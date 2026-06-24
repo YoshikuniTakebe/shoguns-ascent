@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "refactor",
   "description": "Update the Zustand store (src/store/gameStore.ts) and WebSocket server (src/server/index.ts) to work with the new data model and game logic functions. The store needs new actions matching the new game phases and mechanics. The server needs to handle new message types.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Rewrite src/store/gameStore.ts:",
     "1. Update GameStore interface to expose new actions: setupSeason, breakAlliances, formAlliance, drawMandateTiles, chooseMandateTile, executeCurrentMandate (for each player in resolution order), resolveKami, initiateWar, submitWarTacticBids, resolveNextBattle, cleanupSeason, resolveWinter.",
