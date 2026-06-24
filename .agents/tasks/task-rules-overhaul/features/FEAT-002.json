@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "refactor",
   "description": "Complete rewrite of game logic (src/utils/gameLogic.ts) to implement the real board game rules: proper game initialization with 8 clans/figures/temples, seasonal preparation (war province tokens, income, hostage return), tea ceremony (alliance pair system), politics phase with 7 mandate turns and 3 kami turns per season (3+kami+2+kami+2+kami pattern), mandate resolution order (starts left of issuer, bonus for issuer and ally), proper mandates (Recruit places Bushi/Shinto at fortresses, Marshal moves figures between adjacent provinces, Train acquires season cards from market, Harvest gains province reward for strongest, Betray replaces opponent figures), war phase with War Tactics bidding (Seppuku, Take Hostage, Hire Ronin, Imperial Poets), battle resolution based on total force in province, and cleanup/winter scoring.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Rewrite src/utils/gameLogic.ts completely implementing:",
     "1. createInitialGameState(): Place 1 Daimyo + 1 Bushi + 1 Fortress per clan in their home province. Set initial honor (Koi=1 lowest to Luna=8 highest). Place 4 random Temples. Prepare season card decks. Set starting coins based on seasonal income rules.",
