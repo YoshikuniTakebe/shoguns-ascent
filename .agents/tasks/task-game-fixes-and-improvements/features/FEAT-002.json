@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Add visual improvements: stylized Japan map background behind nodes, unique SVG clan shield emblems, and Daimyo portrait illustrations for each clan",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Create src/components/JapanMapBackground.tsx - An SVG component that renders a stylized feudal Japan map background. Include: the general island shape of Japan (Honshu, Hokkaido, Kyushu, Shikoku), stylized mountains (using triangle/polygon shapes), water patterns (wave lines in traditional Japanese style), subtle regional boundaries. Use muted colors that work behind the game nodes (dark blues for water, dark earth tones for land). This goes behind the region nodes in the map-container.",
     "2. Create src/components/ClanShields.tsx - Export 6 SVG shield/emblem components, one per clan. Each shield should be a distinct shape (hexagonal, circular, diamond, etc.) with a thematic Japanese icon inside: (1) Koi clan: stylized koi fish, (2) Dragonfly clan: dragonfly silhouette, (3) Bonsai clan: bonsai tree, (4) Fox clan: fox face/mask, (5) Lotus clan: lotus flower, (6) Turtle clan: turtle shell pattern. Each emblem uses the clan's color. Export as ClanShield component that takes clanId prop and renders the appropriate emblem at a given size.",
@@ -27,5 +27,5 @@
     "cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 3 new components created as inline TSX SVGs. ClanShields uses per-clan sub-components with distinct shield shapes and thematic icons. DaimyoPortraits uses per-clan sub-components with kabuto helmets and clan-specific features. JapanMapBackground uses SVG defs for gradients and wave patterns. Z-index layering: background=0, connection lines=1, regions=2. The old duplicate .japan-map and .regions-overlay CSS rules were removed in favor of the new ones with proper z-index. Build passes clean."
 }
