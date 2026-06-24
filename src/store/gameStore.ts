@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { GameState, MandateType } from '../types/game';
-import { createInitialGameState, executeMandate, moveForces, proposeAlliance, acceptAlliance, recruitMonster, advancePhase, advancePlayer, resolveBattleBids, drawMandate, getCurrentPlayer } from '../utils/gameLogic';
+import { createInitialGameState, moveForces, proposeAlliance, acceptAlliance, recruitMonster, advancePhase, advancePlayer, resolveBattleBids, drawThreeMandates, chooseMandateFromDrawn, advanceTeaTurn, getCurrentPlayer } from '../utils/gameLogic';
 
 interface GameStore {
   gameState: GameState | null; localPlayerId: string | null; selectedRegion: string | null;
@@ -10,9 +10,11 @@ interface GameStore {
   createGame: (players: { name: string; clanId: string }[], mode: 'online' | 'hotseat') => void;
   setGameState: (s: GameState) => void; setLocalPlayerId: (id: string) => void;
   selectRegion: (id: string | null) => void; toggleMoveMode: () => void; setMoveFrom: (id: string | null) => void;
-  issueMandate: (m: MandateType) => void; doMoveForces: (f: string, t: string, c: number) => void;
+  drawMandates: () => void; chooseMandateAction: (mandate: MandateType) => void;
+  doMoveForces: (f: string, t: string, c: number) => void;
   doProposeAlliance: (to: string) => void; doAcceptAlliance: (from: string) => void;
   doRecruitMonster: (id: string) => void; doAdvancePhase: () => void; doAdvancePlayer: () => void;
+  doEndTeaTurn: () => void;
   doBid: (amount: number, battleIndex: number) => void;
   connectWebSocket: (url: string) => void; sendAction: (action: unknown) => void; setLobbyId: (id: string) => void;
 }
@@ -25,11 +27,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   selectRegion: (regionId) => set({ selectedRegion: regionId }),
   toggleMoveMode: () => set((s) => ({ moveMode: !s.moveMode, moveFrom: null })),
   setMoveFrom: (regionId) => set({ moveFrom: regionId }),
-  issueMandate: (mandate) => {
+  drawMandates: () => {
+    const { gameState } = get(); if (!gameState) return;
+    if (gameState.currentPhase !== 'politics') return;
+    const ns = drawThreeMandates(gameState);
+    set({ gameState: ns });
+  },
+  chooseMandateAction: (mandate) => {
     const { gameState, localPlayerId, ws } = get(); if (!gameState || !localPlayerId) return;
     const cp = getCurrentPlayer(gameState); const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid || gameState.currentPhase !== 'politics') return;
-    const { state: afterDraw } = drawMandate(gameState); const ns = executeMandate(afterDraw, mandate, apid);
+    const ns = chooseMandateFromDrawn(gameState, mandate, apid);
     if (ws && gameState.mode === 'online') get().sendAction({ type: 'MANDATE', playerId: apid, payload: { mandate } });
     else set({ gameState: advancePlayer(ns) });
   },
@@ -45,6 +53,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   doRecruitMonster: (id) => { const { gameState, localPlayerId } = get(); if (!gameState || !localPlayerId) return; const cp = getCurrentPlayer(gameState); const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId; if (!apid) return; set({ gameState: recruitMonster(gameState, apid, id) }); },
   doAdvancePhase: () => { const { gameState } = get(); if (!gameState) return; set({ gameState: advancePhase(gameState) }); },
   doAdvancePlayer: () => { const { gameState } = get(); if (!gameState) return; set({ gameState: advancePlayer(gameState) }); },
+  doEndTeaTurn: () => { const { gameState } = get(); if (!gameState) return; set({ gameState: advanceTeaTurn(gameState) }); },
   doBid: (amount, battleIndex) => {
     const { gameState, localPlayerId } = get(); if (!gameState || !localPlayerId) return;
     const cp = getCurrentPlayer(gameState); const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId; if (!apid) return;

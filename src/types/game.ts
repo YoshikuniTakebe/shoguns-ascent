@@ -32,10 +32,12 @@ export interface GameState {
   id: string; mode: 'online' | 'hotseat'; players: Player[];
   regions: { [regionId: string]: Region }; currentSeason: Season; currentPhase: Phase;
   currentPlayerIndex: number; mandatesThisTurn: Mandate[]; mandatesDeck: MandateType[];
+  drawnMandates: MandateType[]; mandateChoicePhase: boolean;
   activeBattles: Battle[]; seasonCards: SeasonCard[]; availableMonsters: Monster[];
   warPoems: WarPoem[]; turnOrder: string[];
   allianceProposals: { from: string; to: string; accepted?: boolean }[];
   politicsMandateCount: number; maxMandates: number; round: number; maxRounds: number;
+  teaTurnIndex: number;
   gameOver: boolean; winner?: string; log: string[]; hostId?: string;
 }
 
@@ -51,11 +53,12 @@ export const REGIONS_DATA: Omit<Region, 'forces' | 'ronin' | 'monsters' | 'hasSh
 ];
 
 export const CLANS: Clan[] = [
-  { id: 'iron-crane', name: 'Iron Crane', color: '#C4A747', ability: 'Honor of the Crane', abilityDescription: 'Gains 1 extra VP each time honor increases. Starts with highest honor.' },
-  { id: 'shadow-fox', name: 'Shadow Fox', color: '#6B4C9A', ability: "Fox's Cunning", abilityDescription: 'May move forces through enemy-occupied regions. +1 movement range.' },
-  { id: 'crimson-bear', name: 'Crimson Bear', color: '#8B1A1A', ability: "Bear's Fury", abilityDescription: 'Recruits 1 extra force with each Recruit mandate. Starts with +2 reserve forces.' },
-  { id: 'storm-dragon', name: 'Storm Dragon', color: '#1A5276', ability: "Dragon's Wrath", abilityDescription: 'Wins ties in battle. +1 combat bonus in all battles.' },
-  { id: 'jade-turtle', name: 'Jade Turtle', color: '#1E8449', ability: "Turtle's Shell", abilityDescription: 'Loses 1 fewer force in battles when defending. Shrines provide +1 VP.' },
+  { id: 'koi', name: 'Koi Clan', color: '#2E86AB', ability: 'Migratory Current', abilityDescription: 'Can move forces to non-adjacent regions (up to 2 hops away). Superior mobility.' },
+  { id: 'dragonfly', name: 'Dragonfly Clan', color: '#C4A747', ability: 'Wings of Honor', abilityDescription: 'Gains +1 VP when scoring if honor is highest among all players. Starts with higher honor.' },
+  { id: 'bonsai', name: 'Bonsai Clan', color: '#1E8449', ability: 'Steady Growth', abilityDescription: 'Recruits 1 extra force with each Recruit mandate. Starts with +2 reserve forces.' },
+  { id: 'fox', name: 'Fox Clan', color: '#6B4C9A', ability: 'Shadow Step', abilityDescription: 'May move forces through enemy-occupied regions. Deception and surprise.' },
+  { id: 'lotus', name: 'Lotus Clan', color: '#D4358C', ability: 'Political Mastery', abilityDescription: 'Draws 4 mandate tiles instead of 3 during politics phase. Superior political choice.' },
+  { id: 'turtle', name: 'Turtle Clan', color: '#1A5276', ability: 'Iron Shell', abilityDescription: 'Loses 1 fewer force in battles when defending. Shrines provide +1 VP.' },
 ];
 
 export const SEASON_CARDS: SeasonCard[] = [

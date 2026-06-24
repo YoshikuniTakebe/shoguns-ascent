@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix game core logic: update clans to 6 with proper powers, implement correct mandate draw system (draw 3, pick 1, return 2), and fix Tea Ceremony alliance phase",
+  "status": "in_progress",
+  "steps": [
+    "1. Update src/types/game.ts - CLANS array: Replace the existing 5 clans with 6 clans themed for feudal Japan area control. The 6 clans should be: (1) Koi clan - power related to movement/migration of forces (can move to non-adjacent regions or move extra distance), (2) Dragonfly clan - power related to honor/victory by honor (gains extra VP from honor, starts with higher honor), (3) Bonsai clan - power related to recruitment/growth (recruits extra forces, starts with more reserves), (4) Fox clan - power related to deception/betrayal (can move through enemy regions, surprise mechanics), (5) Lotus clan - power related to mandates/politics (gets to draw extra mandate tiles, political advantage), (6) Turtle clan - power related to defense/resistance (loses fewer forces in battle, shrine bonuses). Each clan needs: id, name, color, ability name, abilityDescription. Keep the same Clan interface.",
+    "2. Update src/types/game.ts - Add 'drawnMandates' field to GameState interface: drawnMandates: MandateType[] (holds the 3 drawn mandates the active player is choosing from). Also add 'mandateChoicePhase' boolean field to track when player is choosing.",
+    "3. Update src/utils/gameLogic.ts - createInitialGameState: Update all references to old clan IDs to use new clan IDs. Update homeRegions array to include 6 entries. Fix initial honor/reserves based on new clan powers (Dragonfly starts higher honor, Bonsai starts more reserves).",
+    "4. Update src/utils/gameLogic.ts - Implement the mandate draw system: Create function drawThreeMandates(state) that draws 3 from mandatesDeck and puts them in state.drawnMandates. Create function chooseMandateFromDrawn(state, chosenMandate, playerId) that takes the chosen mandate, executes it, returns the other 2 to the TOP of mandatesDeck, and clears drawnMandates. The Lotus clan power should let them draw 4 instead of 3.",
+    "5. Update src/utils/gameLogic.ts - Update executeRecruit, resolveBattleBids, moveForces, scoreRegions: Replace old clan ID checks (iron-crane, shadow-fox, crimson-bear, storm-dragon, jade-turtle) with new clan IDs and their corresponding powers. Koi: can move to non-adjacent (2 hops), Dragonfly: +1 VP when scoring if honor is highest, Bonsai: recruit +1 extra, Fox: can move through enemy regions, Lotus: (handled in mandate draw), Turtle: loses 1 fewer force + shrine VP bonus.",
+    "6. Update src/utils/gameLogic.ts - Fix Tea Ceremony phase: The advancePhase function for 'tea' phase should properly handle the alliance proposal flow. Every player should get a turn to propose alliances during tea phase. Add a teaCeremonyComplete flag or track which players have had their tea turn. When all players have had their turn, advance to politics.",
+    "7. Update src/store/gameStore.ts - Replace issueMandate action with two new actions: drawMandates() that calls drawThreeMandates, and chooseMandateAction(mandate: MandateType) that calls chooseMandateFromDrawn. Update flow: when politics phase starts and it's a player's turn, they first drawMandates, then from the 3 shown they chooseMandateAction.",
+    "8. Update src/store/gameStore.ts - Fix tea ceremony actions: Ensure doProposeAlliance and doAcceptAlliance work correctly for all players in hotseat mode. Add doEndTeaTurn() action that advances to next player's tea turn or advances phase if all have gone.",
+    "9. Update src/components/ActionPanel.tsx - Tea phase: Show current player's alliance options. Show 'End My Tea Turn' button. Show pending proposals for the current player. Each player gets a turn to propose/accept.",
+    "10. Update src/components/ActionPanel.tsx - Politics phase: Instead of showing all 5 mandate buttons, show the 3 drawn mandates as buttons (from gameState.drawnMandates). If drawnMandates is empty, show a 'Draw Mandates' button. Player clicks one of the 3 to choose it.",
+    "11. Update src/components/MainMenu.tsx - Update player count selector to allow 2-6 players. Update default clan assignments to use new clan IDs.",
+    "12. Update src/components/PlayerPanel.tsx, BattlePanel.tsx, GameOverScreen.tsx - Update any references to old CLANS that may break with new clan IDs."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compilation (npx tsc -b) passes with no errors",
+    "Vite build (npx vite build) succeeds",
+    "CLANS array in game.ts contains exactly 6 clans with unique IDs, names, colors, and abilities matching the specified powers",
+    "GameState interface includes drawnMandates field",
+    "During politics phase, player draws 3 mandates (4 for Lotus clan), picks 1, and the other 2 go back to top of deck",
+    "Tea Ceremony allows each player in turn to propose/accept alliances before advancing to politics",
+    "All clan power implementations reference the new clan IDs consistently",
+    "MainMenu supports 2-6 players"
+  ],
+  "verification": [
+    "cd /projects/sandbox/shoguns-ascent && npx tsc -b",
+    "cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

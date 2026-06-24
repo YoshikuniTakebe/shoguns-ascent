@@ -8,11 +8,13 @@ export function createInitialGameState(players: { name: string; clanId: string }
   regions['edo'].hasShrine = true; regions['kansai'].hasShrine = true; regions['kyushu'].hasShrine = true;
   const gamePlayers: Player[] = players.map((p, idx) => {
     const clan = CLANS.find((c) => c.id === p.clanId)!;
-    return { id: hostId && idx === 0 ? hostId : uuidv4(), name: p.name, clanId: p.clanId, coins: 5, honor: clan.id === 'iron-crane' ? 5 : 3, victoryPoints: 0, reserveForces: clan.id === 'crimson-bear' ? 12 : 10, seasonCards: [], monsters: [], warPoems: [], allies: [], isReady: false };
+    const baseHonor = clan.id === 'dragonfly' ? 5 : 3;
+    const baseReserve = clan.id === 'bonsai' ? 12 : 10;
+    return { id: hostId && idx === 0 ? hostId : uuidv4(), name: p.name, clanId: p.clanId, coins: 5, honor: baseHonor, victoryPoints: 0, reserveForces: baseReserve, seasonCards: [], monsters: [], warPoems: [], allies: [], isReady: false };
   });
-  const homeRegions = ['hokkaido', 'kyushu', 'shikoku', 'oshu', 'nagato'];
+  const homeRegions = ['hokkaido', 'kyushu', 'shikoku', 'oshu', 'nagato', 'kanto'];
   gamePlayers.forEach((player, idx) => { const hr = homeRegions[idx % homeRegions.length]; regions[hr].forces[player.id] = 3; player.reserveForces -= 3; });
-  return { id: uuidv4(), mode, players: gamePlayers, regions, currentSeason: 'spring', currentPhase: 'tea', currentPlayerIndex: 0, mandatesThisTurn: [], mandatesDeck: shuffleMandates(), activeBattles: [], seasonCards: [...SEASON_CARDS], availableMonsters: [...MONSTERS], warPoems: [...WAR_POEMS], turnOrder: gamePlayers.map((p) => p.id), allianceProposals: [], politicsMandateCount: 0, maxMandates: gamePlayers.length <= 3 ? 3 : 4, round: 1, maxRounds: 3, gameOver: false, log: ['Game started! Season: Spring - Tea Ceremony Phase'], hostId };
+  return { id: uuidv4(), mode, players: gamePlayers, regions, currentSeason: 'spring', currentPhase: 'tea', currentPlayerIndex: 0, mandatesThisTurn: [], mandatesDeck: shuffleMandates(), drawnMandates: [], mandateChoicePhase: false, activeBattles: [], seasonCards: [...SEASON_CARDS], availableMonsters: [...MONSTERS], warPoems: [...WAR_POEMS], turnOrder: gamePlayers.map((p) => p.id), allianceProposals: [], politicsMandateCount: 0, maxMandates: gamePlayers.length <= 3 ? 3 : 4, round: 1, maxRounds: 3, teaTurnIndex: 0, gameOver: false, log: ['Game started! Season: Spring - Tea Ceremony Phase'], hostId };
 }
 
 function shuffleMandates(): MandateType[] {
@@ -21,6 +23,34 @@ function shuffleMandates(): MandateType[] {
 
 export function shuffle<T>(array: T[]): T[] {
   const arr = [...array]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr;
+}
+
+export function drawThreeMandates(state: GameState): GameState {
+  const newState = { ...state, mandatesDeck: [...state.mandatesDeck] };
+  const currentPlayer = newState.players[newState.currentPlayerIndex];
+  const isLotus = currentPlayer && CLANS.find(c => c.id === currentPlayer.clanId)?.id === 'lotus';
+  const drawCount = isLotus ? 4 : 3;
+  const drawn: MandateType[] = [];
+  for (let i = 0; i < drawCount && newState.mandatesDeck.length > 0; i++) {
+    drawn.push(newState.mandatesDeck.shift()!);
+  }
+  newState.drawnMandates = drawn;
+  newState.mandateChoicePhase = true;
+  return newState;
+}
+
+export function chooseMandateFromDrawn(state: GameState, chosenMandate: MandateType, playerId: string): GameState {
+  let newState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [...state.drawnMandates] };
+  const chosenIdx = newState.drawnMandates.indexOf(chosenMandate);
+  if (chosenIdx === -1) return state;
+  newState.drawnMandates.splice(chosenIdx, 1);
+  // Return remaining mandates to top of deck
+  newState.mandatesDeck = [...newState.drawnMandates, ...newState.mandatesDeck];
+  newState.drawnMandates = [];
+  newState.mandateChoicePhase = false;
+  // Execute the chosen mandate
+  newState = executeMandate(newState, chosenMandate, playerId);
+  return newState;
 }
 
 export function executeMandate(state: GameState, mandate: MandateType, playerId: string): GameState {
@@ -43,7 +73,7 @@ function executeRecruit(state: GameState, playerId: string): GameState {
   const newState = { ...state, regions: { ...state.regions } };
   const player = newState.players.find((p) => p.id === playerId)!;
   const clan = CLANS.find((c) => c.id === player.clanId)!;
-  const totalRecruit = Math.min(2 + (clan.id === 'crimson-bear' ? 1 : 0), player.reserveForces);
+  const totalRecruit = Math.min(2 + (clan.id === 'bonsai' ? 1 : 0), player.reserveForces);
   const controlledRegions = Object.entries(newState.regions).filter(([_, r]) => (r.forces[playerId] || 0) > 0).map(([id]) => id);
   if (controlledRegions.length > 0 && totalRecruit > 0) {
     const rid = controlledRegions[0];
@@ -105,13 +135,13 @@ export function resolveBattleBids(state: GameState, battleIndex: number): GameSt
   const battle = { ...newState.activeBattles[battleIndex] };
   if (!battle || battle.resolved) return state;
   const strengths: { [pid: string]: number } = {};
-  battle.participants.forEach((pid) => { const p = newState.players.find((x) => x.id === pid)!; const clan = CLANS.find((c) => c.id === p.clanId)!; strengths[pid] = (newState.regions[battle.regionId].forces[pid] || 0) + (battle.bids[pid] || 0) + (clan.id === 'storm-dragon' ? 1 : 0); });
+  battle.participants.forEach((pid) => { strengths[pid] = (newState.regions[battle.regionId].forces[pid] || 0) + (battle.bids[pid] || 0); });
   let maxS = -1, winnerId = '';
-  Object.entries(strengths).forEach(([pid, s]) => { const p = newState.players.find((x) => x.id === pid)!; const clan = CLANS.find((c) => c.id === p.clanId)!; if (s > maxS || (s === maxS && clan.id === 'storm-dragon')) { maxS = s; winnerId = pid; } });
+  Object.entries(strengths).forEach(([pid, s]) => { if (s > maxS) { maxS = s; winnerId = pid; } });
   battle.winner = winnerId; battle.resolved = true;
   battle.participants.forEach((pid) => { const p = newState.players.find((x) => x.id === pid)!; p.coins -= battle.bids[pid] || 0; });
   newState.regions[battle.regionId] = { ...newState.regions[battle.regionId], forces: { ...newState.regions[battle.regionId].forces } };
-  battle.participants.forEach((pid) => { if (pid !== winnerId) { const p = newState.players.find((x) => x.id === pid)!; const clan = CLANS.find((c) => c.id === p.clanId)!; const cur = newState.regions[battle.regionId].forces[pid] || 0; const lost = clan.id === 'jade-turtle' ? Math.max(0, cur - 1) : cur; p.reserveForces += lost; newState.regions[battle.regionId].forces[pid] = cur - lost; if (newState.regions[battle.regionId].forces[pid] <= 0) delete newState.regions[battle.regionId].forces[pid]; } });
+  battle.participants.forEach((pid) => { if (pid !== winnerId) { const p = newState.players.find((x) => x.id === pid)!; const clan = CLANS.find((c) => c.id === p.clanId)!; const cur = newState.regions[battle.regionId].forces[pid] || 0; const lost = clan.id === 'turtle' ? Math.max(0, cur - 1) : cur; p.reserveForces += lost; newState.regions[battle.regionId].forces[pid] = cur - lost; if (newState.regions[battle.regionId].forces[pid] <= 0) delete newState.regions[battle.regionId].forces[pid]; } });
   const winner = newState.players.find((p) => p.id === winnerId)!;
   newState.log = [...newState.log, `${winner.name} wins the battle in ${newState.regions[battle.regionId].name}!`];
   newState.activeBattles = [...newState.activeBattles]; newState.activeBattles[battleIndex] = battle;
@@ -121,19 +151,46 @@ export function resolveBattleBids(state: GameState, battleIndex: number): GameSt
 export function advancePhase(state: GameState): GameState {
   let newState = { ...state };
   switch (newState.currentPhase) {
-    case 'tea': newState.currentPhase = 'politics'; newState.log = [...newState.log, 'Politics Phase begins']; break;
-    case 'politics': newState.currentPhase = 'war'; newState.log = [...newState.log, 'War Phase begins']; Object.keys(newState.regions).forEach((rid) => { if (Object.entries(newState.regions[rid].forces).filter(([_, f]) => f > 0).length > 1) newState = resolveBattle(newState, rid); }); break;
+    case 'tea': newState.currentPhase = 'politics'; newState.currentPlayerIndex = 0; newState.log = [...newState.log, 'Politics Phase begins']; break;
+    case 'politics': newState.currentPhase = 'war'; newState.drawnMandates = []; newState.mandateChoicePhase = false; newState.log = [...newState.log, 'War Phase begins']; Object.keys(newState.regions).forEach((rid) => { if (Object.entries(newState.regions[rid].forces).filter(([_, f]) => f > 0).length > 1) newState = resolveBattle(newState, rid); }); break;
     case 'war': newState.currentPhase = 'cleanup'; newState = scoreRegions(newState); newState.log = [...newState.log, 'Cleanup Phase']; break;
     case 'cleanup': newState = advanceSeason(newState); break;
   }
   return newState;
 }
 
+export function advanceTeaTurn(state: GameState): GameState {
+  const newState = { ...state };
+  const nextTea = newState.teaTurnIndex + 1;
+  if (nextTea >= newState.players.length) {
+    // All players have had their tea turn, advance to politics
+    return advancePhase(newState);
+  }
+  newState.teaTurnIndex = nextTea;
+  newState.currentPlayerIndex = nextTea;
+  const cp = newState.players[newState.currentPlayerIndex];
+  newState.log = [...newState.log, `${cp.name}'s turn in Tea Ceremony`];
+  return newState;
+}
+
 function scoreRegions(state: GameState): GameState {
   const newState = { ...state, players: state.players.map(p => ({...p})) };
+  // Determine who has highest honor for Dragonfly bonus
+  const maxHonor = Math.max(...newState.players.map(p => p.honor));
   Object.values(newState.regions).forEach((region) => {
     const forces = Object.entries(region.forces).filter(([_, f]) => f > 0);
-    if (forces.length === 1) { const [cid] = forces[0]; const p = newState.players.find((x) => x.id === cid); if (p) { const clan = CLANS.find((c) => c.id === p.clanId)!; const bonus = region.hasShrine && clan.id === 'jade-turtle' ? 1 : 0; p.victoryPoints += region.reward + bonus; newState.log = [...newState.log, `${p.name} scores ${region.reward + bonus} VP from ${region.name}`]; } }
+    if (forces.length === 1) {
+      const [cid] = forces[0];
+      const p = newState.players.find((x) => x.id === cid);
+      if (p) {
+        const clan = CLANS.find((c) => c.id === p.clanId)!;
+        const shrineBonus = region.hasShrine && clan.id === 'turtle' ? 1 : 0;
+        const honorBonus = clan.id === 'dragonfly' && p.honor >= maxHonor ? 1 : 0;
+        const totalVP = region.reward + shrineBonus + honorBonus;
+        p.victoryPoints += totalVP;
+        newState.log = [...newState.log, `${p.name} scores ${totalVP} VP from ${region.name}`];
+      }
+    }
   });
   return newState;
 }
@@ -142,7 +199,7 @@ function advanceSeason(state: GameState): GameState {
   const newState = { ...state }; const seasons: Season[] = ['spring', 'summer', 'autumn'];
   const idx = seasons.indexOf(newState.currentSeason);
   if (idx >= 2) { newState.gameOver = true; const maxVP = Math.max(...newState.players.map((p) => p.victoryPoints)); const w = newState.players.find((p) => p.victoryPoints === maxVP); newState.winner = w?.id; newState.log = [...newState.log, `Game Over! ${w?.name} wins with ${maxVP} VP!`]; }
-  else { newState.currentSeason = seasons[idx + 1]; newState.currentPhase = 'tea'; newState.politicsMandateCount = 0; newState.mandatesDeck = shuffleMandates(); newState.allianceProposals = []; newState.activeBattles = []; newState.round += 1; newState.log = [...newState.log, `Season: ${newState.currentSeason.charAt(0).toUpperCase() + newState.currentSeason.slice(1)}`]; }
+  else { newState.currentSeason = seasons[idx + 1]; newState.currentPhase = 'tea'; newState.currentPlayerIndex = 0; newState.politicsMandateCount = 0; newState.mandatesDeck = shuffleMandates(); newState.drawnMandates = []; newState.mandateChoicePhase = false; newState.allianceProposals = []; newState.activeBattles = []; newState.teaTurnIndex = 0; newState.round += 1; newState.log = [...newState.log, `Season: ${newState.currentSeason.charAt(0).toUpperCase() + newState.currentSeason.slice(1)}`]; }
   return newState;
 }
 
@@ -150,12 +207,33 @@ export function moveForces(state: GameState, playerId: string, fromRegion: strin
   const newState = { ...state, regions: { ...state.regions }, players: state.players.map(p => ({...p})) };
   const from = newState.regions[fromRegion]; const to = newState.regions[toRegion];
   if (!from || !to) return state;
-  if (!from.adjacentRegions.includes(toRegion)) { const p = newState.players.find((x) => x.id === playerId); if (!p || CLANS.find((c) => c.id === p.clanId)?.id !== 'shadow-fox') return state; }
+  const player = newState.players.find((x) => x.id === playerId);
+  if (!player) return state;
+  const clan = CLANS.find((c) => c.id === player.clanId);
+  // Check adjacency: Koi can move 2 hops, Fox can move through enemy regions
+  if (!from.adjacentRegions.includes(toRegion)) {
+    if (clan?.id === 'koi') {
+      // Koi can move to regions 2 hops away
+      const twoHopReachable = from.adjacentRegions.some(mid => {
+        const midRegion = newState.regions[mid];
+        return midRegion && midRegion.adjacentRegions.includes(toRegion);
+      });
+      if (!twoHopReachable) return state;
+    } else if (clan?.id === 'fox') {
+      // Fox can move through enemy-occupied regions (treat as adjacent if there's a path through enemies)
+      const twoHopReachable = from.adjacentRegions.some(mid => {
+        const midRegion = newState.regions[mid];
+        return midRegion && midRegion.adjacentRegions.includes(toRegion);
+      });
+      if (!twoHopReachable) return state;
+    } else {
+      return state;
+    }
+  }
   const available = from.forces[playerId] || 0; if (count > available) return state;
   newState.regions[fromRegion] = { ...from, forces: { ...from.forces } }; newState.regions[toRegion] = { ...to, forces: { ...to.forces } };
   newState.regions[fromRegion].forces[playerId] = available - count; if (newState.regions[fromRegion].forces[playerId] === 0) delete newState.regions[fromRegion].forces[playerId];
   newState.regions[toRegion].forces[playerId] = (to.forces[playerId] || 0) + count;
-  const player = newState.players.find((p) => p.id === playerId)!;
   newState.log = [...newState.log, `${player.name} moves ${count} forces from ${from.name} to ${to.name}`];
   return newState;
 }
@@ -193,5 +271,6 @@ export function getCurrentPlayer(state: GameState): Player | undefined { return 
 
 export function advancePlayer(state: GameState): GameState {
   const newState = { ...state }; newState.currentPlayerIndex = (newState.currentPlayerIndex + 1) % newState.players.length; newState.politicsMandateCount += 1;
+  newState.drawnMandates = []; newState.mandateChoicePhase = false;
   if (newState.politicsMandateCount >= newState.maxMandates) return advancePhase(newState); return newState;
 }
