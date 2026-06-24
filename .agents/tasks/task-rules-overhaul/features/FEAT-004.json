@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "refactor",
   "description": "Update all UI components to work with the new data model and display the real game state. Update clan shields for 8 clans, update MainMenu for 2-8 player selection with new clan names, update GameBoard/RegionCard to show figure types, update ActionPanel for new phases and mandate flow, update BattlePanel for War Tactics bidding, update PlayerPanel for new player stats, update GameOverScreen for winter scoring breakdown.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "1. Update src/components/ClanShields.tsx: Add SVG shields for Sol and Luna clans. Rename existing shields to match new clan ids (dragonfly->libelula, bonsai->bonsai, fox->zorro, lotus->loto, turtle->tortuga). Keep Koi. Each shield should have a distinctive Japanese-inspired design.",
     "2. Update src/components/DaimyoPortraits.tsx: Add portraits for Sol and Luna. Rename existing to match new clan ids. Adjust visual style to match clan themes.",
