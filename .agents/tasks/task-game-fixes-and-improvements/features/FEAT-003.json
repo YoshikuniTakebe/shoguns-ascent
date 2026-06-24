@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Address review issues: mandate deck exhaustion deadlock, online mandate flow, Fox/Koi power differentiation, duplicate clan prevention in hotseat, and Turtle battle formula fix",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Fix mandate deck exhaustion: increase deck size to 30 mandates, add reshuffle guard in drawThreeMandates when deck is empty, add UI handling for empty drawnMandates case",
     "2. Fix online mandate flow: add DRAW_MANDATES and CHOOSE_MANDATE message types to WebSocket server",
@@ -26,5 +26,5 @@
     "cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All 5 review issues addressed. Build and type check pass clean. Mandate deck now has 30 cards (6 recruit, 6 march, 5 train, 6 harvest, 5 betray) with auto-reshuffle. Fox power changed from duplicate 2-hop movement to betrayal bonus. Turtle formula uses Math.max(1, cur-1). Server now supports DRAW_MANDATES and CHOOSE_MANDATE message types. Duplicate clan selection prevented via filtering already-used clans in dropdown."
 }
