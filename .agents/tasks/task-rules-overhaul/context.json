@@ -1,0 +1,30 @@
+{
+  "project_type": "React + TypeScript board game with Express/WebSocket server",
+  "language": "TypeScript",
+  "build_system": "Vite for client, tsx for server",
+  "test_framework": "None (no tests currently)",
+  "build_command": "npx tsc -b && npx vite build",
+  "test_command": "npx tsc -b",
+  "verification_instructions": "Run tsc -b to verify TypeScript compiles. Run vite build to verify bundling succeeds.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "Node.js available. No test framework installed. Verification is TypeScript compilation.",
+  "contribution_requirements": "TypeScript strict mode with noUnusedLocals and noUnusedParameters. tsconfig.app.json excludes src/server. tsconfig.node.json covers server.",
+  "key_patterns": "Zustand store (src/store/gameStore.ts), pure game logic functions in src/utils/gameLogic.ts, types in src/types/game.ts, React components in src/components/. State is immutable - functions return new state. Server mirrors game logic calls over WebSocket.",
+  "relevant_files": [
+    "src/types/game.ts",
+    "src/utils/gameLogic.ts",
+    "src/store/gameStore.ts",
+    "src/server/index.ts",
+    "src/components/GameBoard.tsx",
+    "src/components/ActionPanel.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/components/MainMenu.tsx",
+    "src/components/PlayerPanel.tsx",
+    "src/components/RegionCard.tsx",
+    "src/components/GameOverScreen.tsx",
+    "src/components/ClanShields.tsx",
+    "src/components/DaimyoPortraits.tsx"
+  ],
+  "directory_structure": "src/types/ - TypeScript interfaces and game data constants. src/utils/ - Pure game logic functions. src/store/ - Zustand state management. src/components/ - React UI. src/server/ - Express + WebSocket multiplayer server."
+}

@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-004",
+  "type": "refactor",
+  "description": "Update all UI components to work with the new data model and display the real game state. Update clan shields for 8 clans, update MainMenu for 2-8 player selection with new clan names, update GameBoard/RegionCard to show figure types, update ActionPanel for new phases and mandate flow, update BattlePanel for War Tactics bidding, update PlayerPanel for new player stats, update GameOverScreen for winter scoring breakdown.",
+  "status": "pending",
+  "steps": [
+    "1. Update src/components/ClanShields.tsx: Add SVG shields for Sol and Luna clans. Rename existing shields to match new clan ids (dragonfly->libelula, bonsai->bonsai, fox->zorro, lotus->loto, turtle->tortuga). Keep Koi. Each shield should have a distinctive Japanese-inspired design.",
+    "2. Update src/components/DaimyoPortraits.tsx: Add portraits for Sol and Luna. Rename existing to match new clan ids. Adjust visual style to match clan themes.",
+    "3. Update src/components/MainMenu.tsx: Support 2-8 player selection. Show new clan names (Koi, Sol, Loto, Tortuga, Libelula, Zorro, Bonsai, Luna). Remove old clan ability descriptions since clans are symmetric. Show initial honor rank per clan.",
+    "4. Update src/components/GameBoard.tsx: Update header to show current sub-phase (mandate turn X, kami turn, etc). Show temple area. Show war province tokens on map. Update season colors.",
+    "5. Update src/components/RegionCard.tsx: Show individual figure icons (Daimyo crown, Bushi sword, Shinto shrine, Fortress castle) instead of generic force count. Color-code by clan. Show war province number token if assigned.",
+    "6. Update src/components/PlayerPanel.tsx: Show figure reserves (Bushi, Shinto, Fortress counts). Show ronin tokens, coins, honor rank, VP, war province tokens collected, season cards owned, hostages held.",
+    "7. Update src/components/ActionPanel.tsx: Rewrite for new phase flow. Season Setup phase (auto-advance). Tea Ceremony (alliance pairing UI). Politics phase (draw 4 mandate tiles, choose 1, show resolution order, kami turn display). War phase (show battles in order). Cleanup (auto-advance). Winter (show scoring breakdown).",
+    "8. Update src/components/BattlePanel.tsx: Show province being contested. Show each player's figures and force. Add War Tactics bidding UI (4 tactics with coin allocation sliders). Show tactic resolution results. Show final battle outcome.",
+    "9. Update src/components/GameOverScreen.tsx: Show winter scoring breakdown (war province tokens by season, set bonuses, winter upgrades). Show honor tiebreaker. Show shared victory for allies.",
+    "10. Add a new component src/components/TemplePanel.tsx: Shows the 4 temples, which Kami is at each, and Shinto figures placed there by each player. Shows current Kami ability text.",
+    "11. Add a new component src/components/SeasonCardsMarket.tsx: Shows available season cards for purchase during Train mandate. Shows card name, cost, type (Virtue/Monster/Upgrade/War Upgrade/Winter Upgrade), and effect text."
+  ],
+  "acceptance_criteria": [
+    "All components compile without TypeScript errors",
+    "MainMenu supports 2-8 players with all 8 clan names",
+    "ClanShields renders for all 8 clans",
+    "DaimyoPortraits renders for all 8 clans",
+    "RegionCard shows individual figure types instead of generic counts",
+    "ActionPanel handles all game phases with appropriate UI",
+    "BattlePanel shows War Tactics bidding interface",
+    "Full vite build succeeds (npx vite build)"
+  ],
+  "verification": [
+    "Run npx tsc -b && npx vite build and confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
