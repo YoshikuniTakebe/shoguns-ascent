@@ -18,7 +18,13 @@ export function createInitialGameState(players: { name: string; clanId: string }
 }
 
 function shuffleMandates(): MandateType[] {
-  return shuffle<MandateType>(['recruit','recruit','recruit','march','march','march','train','train','harvest','harvest','betray','betray']);
+  return shuffle<MandateType>([
+    'recruit','recruit','recruit','recruit','recruit','recruit',
+    'march','march','march','march','march','march',
+    'train','train','train','train','train',
+    'harvest','harvest','harvest','harvest','harvest','harvest',
+    'betray','betray','betray','betray','betray',
+  ]);
 }
 
 export function shuffle<T>(array: T[]): T[] {
@@ -27,6 +33,11 @@ export function shuffle<T>(array: T[]): T[] {
 
 export function drawThreeMandates(state: GameState): GameState {
   const newState = { ...state, mandatesDeck: [...state.mandatesDeck] };
+  // If deck is empty, reshuffle a fresh deck before drawing
+  if (newState.mandatesDeck.length === 0) {
+    newState.mandatesDeck = shuffleMandates();
+    newState.log = [...newState.log, 'Mandate deck reshuffled'];
+  }
   const currentPlayer = newState.players[newState.currentPlayerIndex];
   const isLotus = currentPlayer && CLANS.find(c => c.id === currentPlayer.clanId)?.id === 'lotus';
   const drawCount = isLotus ? 4 : 3;
@@ -114,10 +125,13 @@ function executeHarvest(state: GameState, playerId: string): GameState {
 
 function executeBetray(state: GameState, playerId: string): GameState {
   const newState = { ...state }; const player = newState.players.find((p) => p.id === playerId)!;
+  const clan = CLANS.find((c) => c.id === player.clanId)!;
+  const isFox = clan.id === 'fox';
+  const stealAmount = isFox ? 2 : 1;
   const former = [...player.allies]; player.allies = [];
-  former.forEach((aid) => { const ally = newState.players.find((p) => p.id === aid); if (ally) { ally.allies = ally.allies.filter((id) => id !== playerId); if (ally.coins > 0) { ally.coins -= 1; player.coins += 1; } } });
-  player.honor = Math.max(0, player.honor - 1);
-  newState.log = [...newState.log, `${player.name} betrays their allies!`];
+  former.forEach((aid) => { const ally = newState.players.find((p) => p.id === aid); if (ally) { ally.allies = ally.allies.filter((id) => id !== playerId); const stolen = Math.min(stealAmount, ally.coins); ally.coins -= stolen; player.coins += stolen; } });
+  if (!isFox) { player.honor = Math.max(0, player.honor - 1); }
+  newState.log = [...newState.log, `${player.name} betrays their allies!${isFox ? ' (Fox cunning: steals 2 coins, no honor loss)' : ''}`];
   return newState;
 }
 
@@ -141,7 +155,7 @@ export function resolveBattleBids(state: GameState, battleIndex: number): GameSt
   battle.winner = winnerId; battle.resolved = true;
   battle.participants.forEach((pid) => { const p = newState.players.find((x) => x.id === pid)!; p.coins -= battle.bids[pid] || 0; });
   newState.regions[battle.regionId] = { ...newState.regions[battle.regionId], forces: { ...newState.regions[battle.regionId].forces } };
-  battle.participants.forEach((pid) => { if (pid !== winnerId) { const p = newState.players.find((x) => x.id === pid)!; const clan = CLANS.find((c) => c.id === p.clanId)!; const cur = newState.regions[battle.regionId].forces[pid] || 0; const lost = clan.id === 'turtle' ? Math.max(0, cur - 1) : cur; p.reserveForces += lost; newState.regions[battle.regionId].forces[pid] = cur - lost; if (newState.regions[battle.regionId].forces[pid] <= 0) delete newState.regions[battle.regionId].forces[pid]; } });
+  battle.participants.forEach((pid) => { if (pid !== winnerId) { const p = newState.players.find((x) => x.id === pid)!; const clan = CLANS.find((c) => c.id === p.clanId)!; const cur = newState.regions[battle.regionId].forces[pid] || 0; const lost = clan.id === 'turtle' ? Math.max(1, cur - 1) : cur; p.reserveForces += lost; newState.regions[battle.regionId].forces[pid] = cur - lost; if (newState.regions[battle.regionId].forces[pid] <= 0) delete newState.regions[battle.regionId].forces[pid]; } });
   const winner = newState.players.find((p) => p.id === winnerId)!;
   newState.log = [...newState.log, `${winner.name} wins the battle in ${newState.regions[battle.regionId].name}!`];
   newState.activeBattles = [...newState.activeBattles]; newState.activeBattles[battleIndex] = battle;
@@ -210,17 +224,10 @@ export function moveForces(state: GameState, playerId: string, fromRegion: strin
   const player = newState.players.find((x) => x.id === playerId);
   if (!player) return state;
   const clan = CLANS.find((c) => c.id === player.clanId);
-  // Check adjacency: Koi can move 2 hops, Fox can move through enemy regions
+  // Check adjacency: Koi can move 2 hops
   if (!from.adjacentRegions.includes(toRegion)) {
     if (clan?.id === 'koi') {
       // Koi can move to regions 2 hops away
-      const twoHopReachable = from.adjacentRegions.some(mid => {
-        const midRegion = newState.regions[mid];
-        return midRegion && midRegion.adjacentRegions.includes(toRegion);
-      });
-      if (!twoHopReachable) return state;
-    } else if (clan?.id === 'fox') {
-      // Fox can move through enemy-occupied regions (treat as adjacent if there's a path through enemies)
       const twoHopReachable = from.adjacentRegions.some(mid => {
         const midRegion = newState.regions[mid];
         return midRegion && midRegion.adjacentRegions.includes(toRegion);

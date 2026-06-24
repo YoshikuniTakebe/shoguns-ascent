@@ -24,11 +24,11 @@ export const MainMenu = () => {
       </div>}
       {mode === 'hotseat' && <div className="setup-panel"><h2>Hotseat Setup</h2>
         <div className="player-count-select"><label>Players:</label><select value={pc} onChange={e => setPc(+e.target.value)}>{[2,3,4,5,6].map(n=><option key={n} value={n}>{n}</option>)}</select></div>
-        <div className="player-setup-list">{Array.from({length:pc},(_,i)=><div key={i} className="player-setup-row">
+        <div className="player-setup-list">{Array.from({length:pc},(_,i)=>{const usedClans=clans.slice(0,pc).filter((_c,idx)=>idx!==i);return<div key={i} className="player-setup-row">
           <div className="player-setup-clan-icon"><ClanShield clanId={clans[i]} size={24}/></div>
           <input value={names[i]} onChange={e=>{const n=[...names];n[i]=e.target.value;setNames(n)}} placeholder={`Player ${i+1}`}/>
-          <select value={clans[i]} onChange={e=>{const c=[...clans];c[i]=e.target.value;setClans(c)}}>{CLANS.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
-        </div>)}</div>
+          <select value={clans[i]} onChange={e=>{const c=[...clans];c[i]=e.target.value;setClans(c)}}>{CLANS.filter(c=>!usedClans.includes(c.id)||c.id===clans[i]).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
+        </div>})}</div>
         <div className="setup-actions"><button className="btn-primary" onClick={()=>createGame(Array.from({length:pc},(_,i)=>({name:names[i],clanId:clans[i]})),'hotseat')}>Start</button><button className="btn-secondary" onClick={()=>setMode('select')}>Back</button></div>
       </div>}
       {mode === 'online' && <div className="setup-panel"><h2>Online Setup</h2>

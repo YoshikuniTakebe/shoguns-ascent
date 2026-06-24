@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
-import { createInitialGameState, executeMandate, moveForces, advancePlayer, advancePhase, resolveBattleBids, proposeAlliance, acceptAlliance, recruitMonster } from '../utils/gameLogic';
+import { createInitialGameState, executeMandate, moveForces, advancePlayer, advancePhase, resolveBattleBids, proposeAlliance, acceptAlliance, recruitMonster, drawThreeMandates, chooseMandateFromDrawn } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 
 const app = express(); app.use(cors()); app.use(express.json());
@@ -21,6 +21,8 @@ wss.on('connection', (ws: WebSocket) => {
     case 'JOIN_LOBBY': { const l=lobbies.get(data.lobbyId); if(!l||l.started||l.players.length>=l.maxPlayers){ws.send(JSON.stringify({type:'ERROR',message:'Cannot join'}));return;} l.players.push({id:playerId,name:data.playerName||`Player ${l.players.length+1}`,clanId:data.clanId||'koi',ws}); if(l.players.length===1)l.host=playerId; currentLobbyId=l.id; ws.send(JSON.stringify({type:'LOBBY_JOINED',lobbyId:l.id})); broadcastLobby(l); break; }
     case 'START_GAME': { const l=lobbies.get(data.lobbyId||currentLobbyId||''); if(!l||l.host!==playerId||l.players.length<2)return; l.gameState=createInitialGameState(l.players.map(p=>({name:p.name,clanId:p.clanId})),'online',l.host); l.players.forEach((p,i)=>{if(l.gameState){l.gameState.players[i].id=p.id;l.gameState.turnOrder[i]=p.id;}}); l.started=true; l.players.forEach(p=>p.ws.send(JSON.stringify({type:'GAME_START',state:l.gameState}))); break; }
     case 'MANDATE': { const l=lobbies.get(currentLobbyId||''); if(!l?.gameState)return; let s=executeMandate(l.gameState,data.payload.mandate,data.playerId); s=advancePlayer(s); l.gameState=s; broadcastState(l); break; }
+    case 'DRAW_MANDATES': { const l=lobbies.get(currentLobbyId||''); if(!l?.gameState)return; l.gameState=drawThreeMandates(l.gameState); broadcastState(l); break; }
+    case 'CHOOSE_MANDATE': { const l=lobbies.get(currentLobbyId||''); if(!l?.gameState)return; let s=chooseMandateFromDrawn(l.gameState,data.payload.mandate,data.playerId); s=advancePlayer(s); l.gameState=s; broadcastState(l); break; }
     case 'MOVE': { const l=lobbies.get(currentLobbyId||''); if(!l?.gameState)return; l.gameState=moveForces(l.gameState,data.playerId,data.payload.fromRegion,data.payload.toRegion,data.payload.count); broadcastState(l); break; }
     case 'ADVANCE_PHASE': { const l=lobbies.get(currentLobbyId||''); if(!l?.gameState)return; l.gameState=advancePhase(l.gameState); broadcastState(l); break; }
     case 'BID': { const l=lobbies.get(currentLobbyId||''); if(!l?.gameState)return; const b=l.gameState.activeBattles[data.payload.battleIndex]; if(!b)return; b.bids[data.playerId]=data.payload.amount; if(b.participants.every(pid=>b.bids[pid]!==undefined))l.gameState=resolveBattleBids(l.gameState,data.payload.battleIndex); broadcastState(l); break; }

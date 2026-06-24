@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Address review issues: mandate deck exhaustion deadlock, online mandate flow, Fox/Koi power differentiation, duplicate clan prevention in hotseat, and Turtle battle formula fix",
+  "status": "in_progress",
+  "steps": [
+    "1. Fix mandate deck exhaustion: increase deck size to 30 mandates, add reshuffle guard in drawThreeMandates when deck is empty, add UI handling for empty drawnMandates case",
+    "2. Fix online mandate flow: add DRAW_MANDATES and CHOOSE_MANDATE message types to WebSocket server",
+    "3. Differentiate Fox and Koi powers: Fox gets betrayal bonus (steal 2 coins, no honor loss) instead of movement clone",
+    "4. Prevent duplicate clan selection in hotseat MainMenu",
+    "5. Fix Turtle battle formula: Math.max(1, cur - 1) so Turtle always loses at least 1 force"
+  ],
+  "acceptance_criteria": [
+    "TypeScript compilation (npx tsc -b) passes with no errors",
+    "Vite build (npx vite build) succeeds",
+    "Mandate deck has at least 24 mandates",
+    "drawThreeMandates handles empty deck by reshuffling",
+    "ActionPanel shows skip button when drawnMandates is empty after draw",
+    "Server handles DRAW_MANDATES and CHOOSE_MANDATE message types",
+    "Fox clan has distinct power from Koi (betrayal bonus instead of movement)",
+    "Hotseat setup prevents selecting same clan for multiple players",
+    "Turtle loses Math.max(1, cur-1) forces, ensuring minimum 1 force lost"
+  ],
+  "verification": [
+    "cd /projects/sandbox/shoguns-ascent && npx tsc -b",
+    "cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}

@@ -28,8 +28,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   toggleMoveMode: () => set((s) => ({ moveMode: !s.moveMode, moveFrom: null })),
   setMoveFrom: (regionId) => set({ moveFrom: regionId }),
   drawMandates: () => {
-    const { gameState } = get(); if (!gameState) return;
+    const { gameState, ws } = get(); if (!gameState) return;
     if (gameState.currentPhase !== 'politics') return;
+    if (ws && gameState.mode === 'online') { get().sendAction({ type: 'DRAW_MANDATES', playerId: get().localPlayerId }); return; }
     const ns = drawThreeMandates(gameState);
     set({ gameState: ns });
   },
@@ -37,9 +38,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, localPlayerId, ws } = get(); if (!gameState || !localPlayerId) return;
     const cp = getCurrentPlayer(gameState); const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid || gameState.currentPhase !== 'politics') return;
+    if (ws && gameState.mode === 'online') { get().sendAction({ type: 'CHOOSE_MANDATE', playerId: apid, payload: { mandate } }); return; }
     const ns = chooseMandateFromDrawn(gameState, mandate, apid);
-    if (ws && gameState.mode === 'online') get().sendAction({ type: 'MANDATE', playerId: apid, payload: { mandate } });
-    else set({ gameState: advancePlayer(ns) });
+    set({ gameState: advancePlayer(ns) });
   },
   doMoveForces: (fromRegion, toRegion, count) => {
     const { gameState, localPlayerId, ws } = get(); if (!gameState || !localPlayerId) return;
