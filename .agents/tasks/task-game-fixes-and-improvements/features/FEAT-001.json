@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix game core logic: update clans to 6 with proper powers, implement correct mandate draw system (draw 3, pick 1, return 2), and fix Tea Ceremony alliance phase",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Update src/types/game.ts - CLANS array: Replace the existing 5 clans with 6 clans themed for feudal Japan area control. The 6 clans should be: (1) Koi clan - power related to movement/migration of forces (can move to non-adjacent regions or move extra distance), (2) Dragonfly clan - power related to honor/victory by honor (gains extra VP from honor, starts with higher honor), (3) Bonsai clan - power related to recruitment/growth (recruits extra forces, starts with more reserves), (4) Fox clan - power related to deception/betrayal (can move through enemy regions, surprise mechanics), (5) Lotus clan - power related to mandates/politics (gets to draw extra mandate tiles, political advantage), (6) Turtle clan - power related to defense/resistance (loses fewer forces in battle, shrine bonuses). Each clan needs: id, name, color, ability name, abilityDescription. Keep the same Clan interface.",
     "2. Update src/types/game.ts - Add 'drawnMandates' field to GameState interface: drawnMandates: MandateType[] (holds the 3 drawn mandates the active player is choosing from). Also add 'mandateChoicePhase' boolean field to track when player is choosing.",
@@ -32,5 +32,5 @@
     "cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes compile and build cleanly. The old drawMandate export is kept for backward compat with server. The server default clan fallback was updated from iron-crane to koi. No test framework to run beyond tsc and vite build."
 }
