@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 export const ActionPanel = () => {
-  const { gameState, localPlayerId, moveMode, toggleMoveMode, drawMandates, chooseMandateAction, doAdvancePhase, doProposeAlliance, doAcceptAlliance, doRecruitMonster, doEndTeaTurn } = useGameStore();
+  const { gameState, localPlayerId, moveMode, toggleMoveMode, drawMandates, chooseMandateAction, doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance, doRecruitMonster, doEndTeaTurn } = useGameStore();
   const [showM, setShowM] = useState(false);
   if (!gameState) return null;
   const cp = gameState.players[gameState.currentPlayerIndex];
@@ -17,7 +17,7 @@ export const ActionPanel = () => {
     </div>}
     {gameState.currentPhase==='politics'&&isMyTurn&&<div className="politics-phase"><h4>Politics - Choose Mandate</h4><p className="phase-description">Draw mandates and pick one for all players to follow.</p>
       {gameState.drawnMandates.length===0&&!gameState.mandateChoicePhase&&<button className="btn-primary" onClick={drawMandates}>Draw Mandates</button>}
-      {gameState.mandateChoicePhase&&gameState.drawnMandates.length===0&&<div className="mandate-empty"><p>No mandates available.</p><button className="btn-primary" onClick={doAdvancePhase}>Skip - Advance Phase</button></div>}
+      {gameState.mandateChoicePhase&&gameState.drawnMandates.length===0&&<div className="mandate-empty"><p>No mandates available.</p><button className="btn-primary" onClick={doAdvancePlayer}>Skip - Advance Phase</button></div>}
       {gameState.drawnMandates.length>0&&<div className="mandate-options">{gameState.drawnMandates.map((m, i)=><button key={`${m}-${i}`} className={`btn-mandate mandate-${m}`} onClick={()=>chooseMandateAction(m)}><span className="mandate-name">{m.toUpperCase()}</span><span className="mandate-desc">{desc[m]}</span></button>)}</div>}
       <div className="march-controls"><button className={`btn-secondary ${moveMode?'active':''}`} onClick={toggleMoveMode}>{moveMode?'Cancel Move':'Move Forces'}</button>{moveMode&&<p className="move-instruction">Click source region, then target.</p>}</div>
     </div>}
