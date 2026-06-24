@@ -2,13 +2,13 @@
   "task_id": "task-game-fixes-and-improvements",
   "task_description": "Fix and improve Shogun's Ascent board game: (1) Fix Tea Ceremony alliance logic, (2) Expand to 6 clans with proper powers, (3) Implement correct mandate draw system (draw 3, pick 1, return 2), (4) Add stylized Japan map background, (5) Add unique SVG clan shield emblems, (6) Add Daimyo portrait illustrations",
   "status": "completed",
-  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "feature_order": ["FEAT-001", "FEAT-002"],
   "blocked_reason": null,
   "verification": {
     "build": "pass",
     "tests": "pass",
     "test_quality": "skipped",
     "docker_build": "skipped",
-    "summary": "TypeScript compilation and Vite production build both pass cleanly with no errors. No test framework is configured in this project, so verification is limited to type checking and build success. Docker build is not applicable (no Dockerfile in project)."
+    "summary": "TypeScript compilation and Vite production build both pass cleanly. All review issues (v1: 5 issues, v2: 3 residual concerns) have been addressed. The semantic review v2 verdict is APPROVED. No test framework in project, validation via type checking and build only."
   }
 }
