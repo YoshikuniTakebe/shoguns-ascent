@@ -1,0 +1,39 @@
+{
+  "id": "FEAT-002",
+  "type": "refactor",
+  "description": "Complete rewrite of game logic (src/utils/gameLogic.ts) to implement the real board game rules: proper game initialization with 8 clans/figures/temples, seasonal preparation (war province tokens, income, hostage return), tea ceremony (alliance pair system), politics phase with 7 mandate turns and 3 kami turns per season (3+kami+2+kami+2+kami pattern), mandate resolution order (starts left of issuer, bonus for issuer and ally), proper mandates (Recruit places Bushi/Shinto at fortresses, Marshal moves figures between adjacent provinces, Train acquires season cards from market, Harvest gains province reward for strongest, Betray replaces opponent figures), war phase with War Tactics bidding (Seppuku, Take Hostage, Hire Ronin, Imperial Poets), battle resolution based on total force in province, and cleanup/winter scoring.",
+  "status": "pending",
+  "steps": [
+    "Rewrite src/utils/gameLogic.ts completely implementing:",
+    "1. createInitialGameState(): Place 1 Daimyo + 1 Bushi + 1 Fortress per clan in their home province. Set initial honor (Koi=1 lowest to Luna=8 highest). Place 4 random Temples. Prepare season card decks. Set starting coins based on seasonal income rules.",
+    "2. setupSeason(state, season): Place war province tokens (numPlayers + 2) on random provinces with ascending number tokens. Set season cards for current season visible. Calculate and distribute seasonal income. Return hostages (gain 1 coin per hostage returned).",
+    "3. Tea ceremony: breakAllAlliances() and proposeAlliance()/acceptAlliance() - each player can have exactly 1 ally (pair system using alliance tokens).",
+    "4. Politics phase flow: drawMandates() draws 4 political order tiles, player picks 1, returns rest face down. Resolution order: starting from left of the player who chose, each player executes. Bonus only for the chooser and their ally.",
+    "5. executeRecruit(state, playerId): All players place 1 Bushi from reserve in a province with their Fortress. Issuer (and ally) bonus: place 1 additional Bushi.",
+    "6. executeMarshal(state, playerId): All players may move 1 figure to an adjacent province. Issuer (and ally) bonus: move 1 additional figure. Respect sea routes for movement.",
+    "7. executeTrain(state, playerId): All players may buy 1 season card from the market by paying its cost. Issuer (and ally) bonus: either buy at -1 cost or gain 1 coin.",
+    "8. executeHarvest(state, playerId): For each province, the player with the most force there gains the province's harvest reward. Issuer (and ally) bonus: gain reward from 1 additional province where they are present.",
+    "9. executeBetray(state, playerId): All players may replace 1 opponent Bushi in a province they share with their own Bushi from reserve, losing honor. Issuer (and ally) bonus: replace 1 additional figure.",
+    "10. resolveKamiTurn(state): For each Temple (left to right), the player with the most Shinto force there gains the Kami ability. Ties broken by honor (higher honor wins).",
+    "11. War phase: initiateWar() flips war/politics tiles. resolveWarBattle(state, provinceIndex): For each numbered war province in order - if empty discard token, if 1 player they win token, if 2 allied players strongest wins token without battle, if 2+ non-allied players resolve battle.",
+    "12. Battle resolution: Players reveal ronin/coins, secretly assign coins to 4 War Tactics (Seppuku, Take Hostage, Hire Ronin, Imperial Poets). From left to right, highest bidder on each tactic executes it. Losers discard their bid coins, winner distributes theirs equally to losers.",
+    "13. War Tactics effects: Seppuku - kill own figures to gain VP/honor. Take Hostage - capture 1 enemy Bushi/Shinto as hostage (gain VP, holder keeps until returned). Hire Ronin - each ronin token = +1 force. Imperial Poets - gain VP for each figure you have in this battle.",
+    "14. After all tactics resolved: player with most total force (figures + ronin) wins the war province token. All losing players' figures are killed (return to reserve). Daimyo is immune to all kill effects.",
+    "15. cleanupSeason(state): Discard all ronin and coins. Return all Shinto from Temples to reserves. Shuffle political orders. Advance to next season.",
+    "16. resolveWinter(state): Return hostages (+1 coin each). Score winter upgrades. Score war province tokens (spring=1VP, summer=2VP, autumn=3VP). Score province token sets (3-4 different=10VP, 5-6=20VP, 7-8=30VP). Determine winner (most VP, ties broken by honor, allied players sharing victory).",
+    "17. Utility functions: calculateForce(province, playerId), getHonorRank(state, playerId), moveForces(), getSeasonalIncome(state, playerId), isValidMove()."
+  ],
+  "acceptance_criteria": [
+    "All game logic functions compile without TypeScript errors",
+    "Game initialization creates correct starting state for 2-8 players",
+    "Politics phase correctly implements 7 mandate turns with 3 kami turns interspersed",
+    "Each mandate (Recruit, Marshal, Train, Harvest, Betray) follows the correct resolution pattern",
+    "War phase resolves battles province by province with War Tactics bidding",
+    "Winter scoring correctly calculates VP from tokens and sets"
+  ],
+  "verification": [
+    "Run npx tsc -b and confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

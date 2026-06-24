@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-003",
+  "type": "refactor",
+  "description": "Update the Zustand store (src/store/gameStore.ts) and WebSocket server (src/server/index.ts) to work with the new data model and game logic functions. The store needs new actions matching the new game phases and mechanics. The server needs to handle new message types.",
+  "status": "pending",
+  "steps": [
+    "Rewrite src/store/gameStore.ts:",
+    "1. Update GameStore interface to expose new actions: setupSeason, breakAlliances, formAlliance, drawMandateTiles, chooseMandateTile, executeCurrentMandate (for each player in resolution order), resolveKami, initiateWar, submitWarTacticBids, resolveNextBattle, cleanupSeason, resolveWinter.",
+    "2. Add state for: currentMandateResolutionIndex (which player is resolving), warTacticBidsSubmitted, selectedFigures (for recruit/marshal placement).",
+    "3. Keep hotseat mode working - current player advances through resolution order automatically.",
+    "4. Keep online mode WebSocket integration intact.",
+    "Rewrite src/server/index.ts:",
+    "5. Update message handlers to match new action types: DRAW_MANDATE_TILES, CHOOSE_MANDATE, SUBMIT_WAR_BIDS, FORM_ALLIANCE, BREAK_ALLIANCE, PLACE_FIGURE, MOVE_FIGURE, BUY_CARD, ADVANCE_PHASE.",
+    "6. Ensure server-side game state updates use the new gameLogic functions.",
+    "7. Broadcast state updates to all players in lobby after each action."
+  ],
+  "acceptance_criteria": [
+    "Store compiles without TypeScript errors",
+    "Server compiles without TypeScript errors (using tsx)",
+    "Store actions correctly call new game logic functions",
+    "Hotseat mode supports full game flow from setup through winter"
+  ],
+  "verification": [
+    "Run npx tsc -b and confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

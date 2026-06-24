@@ -1,0 +1,39 @@
+{
+  "id": "FEAT-001",
+  "type": "refactor",
+  "description": "Complete overhaul of the game data model (src/types/game.ts) to match the real board game rules. Replace the 6 simplified clans with 8 real clans (Koi, Sol, Loto, Tortuga, Libelula, Zorro, Bonsai, Luna). Replace generic forces with proper figure types (Daimyo, Bushi, Shinto, Fortress). Add Temples/Kami system, War Province tokens, War Tactics, Hostages, Ronin tokens, seasonal income, proper season card types with all card data from all three seasons plus Kami Unbound cards.",
+  "status": "in_progress",
+  "steps": [
+    "Rewrite src/types/game.ts completely with the following changes:",
+    "1. Replace CLANS array: 8 clans in honor order - Koi (lowest), Sol, Loto, Tortuga, Libelula, Zorro, Bonsai, Luna (highest). Each clan has id, name, color, initialHonor (1-8 matching order). Remove old clan abilities since the real game does not have asymmetric clan powers.",
+    "2. Replace Region interface: Remove generic 'forces' count. Add figures array with typed figures: { type: 'daimyo'|'bushi'|'shinto'|'fortress'|'monster'|'kami', owner: string, id: string }. Add hasSeaRoute (for maritime connections). Keep adjacentRegions. Remove reward/ronin/monsters/hasShrine.",
+    "3. Add Province type with: id, name, adjacentProvinces, seaRoutes (connected by sea), harvestReward (coins earned via Harvest mandate).",
+    "4. Add Temple interface: { id: string, position: number (1-4), kamiType: KamiType, figures: { playerId: string, figureId: string }[] } - tracks Shinto figures placed for worship.",
+    "5. Add KamiType: 'amaterasu'|'fujin'|'hachiman'|'raijin'|'ryujin'|'susanoo'|'tsukuyomi' with effects matching the Kami Unbound cards provided.",
+    "6. Replace Player interface: Remove reserveForces single number. Add: bushi: number (reserve), shinto: number (reserve), hasDaimyo: boolean (whether Daimyo is in reserve), fortresses: number (reserve), coins: number, ronin: number, honor: number (1-8 position on track), victoryPoints: number, seasonCards: SeasonCard[] (actual card objects), warProvinceTokens: WarProvinceToken[], allies: string[] (single ally max - alliance is pair), hostages: { fromClanId: string, figureType: string }[].",
+    "7. Add WarProvinceToken: { season: Season, provinceId: string } - collected tokens worth 1/2/3 VP in winter.",
+    "8. Replace SeasonCard interface with proper card types from the provided data: { id: string, name: string, cost: number, season: Season, group: string, cardType: 'virtue'|'monster'|'upgrade'|'warUpgrade'|'winterUpgrade', effect: string, force?: number }. Include ALL cards listed by the user for Spring, Summer, and Autumn seasons.",
+    "9. Add MandateType: 'recruit'|'marshal'|'train'|'harvest'|'betray' (marshal replaces march).",
+    "10. Add WarTactic type: { id: string, name: string, order: number } for the 4 war tactics on player boards (Seppuku, Tomar Rehenes, Hire Ronin, Imperial Poets equivalent - the standard 4 tactics from left to right).",
+    "11. Add Battle interface: { provinceId: string, participants: string[], warTacticBids: { [playerId: string]: { [tacticId: string]: number } }, resolved: boolean, winner?: string }.",
+    "12. Redefine GameState: seasons are spring/summer/autumn/winter. Phases are: 'seasonSetup'|'tea'|'politics'|'war'|'cleanup'|'winter'. Politics has sub-state for mandate turns and kami turns. Track politicsRound (7 mandates per season: 3 + kami + 2 + kami + 2 + kami). Add warProvinceSlots: { provinceId: string, number: number, season: Season }[] for tracking war tokens placed this season. Add honorTrack: string[] (ordered player ids by honor, index 0 = lowest).",
+    "13. Add PROVINCES_DATA constant with the 8 real provinces from the board game map (Hokkaido, Oshu, Edo, Kanto, Kansai, Nagato, Shikoku, Kyushu) including proper adjacencies and sea routes.",
+    "14. Add SEASON_CARDS_DATA constant with ALL season cards from the user-provided data organized by season. Spring cards: Benevolence, Courage, Daikokuten, Dignity, Earth Dragon, Fukurokuju, Generosity, Honesty, Jinmenju, Jorogumo, Jurojin, Komainu, Kotahi, Oni of Skulls, Oni of Souls, Path of the Builder, Path of the Kannushi, Path of the Kenin, Path of the Light, Path of the Lion, Path of the Ninja, Path of the Pacifist, Path of the Patron, Path of the Salamander, Path of the Vassal, Path of the Warlord, Phoenix, Piety, Righteousness, Way of the Righteous, Way of the Shogun. Summer cards: Bishamon, Fire Dragon, Hotei, Jikininki, Justice, Koneko, Loyalty, Mercy, Nure-Onna, Oni of Blood, Oni of Souls, Path of Might, Path of Sengoku, Path of the Favored, Path of the Monkey, Path of the Samurai, Path of the Serpent, Path of the Shadow, Patience, Respect, Sincerity, Sunakake-Baba, Way of Bushido, Way of Naginata, Way of the Ashigaru, Way of the Merchant, Way of the Ronin, Yurei. Autumn cards: Benten, Boldness, Daikaiju, Ebisu, Form of the Beast, Form of the Demon, Form of the Dragon, Form of the Fox, Form of the Kindred, Form of the Kitsune, Form of the Phoenix, Form of the Tanuki, Kitsune, Oni of Hate, Oni of Plagues, Oni of Spite, Path of the Dragon, Path of the Unrighteous, Path of the Spirit, River Dragon, Sacred Warrior, Way of Naginata, Way of the Katana, Way of the Keiri, Way of the Moneylender, Way of the Snake.",
+    "15. Add KAMI_DATA constant with effects for: Amaterasu, Fujin, Hachiman, Raijin, Ryujin, Susanoo, Tsukuyomi.",
+    "16. Remove WAR_POEMS constant entirely (not in real game).",
+    "17. Remove MONSTERS constant (monsters are now season cards)."
+  ],
+  "acceptance_criteria": [
+    "src/types/game.ts compiles with tsc without errors",
+    "Contains 8 clans in proper honor order (Koi=1, Sol=2, Loto=3, Tortuga=4, Libelula=5, Zorro=6, Bonsai=7, Luna=8)",
+    "Contains all Season Cards from the user-provided data for all 3 seasons plus Kami Unbound data",
+    "GameState interface includes proper phases, temple/kami tracking, war province tokens, honor track",
+    "Player interface tracks figures by type (bushi/shinto/daimyo/fortress reserves), ronin, hostages",
+    "Province data includes 8 provinces with adjacencies and sea routes"
+  ],
+  "verification": [
+    "Run npx tsc -b and confirm no errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
