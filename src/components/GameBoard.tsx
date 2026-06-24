@@ -6,6 +6,7 @@ import { ActionPanel } from './ActionPanel';
 import { BattlePanel } from './BattlePanel';
 import { GameLog } from './GameLog';
 import { GameOverScreen } from './GameOverScreen';
+import { JapanMapBackground } from './JapanMapBackground';
 
 const positions: Record<string, {x:number;y:number}> = { hokkaido:{x:650,y:80}, oshu:{x:600,y:180}, edo:{x:550,y:300}, kanto:{x:480,y:250}, kansai:{x:380,y:350}, nagato:{x:250,y:420}, shikoku:{x:350,y:470}, kyushu:{x:180,y:500} };
 
@@ -26,6 +27,7 @@ export const GameBoard = () => {
       <div className="game-content">
         <div className="left-panel"><PlayerPanel/></div>
         <div className="center-panel"><div className="map-container">
+          <JapanMapBackground/>
           <svg viewBox="0 0 800 600" className="japan-map">{REGIONS_DATA.map(r=>r.adjacentRegions.map(a=>{if(r.id>a)return null;const p1=positions[r.id]||{x:400,y:300};const p2=positions[a]||{x:400,y:300};return<line key={`${r.id}-${a}`} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="rgba(200,170,100,0.4)" strokeWidth="2" strokeDasharray="5,5"/>;}))}</svg>
           <div className="regions-overlay">{REGIONS_DATA.map(r=>{const p=positions[r.id]||{x:400,y:300};return<RegionCard key={r.id} regionId={r.id} style={{left:`${(p.x/800)*100}%`,top:`${(p.y/600)*100}%`}}/>;})}</div>
         </div></div>

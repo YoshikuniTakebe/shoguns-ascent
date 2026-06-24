@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add visual improvements: stylized Japan map background behind nodes, unique SVG clan shield emblems, and Daimyo portrait illustrations for each clan",
+  "status": "in_progress",
+  "steps": [
+    "1. Create src/components/JapanMapBackground.tsx - An SVG component that renders a stylized feudal Japan map background. Include: the general island shape of Japan (Honshu, Hokkaido, Kyushu, Shikoku), stylized mountains (using triangle/polygon shapes), water patterns (wave lines in traditional Japanese style), subtle regional boundaries. Use muted colors that work behind the game nodes (dark blues for water, dark earth tones for land). This goes behind the region nodes in the map-container.",
+    "2. Create src/components/ClanShields.tsx - Export 6 SVG shield/emblem components, one per clan. Each shield should be a distinct shape (hexagonal, circular, diamond, etc.) with a thematic Japanese icon inside: (1) Koi clan: stylized koi fish, (2) Dragonfly clan: dragonfly silhouette, (3) Bonsai clan: bonsai tree, (4) Fox clan: fox face/mask, (5) Lotus clan: lotus flower, (6) Turtle clan: turtle shell pattern. Each emblem uses the clan's color. Export as ClanShield component that takes clanId prop and renders the appropriate emblem at a given size.",
+    "3. Create src/components/DaimyoPortraits.tsx - Export 6 SVG Daimyo portrait illustrations, one per clan. Each should be a stylized feudal Japanese warrior/leader portrait with: helmet/kabuto, face with distinct expression, clan-colored accents, unique identifying features (Koi: flowing water motifs, Dragonfly: wing-like helmet ornament, Bonsai: nature-adorned armor, Fox: fox mask, Lotus: elegant robes, Turtle: heavy shell-like armor). Export as DaimyoPortrait component that takes clanId prop.",
+    "4. Update src/components/GameBoard.tsx - Import and render JapanMapBackground inside the map-container div, positioned absolutely behind the SVG connection lines and region cards. The background should be at z-index 0, connections at z-index 1, regions at z-index 2.",
+    "5. Update src/components/PlayerPanel.tsx - Import ClanShield and show each clan's emblem next to the player name in the player card. Small size (24x24px).",
+    "6. Update src/components/MainMenu.tsx - In the clan preview list at the bottom, show the ClanShield emblem and a smaller DaimyoPortrait for each clan. Also show them during hotseat player setup next to clan selection.",
+    "7. Update src/App.css - Add CSS for the map background (position absolute, full size, opacity/filter to keep it subtle), clan shield sizing, daimyo portrait containers. Ensure the map background does not interfere with region card click events (pointer-events: none)."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compilation (npx tsc -b) passes with no errors",
+    "Vite build (npx vite build) succeeds",
+    "JapanMapBackground component renders a recognizable stylized Japan outline with mountains and water",
+    "ClanShield component renders 6 distinct SVG emblems based on clanId",
+    "DaimyoPortrait component renders 6 distinct SVG portraits based on clanId",
+    "Game board shows the Japan map background behind the region nodes",
+    "Player panel shows clan shields next to player names",
+    "Main menu shows clan shields and daimyo portraits in clan preview"
+  ],
+  "verification": [
+    "cd /projects/sandbox/shoguns-ascent && npx tsc -b",
+    "cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

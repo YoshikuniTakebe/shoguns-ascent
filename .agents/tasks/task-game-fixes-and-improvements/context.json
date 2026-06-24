@@ -1,0 +1,29 @@
+{
+  "project_type": "React + TypeScript board game SPA with WebSocket multiplayer server",
+  "language": "TypeScript",
+  "build_system": "Vite 8 with TypeScript 6, npm scripts",
+  "test_framework": "No test framework configured - validation via TypeScript compilation and Vite build",
+  "build_command": "cd /projects/sandbox/shoguns-ascent && npx tsc -b && npx vite build",
+  "test_command": "cd /projects/sandbox/shoguns-ascent && npx tsc -b",
+  "verification_instructions": "1. Run 'npx tsc -b' for type checking. 2. Run 'npx vite build' to verify the project builds. 3. Check no TypeScript errors.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/shoguns-ascent && npm install",
+  "environment_constraints": "Node.js v22.22.3 available. OPEN_INTERNET network mode. Vite 8 + TypeScript 6 compatible with this Node.",
+  "contribution_requirements": "Direct push to main branch. No PR required.",
+  "key_patterns": "Zustand store (src/store/gameStore.ts) holds all game state. Pure functions in src/utils/gameLogic.ts handle state transitions. Types defined in src/types/game.ts with CLANS, REGIONS_DATA, SEASON_CARDS, MONSTERS, WAR_POEMS constants. Components in src/components/. Single CSS file at src/App.css. SVG assets in public/.",
+  "relevant_files": [
+    "src/types/game.ts",
+    "src/utils/gameLogic.ts",
+    "src/store/gameStore.ts",
+    "src/components/ActionPanel.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/MainMenu.tsx",
+    "src/components/PlayerPanel.tsx",
+    "src/components/RegionCard.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/components/GameOverScreen.tsx",
+    "src/App.css",
+    "public/icons.svg"
+  ],
+  "directory_structure": "Root: package.json, vite.config.ts, tsconfig*.json, index.html. src/: App.tsx, App.css, main.tsx. src/types/: game.ts (types + constants). src/utils/: gameLogic.ts (pure logic). src/store/: gameStore.ts (Zustand). src/components/: all UI components. src/server/: WebSocket server (index.ts). public/: static assets (SVGs, favicon)."
+}
