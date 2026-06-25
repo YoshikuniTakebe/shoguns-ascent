@@ -1,6 +1,8 @@
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
+import { useT } from '../i18n';
+import type { TranslationKey } from '../i18n';
 
 export const ActionPanel = () => {
   const {
@@ -10,17 +12,18 @@ export const ActionPanel = () => {
     doSkipTrainPurchase,
     doResolveWinter,
   } = useGameStore();
+  const t = useT();
 
   if (!gameState) return null;
   const cp = gameState.players[gameState.currentPlayerIndex];
   const isMyTurn = gameState.mode === 'hotseat' || cp?.id === localPlayerId;
 
-  const mandateDesc: Record<string, string> = {
-    recruit: 'Add figures from reserve to your home province',
-    marshal: 'Move your figures between provinces',
-    train: 'Acquire a season card from the market',
-    harvest: 'Gain coins from provinces you control',
-    betray: 'Replace an opponent figure with yours',
+  const mandateDescKeys: Record<string, TranslationKey> = {
+    recruit: 'mandate.recruit',
+    marshal: 'mandate.marshal',
+    train: 'mandate.train',
+    harvest: 'mandate.harvest',
+    betray: 'mandate.betray',
   };
 
   const pending = gameState.allianceProposals.filter(
@@ -29,16 +32,16 @@ export const ActionPanel = () => {
 
   return (
     <div className="action-panel">
-      <h3>Actions</h3>
+      <h3>{t('actions.title')}</h3>
 
       {/* Season Setup Phase */}
       {gameState.currentPhase === 'seasonSetup' && (
         <div className="phase-section">
-          <h4>Season Setup - {gameState.currentSeason.toUpperCase()}</h4>
-          <p className="phase-description">Prepare for the new season. Return figures and set turn order.</p>
+          <h4>{t('actions.seasonSetup')} - {gameState.currentSeason.toUpperCase()}</h4>
+          <p className="phase-description">{t('actions.seasonSetupDesc')}</p>
           {isMyTurn && (
             <button className="btn-primary advance-btn" onClick={doSetupSeason}>
-              Begin Season
+              {t('actions.beginSeason')}
             </button>
           )}
         </div>
@@ -47,28 +50,28 @@ export const ActionPanel = () => {
       {/* Tea Ceremony Phase */}
       {gameState.currentPhase === 'tea' && (
         <div className="tea-phase">
-          <h4>Tea Ceremony - Alliances</h4>
+          <h4>{t('actions.teaCeremony')}</h4>
           <p className="phase-description">
-            Each player takes a turn to propose or accept alliances.
-            Player {gameState.teaTurnIndex + 1} of {gameState.players.length}.
+            {t('actions.teaDesc')}{' '}
+            {t('actions.playerOf', { current: gameState.teaTurnIndex + 1, total: gameState.players.length })}
           </p>
 
           {isMyTurn && (
             <button className="btn-secondary break-btn" onClick={doBreakAlliances}>
-              Break All Alliances
+              {t('actions.breakAlliances')}
             </button>
           )}
 
           {pending.length > 0 && (
             <div className="pending-alliances">
-              <h5>Pending Proposals:</h5>
+              <h5>{t('actions.pendingProposals')}</h5>
               {pending.map(pr => {
                 const fp = gameState.players.find(p => p.id === pr.from);
                 return (
                   <div key={pr.from} className="alliance-proposal">
-                    <span>{fp?.name} wants alliance</span>
+                    <span>{t('actions.wantsAlliance', { name: fp?.name || '' })}</span>
                     <button className="btn-small btn-accept" onClick={() => doAcceptAlliance(pr.from)}>
-                      Accept
+                      {t('actions.accept')}
                     </button>
                   </div>
                 );
@@ -78,7 +81,7 @@ export const ActionPanel = () => {
 
           {isMyTurn && (!cp || cp.allies.length === 0) && (
             <div className="alliance-options">
-              <h5>Propose Alliance:</h5>
+              <h5>{t('actions.proposeAlliance')}</h5>
               {gameState.players
                 .filter(p => p.id !== (gameState.mode === 'hotseat' ? cp?.id : localPlayerId))
                 .filter(p => !cp?.allies.includes(p.id) && p.allies.length === 0)
@@ -100,7 +103,7 @@ export const ActionPanel = () => {
 
           {isMyTurn && (
             <button className="btn-primary advance-btn" onClick={doAdvancePlayer}>
-              End My Tea Turn
+              {t('actions.endTeaTurn')}
             </button>
           )}
         </div>
@@ -109,32 +112,32 @@ export const ActionPanel = () => {
       {/* Politics Phase */}
       {gameState.currentPhase === 'politics' && isMyTurn && (
         <div className="politics-phase">
-          <h4>Politics - Mandate {gameState.politicsMandateCount + 1}/{gameState.maxMandates}</h4>
-          <p className="phase-description">Draw mandate tiles and pick one for all players to execute.</p>
+          <h4>{t('actions.politics', { current: gameState.politicsMandateCount + 1, total: gameState.maxMandates })}</h4>
+          <p className="phase-description">{t('actions.politicsDesc')}</p>
 
           {/* Train mandate active - show skip option */}
           {gameState.trainMandateActive && (
             <div className="train-active">
               <p className="train-notice">
-                Train mandate - {cp?.name} may buy a card from the Season Market or skip.
-                (Player {gameState.trainResolutionIndex + 1} of {gameState.trainResolutionOrder.length})
+                {t('actions.trainNotice', { name: cp?.name || '' })}{' '}
+                {t('actions.trainPlayer', { current: gameState.trainResolutionIndex + 1, total: gameState.trainResolutionOrder.length })}
               </p>
               <button className="btn-secondary" onClick={doSkipTrainPurchase}>
-                Skip Card Purchase
+                {t('actions.skipCardPurchase')}
               </button>
             </div>
           )}
 
           {!gameState.trainMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
             <button className="btn-primary" onClick={doDrawMandateTiles}>
-              Draw Mandate Tiles
+              {t('actions.drawMandateTiles')}
             </button>
           )}
 
           {gameState.mandateChoicePhase && gameState.drawnMandates.length === 0 && (
             <div className="mandate-empty">
-              <p>No mandates available.</p>
-              <button className="btn-primary" onClick={doAdvancePlayer}>Skip</button>
+              <p>{t('actions.noMandates')}</p>
+              <button className="btn-primary" onClick={doAdvancePlayer}>{t('actions.skip')}</button>
             </div>
           )}
 
@@ -147,7 +150,7 @@ export const ActionPanel = () => {
                   onClick={() => doChooseMandateTile(m)}
                 >
                   <span className="mandate-name">{m.toUpperCase()}</span>
-                  <span className="mandate-desc">{mandateDesc[m]}</span>
+                  <span className="mandate-desc">{t(mandateDescKeys[m])}</span>
                 </button>
               ))}
             </div>
@@ -156,16 +159,16 @@ export const ActionPanel = () => {
           {/* Last executed mandate display */}
           {gameState.mandatesThisTurn.length > 0 && !gameState.trainMandateActive && (
             <div className="current-mandate">
-              <h5>Last Mandate: {gameState.mandatesThisTurn[gameState.mandatesThisTurn.length - 1]?.type.toUpperCase()}</h5>
-              <p className="mandate-info">Mandate resolved for all players in order.</p>
+              <h5>{t('actions.lastMandate')} {gameState.mandatesThisTurn[gameState.mandatesThisTurn.length - 1]?.type.toUpperCase()}</h5>
+              <p className="mandate-info">{t('actions.mandateResolved')}</p>
             </div>
           )}
 
           <div className="march-controls">
             <button className={`btn-secondary ${moveMode ? 'active' : ''}`} onClick={toggleMoveMode}>
-              {moveMode ? 'Cancel Move' : 'Move Forces'}
+              {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
             </button>
-            {moveMode && <p className="move-instruction">Click source province, then target.</p>}
+            {moveMode && <p className="move-instruction">{t('actions.moveInstruction')}</p>}
           </div>
         </div>
       )}
@@ -173,27 +176,27 @@ export const ActionPanel = () => {
       {/* Politics - not my turn */}
       {gameState.currentPhase === 'politics' && !isMyTurn && (
         <div className="politics-phase">
-          <h4>Politics Phase</h4>
-          <p className="phase-description">Waiting for {cp?.name} to choose a mandate...</p>
+          <h4>{t('actions.politicsPhase')}</h4>
+          <p className="phase-description">{t('actions.waitingFor', { name: cp?.name || '' })}</p>
         </div>
       )}
 
       {/* War Phase */}
       {gameState.currentPhase === 'war' && (
         <div className="war-phase">
-          <h4>War Phase</h4>
+          <h4>{t('actions.warPhase')}</h4>
           {gameState.activeBattles.filter(b => !b.resolved).length === 0 ? (
             <div>
-              <p>All battles resolved.</p>
+              <p>{t('actions.allBattlesResolved')}</p>
               {isMyTurn && (
                 <button className="btn-primary advance-btn" onClick={doAdvancePhase}>
-                  End War Phase
+                  {t('actions.endWarPhase')}
                 </button>
               )}
             </div>
           ) : (
             <div>
-              <p>Resolve battles in the Battle Panel ({gameState.activeBattles.filter(b => !b.resolved).length} remaining).</p>
+              <p>{t('actions.resolveBattles', { count: gameState.activeBattles.filter(b => !b.resolved).length })}</p>
             </div>
           )}
         </div>
@@ -202,11 +205,11 @@ export const ActionPanel = () => {
       {/* Cleanup Phase */}
       {gameState.currentPhase === 'cleanup' && (
         <div className="cleanup-phase">
-          <h4>Cleanup</h4>
-          <p className="phase-description">Return war tokens, reset for next season.</p>
+          <h4>{t('actions.cleanup')}</h4>
+          <p className="phase-description">{t('actions.cleanupDesc')}</p>
           {isMyTurn && (
             <button className="btn-primary advance-btn" onClick={doAdvancePhase}>
-              Proceed to Next Season
+              {t('actions.proceedNextSeason')}
             </button>
           )}
         </div>
@@ -215,20 +218,20 @@ export const ActionPanel = () => {
       {/* Winter Phase */}
       {gameState.currentPhase === 'winter' && (
         <div className="winter-phase">
-          <h4>Winter - Final Scoring</h4>
+          <h4>{t('actions.winterScoring')}</h4>
           {gameState.gameOver ? (
             <div>
-              <p className="phase-description">Game Over! Final scores calculated.</p>
+              <p className="phase-description">{t('actions.gameOverDesc')}</p>
               {gameState.winner && (
-                <p><strong>Winner: {gameState.players.find(p => p.id === gameState.winner)?.name}</strong></p>
+                <p><strong>{t('actions.winner')} {gameState.players.find(p => p.id === gameState.winner)?.name}</strong></p>
               )}
             </div>
           ) : (
             <div>
-              <p className="phase-description">Score war province tokens, set bonuses, and winter upgrades.</p>
+              <p className="phase-description">{t('actions.winterDesc')}</p>
               {isMyTurn && (
                 <button className="btn-primary advance-btn" onClick={doResolveWinter}>
-                  Resolve Winter Scoring
+                  {t('actions.resolveWinterScoring')}
                 </button>
               )}
             </div>

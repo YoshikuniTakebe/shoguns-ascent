@@ -35,6 +35,8 @@ interface GameStore {
   lobbyId: string | null;
   currentMandateResolutionIndex: number;
   warTacticBidsSubmitted: boolean;
+  language: 'en' | 'es';
+  setLanguage: (lang: 'en' | 'es') => void;
 
   // UI actions
   setScreen: (s: 'menu' | 'lobby' | 'game') => void;
@@ -102,6 +104,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   lobbyId: null,
   currentMandateResolutionIndex: 0,
   warTacticBidsSubmitted: false,
+  language: (localStorage.getItem('shoguns-ascent-language') as 'en' | 'es') || 'es',
+  setLanguage: (lang) => {
+    localStorage.setItem('shoguns-ascent-language', lang);
+    set({ language: lang });
+  },
 
   // --- UI Actions ---
   setScreen: (screen) => set({ screen }),

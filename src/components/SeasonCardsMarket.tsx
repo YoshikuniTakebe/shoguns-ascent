@@ -1,9 +1,12 @@
 import { useGameStore } from '../store/gameStore';
 import { getCurrentPlayer } from '../utils/gameLogic';
 import type { SeasonCard } from '../types/game';
+import { useT } from '../i18n';
+import type { TranslationKey } from '../i18n';
 
 export const SeasonCardsMarket = () => {
   const { gameState, localPlayerId, doBuySeasonCard } = useGameStore();
+  const t = useT();
   if (!gameState) return null;
 
   const availableCards = gameState.seasonCardsDeck.filter(
@@ -20,12 +23,12 @@ export const SeasonCardsMarket = () => {
     ? (activePlayer.clanId === 'sol' || activePlayer.clanId === 'luna')
     : false;
 
-  const cardTypeLabel: Record<string, string> = {
-    virtue: 'Virtue',
-    monster: 'Monster',
-    upgrade: 'Upgrade',
-    warUpgrade: 'War Upgrade',
-    winterUpgrade: 'Winter Upgrade',
+  const cardTypeLabelKeys: Record<string, TranslationKey> = {
+    virtue: 'market.virtue',
+    monster: 'market.monster',
+    upgrade: 'market.upgrade',
+    warUpgrade: 'market.warUpgrade',
+    winterUpgrade: 'market.winterUpgrade',
   };
 
   const canBuy = gameState.currentPhase === 'politics' && gameState.trainMandateActive;
@@ -41,14 +44,12 @@ export const SeasonCardsMarket = () => {
     const dynastyInvasion = isDynastyInvasionMonster(card);
 
     if (isSolOrLuna) {
-      // Sol/Luna can ONLY buy Dynasty Invasion monsters, not other monsters
       if (!dynastyInvasion) {
-        return 'Sol/Luna can only buy Dynasty Invasion monsters';
+        return t('market.solLunaOnly');
       }
     } else {
-      // Non-Sol/Luna cannot buy Dynasty Invasion monsters
       if (dynastyInvasion) {
-        return 'Only Sol/Luna clans can buy Dynasty Invasion monsters';
+        return t('market.dynastyOnly');
       }
     }
 
@@ -66,7 +67,7 @@ export const SeasonCardsMarket = () => {
           <span className="card-name">{card.name}</span>
           <span className="card-cost">{card.cost} coins</span>
         </div>
-        <div className="card-type">{cardTypeLabel[card.cardType] || card.cardType}</div>
+        <div className="card-type">{t(cardTypeLabelKeys[card.cardType] || ('market.upgrade' as TranslationKey))}</div>
         <div className="card-effect">{card.effect}</div>
         {card.force !== undefined && card.force > 0 && (
           <div className="card-force">Force: {card.force}</div>
@@ -80,7 +81,7 @@ export const SeasonCardsMarket = () => {
               disabled={!canAfford}
               onClick={() => doBuySeasonCard(card.id)}
             >
-              {canAfford ? 'Buy' : 'Cannot afford'}
+              {canAfford ? t('market.buy') : t('market.cannotAfford')}
             </button>
           )
         )}
@@ -90,15 +91,15 @@ export const SeasonCardsMarket = () => {
 
   return (
     <div className="season-cards-market">
-      <h4>Season Cards Market ({gameState.currentSeason})</h4>
+      <h4>{t('market.title')} ({gameState.currentSeason})</h4>
       {activePlayer && (
-        <p className="player-coins">Your coins: {activePlayer.coins}</p>
+        <p className="player-coins">{t('market.yourCoins')} {activePlayer.coins}</p>
       )}
       <div className="cards-grid">
         {availableCards.slice(0, 8).map(renderCard)}
       </div>
       {availableCards.length > 8 && (
-        <p className="cards-more">+{availableCards.length - 8} more available</p>
+        <p className="cards-more">{t('market.moreAvailable', { count: availableCards.length - 8 })}</p>
       )}
     </div>
   );

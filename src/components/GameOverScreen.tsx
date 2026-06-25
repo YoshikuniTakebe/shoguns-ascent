@@ -1,8 +1,10 @@
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
+import { useT } from '../i18n';
 
 export const GameOverScreen = () => {
   const { gameState } = useGameStore();
+  const t = useT();
   if (!gameState) return null;
 
   const winner = gameState.players.find(p => p.id === gameState.winner);
@@ -15,16 +17,16 @@ export const GameOverScreen = () => {
   return (
     <div className="game-over-screen">
       <div className="game-over-content">
-        <h1 className="game-over-title">GAME OVER</h1>
+        <h1 className="game-over-title">{t('gameOver.title')}</h1>
 
         {winner && wClan && (
           <div className="winner-announcement" style={{ borderColor: wClan.color }}>
             <h2 style={{ color: wClan.color }}>{winner.name} of {wClan.name}</h2>
-            <p className="winner-subtitle">Has Ascended to Shogun!</p>
+            <p className="winner-subtitle">{t('gameOver.ascended')}</p>
             <div className="winner-vp">{winner.victoryPoints} VP</div>
             {winner.allies.length > 0 && (
               <div className="shared-victory">
-                <p>Shared victory with allies:</p>
+                <p>{t('gameOver.sharedVictory')}</p>
                 <ul>
                   {winner.allies.map(allyId => {
                     const ally = gameState.players.find(p => p.id === allyId);
@@ -37,17 +39,17 @@ export const GameOverScreen = () => {
         )}
 
         <div className="final-standings">
-          <h3>Final Standings</h3>
+          <h3>{t('gameOver.finalStandings')}</h3>
           <table className="standings-table">
             <thead>
               <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Clan</th>
-                <th>VP</th>
-                <th>Honor</th>
-                <th>War Tokens</th>
-                <th>Cards</th>
+                <th>{t('gameOver.rank')}</th>
+                <th>{t('gameOver.player')}</th>
+                <th>{t('gameOver.clan')}</th>
+                <th>{t('gameOver.vp')}</th>
+                <th>{t('gameOver.honor')}</th>
+                <th>{t('gameOver.warTokens')}</th>
+                <th>{t('gameOver.cards')}</th>
               </tr>
             </thead>
             <tbody>
@@ -71,13 +73,13 @@ export const GameOverScreen = () => {
 
         {/* Scoring Breakdown */}
         <div className="scoring-breakdown">
-          <h3>War Province Tokens</h3>
+          <h3>{t('gameOver.warProvinceTokens')}</h3>
           {sorted.map(p => {
             const c = CLANS.find(x => x.id === p.clanId)!;
             if (p.warProvinceTokens.length === 0) return null;
             const bySeason: Record<string, number> = {};
-            for (const t of p.warProvinceTokens) {
-              bySeason[t.season] = (bySeason[t.season] || 0) + 1;
+            for (const tok of p.warProvinceTokens) {
+              bySeason[tok.season] = (bySeason[tok.season] || 0) + 1;
             }
             return (
               <div key={p.id} className="player-token-breakdown" style={{ borderColor: c.color }}>
@@ -93,7 +95,7 @@ export const GameOverScreen = () => {
 
         <div className="game-over-actions">
           <button className="btn-primary" onClick={() => useGameStore.setState({ gameState: null, screen: 'menu' })}>
-            Return to Menu
+            {t('gameOver.returnToMenu')}
           </button>
         </div>
       </div>

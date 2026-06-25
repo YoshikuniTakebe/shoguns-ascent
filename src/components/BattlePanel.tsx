@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, WAR_TACTICS } from '../types/game';
+import { useT } from '../i18n';
 
 export const BattlePanel = () => {
   const { gameState, localPlayerId, doSubmitWarTacticBids, doResolveNextBattle, doAdvancePhase, warTacticBidsSubmitted } = useGameStore();
+  const t = useT();
   const [bids, setBids] = useState<Record<string, number>>({
     seppuku: 0,
     'take-hostage': 0,
@@ -22,24 +24,24 @@ export const BattlePanel = () => {
   if (active.length === 0) {
     return (
       <div className="battle-panel">
-        <h3>War Complete</h3>
+        <h3>{t('battle.warComplete')}</h3>
         {resolved.length > 0 && (
           <div className="resolved-battles">
-            <h4>Results:</h4>
+            <h4>{t('battle.results')}</h4>
             {resolved.map((b, i) => {
               const w = gameState.players.find(p => p.id === b.winner);
               const prov = gameState.provinces[b.provinceId];
               return (
                 <div key={i} className="battle-result">
                   <span className="battle-region">{prov?.name || b.provinceId}</span>
-                  <span className="battle-winner">Winner: {w?.name || 'None'}</span>
+                  <span className="battle-winner">{t('battle.winner')} {w?.name || 'None'}</span>
                 </div>
               );
             })}
           </div>
         )}
         {isMyTurn && (
-          <button className="btn-primary advance-btn" onClick={doAdvancePhase}>End War</button>
+          <button className="btn-primary advance-btn" onClick={doAdvancePhase}>{t('battle.endWar')}</button>
         )}
       </div>
     );
@@ -61,10 +63,10 @@ export const BattlePanel = () => {
 
   return (
     <div className="battle-panel">
-      <h3>Battle in {province?.name || battle.provinceId}</h3>
+      <h3>{t('battle.battleIn', { name: province?.name || battle.provinceId })}</h3>
 
       <div className="battle-info">
-        <h4>Combatants:</h4>
+        <h4>{t('battle.combatants')}</h4>
         {battle.participants.map(pid => {
           const p = gameState.players.find(x => x.id === pid);
           const clan = p ? CLANS.find(c => c.id === p.clanId) : null;
@@ -72,9 +74,9 @@ export const BattlePanel = () => {
           return (
             <div key={pid} className="battle-combatant" style={{ borderColor: clan?.color }}>
               <span className="combatant-name" style={{ color: clan?.color }}>{p?.name}</span>
-              <span className="combatant-forces">{figures.length} figures</span>
+              <span className="combatant-forces">{figures.length} {t('battle.figures')}</span>
               <span className="combatant-bid-status">
-                {battle.warTacticBids[pid] !== undefined ? 'Bids placed' : 'Waiting...'}
+                {battle.warTacticBids[pid] !== undefined ? t('battle.bidsPlaced') : t('battle.waiting')}
               </span>
             </div>
           );
@@ -83,9 +85,9 @@ export const BattlePanel = () => {
 
       {isPart && !hasBid && !warTacticBidsSubmitted && (
         <div className="bid-section">
-          <h4>War Tactics - Allocate Coins:</h4>
+          <h4>{t('battle.warTactics')}</h4>
           <p className="bid-info">
-            Distribute coins across tactics. Total: {totalBid}/{maxCoins} available.
+            {t('battle.bidInfo', { current: totalBid, max: maxCoins })}
           </p>
           <div className="tactic-bids">
             {WAR_TACTICS.map(tactic => (
@@ -108,17 +110,17 @@ export const BattlePanel = () => {
             ))}
           </div>
           <button className="btn-primary" onClick={handleSubmitBids}>
-            Confirm Bids ({totalBid} coins)
+            {t('battle.confirmBids', { total: totalBid })}
           </button>
         </div>
       )}
 
       {(hasBid || warTacticBidsSubmitted) && isPart && (
         <div className="bid-waiting">
-          <p>Bids submitted. Waiting for others...</p>
+          <p>{t('battle.bidsSubmitted')}</p>
           {isMyTurn && (
             <button className="btn-primary" onClick={doResolveNextBattle}>
-              Resolve Battle
+              {t('battle.resolveBattle')}
             </button>
           )}
         </div>
@@ -126,10 +128,10 @@ export const BattlePanel = () => {
 
       {!isPart && (
         <div className="bid-spectator">
-          <p>You are not part of this battle.</p>
+          <p>{t('battle.notPart')}</p>
           {isMyTurn && (
             <button className="btn-primary" onClick={doResolveNextBattle}>
-              Resolve Battle
+              {t('battle.resolveBattle')}
             </button>
           )}
         </div>
@@ -138,14 +140,14 @@ export const BattlePanel = () => {
       {/* Show resolved battles */}
       {resolved.length > 0 && (
         <div className="resolved-battles">
-          <h4>Previous Results:</h4>
+          <h4>{t('battle.previousResults')}</h4>
           {resolved.map((b, i) => {
             const w = gameState.players.find(p => p.id === b.winner);
             const prov = gameState.provinces[b.provinceId];
             return (
               <div key={i} className="battle-result">
                 <span className="battle-region">{prov?.name || b.provinceId}</span>
-                <span className="battle-winner">Winner: {w?.name || 'None'}</span>
+                <span className="battle-winner">{t('battle.winner')} {w?.name || 'None'}</span>
               </div>
             );
           })}

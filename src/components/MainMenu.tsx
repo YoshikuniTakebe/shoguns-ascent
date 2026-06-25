@@ -4,9 +4,11 @@ import { CLANS, DECK_GROUPS } from '../types/game';
 import type { DeckConfig, DeckName } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { DaimyoPortrait } from './DaimyoPortraits';
+import { useT } from '../i18n';
 
 export const MainMenu = () => {
-  const { createGame, connectWebSocket, setLobbyId, setScreen } = useGameStore();
+  const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage } = useGameStore();
+  const t = useT();
   const [mode, setMode] = useState<'select' | 'hotseat' | 'online'>('select');
   const [pc, setPc] = useState(3);
   const [names, setNames] = useState(
@@ -29,31 +31,46 @@ export const MainMenu = () => {
 
   return (
     <div className="main-menu">
+      <div className="language-selector">
+        <button
+          className={`lang-btn${language === 'en' ? ' active' : ''}`}
+          onClick={() => setLanguage('en')}
+        >
+          EN
+        </button>
+        <button
+          className={`lang-btn${language === 'es' ? ' active' : ''}`}
+          onClick={() => setLanguage('es')}
+        >
+          ES
+        </button>
+      </div>
+
       <div className="menu-header">
-        <h1 className="game-title">Noboru taiy&#x14D;</h1>
-        <p className="game-subtitle">The Rising Sun of the Shogunate</p>
+        <h1 className="game-title">{t('menu.title')}</h1>
+        <p className="game-subtitle">{t('menu.subtitle')}</p>
       </div>
 
       {mode === 'select' && (
         <div className="menu-options">
           <button className="menu-btn" onClick={() => setMode('hotseat')}>
             <span className="btn-icon">&#9876;</span>
-            <span className="btn-text">Hotseat Mode</span>
-            <span className="btn-desc">Same device, taking turns</span>
+            <span className="btn-text">{t('menu.hotseatMode')}</span>
+            <span className="btn-desc">{t('menu.hotseatDesc')}</span>
           </button>
           <button className="menu-btn" onClick={() => setMode('online')}>
             <span className="btn-icon">&#9733;</span>
-            <span className="btn-text">Online Mode</span>
-            <span className="btn-desc">Play over the network</span>
+            <span className="btn-text">{t('menu.onlineMode')}</span>
+            <span className="btn-desc">{t('menu.onlineDesc')}</span>
           </button>
         </div>
       )}
 
       {mode === 'hotseat' && (
         <div className="setup-panel">
-          <h2>Hotseat Setup</h2>
+          <h2>{t('menu.hotseatSetup')}</h2>
           <div className="player-count-select">
-            <label>Players:</label>
+            <label>{t('menu.players')}</label>
             <select value={pc} onChange={e => setPc(+e.target.value)}>
               {[2, 3, 4, 5, 6, 7, 8].map(n => (
                 <option key={n} value={n}>{n}</option>
@@ -94,15 +111,15 @@ export const MainMenu = () => {
             })}
           </div>
           <div className="deck-config-section">
-            <h3>Configuraci&oacute;n del Mazo</h3>
+            <h3>{t('deck.config')}</h3>
             <div className="deck-group-selector">
-              <label className="deck-config-label">Grupo de Mazo</label>
+              <label className="deck-config-label">{t('deck.group')}</label>
               <div className="deck-group-options">
                 <button
                   className={`deck-group-btn${chosenDeck === 'random' ? ' active' : ''}`}
                   onClick={() => setChosenDeck('random')}
                 >
-                  &#127922; Aleatorio
+                  &#127922; {t('deck.random')}
                 </button>
                 {DECK_GROUPS.map(g => (
                   <button
@@ -116,7 +133,7 @@ export const MainMenu = () => {
               </div>
             </div>
             <div className="deck-monsters-selector">
-              <label className="deck-config-label">Monstruos Extra por estaci&oacute;n</label>
+              <label className="deck-config-label">{t('deck.extraMonsters')}</label>
               <div className="deck-monster-options">
                 {([0, 1, 2] as const).map(n => (
                   <button
@@ -124,15 +141,15 @@ export const MainMenu = () => {
                     className={`deck-monster-btn${extraMonsters === n ? ' active' : ''}`}
                     onClick={() => setExtraMonsters(n)}
                   >
-                    {n === 0 ? 'Ninguno' : n}
+                    {n === 0 ? t('deck.none') : n}
                   </button>
                 ))}
               </div>
-              <span className="deck-config-hint">Incluye cartas de Kickstarter y Monster Pack</span>
+              <span className="deck-config-hint">{t('deck.kickstarterHint')}</span>
             </div>
             {hasSolOrLuna && (
               <div className="deck-config-info">
-                &#9962; Las cartas de Invasi&oacute;n Din&aacute;stica se incluyen autom&aacute;ticamente (clan Sol o Luna seleccionado).
+                &#9962; {t('deck.dynastyNote')}
               </div>
             )}
           </div>
@@ -147,28 +164,28 @@ export const MainMenu = () => {
                 )
               }
             >
-              Start
+              {t('menu.start')}
             </button>
-            <button className="btn-secondary" onClick={() => setMode('select')}>Back</button>
+            <button className="btn-secondary" onClick={() => setMode('select')}>{t('menu.back')}</button>
           </div>
         </div>
       )}
 
       {mode === 'online' && (
         <div className="setup-panel">
-          <h2>Online Setup</h2>
+          <h2>{t('menu.onlineSetup')}</h2>
           <div className="online-form">
-            <label>Server:</label>
+            <label>{t('menu.server')}</label>
             <input value={url} onChange={e => setUrl(e.target.value)} />
-            <label>Name:</label>
+            <label>{t('menu.name')}</label>
             <input value={oName} onChange={e => setOName(e.target.value)} placeholder="Your name" />
-            <label>Clan:</label>
+            <label>{t('menu.clan')}</label>
             <select value={oClan} onChange={e => setOClan(e.target.value)}>
               {CLANS.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            <label>Lobby ID:</label>
+            <label>{t('menu.lobbyId')}</label>
             <input value={lid} onChange={e => setLid(e.target.value)} placeholder="Lobby ID" />
           </div>
           <div className="setup-actions">
@@ -186,15 +203,15 @@ export const MainMenu = () => {
                 }, 1000);
               }}
             >
-              Join
+              {t('menu.join')}
             </button>
-            <button className="btn-secondary" onClick={() => setMode('select')}>Back</button>
+            <button className="btn-secondary" onClick={() => setMode('select')}>{t('menu.back')}</button>
           </div>
         </div>
       )}
 
       <div className="menu-footer">
-        <p>Clans:</p>
+        <p>{t('menu.clans')}</p>
         <div className="clan-preview-list">
           {CLANS.map(c => (
             <div key={c.id} className="clan-preview" style={{ borderColor: c.color }}>
@@ -204,7 +221,7 @@ export const MainMenu = () => {
               </div>
               <div className="clan-preview-body">
                 <DaimyoPortrait clanId={c.id} size={56} />
-                <span className="clan-honor">Initial Honor: {c.initialHonor}</span>
+                <span className="clan-honor">{t('menu.initialHonor')} {c.initialHonor}</span>
               </div>
             </div>
           ))}

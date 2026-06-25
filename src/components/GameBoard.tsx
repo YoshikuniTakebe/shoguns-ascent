@@ -12,6 +12,7 @@ import { TemplePanel } from './TemplePanel';
 import { HonorTrack } from './HonorTrack';
 import { AllianceDisplay } from './AllianceDisplay';
 import { PoliticsTrack } from './PoliticsTrack';
+import { useT } from '../i18n';
 
 const MAP_WIDTH = 1672;
 const MAP_HEIGHT = 941;
@@ -55,6 +56,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 
 export const GameBoard = () => {
   const { gameState, localPlayerId } = useGameStore();
+  const t = useT();
 
   const [translateX, setTranslateX] = useState(0);
   const [translateY, setTranslateY] = useState(0);
@@ -141,12 +143,12 @@ export const GameBoard = () => {
   };
 
   const phaseLabels: Record<string, string> = {
-    seasonSetup: 'SEASON SETUP',
-    tea: 'TEA CEREMONY',
-    politics: `POLITICS (${gameState.politicsMandateCount}/${gameState.maxMandates})`,
-    war: 'WAR',
-    cleanup: 'CLEANUP',
-    winter: 'WINTER',
+    seasonSetup: t('phase.seasonSetup'),
+    tea: t('phase.tea'),
+    politics: `${t('phase.politics')} (${gameState.politicsMandateCount}/${gameState.maxMandates})`,
+    war: t('phase.war'),
+    cleanup: t('phase.cleanup'),
+    winter: t('phase.winter'),
   };
 
   return (
@@ -158,13 +160,13 @@ export const GameBoard = () => {
         </div>
         <div className="turn-indicator">
           <span className="current-player-name" style={{ color: CLANS.find(c => c.id === cp?.clanId)?.color }}>
-            {cp?.name}&apos;s Turn
+            {t('game.turn', { name: cp?.name || '' })}
           </span>
-          {gameState.mode === 'hotseat' && <span className="hotseat-label">[HOTSEAT]</span>}
-          {!isMyTurn && gameState.mode === 'online' && <span className="waiting-label">[WAITING]</span>}
+          {gameState.mode === 'hotseat' && <span className="hotseat-label">{t('game.hotseat')}</span>}
+          {!isMyTurn && gameState.mode === 'online' && <span className="waiting-label">{t('game.waiting')}</span>}
         </div>
         <div className="mandate-counter">
-          Round: {gameState.round}/{gameState.maxRounds}
+          {t('game.round')} {gameState.round}/{gameState.maxRounds}
         </div>
       </div>
 

@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Add English/Spanish i18n system with language selector in MainMenu and translation of all UI strings",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create src/i18n/index.ts that exports: (1) a Language type ('en' | 'es'), (2) a translations object with keys for all UI strings (phase names, button labels, menu text, etc.) with 'en' and 'es' values, (3) a useTranslation hook or helper function t(key: string) => string that reads the current language from the store",
     "Create src/i18n/en.ts with English translations for all UI strings: menu titles, button labels (Start, Back, Join, Leave), phase names (Spring, Summer, Autumn, Winter, Tea Ceremony, Politics, War, Cleanup), action panel labels (Draw Mandate Tiles, Choose Mandate, Move Forces, Buy Card, Skip, etc.), deck config labels, player setup labels, clan names",
