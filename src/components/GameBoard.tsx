@@ -225,7 +225,7 @@ export const GameBoard = () => {
                     {
                       from: 'kansai',
                       to: 'kyushu',
-                      path: `M ${positions.kansai.x} ${positions.kansai.y} C ${positions.kansai.x - 100} ${positions.kansai.y + 120}, ${positions.kyushu.x + 100} ${positions.kyushu.y + 80}, ${positions.kyushu.x} ${positions.kyushu.y}`,
+                      path: `M ${positions.kansai.x} ${positions.kansai.y} C ${positions.kansai.x - 100} ${positions.kansai.y - 120}, ${positions.kyushu.x + 100} ${positions.kyushu.y - 80}, ${positions.kyushu.x} ${positions.kyushu.y}`,
                     },
                     {
                       from: 'kansai',
