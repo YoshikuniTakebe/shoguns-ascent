@@ -84,6 +84,7 @@ export interface Player {
   allies: string[];
   hostages: Hostage[];
   isReady: boolean;
+  allianceSeasons: number;
 }
 
 export interface SeasonCard {

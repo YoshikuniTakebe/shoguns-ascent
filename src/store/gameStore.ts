@@ -8,7 +8,6 @@ import {
   acceptAlliance,
   drawMandateTiles,
   chooseMandateTile,
-  executeMandate,
   resolveKamiTurn,
   initiateWarPhase,
   submitWarTacticBids,
@@ -19,6 +18,7 @@ import {
   advancePhase,
   advancePlayer,
   getCurrentPlayer,
+  buySeasonCard,
 } from '../utils/gameLogic';
 
 interface GameStore {
@@ -57,7 +57,9 @@ interface GameStore {
   // Politics
   doDrawMandateTiles: () => void;
   doChooseMandateTile: (mandate: MandateType) => void;
-  doExecuteCurrentMandate: (mandate: MandateType) => void;
+
+  // Buy Season Card (Train mandate)
+  doBuySeasonCard: (cardId: string) => void;
 
   // Kami
   doResolveKami: () => void;
@@ -117,7 +119,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws } = get();
     if (!gameState) return;
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'ADVANCE_PHASE', playerId: get().localPlayerId });
+      get().sendAction({ type: 'SETUP_SEASON', playerId: get().localPlayerId });
       return;
     }
     const ns = setupSeason(gameState, gameState.currentSeason);
@@ -183,17 +185,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const ns = chooseMandateTile(gameState, mandate, apid);
     set({ gameState: advancePlayer(ns) });
   },
-  doExecuteCurrentMandate: (mandate) => {
+
+  // --- Buy Season Card (Train mandate) ---
+  doBuySeasonCard: (cardId) => {
     const { gameState, localPlayerId, ws } = get();
     if (!gameState || !localPlayerId) return;
     const cp = getCurrentPlayer(gameState);
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'CHOOSE_MANDATE', playerId: apid, payload: { mandate } });
+      get().sendAction({ type: 'BUY_CARD', playerId: apid, payload: { cardId } });
       return;
     }
-    set({ gameState: executeMandate(gameState, mandate, apid) });
+    set({ gameState: buySeasonCard(gameState, apid, cardId) });
   },
 
   // --- Kami ---
@@ -201,7 +205,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws } = get();
     if (!gameState) return;
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'ADVANCE_PHASE', playerId: get().localPlayerId });
+      get().sendAction({ type: 'RESOLVE_KAMI', playerId: get().localPlayerId });
       return;
     }
     set({ gameState: resolveKamiTurn(gameState) });
@@ -212,7 +216,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws } = get();
     if (!gameState) return;
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'ADVANCE_PHASE', playerId: get().localPlayerId });
+      get().sendAction({ type: 'INITIATE_WAR', playerId: get().localPlayerId });
       return;
     }
     set({ gameState: initiateWarPhase(gameState) });
@@ -231,7 +235,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws } = get();
     if (!gameState) return;
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'ADVANCE_PHASE', playerId: get().localPlayerId });
+      get().sendAction({ type: 'RESOLVE_BATTLE', playerId: get().localPlayerId });
       return;
     }
     set({ gameState: resolveNextBattle(gameState), warTacticBidsSubmitted: false });
@@ -242,7 +246,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws } = get();
     if (!gameState) return;
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'ADVANCE_PHASE', playerId: get().localPlayerId });
+      get().sendAction({ type: 'CLEANUP_SEASON', playerId: get().localPlayerId });
       return;
     }
     set({ gameState: cleanupSeason(gameState) });
@@ -251,7 +255,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws } = get();
     if (!gameState) return;
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'ADVANCE_PHASE', playerId: get().localPlayerId });
+      get().sendAction({ type: 'RESOLVE_WINTER', playerId: get().localPlayerId });
       return;
     }
     set({ gameState: resolveWinter(gameState) });
