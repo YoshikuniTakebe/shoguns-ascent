@@ -20,6 +20,7 @@ import {
   getCurrentPlayer,
   buySeasonCard,
   skipTrainPurchase,
+  advanceTrainResolution,
 } from '../utils/gameLogic';
 
 interface GameStore {
@@ -206,29 +207,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     let ns = buySeasonCard(gameState, apid, cardId);
-    // Advance to next player in train resolution order
+    // Advance to next player in train resolution order using the pure helper
     ns = {
       ...ns,
       trainResolutionIndex: ns.trainResolutionIndex + 1,
       log: [...ns.log],
     };
-    // Use advanceTrainResolution logic inline: if all players done, clear train and advance mandate
-    if (ns.trainResolutionIndex >= ns.trainResolutionOrder.length) {
-      ns = {
-        ...ns,
-        trainMandateActive: false,
-        trainResolutionOrder: [],
-        trainResolutionIndex: 0,
-        trainMandateIssuerId: null,
-      };
+    ns = advanceTrainResolution(ns);
+    if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
-    } else {
-      // Move to next player in resolution order
-      const nextPlayerId = ns.trainResolutionOrder[ns.trainResolutionIndex];
-      const nextPlayerIdx = ns.players.findIndex(p => p.id === nextPlayerId);
-      if (nextPlayerIdx >= 0) {
-        ns = { ...ns, currentPlayerIndex: nextPlayerIdx };
-      }
     }
     set({ gameState: ns });
   },

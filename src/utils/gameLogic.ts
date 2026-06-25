@@ -36,13 +36,10 @@ function createFigure(type: Figure['type'], owner: string): Figure {
 
 export function buildSeasonDeck(
   seasonCards: SeasonCard[],
-  deckConfig: DeckConfig,
+  deckConfig: { chosenDeck: DeckName; kickstarterCards: 0 | 1 | 2; monsterPackCards: 0 | 1 | 2 },
   playerClanIds: string[]
 ): SeasonCard[] {
-  // Determine the chosen deck group (resolve 'random')
-  const chosenDeck: DeckName = deckConfig.chosenDeck === 'random'
-    ? DECK_GROUPS[Math.floor(Math.random() * DECK_GROUPS.length)]
-    : deckConfig.chosenDeck;
+  const chosenDeck: DeckName = deckConfig.chosenDeck;
 
   const result: SeasonCard[] = [];
   const hasDynastyInvasion = playerClanIds.some(id => id === 'sol' || id === 'luna');
@@ -188,9 +185,10 @@ export function createInitialGameState(
   const config: DeckConfig = deckConfig ?? { chosenDeck: 'random', kickstarterCards: 0, monsterPackCards: 0 };
   const playerClanIds = players.map(p => p.clanId);
   // Resolve 'random' deck choice once for the entire game (Issue 3 fix)
-  const resolvedConfig: DeckConfig = config.chosenDeck === 'random'
-    ? { ...config, chosenDeck: DECK_GROUPS[Math.floor(Math.random() * DECK_GROUPS.length)] }
-    : config;
+  const resolvedDeck: DeckName = config.chosenDeck === 'random'
+    ? DECK_GROUPS[Math.floor(Math.random() * DECK_GROUPS.length)]
+    : config.chosenDeck;
+  const resolvedConfig = { chosenDeck: resolvedDeck, kickstarterCards: config.kickstarterCards, monsterPackCards: config.monsterPackCards };
   const springDeck = buildSeasonDeck(SPRING_CARDS, resolvedConfig, playerClanIds);
   const summerDeck = buildSeasonDeck(SUMMER_CARDS, resolvedConfig, playerClanIds);
   const autumnDeck = buildSeasonDeck(AUTUMN_CARDS, resolvedConfig, playerClanIds);
@@ -1414,11 +1412,6 @@ export function advancePhase(state: GameState): GameState {
   let newState: GameState = { ...state, log: [...state.log] };
 
   switch (newState.currentPhase) {
-    case 'seasonSetup':
-      // Note: This case is kept as a safety fallback, but setupSeason() already
-      // transitions directly to 'tea'. In normal flow, this is unreachable.
-      newState = setupSeason(newState, newState.currentSeason);
-      break;
     case 'tea':
       newState.currentPhase = 'politics';
       newState.currentPlayerIndex = 0;
@@ -1536,7 +1529,7 @@ export function skipTrainPurchase(state: GameState): GameState {
  * next player in resolution order. If all players have had their turn,
  * clear the train state.
  */
-function advanceTrainResolution(state: GameState): GameState {
+export function advanceTrainResolution(state: GameState): GameState {
   if (state.trainResolutionIndex >= state.trainResolutionOrder.length) {
     // All players have had their turn - clear train mandate
     return {
