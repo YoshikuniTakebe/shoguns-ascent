@@ -8,6 +8,7 @@ import { GameLog } from './GameLog';
 import { GameOverScreen } from './GameOverScreen';
 import { JapanMapBackground } from './JapanMapBackground';
 import { TemplePanel } from './TemplePanel';
+import { HonorTrack } from './HonorTrack';
 
 const positions: Record<string, { x: number; y: number }> = {
   hokkaido: { x: 650, y: 80 },
@@ -67,6 +68,7 @@ export const GameBoard = () => {
         <div className="left-panel">
           <PlayerPanel />
           <TemplePanel />
+          <HonorTrack />
         </div>
         <div className="center-panel">
           <div className="map-container">

@@ -162,14 +162,14 @@ export interface GameState {
 // --- Clans (in honor order, lowest to highest) ---
 
 export const CLANS: Clan[] = [
-  { id: 'koi', name: 'Koi', color: '#2E86AB', initialHonor: 1 },
-  { id: 'sol', name: 'Sol', color: '#F6AE2D', initialHonor: 2 },
-  { id: 'loto', name: 'Loto', color: '#D4358C', initialHonor: 3 },
-  { id: 'tortuga', name: 'Tortuga', color: '#1A5276', initialHonor: 4 },
-  { id: 'libelula', name: 'Libelula', color: '#C4A747', initialHonor: 5 },
-  { id: 'zorro', name: 'Zorro', color: '#6B4C9A', initialHonor: 6 },
-  { id: 'bonsai', name: 'Bonsai', color: '#1E8449', initialHonor: 7 },
-  { id: 'luna', name: 'Luna', color: '#7F8C8D', initialHonor: 8 },
+  { id: 'koi', name: 'Koi', color: '#E63946', initialHonor: 1 },
+  { id: 'sol', name: 'Sol', color: '#DAA520', initialHonor: 2 },
+  { id: 'loto', name: 'Loto', color: '#8B5CF6', initialHonor: 3 },
+  { id: 'tortuga', name: 'Tortuga', color: '#2D8B4E', initialHonor: 4 },
+  { id: 'libelula', name: 'Libelula', color: '#5BC0EB', initialHonor: 5 },
+  { id: 'zorro', name: 'Zorro', color: '#F57C20', initialHonor: 6 },
+  { id: 'bonsai', name: 'Bonsai', color: '#F5D020', initialHonor: 7 },
+  { id: 'luna', name: 'Luna', color: '#B0BEC5', initialHonor: 8 },
 ];
 
 // --- Provinces ---
