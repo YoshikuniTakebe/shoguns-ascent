@@ -11,8 +11,8 @@ import {
   resolveKamiTurn,
   initiateWarPhase,
   submitWarTacticBids,
+  allBidsSubmitted,
   resolveNextBattle,
-  cleanupSeason,
   resolveWinter,
   moveForces,
   advancePhase,
@@ -66,11 +66,10 @@ interface GameStore {
 
   // War
   doInitiateWar: () => void;
-  doSubmitWarTacticBids: (provinceId: string, bids: { [playerId: string]: { [tacticId: string]: number } }) => void;
+  doSubmitWarTacticBids: (provinceId: string, tacticBids: { [tacticId: string]: number }) => void;
   doResolveNextBattle: () => void;
 
   // Cleanup & Winter
-  doCleanupSeason: () => void;
   doResolveWinter: () => void;
 
   // Movement
@@ -221,15 +220,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     set({ gameState: initiateWarPhase(gameState) });
   },
-  doSubmitWarTacticBids: (provinceId, bids) => {
-    const { gameState, ws } = get();
-    if (!gameState) return;
+  doSubmitWarTacticBids: (provinceId, tacticBids) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState || !localPlayerId) return;
+    const cp = getCurrentPlayer(gameState);
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (!apid) return;
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'SUBMIT_WAR_BIDS', playerId: get().localPlayerId, payload: { provinceId, bids } });
+      get().sendAction({ type: 'SUBMIT_WAR_BIDS', playerId: apid, payload: { provinceId, tacticBids } });
       return;
     }
-    const ns = submitWarTacticBids(gameState, provinceId, bids);
-    set({ gameState: ns, warTacticBidsSubmitted: true });
+    let ns = submitWarTacticBids(gameState, provinceId, apid, tacticBids);
+    // In hotseat mode, auto-resolve once all participants have submitted
+    if (allBidsSubmitted(ns, provinceId)) {
+      ns = resolveNextBattle(ns);
+      set({ gameState: ns, warTacticBidsSubmitted: false });
+    } else {
+      set({ gameState: ns, warTacticBidsSubmitted: true });
+    }
   },
   doResolveNextBattle: () => {
     const { gameState, ws } = get();
@@ -242,15 +250,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // --- Cleanup & Winter ---
-  doCleanupSeason: () => {
-    const { gameState, ws } = get();
-    if (!gameState) return;
-    if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'CLEANUP_SEASON', playerId: get().localPlayerId });
-      return;
-    }
-    set({ gameState: cleanupSeason(gameState) });
-  },
   doResolveWinter: () => {
     const { gameState, ws } = get();
     if (!gameState) return;

@@ -7,7 +7,7 @@ export const ActionPanel = () => {
     gameState, localPlayerId, moveMode, toggleMoveMode,
     doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance,
     doSetupSeason, doBreakAlliances, doDrawMandateTiles, doChooseMandateTile,
-    doResolveKami, doInitiateWar, doCleanupSeason,
+    doResolveKami, doInitiateWar,
     doResolveWinter,
   } = useGameStore();
 
@@ -210,7 +210,7 @@ export const ActionPanel = () => {
           <h4>Cleanup</h4>
           <p className="phase-description">Return war tokens, reset for next season.</p>
           {isMyTurn && (
-            <button className="btn-primary advance-btn" onClick={doCleanupSeason}>
+            <button className="btn-primary advance-btn" onClick={doAdvancePhase}>
               Proceed to Next Season
             </button>
           )}

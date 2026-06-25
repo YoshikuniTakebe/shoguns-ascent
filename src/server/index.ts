@@ -11,6 +11,7 @@ import {
   drawMandateTiles,
   chooseMandateTile,
   submitWarTacticBids,
+  allBidsSubmitted,
   resolveNextBattle,
   moveForces,
   advancePhase,
@@ -18,7 +19,6 @@ import {
   setupSeason,
   resolveKamiTurn,
   initiateWarPhase,
-  cleanupSeason,
   resolveWinter,
   buySeasonCard,
 } from '../utils/gameLogic';
@@ -153,11 +153,13 @@ wss.on('connection', (ws: WebSocket) => {
         case 'SUBMIT_WAR_BIDS': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
-          const { provinceId, bids } = data.payload || {};
-          if (!provinceId || !bids) return;
-          l.gameState = submitWarTacticBids(l.gameState, provinceId, bids);
-          // Auto-resolve battle after bids are submitted
-          l.gameState = resolveNextBattle(l.gameState);
+          const { provinceId, tacticBids } = data.payload || {};
+          if (!provinceId || !tacticBids) return;
+          l.gameState = submitWarTacticBids(l.gameState, provinceId, data.playerId, tacticBids);
+          // Only resolve once all participants have submitted their bids
+          if (allBidsSubmitted(l.gameState, provinceId)) {
+            l.gameState = resolveNextBattle(l.gameState);
+          }
           broadcastState(l);
           break;
         }
@@ -219,14 +221,6 @@ wss.on('connection', (ws: WebSocket) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           l.gameState = resolveNextBattle(l.gameState);
-          broadcastState(l);
-          break;
-        }
-
-        case 'CLEANUP_SEASON': {
-          const l = lobbies.get(currentLobbyId || '');
-          if (!l?.gameState) return;
-          l.gameState = cleanupSeason(l.gameState);
           broadcastState(l);
           break;
         }

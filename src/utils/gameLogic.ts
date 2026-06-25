@@ -127,6 +127,7 @@ export function createInitialGameState(
     teaTurnIndex: 0,
     honorTrack,
     warProvinceSlots: [],
+    trainMandateActive: false,
     gameOver: false,
     log: ['Game started! Season: Spring'],
     hostId,
@@ -323,7 +324,7 @@ export function drawMandateTiles(state: GameState): GameState {
 }
 
 export function chooseMandateTile(state: GameState, mandate: MandateType, playerId: string): GameState {
-  let newState: GameState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [...state.drawnMandates] };
+  let newState: GameState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [...state.drawnMandates], trainMandateActive: false };
   const chosenIdx = newState.drawnMandates.indexOf(mandate);
   if (chosenIdx === -1) return state;
 
@@ -459,12 +460,16 @@ function executeTrain(state: GameState, issuerId: string): GameState {
   const newState: GameState = {
     ...state,
     players: bonusPlayers,
+    trainMandateActive: true,
     log: [...state.log, 'Train mandate issued - players may buy 1 season card from the market. Use the Season Cards Market to purchase.'],
   };
   return newState;
 }
 
 export function buySeasonCard(state: GameState, playerId: string, cardId: string): GameState {
+  // Can only buy during politics phase when Train mandate is active
+  if (!state.trainMandateActive || state.currentPhase !== 'politics') return state;
+
   const card = state.seasonCardsDeck.find((c) => c.id === cardId);
   if (!card) return state;
 
@@ -755,7 +760,8 @@ export function initiateWarPhase(state: GameState): GameState {
 export function submitWarTacticBids(
   state: GameState,
   provinceId: string,
-  bids: { [playerId: string]: { [tacticId: string]: number } }
+  playerId: string,
+  tacticBids: { [tacticId: string]: number }
 ): GameState {
   const newState: GameState = {
     ...state,
@@ -765,19 +771,24 @@ export function submitWarTacticBids(
   const battle = newState.activeBattles.find((b) => b.provinceId === provinceId);
   if (!battle || battle.resolved) return state;
 
-  // Validate bids against player coin balances
-  for (const playerId of Object.keys(bids)) {
-    const player = state.players.find((p) => p.id === playerId);
-    if (!player) continue;
-    const totalBid = Object.values(bids[playerId]).reduce((sum, v) => sum + v, 0);
-    if (totalBid > player.coins) {
-      // Reject bids that exceed coin balance - return unchanged state
-      return state;
-    }
+  // Validate bids against player coin balance
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return state;
+  const totalBid = Object.values(tacticBids).reduce((sum, v) => sum + v, 0);
+  if (totalBid > player.coins) {
+    // Reject bids that exceed coin balance - return unchanged state
+    return state;
   }
 
-  battle.warTacticBids = bids;
+  // Merge this player's bids into the existing warTacticBids map
+  battle.warTacticBids[playerId] = tacticBids;
   return newState;
+}
+
+export function allBidsSubmitted(state: GameState, provinceId: string): boolean {
+  const battle = state.activeBattles.find((b) => b.provinceId === provinceId);
+  if (!battle || battle.resolved) return false;
+  return battle.participants.every((pid) => pid in battle.warTacticBids);
 }
 
 export function resolveNextBattle(state: GameState): GameState {
@@ -1290,6 +1301,7 @@ export function advancePhase(state: GameState): GameState {
       break;
     }
     case 'cleanup': {
+      // Run cleanup and advance to next season in one step
       newState = cleanupSeason(newState);
       // Advance to next season or winter
       const seasons: Season[] = ['spring', 'summer', 'autumn'];

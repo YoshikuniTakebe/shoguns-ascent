@@ -55,10 +55,7 @@ export const BattlePanel = () => {
 
   const handleSubmitBids = () => {
     if (!apid) return;
-    const playerBids: { [playerId: string]: { [tacticId: string]: number } } = {
-      [apid]: bids,
-    };
-    doSubmitWarTacticBids(battle.provinceId, playerBids);
+    doSubmitWarTacticBids(battle.provinceId, bids);
     setBids({ seppuku: 0, 'take-hostage': 0, 'hire-ronin': 0, 'imperial-poets': 0 });
   };
 
