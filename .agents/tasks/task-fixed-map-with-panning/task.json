@@ -1,0 +1,7 @@
+{
+  "task_id": "task-fixed-map-with-panning",
+  "task_description": "Convert the game map from a responsive/percentage-based layout to a fixed-resolution (1200x900px) canvas inside a clipped viewport with click-and-drag panning. All map elements (background image, SVG routes, region cards) use absolute pixel positioning inside the fixed canvas and move together when panning.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Convert the map to a fixed-resolution inner canvas (1200x900px) inside a clipped viewport, with click-and-drag panning, and position all elements (map image, SVG routes, region cards) using absolute pixel coordinates inside the fixed-size map so they move together when panning.",
+  "status": "in_progress",
+  "steps": [
+    "In src/components/GameBoard.tsx, restructure the .map-container div to become a viewport/wrapper that clips overflow. Inside it, add a new inner div (the 'map-canvas') with a fixed size of 1200x900px. Move JapanMapBackground, the SVG overlay, and the regions-overlay div inside this inner fixed-size div.",
+    "Keep HonorTrack and AllianceDisplay positioned absolutely within the viewport wrapper (not inside the fixed map canvas) so they stay visible on screen regardless of pan position.",
+    "Change the SVG viewBox from '0 0 800 600' to '0 0 1200 900' and update the positions record to use coordinates appropriate for the 1200x900 space (multiply existing x by 1.5, existing y by 1.5 to scale proportionally).",
+    "Change the regions-overlay positioning from percentage-based (left: (p.x/800)*100%) to absolute pixel positioning (left: p.x + 'px', top: p.y + 'px') so region cards are placed at fixed pixel coordinates within the 1200x900 canvas.",
+    "Implement click-and-drag panning: add React state for pan offset (translateX, translateY) and drag tracking (isDragging, startX, startY). On mousedown on the viewport, start tracking. On mousemove, update the translate. On mouseup/mouseleave, stop. Apply the transform via CSS transform: translate(x, y) on the inner map-canvas div.",
+    "Ensure panning doesn't conflict with region card clicks: only start drag if mouse has moved more than 5px from mousedown position (dead zone). If the mouse hasn't moved enough, treat it as a click rather than a pan.",
+    "Add corresponding CSS in src/App.css: the map-container (viewport) should have overflow:hidden, position:relative, cursor:grab (cursor:grabbing when dragging). The inner map-canvas should have width:1200px, height:900px, position:relative. The japan-map-background should fill the canvas (width:100%, height:100%). The SVG and regions-overlay should be position:absolute covering the full 1200x900 canvas.",
+    "Update JapanMapBackground.tsx if needed to ensure the image fills the fixed-size container properly (object-fit:cover or just width/height 100%)."
+  ],
+  "acceptance_criteria": [
+    "The map renders at a fixed 1200x900px size regardless of screen/window resolution",
+    "The viewport clips the map to whatever space is available in the center panel",
+    "Click-and-drag panning moves the map and all elements (routes, region cards) together",
+    "Region cards are positioned at absolute pixel coordinates within the fixed map",
+    "Clicking a region card without dragging still works (click vs drag discrimination)",
+    "HonorTrack and AllianceDisplay remain visible as floating overlays on top of the viewport",
+    "The project builds successfully with npx tsc -b && npx vite build"
+  ],
+  "verification": [
+    "npx tsc -b && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

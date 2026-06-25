@@ -1,0 +1,20 @@
+{
+  "project_type": "React SPA board game (Shogun's Ascent)",
+  "language": "TypeScript",
+  "build_system": "Vite + TypeScript",
+  "test_framework": "None (no test files found)",
+  "build_command": "npx tsc -b && npx vite build",
+  "test_command": "npx tsc -b",
+  "verification_instructions": "Run 'npx tsc -b && npx vite build' to confirm no type errors and a successful build",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install (node_modules already present)",
+  "environment_constraints": "No test framework installed; verification is TypeScript compilation + Vite build",
+  "contribution_requirements": "Push directly to main branch",
+  "key_patterns": "Zustand store at src/store/gameStore.ts; all styles in src/App.css (minified single-line blocks); components in src/components/; map positions defined as pixel coordinates in an 800x600 coordinate system in GameBoard.tsx and converted to percentages for positioning",
+  "relevant_files": [
+    "src/components/GameBoard.tsx",
+    "src/components/JapanMapBackground.tsx",
+    "src/App.css"
+  ],
+  "directory_structure": "src/components/ - React components; src/store/ - Zustand store; src/types/ - TypeScript types; src/utils/ - game logic; src/img/ - image assets; public/ - static assets"
+}
