@@ -23,8 +23,8 @@ const positions: Record<string, { x: number; y: number }> = {
   kanto: { x: 1229, y: 637 },
   kansai: { x: 774, y: 674 },
   nagato: { x: 448, y: 605 },
-  shikoku: { x: 632, y: 807 },
-  kyushu: { x: 278, y: 808 },
+  shikoku: { x: 630, y: 807 },
+  kyushu: { x: 276, y: 808 },
 };
 
 const DRAG_DEAD_ZONE = 5;
@@ -209,18 +209,33 @@ export const GameBoard = () => {
                   const seaRoutePaths: { from: string; to: string; path: string }[] = [
                     {
                       from: 'hokkaido',
-                      to: 'shikoku',
-                      path: `M ${positions.hokkaido.x} ${positions.hokkaido.y} C ${positions.hokkaido.x + 120} ${positions.hokkaido.y + 180}, ${positions.shikoku.x + 150} ${positions.shikoku.y - 270}, ${positions.shikoku.x} ${positions.shikoku.y}`,
+                      to: 'oshu',
+                      path: `M ${positions.hokkaido.x} ${positions.hokkaido.y} C ${positions.hokkaido.x + 60} ${positions.hokkaido.y + 50}, ${positions.oshu.x + 60} ${positions.oshu.y - 50}, ${positions.oshu.x} ${positions.oshu.y}`,
                     },
                     {
-                      from: 'nagato',
+                      from: 'hokkaido',
+                      to: 'kansai',
+                      path: `M ${positions.hokkaido.x} ${positions.hokkaido.y} C ${positions.hokkaido.x + 200} ${positions.hokkaido.y + 200}, ${positions.kansai.x + 250} ${positions.kansai.y - 250}, ${positions.kansai.x} ${positions.kansai.y}`,
+                    },
+                    {
+                      from: 'hokkaido',
+                      to: 'kyushu',
+                      path: `M ${positions.hokkaido.x} ${positions.hokkaido.y} C ${positions.hokkaido.x - 500} ${positions.hokkaido.y - 100}, ${positions.kyushu.x - 200} ${positions.kyushu.y - 400}, ${positions.kyushu.x} ${positions.kyushu.y}`,
+                    },
+                    {
+                      from: 'kansai',
+                      to: 'kyushu',
+                      path: `M ${positions.kansai.x} ${positions.kansai.y} C ${positions.kansai.x - 100} ${positions.kansai.y + 120}, ${positions.kyushu.x + 100} ${positions.kyushu.y + 80}, ${positions.kyushu.x} ${positions.kyushu.y}`,
+                    },
+                    {
+                      from: 'kansai',
                       to: 'shikoku',
-                      path: `M ${positions.nagato.x} ${positions.nagato.y} Q ${positions.nagato.x + 45} ${positions.nagato.y + 60}, ${positions.shikoku.x} ${positions.shikoku.y}`,
+                      path: `M ${positions.kansai.x} ${positions.kansai.y} C ${positions.kansai.x - 30} ${positions.kansai.y + 60}, ${positions.shikoku.x + 30} ${positions.shikoku.y - 60}, ${positions.shikoku.x} ${positions.shikoku.y}`,
                     },
                     {
                       from: 'shikoku',
                       to: 'kyushu',
-                      path: `M ${positions.shikoku.x} ${positions.shikoku.y} Q ${positions.shikoku.x - 90} ${positions.shikoku.y + 45}, ${positions.kyushu.x} ${positions.kyushu.y}`,
+                      path: `M ${positions.shikoku.x} ${positions.shikoku.y} C ${positions.shikoku.x - 90} ${positions.shikoku.y + 50}, ${positions.kyushu.x + 90} ${positions.kyushu.y + 50}, ${positions.kyushu.x} ${positions.kyushu.y}`,
                     },
                   ];
                   return seaRoutePaths.map(route => (

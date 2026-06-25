@@ -192,14 +192,14 @@ export const CLANS: Clan[] = [
 // --- Provinces ---
 
 export const PROVINCES_DATA: Province[] = [
-  { id: 'hokkaido', name: 'Hokkaido', adjacentProvinces: ['oshu'], seaRoutes: ['shikoku'], harvestReward: 2 },
-  { id: 'oshu', name: 'Oshu', adjacentProvinces: ['hokkaido', 'edo', 'kanto'], seaRoutes: [], harvestReward: 3 },
+  { id: 'hokkaido', name: 'Hokkaido', adjacentProvinces: [], seaRoutes: ['oshu', 'kansai', 'kyushu'], harvestReward: 2 },
+  { id: 'oshu', name: 'Oshu', adjacentProvinces: ['edo', 'kanto'], seaRoutes: ['hokkaido'], harvestReward: 3 },
   { id: 'edo', name: 'Edo', adjacentProvinces: ['oshu', 'kanto', 'kansai'], seaRoutes: [], harvestReward: 4 },
-  { id: 'kanto', name: 'Kanto', adjacentProvinces: ['oshu', 'edo', 'kansai'], seaRoutes: [], harvestReward: 3 },
-  { id: 'kansai', name: 'Kansai', adjacentProvinces: ['edo', 'kanto', 'nagato', 'shikoku'], seaRoutes: [], harvestReward: 3 },
-  { id: 'nagato', name: 'Nagato', adjacentProvinces: ['kansai', 'kyushu'], seaRoutes: ['shikoku'], harvestReward: 2 },
-  { id: 'shikoku', name: 'Shikoku', adjacentProvinces: ['kansai'], seaRoutes: ['hokkaido', 'nagato', 'kyushu'], harvestReward: 2 },
-  { id: 'kyushu', name: 'Kyushu', adjacentProvinces: ['nagato'], seaRoutes: ['shikoku'], harvestReward: 3 },
+  { id: 'kanto', name: 'Kanto', adjacentProvinces: ['oshu', 'edo'], seaRoutes: [], harvestReward: 3 },
+  { id: 'kansai', name: 'Kansai', adjacentProvinces: ['edo', 'nagato'], seaRoutes: ['hokkaido', 'kyushu', 'shikoku'], harvestReward: 3 },
+  { id: 'nagato', name: 'Nagato', adjacentProvinces: ['kansai'], seaRoutes: [], harvestReward: 2 },
+  { id: 'shikoku', name: 'Shikoku', adjacentProvinces: [], seaRoutes: ['kansai', 'kyushu'], harvestReward: 2 },
+  { id: 'kyushu', name: 'Kyushu', adjacentProvinces: [], seaRoutes: ['shikoku', 'kansai', 'hokkaido'], harvestReward: 3 },
 ];
 
 // --- Home Provinces (one per clan, in clan order) ---
