@@ -13,14 +13,14 @@ import { AllianceDisplay } from './AllianceDisplay';
 import { PoliticsTrack } from './PoliticsTrack';
 
 const positions: Record<string, { x: number; y: number }> = {
-  hokkaido: { x: 650, y: 80 },
-  oshu: { x: 600, y: 180 },
-  edo: { x: 550, y: 300 },
-  kanto: { x: 480, y: 250 },
-  kansai: { x: 380, y: 350 },
-  nagato: { x: 250, y: 420 },
-  shikoku: { x: 350, y: 470 },
-  kyushu: { x: 180, y: 500 },
+  hokkaido: { x: 620, y: 75 },
+  oshu: { x: 590, y: 190 },
+  edo: { x: 560, y: 310 },
+  kanto: { x: 490, y: 260 },
+  kansai: { x: 390, y: 340 },
+  nagato: { x: 270, y: 400 },
+  shikoku: { x: 370, y: 450 },
+  kyushu: { x: 200, y: 490 },
 };
 
 export const GameBoard = () => {
@@ -92,21 +92,37 @@ export const GameBoard = () => {
                   );
                 })
               )}
-              {/* Sea routes in blue */}
-              {PROVINCES_DATA.map(r =>
-                r.seaRoutes.map(a => {
-                  if (r.id > a) return null;
-                  const p1 = positions[r.id] || { x: 400, y: 300 };
-                  const p2 = positions[a] || { x: 400, y: 300 };
-                  return (
-                    <line
-                      key={`sea-${r.id}-${a}`}
-                      x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
-                      stroke="rgba(100,150,200,0.4)" strokeWidth="2" strokeDasharray="3,6"
-                    />
-                  );
-                })
-              )}
+              {/* Sea routes as curved paths */}
+              {(() => {
+                const seaRoutePaths: { from: string; to: string; path: string }[] = [
+                  {
+                    from: 'hokkaido',
+                    to: 'shikoku',
+                    path: `M ${positions.hokkaido.x} ${positions.hokkaido.y} C ${positions.hokkaido.x + 80} ${positions.hokkaido.y + 120}, ${positions.shikoku.x + 100} ${positions.shikoku.y - 180}, ${positions.shikoku.x} ${positions.shikoku.y}`,
+                  },
+                  {
+                    from: 'nagato',
+                    to: 'shikoku',
+                    path: `M ${positions.nagato.x} ${positions.nagato.y} Q ${positions.nagato.x + 30} ${positions.nagato.y + 40}, ${positions.shikoku.x} ${positions.shikoku.y}`,
+                  },
+                  {
+                    from: 'shikoku',
+                    to: 'kyushu',
+                    path: `M ${positions.shikoku.x} ${positions.shikoku.y} Q ${positions.shikoku.x - 60} ${positions.shikoku.y + 30}, ${positions.kyushu.x} ${positions.kyushu.y}`,
+                  },
+                ];
+                return seaRoutePaths.map(route => (
+                  <path
+                    key={`sea-${route.from}-${route.to}`}
+                    d={route.path}
+                    fill="none"
+                    stroke="rgba(80,160,220,0.5)"
+                    strokeWidth="2.5"
+                    strokeDasharray="6,4"
+                    strokeLinecap="round"
+                  />
+                ));
+              })()}
             </svg>
             <div className="regions-overlay">
               {PROVINCES_DATA.map(r => {
