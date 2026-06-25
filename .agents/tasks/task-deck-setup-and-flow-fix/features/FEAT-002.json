@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix the game flow so the game is actually playable end-to-end from setup through all 3 seasons to Winter scoring. Currently the flow is broken - the season setup phase doesn't auto-advance, the Tea phase doesn't advance to Politics properly, the politics phase mandate count and kami turns are confusing, and the war/cleanup/season-transition flow doesn't work smoothly in hotseat mode.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "1. In src/utils/gameLogic.ts, fix the season setup flow: createInitialGameState should set currentPhase to 'seasonSetup' and the first call to setupSeason (via doSetupSeason in store) should transition to 'tea' phase automatically after setup is done.",
     "2. Fix the Tea Ceremony phase advancement: In advancePlayer when currentPhase is 'tea', track teaTurnIndex properly. When all players have had a tea turn (teaTurnIndex >= players.length), auto-advance to 'politics' phase. Currently doAdvancePlayer is generic and doesn't handle tea-specific logic.",

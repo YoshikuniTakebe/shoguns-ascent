@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Add deck configuration to the game setup screen and implement deck-building logic. The setup must let players choose Core + one expansion deck (Archway, Tower, Teapot, Horseman, Ship, Mountain) or random. Also add optional Dynasty Invasion auto-inclusion when Sol/Luna clans are selected, and optional Kickstarter Exclusive + Monster Pack expansion (0, 1, or 2 extra monster cards per season). Update createInitialGameState to accept these config options and build the correct season card deck filtered by groups and season.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/types/game.ts, add a new interface DeckConfig with fields: chosenDeck (string - one of 'Archway','Tower','Teapot','Horseman','Ship','Mountain','random'), kickstarterCards (0|1|2 - number of Kickstarter Exclusive cards per season), monsterPackCards (0|1|2 - number of Monster Pack cards per season). Also add a helper type for deck names.",
     "2. In src/types/game.ts, add a new type or export const DECK_GROUPS = ['Archway','Tower','Teapot','Horseman','Ship','Mountain'] for the UI to use.",
@@ -29,5 +29,5 @@
     "npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation complete. All 8 steps satisfied. TypeScript compilation and Vite build both pass. The buildSeasonDeck function correctly handles multi-group cards by splitting on '/' and checking if any group matches the chosen deck. Dynasty Invasion cards are auto-included when Sol or Luna clans are present. Purchase restrictions are enforced both in UI (SeasonCardsMarket) and server-side (buySeasonCard). Default DeckConfig (random deck, 0 KS, 0 MP) is used when none is provided, maintaining backward compatibility."
 }

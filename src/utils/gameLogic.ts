@@ -243,7 +243,9 @@ export function setupSeason(state: GameState, season: Season): GameState {
     provinces: { ...state.provinces },
     warProvinceSlots: [] as WarProvinceSlot[],
     currentSeason: season,
-    currentPhase: 'seasonSetup' as const,
+    currentPhase: 'tea' as const,
+    currentPlayerIndex: 0,
+    teaTurnIndex: 0,
     log: [...state.log, `Season Setup: ${season.charAt(0).toUpperCase() + season.slice(1)}`],
   };
 
@@ -277,7 +279,10 @@ export function setupSeason(state: GameState, season: Season): GameState {
   // Return hostages (gain 1 coin per hostage returned)
   newState = returnHostages(newState);
 
-  newState.log = [...newState.log, `War province tokens placed on ${selectedProvinces.length} provinces`];
+  // Break all alliances for tea ceremony
+  newState = breakAllAlliances(newState);
+
+  newState.log = [...newState.log, `War province tokens placed on ${selectedProvinces.length} provinces`, 'Tea Ceremony Phase begins'];
 
   return newState;
 }
@@ -1133,6 +1138,7 @@ export function cleanupSeason(state: GameState): GameState {
     activeBattles: [],
     allianceProposals: [],
     politicsMandateCount: 0,
+    trainMandateActive: false,
     teaTurnIndex: 0,
     log: [...state.log, 'Cleanup: Ronin and coins discarded, Shinto returned from temples'],
   };
@@ -1385,6 +1391,7 @@ export function advancePhase(state: GameState): GameState {
     case 'seasonSetup':
       newState.currentPhase = 'tea';
       newState.currentPlayerIndex = 0;
+      newState.teaTurnIndex = 0;
       newState = breakAllAlliances(newState);
       newState.log = [...newState.log, 'Tea Ceremony Phase begins'];
       break;
@@ -1392,10 +1399,18 @@ export function advancePhase(state: GameState): GameState {
       newState.currentPhase = 'politics';
       newState.currentPlayerIndex = 0;
       newState.politicsMandateCount = 0;
+      newState.trainMandateActive = false;
+      newState.drawnMandates = [];
+      newState.mandateChoicePhase = false;
       newState.log = [...newState.log, 'Politics Phase begins'];
       break;
     case 'politics':
       newState = initiateWarPhase(newState);
+      // If no battles were created, auto-advance to cleanup
+      if (newState.activeBattles.filter(b => !b.resolved).length === 0) {
+        newState.currentPhase = 'cleanup';
+        newState.log = [...newState.log, 'No battles to resolve - moving to Cleanup'];
+      }
       break;
     case 'war': {
       newState.currentPhase = 'cleanup';
@@ -1403,7 +1418,7 @@ export function advancePhase(state: GameState): GameState {
       break;
     }
     case 'cleanup': {
-      // Run cleanup and advance to next season in one step
+      // Run cleanup
       newState = cleanupSeason(newState);
       // Advance to next season or winter
       const seasons: Season[] = ['spring', 'summer', 'autumn'];
@@ -1412,13 +1427,10 @@ export function advancePhase(state: GameState): GameState {
         // After autumn, go to winter
         newState = resolveWinter(newState);
       } else {
-        // Advance to next season
+        // Advance to next season via setupSeason (which transitions to tea internally)
         const nextSeason = seasons[idx + 1];
         newState.round += 1;
         newState = setupSeason(newState, nextSeason);
-        newState.currentPhase = 'tea';
-        newState = breakAllAlliances(newState);
-        newState.log = [...newState.log, `Tea Ceremony Phase begins for ${nextSeason}`];
       }
       break;
     }
@@ -1431,7 +1443,13 @@ export function advancePhase(state: GameState): GameState {
 }
 
 export function advancePlayer(state: GameState): GameState {
-  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, log: [...state.log] };
+  // Handle tea phase advancement separately
+  if (state.currentPhase === 'tea') {
+    return advanceTeaPlayer(state);
+  }
+
+  // Politics phase advancement
+  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, log: [...state.log] };
   newState.politicsMandateCount += 1;
 
   // Check if we need a kami turn
@@ -1452,6 +1470,39 @@ export function advancePlayer(state: GameState): GameState {
   // Move to next player
   newState.currentPlayerIndex = (newState.currentPlayerIndex + 1) % newState.players.length;
   return newState;
+}
+
+/**
+ * Advance the tea phase: increment teaTurnIndex, and when all players
+ * have had their turn, auto-advance to politics phase.
+ */
+export function advanceTeaPlayer(state: GameState): GameState {
+  const newState: GameState = { ...state, log: [...state.log] };
+  newState.teaTurnIndex += 1;
+
+  // When all players have had a tea turn, move to politics
+  if (newState.teaTurnIndex >= newState.players.length) {
+    newState.teaTurnIndex = 0;
+    return advancePhase(newState);
+  }
+
+  // Move to next player
+  newState.currentPlayerIndex = (newState.currentPlayerIndex + 1) % newState.players.length;
+  return newState;
+}
+
+/**
+ * Skip the current Train mandate purchase opportunity.
+ * In hotseat mode, this just clears trainMandateActive so the next
+ * mandate can proceed.
+ */
+export function skipTrainPurchase(state: GameState): GameState {
+  if (!state.trainMandateActive) return state;
+  return {
+    ...state,
+    trainMandateActive: false,
+    log: [...state.log, `${state.players[state.currentPlayerIndex]?.name ?? 'Player'} skips card purchase`],
+  };
 }
 
 export function getCurrentPlayer(state: GameState): Player | undefined {

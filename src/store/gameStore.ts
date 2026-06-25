@@ -19,6 +19,7 @@ import {
   advancePlayer,
   getCurrentPlayer,
   buySeasonCard,
+  skipTrainPurchase,
 } from '../utils/gameLogic';
 
 interface GameStore {
@@ -60,6 +61,9 @@ interface GameStore {
 
   // Buy Season Card (Train mandate)
   doBuySeasonCard: (cardId: string) => void;
+
+  // Skip Train card purchase
+  doSkipTrainPurchase: () => void;
 
   // Kami
   doResolveKami: () => void;
@@ -182,7 +186,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = chooseMandateTile(gameState, mandate, apid);
-    set({ gameState: advancePlayer(ns) });
+    // If train mandate is active, wait for buy/skip before advancing
+    if (ns.trainMandateActive) {
+      set({ gameState: ns });
+    } else {
+      set({ gameState: advancePlayer(ns) });
+    }
   },
 
   // --- Buy Season Card (Train mandate) ---
@@ -196,7 +205,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'BUY_CARD', playerId: apid, payload: { cardId } });
       return;
     }
-    set({ gameState: buySeasonCard(gameState, apid, cardId) });
+    let ns = buySeasonCard(gameState, apid, cardId);
+    // After buying, clear trainMandateActive and advance to next player
+    ns = { ...ns, trainMandateActive: false };
+    ns = advancePlayer(ns);
+    set({ gameState: ns });
+  },
+
+  // --- Skip Train Purchase ---
+  doSkipTrainPurchase: () => {
+    const { gameState } = get();
+    if (!gameState) return;
+    let ns = skipTrainPurchase(gameState);
+    // After skipping, advance to next player
+    ns = advancePlayer(ns);
+    set({ gameState: ns });
   },
 
   // --- Kami ---

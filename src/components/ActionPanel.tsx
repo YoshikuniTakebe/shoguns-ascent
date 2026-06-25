@@ -7,7 +7,7 @@ export const ActionPanel = () => {
     gameState, localPlayerId, moveMode, toggleMoveMode,
     doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance,
     doSetupSeason, doBreakAlliances, doDrawMandateTiles, doChooseMandateTile,
-    doResolveKami, doInitiateWar,
+    doSkipTrainPurchase,
     doResolveWinter,
   } = useGameStore();
 
@@ -112,7 +112,17 @@ export const ActionPanel = () => {
           <h4>Politics - Mandate {gameState.politicsMandateCount + 1}/{gameState.maxMandates}</h4>
           <p className="phase-description">Draw mandate tiles and pick one for all players to execute.</p>
 
-          {gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
+          {/* Train mandate active - show skip option */}
+          {gameState.trainMandateActive && (
+            <div className="train-active">
+              <p className="train-notice">Train mandate active - buy a card from the Season Market or skip.</p>
+              <button className="btn-secondary" onClick={doSkipTrainPurchase}>
+                Skip Card Purchase
+              </button>
+            </div>
+          )}
+
+          {!gameState.trainMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
             <button className="btn-primary" onClick={doDrawMandateTiles}>
               Draw Mandate Tiles
             </button>
@@ -141,7 +151,7 @@ export const ActionPanel = () => {
           )}
 
           {/* Last executed mandate display */}
-          {gameState.mandatesThisTurn.length > 0 && (
+          {gameState.mandatesThisTurn.length > 0 && !gameState.trainMandateActive && (
             <div className="current-mandate">
               <h5>Last Mandate: {gameState.mandatesThisTurn[gameState.mandatesThisTurn.length - 1]?.type.toUpperCase()}</h5>
               <p className="mandate-info">Mandate resolved for all players in order.</p>
@@ -154,10 +164,6 @@ export const ActionPanel = () => {
             </button>
             {moveMode && <p className="move-instruction">Click source province, then target.</p>}
           </div>
-
-          <button className="btn-primary advance-btn" onClick={doAdvancePlayer}>
-            End Turn
-          </button>
         </div>
       )}
 
@@ -169,29 +175,13 @@ export const ActionPanel = () => {
         </div>
       )}
 
-      {/* Kami resolution (between politics and war) */}
-      {gameState.currentPhase === 'politics' && gameState.politicsMandateCount >= gameState.maxMandates && isMyTurn && (
-        <div className="kami-phase">
-          <h4>Kami Turn</h4>
-          <p className="phase-description">Resolve Kami abilities at temples.</p>
-          <button className="btn-primary advance-btn" onClick={doResolveKami}>
-            Resolve Kami
-          </button>
-        </div>
-      )}
-
       {/* War Phase */}
       {gameState.currentPhase === 'war' && (
         <div className="war-phase">
           <h4>War Phase</h4>
           {gameState.activeBattles.filter(b => !b.resolved).length === 0 ? (
             <div>
-              <p>No battles to resolve.</p>
-              {isMyTurn && (
-                <button className="btn-primary advance-btn" onClick={doInitiateWar}>
-                  Initiate War
-                </button>
-              )}
+              <p>All battles resolved.</p>
               {isMyTurn && (
                 <button className="btn-primary advance-btn" onClick={doAdvancePhase}>
                   End War Phase
@@ -199,7 +189,9 @@ export const ActionPanel = () => {
               )}
             </div>
           ) : (
-            <p>Resolve battles in the Battle Panel.</p>
+            <div>
+              <p>Resolve battles in the Battle Panel ({gameState.activeBattles.filter(b => !b.resolved).length} remaining).</p>
+            </div>
           )}
         </div>
       )}
@@ -221,11 +213,22 @@ export const ActionPanel = () => {
       {gameState.currentPhase === 'winter' && (
         <div className="winter-phase">
           <h4>Winter - Final Scoring</h4>
-          <p className="phase-description">Score war province tokens, set bonuses, and winter upgrades.</p>
-          {isMyTurn && (
-            <button className="btn-primary advance-btn" onClick={doResolveWinter}>
-              Resolve Winter Scoring
-            </button>
+          {gameState.gameOver ? (
+            <div>
+              <p className="phase-description">Game Over! Final scores calculated.</p>
+              {gameState.winner && (
+                <p><strong>Winner: {gameState.players.find(p => p.id === gameState.winner)?.name}</strong></p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <p className="phase-description">Score war province tokens, set bonuses, and winter upgrades.</p>
+              {isMyTurn && (
+                <button className="btn-primary advance-btn" onClick={doResolveWinter}>
+                  Resolve Winter Scoring
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
