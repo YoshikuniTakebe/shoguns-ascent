@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, KAMI_DATA } from '../types/game';
 import type { KamiType } from '../types/game';
@@ -32,11 +33,38 @@ const KAMI_IMAGES: Record<KamiType, string> = {
 
 export const TemplePanel = () => {
   const { gameState } = useGameStore();
+  const [selectedKami, setSelectedKami] = useState<KamiType | null>(null);
+
   if (!gameState) return null;
   if (gameState.temples.length === 0) return null;
 
   // Pad to 4 slots (the game uses exactly 4 kami)
   const slots = Array.from({ length: 4 }, (_, i) => gameState.temples[i] || null);
+
+  const selectedTemple = selectedKami
+    ? gameState.temples.find(t => t.kamiType === selectedKami)
+    : null;
+  const selectedKamiData = selectedKami
+    ? KAMI_DATA.find(k => k.type === selectedKami)
+    : null;
+
+  // Group figures by clan for the modal
+  const figuresByClan: { clanId: string; clanName: string; color: string; count: number }[] = [];
+  if (selectedTemple) {
+    const clanCounts: Record<string, number> = {};
+    for (const fig of selectedTemple.figures) {
+      const player = gameState.players.find(pl => pl.id === fig.playerId);
+      if (player) {
+        clanCounts[player.clanId] = (clanCounts[player.clanId] || 0) + 1;
+      }
+    }
+    for (const [clanId, count] of Object.entries(clanCounts)) {
+      const clan = CLANS.find(c => c.id === clanId);
+      if (clan) {
+        figuresByClan.push({ clanId, clanName: clan.name, color: clan.color, count });
+      }
+    }
+  }
 
   return (
     <div className="kami-track">
@@ -70,6 +98,7 @@ export const TemplePanel = () => {
                 borderColor: palette.primary,
                 boxShadow: `0 0 12px ${palette.glow}, inset 0 0 20px ${palette.glow}`,
               }}
+              onClick={() => setSelectedKami(temple.kamiType)}
             >
               <div className="kami-slot-illustration">
                 <img
@@ -108,6 +137,52 @@ export const TemplePanel = () => {
           );
         })}
       </div>
+
+      {selectedKami && selectedKamiData && (
+        <div className="kami-modal-backdrop" onClick={() => setSelectedKami(null)}>
+          <div className="kami-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="kami-modal-close" onClick={() => setSelectedKami(null)}>
+              &times;
+            </button>
+            <div className="kami-modal-image">
+              <img
+                src={KAMI_IMAGES[selectedKami]}
+                alt={selectedKamiData.name}
+                width={200}
+                height={200}
+                style={{
+                  borderRadius: '10px',
+                  objectFit: 'cover',
+                  border: `2px solid ${KAMI_PALETTES[selectedKami].primary}`,
+                  boxShadow: `0 0 20px ${KAMI_PALETTES[selectedKami].glow}`,
+                }}
+              />
+            </div>
+            <h3
+              className="kami-modal-name"
+              style={{ color: KAMI_PALETTES[selectedKami].primary }}
+            >
+              {selectedKamiData.name}
+            </h3>
+            <p className="kami-modal-effect">{selectedKamiData.effect}</p>
+            {figuresByClan.length > 0 && (
+              <div className="kami-modal-figures">
+                <h4 className="kami-modal-figures-title">Shinto Figures</h4>
+                {figuresByClan.map(({ clanId, clanName, color, count }) => (
+                  <div key={clanId} className="kami-modal-figure-row">
+                    <span
+                      className="kami-modal-clan-dot"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="kami-modal-clan-name">{clanName}</span>
+                    <span className="kami-modal-figure-count">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

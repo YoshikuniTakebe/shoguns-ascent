@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Add click-to-zoom modal on kami slots in TemplePanel showing enlarged kami image, name, effect description, and shinto figures present by clan/color",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "In src/components/TemplePanel.tsx, add React state for the selected kami (useState<KamiType | null>(null))",
     "Add an onClick handler on each .kami-slot.filled div that sets the selected kami state to that temple's kamiType",
