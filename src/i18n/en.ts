@@ -156,7 +156,7 @@ export const en = {
   'kami.tsukuyomi.effect': 'Before war here, all players with Force gain 4 Coins.',
 
   // Deck Indicator
-  'deck.indicator': 'Core + {name}',
+  'deck.indicator': '{name}',
 
   // Kami Modal
   'kamiModal.shintoFigures': 'Shinto Figures',

@@ -161,5 +161,5 @@ export const es: Record<TranslationKey, string> = {
   'kami.tsukuyomi.effect': 'Antes de resolver la Guerra en esta Provincia, todos los jugadores con Fuerza en ella ganan 4 Monedas.',
 
   // Deck Indicator
-  'deck.indicator': 'Core + {name}',
+  'deck.indicator': '{name}',
 };

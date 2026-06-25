@@ -154,20 +154,22 @@ export const GameBoard = () => {
   return (
     <div className="game-board">
       <div className="game-header">
-        <div className="season-indicator" style={{ backgroundColor: seasonColors[gameState.currentSeason] }}>
-          <span className="season-name">{t(`season.${gameState.currentSeason}` as any)}</span>
-          <span className="phase-name">{phaseLabels[gameState.currentPhase] || gameState.currentPhase.toUpperCase()}</span>
-        </div>
-        {gameState.activeDeckGroup && (
-          <div className="deck-indicator">
-            <svg className="deck-indicator-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="4" y="2" width="14" height="18" rx="2" opacity="0.4"/>
-              <rect x="6" y="4" width="14" height="18" rx="2" opacity="0.7"/>
-              <rect x="8" y="6" width="14" height="18" rx="2"/>
-            </svg>
-            <span className="deck-indicator-text">{t('deck.indicator', { name: gameState.activeDeckGroup })}</span>
+        <div className="header-left">
+          <div className="season-indicator" style={{ backgroundColor: seasonColors[gameState.currentSeason] }}>
+            <span className="season-name">{t(`season.${gameState.currentSeason}` as any)}</span>
+            <span className="phase-name">{phaseLabels[gameState.currentPhase] || gameState.currentPhase.toUpperCase()}</span>
           </div>
-        )}
+          {gameState.activeDeckGroup && (
+            <div className="deck-indicator">
+              <svg className="deck-indicator-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="4" y="2" width="14" height="18" rx="2" opacity="0.4"/>
+                <rect x="6" y="4" width="14" height="18" rx="2" opacity="0.7"/>
+                <rect x="8" y="6" width="14" height="18" rx="2"/>
+              </svg>
+              <span className="deck-indicator-text">{gameState.activeDeckGroup}</span>
+            </div>
+          )}
+        </div>
         <div className="turn-indicator">
           <span className="current-player-name" style={{ color: CLANS.find(c => c.id === cp?.clanId)?.color }}>
             {t('game.turn', { name: cp?.name || '' })}
