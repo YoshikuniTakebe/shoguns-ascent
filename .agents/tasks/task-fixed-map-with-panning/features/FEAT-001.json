@@ -26,5 +26,5 @@
     "npx tsc -b && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": "Successfully implemented. Build passes cleanly (tsc + vite). Map is now fixed at 1200x900px with panning bounded to keep at least 30% visible. Positions scaled by 1.5x from original 800x600 coords."
+  "findings": "Successfully implemented with review fixes applied. Build passes cleanly (tsc + vite). Map is fixed at 1200x900px. Review fixes: (1) switched from mouse events to pointer events with setPointerCapture for mobile/touch support and reliable drag-past-edge behavior, (2) tightened pan bounds so map edges stop at viewport edges with no empty space, (3) map starts centered based on container dimensions, (4) added touch-action:none CSS, (5) cached container dimensions on pointerdown to avoid layout thrashing."
 }
