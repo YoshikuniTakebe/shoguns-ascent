@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCES_DATA } from '../types/game';
 import { RegionCard } from './RegionCard';
@@ -29,29 +29,75 @@ const positions: Record<string, { x: number; y: number }> = {
 
 const DRAG_DEAD_ZONE = 5;
 
+/** Compute initial centered pan offset for a given container size */
+function computeInitialPan(containerWidth: number, containerHeight: number) {
+  const x = Math.min(0, (containerWidth - MAP_WIDTH) / 2);
+  const y = Math.min(0, (containerHeight - MAP_HEIGHT) / 2);
+  return { x, y };
+}
+
+/** Clamp pan values so the map edges stop at the viewport edges */
+function clampPan(rawX: number, rawY: number, containerWidth: number, containerHeight: number) {
+  const minX = Math.min(0, containerWidth - MAP_WIDTH);
+  const maxX = 0;
+  const minY = Math.min(0, containerHeight - MAP_HEIGHT);
+  const maxY = 0;
+  return {
+    x: Math.max(minX, Math.min(maxX, rawX)),
+    y: Math.max(minY, Math.min(maxY, rawY)),
+  };
+}
+
 export const GameBoard = () => {
   const { gameState, localPlayerId } = useGameStore();
 
   const [translateX, setTranslateX] = useState(0);
   const [translateY, setTranslateY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef({ startX: 0, startY: 0, startTranslateX: 0, startTranslateY: 0, didDrag: false });
+  const [initialized, setInitialized] = useState(false);
+  const dragRef = useRef({ startX: 0, startY: 0, startTranslateX: 0, startTranslateY: 0, didDrag: false, containerWidth: 0, containerHeight: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Only start drag on left click
+  // Center the map on first render once the container has a size
+  useEffect(() => {
+    if (initialized) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    if (cw === 0 || ch === 0) return;
+    const { x, y } = computeInitialPan(cw, ch);
+    const clamped = clampPan(x, y, cw, ch);
+    setTranslateX(clamped.x);
+    setTranslateY(clamped.y);
+    setInitialized(true);
+  }, [initialized]);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    // Only start drag on primary button (left click / touch)
     if (e.button !== 0) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Cache container dimensions at drag start to avoid layout thrashing during moves
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+
     dragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
       startTranslateX: translateX,
       startTranslateY: translateY,
       didDrag: false,
+      containerWidth: cw,
+      containerHeight: ch,
     };
     setIsDragging(true);
+    // Capture pointer so moves/up fire on document even if pointer leaves the element
+    (e.target as Element).setPointerCapture(e.pointerId);
   }, [translateX, translateY]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDragging) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
@@ -61,31 +107,19 @@ export const GameBoard = () => {
     }
     dragRef.current.didDrag = true;
 
-    const container = containerRef.current;
-    if (!container) return;
+    const { containerWidth, containerHeight } = dragRef.current;
 
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
-
-    // Bound panning so the map doesn't go completely off screen
-    const minX = -(MAP_WIDTH - containerWidth * 0.3);
-    const maxX = containerWidth * 0.3;
-    const minY = -(MAP_HEIGHT - containerHeight * 0.3);
-    const maxY = containerHeight * 0.3;
-
-    const newX = Math.max(minX, Math.min(maxX, dragRef.current.startTranslateX + dx));
-    const newY = Math.max(minY, Math.min(maxY, dragRef.current.startTranslateY + dy));
+    const rawX = dragRef.current.startTranslateX + dx;
+    const rawY = dragRef.current.startTranslateY + dy;
+    const { x: newX, y: newY } = clampPan(rawX, rawY, containerWidth, containerHeight);
 
     setTranslateX(newX);
     setTranslateY(newY);
   }, [isDragging]);
 
-  const handleMouseUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
     setIsDragging(false);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsDragging(false);
+    (e.target as Element).releasePointerCapture(e.pointerId);
   }, []);
 
   if (!gameState) return <div className="loading">Loading...</div>;
@@ -139,10 +173,9 @@ export const GameBoard = () => {
           <div
             className={`map-container${isDragging ? ' dragging' : ''}`}
             ref={containerRef}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
           >
             <HonorTrack />
             <AllianceDisplay />
