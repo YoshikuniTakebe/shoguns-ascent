@@ -17,14 +17,14 @@ const MAP_WIDTH = 1672;
 const MAP_HEIGHT = 941;
 
 const positions: Record<string, { x: number; y: number }> = {
-  hokkaido: { x: 1229, y: 242 },
-  oshu: { x: 1195, y: 439 },
-  edo: { x: 1106, y: 593 },
-  kanto: { x: 1064, y: 651 },
-  kansai: { x: 784, y: 686 },
-  nagato: { x: 542, y: 623 },
-  shikoku: { x: 722, y: 827 },
-  kyushu: { x: 404, y: 822 },
+  hokkaido: { x: 1229, y: 218 },
+  oshu: { x: 1195, y: 419 },
+  edo: { x: 1058, y: 573 },
+  kanto: { x: 1229, y: 637 },
+  kansai: { x: 774, y: 674 },
+  nagato: { x: 448, y: 605 },
+  shikoku: { x: 632, y: 807 },
+  kyushu: { x: 278, y: 808 },
 };
 
 const DRAG_DEAD_ZONE = 5;
