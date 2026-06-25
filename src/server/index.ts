@@ -15,6 +15,12 @@ import {
   moveForces,
   advancePhase,
   advancePlayer,
+  setupSeason,
+  resolveKamiTurn,
+  initiateWarPhase,
+  cleanupSeason,
+  resolveWinter,
+  buySeasonCard,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 
@@ -185,11 +191,58 @@ wss.on('connection', (ws: WebSocket) => {
           break;
         }
 
+        case 'SETUP_SEASON': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = setupSeason(l.gameState, l.gameState.currentSeason);
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_KAMI': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = resolveKamiTurn(l.gameState);
+          broadcastState(l);
+          break;
+        }
+
+        case 'INITIATE_WAR': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = initiateWarPhase(l.gameState);
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_BATTLE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = resolveNextBattle(l.gameState);
+          broadcastState(l);
+          break;
+        }
+
+        case 'CLEANUP_SEASON': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = cleanupSeason(l.gameState);
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_WINTER': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = resolveWinter(l.gameState);
+          broadcastState(l);
+          break;
+        }
+
         case 'PLACE_FIGURE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           // Place figure is handled as part of recruit mandate resolution
-          // For now, broadcast current state
           broadcastState(l);
           break;
         }
@@ -197,8 +250,9 @@ wss.on('connection', (ws: WebSocket) => {
         case 'BUY_CARD': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
-          // Buy card is handled as part of train mandate resolution
-          // For now, broadcast current state
+          const { cardId } = data.payload || {};
+          if (!cardId) return;
+          l.gameState = buySeasonCard(l.gameState, data.playerId, cardId);
           broadcastState(l);
           break;
         }

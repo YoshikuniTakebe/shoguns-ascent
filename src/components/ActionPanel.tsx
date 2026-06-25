@@ -7,7 +7,7 @@ export const ActionPanel = () => {
     gameState, localPlayerId, moveMode, toggleMoveMode,
     doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance,
     doSetupSeason, doBreakAlliances, doDrawMandateTiles, doChooseMandateTile,
-    doExecuteCurrentMandate, doResolveKami, doInitiateWar, doCleanupSeason,
+    doResolveKami, doInitiateWar, doCleanupSeason,
     doResolveWinter,
   } = useGameStore();
 
@@ -140,16 +140,11 @@ export const ActionPanel = () => {
             </div>
           )}
 
-          {/* Current mandate execution */}
+          {/* Last executed mandate display */}
           {gameState.mandatesThisTurn.length > 0 && (
             <div className="current-mandate">
-              <h5>Current Mandate: {gameState.mandatesThisTurn[gameState.mandatesThisTurn.length - 1]?.type.toUpperCase()}</h5>
-              <button
-                className="btn-primary"
-                onClick={() => doExecuteCurrentMandate(gameState.mandatesThisTurn[gameState.mandatesThisTurn.length - 1].type)}
-              >
-                Execute Mandate
-              </button>
+              <h5>Last Mandate: {gameState.mandatesThisTurn[gameState.mandatesThisTurn.length - 1]?.type.toUpperCase()}</h5>
+              <p className="mandate-info">Mandate resolved for all players in order.</p>
             </div>
           )}
 

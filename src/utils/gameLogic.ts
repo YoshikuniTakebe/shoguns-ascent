@@ -64,6 +64,7 @@ export function createInitialGameState(
       allies: [],
       hostages: [],
       isReady: false,
+      allianceSeasons: 0,
     };
   });
 
@@ -429,8 +430,19 @@ function executeRecruit(state: GameState, issuerId: string): GameState {
 function executeMarshal(state: GameState, issuerId: string): GameState {
   // Marshal: Each player may move 1 figure to an adjacent province
   // Bonus for issuer/ally: +1 extra move
-  // The actual movement is handled by moveForces() calls from the UI
-  const newState: GameState = { ...state, log: [...state.log, `Marshal mandate issued by ${state.players.find((p) => p.id === issuerId)?.name} - players may move figures`] };
+  // Movement is UI-driven: each player uses moveForces() through the UI.
+  // In hotseat mode, the current player can move during their turn.
+  const issuer = state.players.find((p) => p.id === issuerId);
+  const bonusPlayers = state.players
+    .filter((p) => isIssuerOrAlly(state, p.id, issuerId))
+    .map((p) => p.name);
+  const bonusNote = bonusPlayers.length > 0
+    ? ` (${bonusPlayers.join(', ')} may move 1 additional figure)`
+    : '';
+  const newState: GameState = {
+    ...state,
+    log: [...state.log, `Marshal mandate issued by ${issuer?.name} - all players may move 1 figure to an adjacent province${bonusNote}. Use Move Forces to execute.`],
+  };
   return newState;
 }
 
@@ -447,8 +459,37 @@ function executeTrain(state: GameState, issuerId: string): GameState {
   const newState: GameState = {
     ...state,
     players: bonusPlayers,
-    log: [...state.log, 'Train mandate issued - players may buy 1 season card from the market'],
+    log: [...state.log, 'Train mandate issued - players may buy 1 season card from the market. Use the Season Cards Market to purchase.'],
   };
+  return newState;
+}
+
+export function buySeasonCard(state: GameState, playerId: string, cardId: string): GameState {
+  const card = state.seasonCardsDeck.find((c) => c.id === cardId);
+  if (!card) return state;
+
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return state;
+
+  // Check if player can afford the card
+  if (player.coins < card.cost) return state;
+
+  const newState: GameState = {
+    ...state,
+    players: state.players.map((p) => {
+      if (p.id === playerId) {
+        return {
+          ...p,
+          coins: p.coins - card.cost,
+          seasonCards: [...p.seasonCards, card],
+        };
+      }
+      return { ...p };
+    }),
+    seasonCardsDeck: state.seasonCardsDeck.filter((c) => c.id !== cardId),
+    log: [...state.log, `${player.name} buys ${card.name} for ${card.cost} coin(s)`],
+  };
+
   return newState;
 }
 
@@ -724,6 +765,17 @@ export function submitWarTacticBids(
   const battle = newState.activeBattles.find((b) => b.provinceId === provinceId);
   if (!battle || battle.resolved) return state;
 
+  // Validate bids against player coin balances
+  for (const playerId of Object.keys(bids)) {
+    const player = state.players.find((p) => p.id === playerId);
+    if (!player) continue;
+    const totalBid = Object.values(bids[playerId]).reduce((sum, v) => sum + v, 0);
+    if (totalBid > player.coins) {
+      // Reject bids that exceed coin balance - return unchanged state
+      return state;
+    }
+  }
+
   battle.warTacticBids = bids;
   return newState;
 }
@@ -839,19 +891,33 @@ export function resolveNextBattle(state: GameState): GameState {
   let maxForce = 0;
   let winnerId: string | null = null;
 
+  // Determine who won the hire-ronin tactic (using honor tiebreaker for equal bids)
+  let hireRoninWinner: string | null = null;
+  {
+    let highestRoninBid = 0;
+    battle.participants.forEach((pid) => {
+      const playerBids = battle.warTacticBids[pid];
+      const bid = playerBids?.['hire-ronin'] || 0;
+      if (bid > highestRoninBid) {
+        highestRoninBid = bid;
+        hireRoninWinner = pid;
+      } else if (bid === highestRoninBid && bid > 0) {
+        // Tie-breaking by honor (higher honor wins)
+        const currentHonor = newState.honorTrack.indexOf(hireRoninWinner!);
+        const challengerHonor = newState.honorTrack.indexOf(pid);
+        if (challengerHonor > currentHonor) {
+          hireRoninWinner = pid;
+        }
+      }
+    });
+  }
+
   battle.participants.forEach((pid) => {
     const player = newState.players.find((p) => p.id === pid)!;
     let force = calculateForce(finalProvince, pid);
-    // Add ronin force if this player won the hire-ronin tactic
-    const hireRoninBid = battle.warTacticBids[pid]?.['hire-ronin'] || 0;
-    if (hireRoninBid > 0) {
-      const isHighest = battle.participants.every((otherId) => {
-        if (otherId === pid) return true;
-        return (battle.warTacticBids[otherId]?.['hire-ronin'] || 0) <= hireRoninBid;
-      });
-      if (isHighest) {
-        force += player.ronin;
-      }
+    // Add ronin force only if this player won the hire-ronin tactic
+    if (pid === hireRoninWinner) {
+      force += player.ronin;
     }
     if (force > maxForce) {
       maxForce = force;
@@ -934,7 +1000,17 @@ export function resolveNextBattle(state: GameState): GameState {
 export function cleanupSeason(state: GameState): GameState {
   const newState: GameState = {
     ...state,
-    players: state.players.map((p) => ({ ...p, ronin: 0, coins: 0, allies: [...p.allies], seasonCards: [...p.seasonCards], warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages] })),
+    players: state.players.map((p) => ({
+      ...p,
+      ronin: 0,
+      coins: 0,
+      allies: [...p.allies],
+      seasonCards: [...p.seasonCards],
+      warProvinceTokens: [...p.warProvinceTokens],
+      hostages: [...p.hostages],
+      // Increment allianceSeasons if player has an ally this season
+      allianceSeasons: p.allies.length > 0 ? p.allianceSeasons + 1 : p.allianceSeasons,
+    })),
     temples: state.temples.map((t) => ({ ...t, figures: [] })),
     provinces: { ...state.provinces },
     mandatesDeck: shuffleMandates(),
@@ -1081,7 +1157,8 @@ function scoreWinterUpgrade(gameState: GameState, player: Player, card: SeasonCa
       return count * 3;
     }
     case 'au-form-of-the-kindred': {
-      return player.allies.length > 0 ? 9 : 0;
+      // 3 VP per season the player had an ally (max 9 over 3 seasons)
+      return Math.min(player.allianceSeasons, 3) * 3;
     }
     case 'au-form-of-the-kitsune': {
       let fortCount = 0;
