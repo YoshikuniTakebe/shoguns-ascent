@@ -32,8 +32,8 @@ export const MainMenu = () => {
   return (
     <div className="main-menu">
       <div className="menu-header">
-        <h1 className="game-title">SHOGUN&apos;S ASCENT</h1>
-        <p className="game-subtitle">A Game of War, Honor &amp; Betrayal in Feudal Japan</p>
+        <h1 className="game-title">Noboru taiy&#x14D;</h1>
+        <p className="game-subtitle">The Rising Sun of the Shogunate</p>
       </div>
 
       {mode === 'select' && (
