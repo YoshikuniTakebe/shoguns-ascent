@@ -65,15 +65,14 @@ export const GameBoard = () => {
         </div>
       </div>
 
-      <PoliticsTrack />
-      <TemplePanel />
-
       <div className="game-content">
         <div className="left-panel">
           <PlayerPanel />
           <HonorTrack />
         </div>
         <div className="center-panel">
+          <PoliticsTrack />
+          <TemplePanel />
           <div className="map-container">
             <JapanMapBackground />
             <svg viewBox="0 0 800 600" className="japan-map">
