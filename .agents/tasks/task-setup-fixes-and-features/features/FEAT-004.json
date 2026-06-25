@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "fix",
   "description": "Address review issues: fix i18n interpolation to use replaceAll, translate hardcoded TemplePanel string, update harvest mandate description",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/i18n/index.ts, change both replace() calls in the t() function and useT() hook to use replaceAll() so repeated placeholders are substituted correctly",
     "In src/components/TemplePanel.tsx, import useT from '../i18n' and replace the hardcoded 'Shinto Figures' heading with t('kamiModal.shintoFigures')",
@@ -20,5 +20,5 @@
   ],
   "verification": ["npx tsc -b && npx vite build"],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All 3 review issues fixed. Issue #4 (language default is Spanish) was not changed as it was an intentional design decision documented in FEAT-003 findings. The executeHarvest function gives province harvest rewards to the strongest player per province (with honor tiebreaker), so the updated mandate description accurately reflects the implementation."
 }
