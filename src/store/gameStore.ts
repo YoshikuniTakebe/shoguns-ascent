@@ -206,9 +206,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     let ns = buySeasonCard(gameState, apid, cardId);
-    // After buying, clear trainMandateActive and advance to next player
-    ns = { ...ns, trainMandateActive: false };
-    ns = advancePlayer(ns);
+    // Advance to next player in train resolution order
+    ns = {
+      ...ns,
+      trainResolutionIndex: ns.trainResolutionIndex + 1,
+      log: [...ns.log],
+    };
+    // Use advanceTrainResolution logic inline: if all players done, clear train and advance mandate
+    if (ns.trainResolutionIndex >= ns.trainResolutionOrder.length) {
+      ns = {
+        ...ns,
+        trainMandateActive: false,
+        trainResolutionOrder: [],
+        trainResolutionIndex: 0,
+        trainMandateIssuerId: null,
+      };
+      ns = advancePlayer(ns);
+    } else {
+      // Move to next player in resolution order
+      const nextPlayerId = ns.trainResolutionOrder[ns.trainResolutionIndex];
+      const nextPlayerIdx = ns.players.findIndex(p => p.id === nextPlayerId);
+      if (nextPlayerIdx >= 0) {
+        ns = { ...ns, currentPlayerIndex: nextPlayerIdx };
+      }
+    }
     set({ gameState: ns });
   },
 
@@ -217,8 +238,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState } = get();
     if (!gameState) return;
     let ns = skipTrainPurchase(gameState);
-    // After skipping, advance to next player
-    ns = advancePlayer(ns);
+    // If train mandate is now resolved (all players done), advance to next mandate turn
+    if (!ns.trainMandateActive) {
+      ns = advancePlayer(ns);
+    }
     set({ gameState: ns });
   },
 

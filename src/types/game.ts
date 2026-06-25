@@ -164,6 +164,9 @@ export interface GameState {
   honorTrack: string[];
   warProvinceSlots: WarProvinceSlot[];
   trainMandateActive: boolean;
+  trainResolutionOrder: string[];
+  trainResolutionIndex: number;
+  trainMandateIssuerId: string | null;
   gameOver: boolean;
   winner?: string;
   log: string[];

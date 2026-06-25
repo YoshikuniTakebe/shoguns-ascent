@@ -75,29 +75,34 @@ export function buildSeasonDeck(
     }
   }
 
+  // Track IDs already added to avoid duplicates across Kickstarter/Monster Pack pools (Issue 4 fix)
+  const addedIds = new Set(result.map(c => c.id));
+
   // Add random Kickstarter Exclusive cards
   if (deckConfig.kickstarterCards > 0) {
     const kickstarterPool = seasonCards.filter(c => {
       const groups = c.group.split('/').map(g => g.trim());
-      return groups.includes('Kickstarter Exclusive');
+      return groups.includes('Kickstarter Exclusive') && !addedIds.has(c.id);
     });
     const shuffledKS = shuffle(kickstarterPool);
     const ksCount = Math.min(deckConfig.kickstarterCards, shuffledKS.length);
     for (let i = 0; i < ksCount; i++) {
       result.push(shuffledKS[i]);
+      addedIds.add(shuffledKS[i].id);
     }
   }
 
-  // Add random Monster Pack cards
+  // Add random Monster Pack cards (excluding any already added from Kickstarter pool)
   if (deckConfig.monsterPackCards > 0) {
     const monsterPackPool = seasonCards.filter(c => {
       const groups = c.group.split('/').map(g => g.trim());
-      return groups.includes('Monster Pack');
+      return groups.includes('Monster Pack') && !addedIds.has(c.id);
     });
     const shuffledMP = shuffle(monsterPackPool);
     const mpCount = Math.min(deckConfig.monsterPackCards, shuffledMP.length);
     for (let i = 0; i < mpCount; i++) {
       result.push(shuffledMP[i]);
+      addedIds.add(shuffledMP[i].id);
     }
   }
 
@@ -182,9 +187,13 @@ export function createInitialGameState(
   // Build season decks from config
   const config: DeckConfig = deckConfig ?? { chosenDeck: 'random', kickstarterCards: 0, monsterPackCards: 0 };
   const playerClanIds = players.map(p => p.clanId);
-  const springDeck = buildSeasonDeck(SPRING_CARDS, config, playerClanIds);
-  const summerDeck = buildSeasonDeck(SUMMER_CARDS, config, playerClanIds);
-  const autumnDeck = buildSeasonDeck(AUTUMN_CARDS, config, playerClanIds);
+  // Resolve 'random' deck choice once for the entire game (Issue 3 fix)
+  const resolvedConfig: DeckConfig = config.chosenDeck === 'random'
+    ? { ...config, chosenDeck: DECK_GROUPS[Math.floor(Math.random() * DECK_GROUPS.length)] }
+    : config;
+  const springDeck = buildSeasonDeck(SPRING_CARDS, resolvedConfig, playerClanIds);
+  const summerDeck = buildSeasonDeck(SUMMER_CARDS, resolvedConfig, playerClanIds);
+  const autumnDeck = buildSeasonDeck(AUTUMN_CARDS, resolvedConfig, playerClanIds);
 
   const state: GameState = {
     id: generateId(),
@@ -214,6 +223,9 @@ export function createInitialGameState(
     honorTrack,
     warProvinceSlots: [],
     trainMandateActive: false,
+    trainResolutionOrder: [],
+    trainResolutionIndex: 0,
+    trainMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
     hostId,
@@ -415,7 +427,7 @@ export function drawMandateTiles(state: GameState): GameState {
 }
 
 export function chooseMandateTile(state: GameState, mandate: MandateType, playerId: string): GameState {
-  let newState: GameState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [...state.drawnMandates], trainMandateActive: false };
+  let newState: GameState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [...state.drawnMandates] };
   const chosenIdx = newState.drawnMandates.indexOf(mandate);
   if (chosenIdx === -1) return state;
 
@@ -548,12 +560,23 @@ function executeTrain(state: GameState, issuerId: string): GameState {
     }
     return { ...p };
   });
+  // Set up resolution order so ALL players get the buy/skip opportunity (Issue 1 fix)
+  const resolutionOrder = getResolutionOrder(state, issuerId);
   const newState: GameState = {
     ...state,
     players: bonusPlayers,
     trainMandateActive: true,
-    log: [...state.log, 'Train mandate issued - players may buy 1 season card from the market. Use the Season Cards Market to purchase.'],
+    trainResolutionOrder: resolutionOrder,
+    trainResolutionIndex: 0,
+    trainMandateIssuerId: issuerId,
+    log: [...state.log, 'Train mandate issued - all players may buy 1 season card from the market in resolution order.'],
   };
+  // Set currentPlayerIndex to the first player in resolution order
+  const firstPlayerId = resolutionOrder[0];
+  const firstPlayerIdx = newState.players.findIndex(p => p.id === firstPlayerId);
+  if (firstPlayerIdx >= 0) {
+    newState.currentPlayerIndex = firstPlayerIdx;
+  }
   return newState;
 }
 
@@ -1139,6 +1162,9 @@ export function cleanupSeason(state: GameState): GameState {
     allianceProposals: [],
     politicsMandateCount: 0,
     trainMandateActive: false,
+    trainResolutionOrder: [],
+    trainResolutionIndex: 0,
+    trainMandateIssuerId: null,
     teaTurnIndex: 0,
     log: [...state.log, 'Cleanup: Ronin and coins discarded, Shinto returned from temples'],
   };
@@ -1389,11 +1415,9 @@ export function advancePhase(state: GameState): GameState {
 
   switch (newState.currentPhase) {
     case 'seasonSetup':
-      newState.currentPhase = 'tea';
-      newState.currentPlayerIndex = 0;
-      newState.teaTurnIndex = 0;
-      newState = breakAllAlliances(newState);
-      newState.log = [...newState.log, 'Tea Ceremony Phase begins'];
+      // Note: This case is kept as a safety fallback, but setupSeason() already
+      // transitions directly to 'tea'. In normal flow, this is unreachable.
+      newState = setupSeason(newState, newState.currentSeason);
       break;
     case 'tea':
       newState.currentPhase = 'politics';
@@ -1449,7 +1473,7 @@ export function advancePlayer(state: GameState): GameState {
   }
 
   // Politics phase advancement
-  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, log: [...state.log] };
+  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, log: [...state.log] };
   newState.politicsMandateCount += 1;
 
   // Check if we need a kami turn
@@ -1493,16 +1517,43 @@ export function advanceTeaPlayer(state: GameState): GameState {
 
 /**
  * Skip the current Train mandate purchase opportunity.
- * In hotseat mode, this just clears trainMandateActive so the next
- * mandate can proceed.
+ * Advances to the next player in the train resolution order,
+ * or clears the train state if all players have had their turn.
  */
 export function skipTrainPurchase(state: GameState): GameState {
   if (!state.trainMandateActive) return state;
-  return {
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const newState: GameState = {
     ...state,
-    trainMandateActive: false,
-    log: [...state.log, `${state.players[state.currentPlayerIndex]?.name ?? 'Player'} skips card purchase`],
+    trainResolutionIndex: state.trainResolutionIndex + 1,
+    log: [...state.log, `${currentPlayer?.name ?? 'Player'} skips card purchase`],
   };
+  return advanceTrainResolution(newState);
+}
+
+/**
+ * After a player buys or skips during a Train mandate, advance to the
+ * next player in resolution order. If all players have had their turn,
+ * clear the train state.
+ */
+function advanceTrainResolution(state: GameState): GameState {
+  if (state.trainResolutionIndex >= state.trainResolutionOrder.length) {
+    // All players have had their turn - clear train mandate
+    return {
+      ...state,
+      trainMandateActive: false,
+      trainResolutionOrder: [],
+      trainResolutionIndex: 0,
+      trainMandateIssuerId: null,
+    };
+  }
+  // Set currentPlayerIndex to the next player in resolution order
+  const nextPlayerId = state.trainResolutionOrder[state.trainResolutionIndex];
+  const nextPlayerIdx = state.players.findIndex(p => p.id === nextPlayerId);
+  if (nextPlayerIdx >= 0) {
+    return { ...state, currentPlayerIndex: nextPlayerIdx };
+  }
+  return state;
 }
 
 export function getCurrentPlayer(state: GameState): Player | undefined {

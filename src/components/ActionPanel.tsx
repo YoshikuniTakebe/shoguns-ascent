@@ -115,7 +115,10 @@ export const ActionPanel = () => {
           {/* Train mandate active - show skip option */}
           {gameState.trainMandateActive && (
             <div className="train-active">
-              <p className="train-notice">Train mandate active - buy a card from the Season Market or skip.</p>
+              <p className="train-notice">
+                Train mandate - {cp?.name} may buy a card from the Season Market or skip.
+                (Player {gameState.trainResolutionIndex + 1} of {gameState.trainResolutionOrder.length})
+              </p>
               <button className="btn-secondary" onClick={doSkipTrainPurchase}>
                 Skip Card Purchase
               </button>
