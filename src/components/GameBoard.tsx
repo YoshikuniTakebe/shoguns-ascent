@@ -68,12 +68,12 @@ export const GameBoard = () => {
       <div className="game-content">
         <div className="left-panel">
           <PlayerPanel />
-          <HonorTrack />
         </div>
         <div className="center-panel">
           <PoliticsTrack />
           <TemplePanel />
           <div className="map-container">
+            <HonorTrack />
             <JapanMapBackground />
             <svg viewBox="0 0 800 600" className="japan-map">
               {PROVINCES_DATA.map(r =>
