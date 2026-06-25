@@ -16,6 +16,10 @@ export const SeasonCardsMarket = () => {
   const activePlayerId = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
   const activePlayer = gameState.players.find(p => p.id === activePlayerId);
 
+  const isSolOrLuna = activePlayer
+    ? (activePlayer.clanId === 'sol' || activePlayer.clanId === 'luna')
+    : false;
+
   const cardTypeLabel: Record<string, string> = {
     virtue: 'Virtue',
     monster: 'Monster',
@@ -26,11 +30,38 @@ export const SeasonCardsMarket = () => {
 
   const canBuy = gameState.currentPhase === 'politics' && gameState.trainMandateActive;
 
+  const isDynastyInvasionMonster = (card: SeasonCard): boolean => {
+    const groups = card.group.split('/').map(g => g.trim());
+    return card.cardType === 'monster' && groups.includes('Dynasty Invasion');
+  };
+
+  const getPurchaseRestriction = (card: SeasonCard): string | null => {
+    if (card.cardType !== 'monster') return null;
+
+    const dynastyInvasion = isDynastyInvasionMonster(card);
+
+    if (isSolOrLuna) {
+      // Sol/Luna can ONLY buy Dynasty Invasion monsters, not other monsters
+      if (!dynastyInvasion) {
+        return 'Sol/Luna can only buy Dynasty Invasion monsters';
+      }
+    } else {
+      // Non-Sol/Luna cannot buy Dynasty Invasion monsters
+      if (dynastyInvasion) {
+        return 'Only Sol/Luna clans can buy Dynasty Invasion monsters';
+      }
+    }
+
+    return null;
+  };
+
   const renderCard = (card: SeasonCard) => {
     const canAfford = activePlayer ? activePlayer.coins >= card.cost : false;
+    const restriction = getPurchaseRestriction(card);
+    const isRestricted = restriction !== null;
 
     return (
-      <div key={card.id} className="season-card-item">
+      <div key={card.id} className={`season-card-item${isRestricted ? ' card-restricted' : ''}`}>
         <div className="card-header">
           <span className="card-name">{card.name}</span>
           <span className="card-cost">{card.cost} coins</span>
@@ -41,13 +72,17 @@ export const SeasonCardsMarket = () => {
           <div className="card-force">Force: {card.force}</div>
         )}
         {canBuy && (
-          <button
-            className="btn-small btn-buy-card"
-            disabled={!canAfford}
-            onClick={() => doBuySeasonCard(card.id)}
-          >
-            {canAfford ? 'Buy' : 'Cannot afford'}
-          </button>
+          isRestricted ? (
+            <div className="card-restriction-text">{restriction}</div>
+          ) : (
+            <button
+              className="btn-small btn-buy-card"
+              disabled={!canAfford}
+              onClick={() => doBuySeasonCard(card.id)}
+            >
+              {canAfford ? 'Buy' : 'Cannot afford'}
+            </button>
+          )
         )}
       </div>
     );

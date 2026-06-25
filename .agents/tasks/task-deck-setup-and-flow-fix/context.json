@@ -1,0 +1,25 @@
+{
+  "project_type": "React board game SPA with TypeScript, Vite, Zustand state management",
+  "language": "TypeScript / TSX",
+  "build_system": "Vite with TypeScript compiler (tsc -b)",
+  "test_framework": "None (no test files found)",
+  "build_command": "npx tsc -b && npx vite build",
+  "test_command": "npx tsc -b (type-checking only, no tests exist)",
+  "verification_instructions": "1. Run npx tsc -b to verify no type errors. 2. Run npx vite build to verify the bundle compiles. 3. Verify season card arrays and deck building logic handles all groups correctly.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install (node_modules already present)",
+  "environment_constraints": "No test framework installed. Verification via TypeScript compilation and Vite build only.",
+  "contribution_requirements": "Push directly to main branch.",
+  "key_patterns": "Zustand store in src/store/gameStore.ts with actions that call pure functions from src/utils/gameLogic.ts. Types/constants in src/types/game.ts. Components in src/components/. Game state flows: createInitialGameState() -> setupSeason() -> phase transitions via advancePhase(). The createGame store action calls createInitialGameState and currently only passes player names/clans. Season cards are defined as constants (SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS) in game.ts with group field indicating which deck they belong to.",
+  "relevant_files": [
+    "src/types/game.ts",
+    "src/utils/gameLogic.ts",
+    "src/store/gameStore.ts",
+    "src/components/MainMenu.tsx",
+    "src/components/SeasonCardsMarket.tsx",
+    "src/components/ActionPanel.tsx",
+    "src/components/GameBoard.tsx",
+    "src/App.tsx"
+  ],
+  "directory_structure": "src/types/game.ts (types + card data constants), src/utils/gameLogic.ts (pure game logic functions), src/store/gameStore.ts (Zustand store with UI actions), src/components/ (React components), public/ (static assets)"
+}

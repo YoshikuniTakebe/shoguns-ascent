@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix the game flow so the game is actually playable end-to-end from setup through all 3 seasons to Winter scoring. Currently the flow is broken - the season setup phase doesn't auto-advance, the Tea phase doesn't advance to Politics properly, the politics phase mandate count and kami turns are confusing, and the war/cleanup/season-transition flow doesn't work smoothly in hotseat mode.",
+  "status": "pending",
+  "steps": [
+    "1. In src/utils/gameLogic.ts, fix the season setup flow: createInitialGameState should set currentPhase to 'seasonSetup' and the first call to setupSeason (via doSetupSeason in store) should transition to 'tea' phase automatically after setup is done.",
+    "2. Fix the Tea Ceremony phase advancement: In advancePlayer when currentPhase is 'tea', track teaTurnIndex properly. When all players have had a tea turn (teaTurnIndex >= players.length), auto-advance to 'politics' phase. Currently doAdvancePlayer is generic and doesn't handle tea-specific logic.",
+    "3. Fix the Politics phase flow: The current advancePlayer function increments politicsMandateCount and checks isKamiTurn, but the actual flow should be: current player draws 4 mandate tiles, picks one, mandate executes for all players, then move to next player. The mandate count should only increment after a mandate is fully resolved. Ensure the pattern is: 3 mandates -> kami turn -> 2 mandates -> kami turn -> 2 mandates -> kami turn -> war phase (total 7 mandates with 3 kami turns).",
+    "4. Fix the Train mandate: currently trainMandateActive is set to true but never reset after players finish buying. Add logic so that after a Train mandate, each player (in resolution order) gets a chance to buy one card. In hotseat mode, after a player buys or skips, move to next. The trainMandateActive flag should be cleared when moving to the next mandate turn.",
+    "5. Fix the War phase initiation: currently advancePhase from 'politics' calls initiateWarPhase but doesn't properly handle the case where there are no battles (should skip to cleanup). Also fix the war phase so it properly resolves all battles in sequence and then auto-advances to cleanup.",
+    "6. Fix the Cleanup -> next season transition: The current cleanup case in advancePhase calls cleanupSeason and then setupSeason for the next season but sets currentPhase to 'tea' directly - it should go through 'seasonSetup' first (which then distributes income, places war tokens, etc.) or inline all that. Make sure the full 3-season cycle works: Spring -> Summer -> Autumn -> Winter.",
+    "7. In src/components/ActionPanel.tsx, update the UI to properly reflect the fixed flow: show clear phase indicators, proper buttons for each phase, and handle the tea->politics->war->cleanup->next season cycle smoothly. Add a 'Skip Card Purchase' button for the Train mandate when trainMandateActive is true.",
+    "8. Ensure the game properly reaches Winter after Autumn's war/cleanup phase, resolves winter scoring, and shows the game over screen with winner."
+  ],
+  "acceptance_criteria": [
+    "Running npx tsc -b produces no type errors",
+    "Running npx vite build succeeds",
+    "Game can be started from MainMenu and immediately enters Season Setup for Spring",
+    "Season Setup transitions to Tea Ceremony",
+    "Tea Ceremony allows alliances and advances to Politics when all players have had their turn",
+    "Politics phase lets current player draw mandates, pick one, and resolves it before moving to next player",
+    "Train mandate allows card purchase with a skip option, then advances",
+    "After 7 mandates (with kami turns at 3, 5, 7), war phase begins",
+    "War phase resolves battles and advances to cleanup",
+    "Cleanup advances to next season (Summer then Autumn then Winter)",
+    "Winter resolves final scoring and shows game over"
+  ],
+  "verification": [
+    "npx tsc -b",
+    "npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

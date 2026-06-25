@@ -124,6 +124,18 @@ export interface WarProvinceSlot {
   season: Season;
 }
 
+// --- Deck Configuration ---
+
+export type DeckName = 'Archway' | 'Tower' | 'Teapot' | 'Horseman' | 'Ship' | 'Mountain';
+
+export const DECK_GROUPS: DeckName[] = ['Archway', 'Tower', 'Teapot', 'Horseman', 'Ship', 'Mountain'];
+
+export interface DeckConfig {
+  chosenDeck: DeckName | 'random';
+  kickstarterCards: 0 | 1 | 2;
+  monsterPackCards: 0 | 1 | 2;
+}
+
 export interface GameState {
   id: string;
   mode: 'online' | 'hotseat';
@@ -139,6 +151,9 @@ export interface GameState {
   mandateChoicePhase: boolean;
   activeBattles: Battle[];
   seasonCardsDeck: SeasonCard[];
+  springDeck: SeasonCard[];
+  summerDeck: SeasonCard[];
+  autumnDeck: SeasonCard[];
   turnOrder: string[];
   allianceProposals: AllianceProposal[];
   politicsMandateCount: number;

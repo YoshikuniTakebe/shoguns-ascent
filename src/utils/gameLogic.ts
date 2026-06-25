@@ -1,11 +1,12 @@
 import type {
   GameState, Player, Province, Season, MandateType,
   Battle, Figure, Temple, WarProvinceSlot, SeasonCard,
-  AllianceProposal, Hostage,
+  AllianceProposal, Hostage, DeckConfig, DeckName,
 } from '../types/game';
 import {
   CLANS, PROVINCES_DATA, HOME_PROVINCES, WAR_TACTICS,
   KAMI_DATA, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS,
+  DECK_GROUPS,
 } from '../types/game';
 
 // ============================================================
@@ -30,13 +31,88 @@ function createFigure(type: Figure['type'], owner: string): Figure {
 }
 
 // ============================================================
+// Deck Building
+// ============================================================
+
+export function buildSeasonDeck(
+  seasonCards: SeasonCard[],
+  deckConfig: DeckConfig,
+  playerClanIds: string[]
+): SeasonCard[] {
+  // Determine the chosen deck group (resolve 'random')
+  const chosenDeck: DeckName = deckConfig.chosenDeck === 'random'
+    ? DECK_GROUPS[Math.floor(Math.random() * DECK_GROUPS.length)]
+    : deckConfig.chosenDeck;
+
+  const result: SeasonCard[] = [];
+  const hasDynastyInvasion = playerClanIds.some(id => id === 'sol' || id === 'luna');
+
+  for (const card of seasonCards) {
+    const cardGroups = card.group.split('/').map(g => g.trim());
+
+    // Always include Core cards
+    if (cardGroups.includes('Core')) {
+      result.push(card);
+      continue;
+    }
+
+    // Include Dynasty Invasion if Sol or Luna is playing
+    if (cardGroups.includes('Dynasty Invasion')) {
+      if (hasDynastyInvasion) {
+        result.push(card);
+      }
+      continue;
+    }
+
+    // Skip Kickstarter/Monster Pack here (handled separately below)
+    if (cardGroups.includes('Kickstarter Exclusive') || cardGroups.includes('Monster Pack')) {
+      continue;
+    }
+
+    // Include if any of the card's groups matches the chosen deck
+    if (cardGroups.some(g => g === chosenDeck)) {
+      result.push(card);
+    }
+  }
+
+  // Add random Kickstarter Exclusive cards
+  if (deckConfig.kickstarterCards > 0) {
+    const kickstarterPool = seasonCards.filter(c => {
+      const groups = c.group.split('/').map(g => g.trim());
+      return groups.includes('Kickstarter Exclusive');
+    });
+    const shuffledKS = shuffle(kickstarterPool);
+    const ksCount = Math.min(deckConfig.kickstarterCards, shuffledKS.length);
+    for (let i = 0; i < ksCount; i++) {
+      result.push(shuffledKS[i]);
+    }
+  }
+
+  // Add random Monster Pack cards
+  if (deckConfig.monsterPackCards > 0) {
+    const monsterPackPool = seasonCards.filter(c => {
+      const groups = c.group.split('/').map(g => g.trim());
+      return groups.includes('Monster Pack');
+    });
+    const shuffledMP = shuffle(monsterPackPool);
+    const mpCount = Math.min(deckConfig.monsterPackCards, shuffledMP.length);
+    for (let i = 0; i < mpCount; i++) {
+      result.push(shuffledMP[i]);
+    }
+  }
+
+  return result;
+}
+
+// ============================================================
 // Game Initialization
 // ============================================================
 
 export function createInitialGameState(
   players: { name: string; clanId: string }[],
   mode: 'online' | 'hotseat',
-  hostId?: string
+  hostId?: string,
+  deckConfig?: DeckConfig
 ): GameState {
   // Initialize provinces with empty figures
   const provinces: GameState['provinces'] = {};
@@ -103,6 +179,13 @@ export function createInitialGameState(
     .sort((a, b) => b.honor - a.honor)
     .map((p) => p.id);
 
+  // Build season decks from config
+  const config: DeckConfig = deckConfig ?? { chosenDeck: 'random', kickstarterCards: 0, monsterPackCards: 0 };
+  const playerClanIds = players.map(p => p.clanId);
+  const springDeck = buildSeasonDeck(SPRING_CARDS, config, playerClanIds);
+  const summerDeck = buildSeasonDeck(SUMMER_CARDS, config, playerClanIds);
+  const autumnDeck = buildSeasonDeck(AUTUMN_CARDS, config, playerClanIds);
+
   const state: GameState = {
     id: generateId(),
     mode,
@@ -117,7 +200,10 @@ export function createInitialGameState(
     drawnMandates: [],
     mandateChoicePhase: false,
     activeBattles: [],
-    seasonCardsDeck: [...SPRING_CARDS],
+    seasonCardsDeck: [...springDeck],
+    springDeck,
+    summerDeck,
+    autumnDeck,
     turnOrder,
     allianceProposals: [],
     politicsMandateCount: 0,
@@ -172,16 +258,16 @@ export function setupSeason(state: GameState, season: Season): GameState {
   }));
   newState.warProvinceSlots = warSlots;
 
-  // Set season cards for current season
+  // Set season cards for current season from pre-built decks
   switch (season) {
     case 'spring':
-      newState.seasonCardsDeck = [...SPRING_CARDS];
+      newState.seasonCardsDeck = [...newState.springDeck];
       break;
     case 'summer':
-      newState.seasonCardsDeck = [...SUMMER_CARDS];
+      newState.seasonCardsDeck = [...newState.summerDeck];
       break;
     case 'autumn':
-      newState.seasonCardsDeck = [...AUTUMN_CARDS];
+      newState.seasonCardsDeck = [...newState.autumnDeck];
       break;
   }
 
@@ -475,6 +561,22 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
 
   const player = state.players.find((p) => p.id === playerId);
   if (!player) return state;
+
+  // Enforce purchase restrictions for monsters
+  if (card.cardType === 'monster') {
+    const cardGroups = card.group.split('/').map(g => g.trim());
+    const isDynastyInvasion = cardGroups.includes('Dynasty Invasion');
+    const isSolOrLuna = player.clanId === 'sol' || player.clanId === 'luna';
+
+    if (isSolOrLuna && !isDynastyInvasion) {
+      // Sol/Luna can only buy Dynasty Invasion monsters
+      return state;
+    }
+    if (!isSolOrLuna && isDynastyInvasion) {
+      // Non-Sol/Luna cannot buy Dynasty Invasion monsters
+      return state;
+    }
+  }
 
   // Check if player can afford the card
   if (player.coins < card.cost) return state;

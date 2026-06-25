@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add deck configuration to the game setup screen and implement deck-building logic. The setup must let players choose Core + one expansion deck (Archway, Tower, Teapot, Horseman, Ship, Mountain) or random. Also add optional Dynasty Invasion auto-inclusion when Sol/Luna clans are selected, and optional Kickstarter Exclusive + Monster Pack expansion (0, 1, or 2 extra monster cards per season). Update createInitialGameState to accept these config options and build the correct season card deck filtered by groups and season.",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/types/game.ts, add a new interface DeckConfig with fields: chosenDeck (string - one of 'Archway','Tower','Teapot','Horseman','Ship','Mountain','random'), kickstarterCards (0|1|2 - number of Kickstarter Exclusive cards per season), monsterPackCards (0|1|2 - number of Monster Pack cards per season). Also add a helper type for deck names.",
+    "2. In src/types/game.ts, add a new type or export const DECK_GROUPS = ['Archway','Tower','Teapot','Horseman','Ship','Mountain'] for the UI to use.",
+    "3. In src/utils/gameLogic.ts, update createInitialGameState signature to accept a DeckConfig parameter. Implement buildSeasonDeck(season, deckConfig, playerClanIds) that: (a) Always includes cards with group 'Core', (b) Includes cards matching the chosen deck group (if random, pick one randomly), (c) If any player has clan 'sol' or 'luna', includes cards with group 'Dynasty Invasion' - these are Lucky Gods monsters ONLY purchasable by Sol/Luna, (d) From 'Kickstarter Exclusive' cards of the current season, randomly picks 0/1/2 based on config, (e) From 'Monster Pack' cards of the current season, randomly picks 0/1/2 based on config, (f) NOTE: Cards like 'Oni of Blood' (summer) belong to multiple groups (Archway/Horseman/Mountain/Ship/Tower) - include them if ANY of their groups matches the chosen deck. Same for Oni of Souls (summer: Archway/Teapot/Ship), Oni of Hate (autumn: Archway/Horseman/Teapot/Mountain/Ship), Oni of Spite (autumn: Archway/Horseman/Mountain/Ship/Tower).",
+    "4. Update setupSeason in src/utils/gameLogic.ts to use the built deck per season from the game state rather than raw SPRING_CARDS/SUMMER_CARDS/AUTUMN_CARDS. Store the full built decks for all 3 seasons in GameState at game creation time (add fields springDeck, summerDeck, autumnDeck to GameState interface in game.ts).",
+    "5. In src/store/gameStore.ts, update the createGame action to accept DeckConfig and pass it to createInitialGameState.",
+    "6. In src/components/MainMenu.tsx, add UI controls to the hotseat setup: (a) A deck selector dropdown with options for each deck group + 'Random', (b) Kickstarter Exclusive toggle (0, 1, or 2 per season), (c) Monster Pack toggle (0, 1, or 2 per season), (d) Show an info note that Dynasty Invasion is auto-included when Sol or Luna clans are selected. Pass these options to createGame.",
+    "7. In src/components/SeasonCardsMarket.tsx, add purchase restriction logic: (a) Sol/Luna clan players can ONLY buy monsters from the Dynasty Invasion group (Lucky Gods), they CANNOT buy other monsters, (b) Non-Sol/Luna players CANNOT buy Dynasty Invasion monsters, (c) All players can buy non-monster cards (virtues, upgrades, war upgrades, winter upgrades) regardless of clan. Show disabled state with reason text for restricted cards.",
+    "8. In src/utils/gameLogic.ts, update buySeasonCard to enforce the same purchase restrictions server-side: Sol/Luna can only buy Dynasty Invasion monsters, others cannot buy Dynasty Invasion monsters. Non-monster cards have no clan restriction."
+  ],
+  "acceptance_criteria": [
+    "Running npx tsc -b produces no type errors",
+    "Running npx vite build succeeds",
+    "GameState includes springDeck, summerDeck, autumnDeck arrays built from config",
+    "MainMenu shows deck selection UI with all 6 deck options + Random",
+    "MainMenu shows Kickstarter/Monster Pack card count selectors (0, 1, 2)",
+    "Dynasty Invasion cards are auto-included when Sol or Luna clan is in the game",
+    "Sol/Luna players cannot buy non-Dynasty-Invasion monsters in SeasonCardsMarket",
+    "Non-Sol/Luna players cannot buy Dynasty Invasion monsters in SeasonCardsMarket",
+    "Multi-group cards (Oni of Blood, Oni of Souls, Oni of Hate, Oni of Spite) are included if any of their groups matches the chosen deck"
+  ],
+  "verification": [
+    "npx tsc -b",
+    "npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

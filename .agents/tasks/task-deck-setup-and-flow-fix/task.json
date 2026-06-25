@@ -1,0 +1,7 @@
+{
+  "task_id": "task-deck-setup-and-flow-fix",
+  "task_description": "Add deck configuration to game setup (Core + expansion deck selection, Dynasty Invasion auto-inclusion for Sol/Luna, Kickstarter/Monster Pack optional cards), implement purchase restrictions for Sol/Luna clan monsters, and fix the entire game flow so the game is playable end-to-end through all seasons.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

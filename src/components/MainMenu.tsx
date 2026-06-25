@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS } from '../types/game';
+import { CLANS, DECK_GROUPS } from '../types/game';
+import type { DeckConfig, DeckName } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { DaimyoPortrait } from './DaimyoPortraits';
 
@@ -12,10 +13,21 @@ export const MainMenu = () => {
     Array.from({ length: 8 }, (_, i) => `Player ${i + 1}`)
   );
   const [clans, setClans] = useState(CLANS.map(c => c.id));
+  const [chosenDeck, setChosenDeck] = useState<DeckName | 'random'>('random');
+  const [kickstarterCards, setKickstarterCards] = useState<0 | 1 | 2>(0);
+  const [monsterPackCards, setMonsterPackCards] = useState<0 | 1 | 2>(0);
   const [url, setUrl] = useState('ws://localhost:3001');
   const [oName, setOName] = useState('');
   const [oClan, setOClan] = useState('koi');
   const [lid, setLid] = useState('');
+
+  const hasSolOrLuna = clans.slice(0, pc).some(id => id === 'sol' || id === 'luna');
+
+  const getDeckConfig = (): DeckConfig => ({
+    chosenDeck,
+    kickstarterCards,
+    monsterPackCards,
+  });
 
   return (
     <div className="main-menu">
@@ -83,13 +95,47 @@ export const MainMenu = () => {
               );
             })}
           </div>
+          <div className="deck-config-section">
+            <h3>Deck Configuration</h3>
+            <div className="deck-config-row">
+              <label>Deck Group:</label>
+              <select value={chosenDeck} onChange={e => setChosenDeck(e.target.value as DeckName | 'random')}>
+                <option value="random">Random</option>
+                {DECK_GROUPS.map(g => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </div>
+            <div className="deck-config-row">
+              <label>Kickstarter Exclusive cards per season:</label>
+              <select value={kickstarterCards} onChange={e => setKickstarterCards(+e.target.value as 0 | 1 | 2)}>
+                <option value={0}>0</option>
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+              </select>
+            </div>
+            <div className="deck-config-row">
+              <label>Monster Pack cards per season:</label>
+              <select value={monsterPackCards} onChange={e => setMonsterPackCards(+e.target.value as 0 | 1 | 2)}>
+                <option value={0}>0</option>
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+              </select>
+            </div>
+            {hasSolOrLuna && (
+              <div className="deck-config-info">
+                Dynasty Invasion cards will be auto-included (Sol or Luna clan selected).
+              </div>
+            )}
+          </div>
           <div className="setup-actions">
             <button
               className="btn-primary"
               onClick={() =>
                 createGame(
                   Array.from({ length: pc }, (_, i) => ({ name: names[i], clanId: clans[i] })),
-                  'hotseat'
+                  'hotseat',
+                  getDeckConfig()
                 )
               }
             >

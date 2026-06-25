@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, MandateType } from '../types/game';
+import type { GameState, MandateType, DeckConfig } from '../types/game';
 import {
   createInitialGameState,
   setupSeason,
@@ -42,7 +42,7 @@ interface GameStore {
   setSelectedFigures: (ids: string[]) => void;
 
   // Game lifecycle
-  createGame: (players: { name: string; clanId: string }[], mode: 'online' | 'hotseat') => void;
+  createGame: (players: { name: string; clanId: string }[], mode: 'online' | 'hotseat', deckConfig?: DeckConfig) => void;
   setGameState: (s: GameState) => void;
   setLocalPlayerId: (id: string) => void;
 
@@ -106,8 +106,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setSelectedFigures: (ids) => set({ selectedFigures: ids }),
 
   // --- Game Lifecycle ---
-  createGame: (players, mode) => {
-    const state = createInitialGameState(players, mode);
+  createGame: (players, mode, deckConfig) => {
+    const state = createInitialGameState(players, mode, undefined, deckConfig);
     set({ gameState: state, localPlayerId: state.players[0].id, screen: 'game' });
   },
   setGameState: (state) => set({ gameState: state }),
