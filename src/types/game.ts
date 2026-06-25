@@ -132,8 +132,7 @@ export const DECK_GROUPS: DeckName[] = ['Archway', 'Tower', 'Teapot', 'Horseman'
 
 export interface DeckConfig {
   chosenDeck: DeckName | 'random';
-  kickstarterCards: 0 | 1 | 2;
-  monsterPackCards: 0 | 1 | 2;
+  extraMonsters: 0 | 1 | 2;
 }
 
 export interface GameState {

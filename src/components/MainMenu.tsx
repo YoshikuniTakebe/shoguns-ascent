@@ -14,8 +14,7 @@ export const MainMenu = () => {
   );
   const [clans, setClans] = useState(CLANS.map(c => c.id));
   const [chosenDeck, setChosenDeck] = useState<DeckName | 'random'>('random');
-  const [kickstarterCards, setKickstarterCards] = useState<0 | 1 | 2>(0);
-  const [monsterPackCards, setMonsterPackCards] = useState<0 | 1 | 2>(0);
+  const [extraMonsters, setExtraMonsters] = useState<0 | 1 | 2>(0);
   const [url, setUrl] = useState('ws://localhost:3001');
   const [oName, setOName] = useState('');
   const [oClan, setOClan] = useState('koi');
@@ -25,8 +24,7 @@ export const MainMenu = () => {
 
   const getDeckConfig = (): DeckConfig => ({
     chosenDeck,
-    kickstarterCards,
-    monsterPackCards,
+    extraMonsters,
   });
 
   return (
@@ -96,35 +94,45 @@ export const MainMenu = () => {
             })}
           </div>
           <div className="deck-config-section">
-            <h3>Deck Configuration</h3>
-            <div className="deck-config-row">
-              <label>Deck Group:</label>
-              <select value={chosenDeck} onChange={e => setChosenDeck(e.target.value as DeckName | 'random')}>
-                <option value="random">Random</option>
+            <h3>Configuraci&oacute;n del Mazo</h3>
+            <div className="deck-group-selector">
+              <label className="deck-config-label">Grupo de Mazo</label>
+              <div className="deck-group-options">
+                <button
+                  className={`deck-group-btn${chosenDeck === 'random' ? ' active' : ''}`}
+                  onClick={() => setChosenDeck('random')}
+                >
+                  &#127922; Aleatorio
+                </button>
                 {DECK_GROUPS.map(g => (
-                  <option key={g} value={g}>{g}</option>
+                  <button
+                    key={g}
+                    className={`deck-group-btn${chosenDeck === g ? ' active' : ''}`}
+                    onClick={() => setChosenDeck(g)}
+                  >
+                    {g}
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
-            <div className="deck-config-row">
-              <label>Kickstarter Exclusive cards per season:</label>
-              <select value={kickstarterCards} onChange={e => setKickstarterCards(+e.target.value as 0 | 1 | 2)}>
-                <option value={0}>0</option>
-                <option value={1}>1</option>
-                <option value={2}>2</option>
-              </select>
-            </div>
-            <div className="deck-config-row">
-              <label>Monster Pack cards per season:</label>
-              <select value={monsterPackCards} onChange={e => setMonsterPackCards(+e.target.value as 0 | 1 | 2)}>
-                <option value={0}>0</option>
-                <option value={1}>1</option>
-                <option value={2}>2</option>
-              </select>
+            <div className="deck-monsters-selector">
+              <label className="deck-config-label">Monstruos Extra por estaci&oacute;n</label>
+              <div className="deck-monster-options">
+                {([0, 1, 2] as const).map(n => (
+                  <button
+                    key={n}
+                    className={`deck-monster-btn${extraMonsters === n ? ' active' : ''}`}
+                    onClick={() => setExtraMonsters(n)}
+                  >
+                    {n === 0 ? 'Ninguno' : n}
+                  </button>
+                ))}
+              </div>
+              <span className="deck-config-hint">Incluye cartas de Kickstarter y Monster Pack</span>
             </div>
             {hasSolOrLuna && (
               <div className="deck-config-info">
-                Dynasty Invasion cards will be auto-included (Sol or Luna clan selected).
+                &#9962; Las cartas de Invasi&oacute;n Din&aacute;stica se incluyen autom&aacute;ticamente (clan Sol o Luna seleccionado).
               </div>
             )}
           </div>

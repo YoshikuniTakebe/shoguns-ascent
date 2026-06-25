@@ -36,7 +36,7 @@ function createFigure(type: Figure['type'], owner: string): Figure {
 
 export function buildSeasonDeck(
   seasonCards: SeasonCard[],
-  deckConfig: { chosenDeck: DeckName; kickstarterCards: 0 | 1 | 2; monsterPackCards: 0 | 1 | 2 },
+  deckConfig: { chosenDeck: DeckName; extraMonsters: 0 | 1 | 2 },
   playerClanIds: string[]
 ): SeasonCard[] {
   const chosenDeck: DeckName = deckConfig.chosenDeck;
@@ -72,34 +72,17 @@ export function buildSeasonDeck(
     }
   }
 
-  // Track IDs already added to avoid duplicates across Kickstarter/Monster Pack pools (Issue 4 fix)
-  const addedIds = new Set(result.map(c => c.id));
-
-  // Add random Kickstarter Exclusive cards
-  if (deckConfig.kickstarterCards > 0) {
-    const kickstarterPool = seasonCards.filter(c => {
+  // Add random extra monsters from a combined Kickstarter Exclusive + Monster Pack pool
+  if (deckConfig.extraMonsters > 0) {
+    const addedIds = new Set(result.map(c => c.id));
+    const combinedPool = seasonCards.filter(c => {
       const groups = c.group.split('/').map(g => g.trim());
-      return groups.includes('Kickstarter Exclusive') && !addedIds.has(c.id);
+      return (groups.includes('Kickstarter Exclusive') || groups.includes('Monster Pack')) && !addedIds.has(c.id);
     });
-    const shuffledKS = shuffle(kickstarterPool);
-    const ksCount = Math.min(deckConfig.kickstarterCards, shuffledKS.length);
-    for (let i = 0; i < ksCount; i++) {
-      result.push(shuffledKS[i]);
-      addedIds.add(shuffledKS[i].id);
-    }
-  }
-
-  // Add random Monster Pack cards (excluding any already added from Kickstarter pool)
-  if (deckConfig.monsterPackCards > 0) {
-    const monsterPackPool = seasonCards.filter(c => {
-      const groups = c.group.split('/').map(g => g.trim());
-      return groups.includes('Monster Pack') && !addedIds.has(c.id);
-    });
-    const shuffledMP = shuffle(monsterPackPool);
-    const mpCount = Math.min(deckConfig.monsterPackCards, shuffledMP.length);
-    for (let i = 0; i < mpCount; i++) {
-      result.push(shuffledMP[i]);
-      addedIds.add(shuffledMP[i].id);
+    const shuffled = shuffle(combinedPool);
+    const count = Math.min(deckConfig.extraMonsters, shuffled.length);
+    for (let i = 0; i < count; i++) {
+      result.push(shuffled[i]);
     }
   }
 
@@ -182,13 +165,13 @@ export function createInitialGameState(
     .map((p) => p.id);
 
   // Build season decks from config
-  const config: DeckConfig = deckConfig ?? { chosenDeck: 'random', kickstarterCards: 0, monsterPackCards: 0 };
+  const config: DeckConfig = deckConfig ?? { chosenDeck: 'random', extraMonsters: 0 };
   const playerClanIds = players.map(p => p.clanId);
   // Resolve 'random' deck choice once for the entire game (Issue 3 fix)
   const resolvedDeck: DeckName = config.chosenDeck === 'random'
     ? DECK_GROUPS[Math.floor(Math.random() * DECK_GROUPS.length)]
     : config.chosenDeck;
-  const resolvedConfig = { chosenDeck: resolvedDeck, kickstarterCards: config.kickstarterCards, monsterPackCards: config.monsterPackCards };
+  const resolvedConfig = { chosenDeck: resolvedDeck, extraMonsters: config.extraMonsters };
   const springDeck = buildSeasonDeck(SPRING_CARDS, resolvedConfig, playerClanIds);
   const summerDeck = buildSeasonDeck(SUMMER_CARDS, resolvedConfig, playerClanIds);
   const autumnDeck = buildSeasonDeck(AUTUMN_CARDS, resolvedConfig, playerClanIds);
