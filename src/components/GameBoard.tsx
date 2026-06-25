@@ -9,6 +9,7 @@ import { GameOverScreen } from './GameOverScreen';
 import { JapanMapBackground } from './JapanMapBackground';
 import { TemplePanel } from './TemplePanel';
 import { HonorTrack } from './HonorTrack';
+import { PoliticsTrack } from './PoliticsTrack';
 
 const positions: Record<string, { x: number; y: number }> = {
   hokkaido: { x: 650, y: 80 },
@@ -63,6 +64,8 @@ export const GameBoard = () => {
           Round: {gameState.round}/{gameState.maxRounds}
         </div>
       </div>
+
+      <PoliticsTrack />
 
       <div className="game-content">
         <div className="left-panel">
