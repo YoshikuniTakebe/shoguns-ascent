@@ -136,6 +136,28 @@ export const en = {
   'market.dynastyOnly': 'Only Sol/Luna clans can buy Dynasty Invasion monsters',
   'market.moreAvailable': '+{count} more available',
 
+  // Seasons
+  'season.spring': 'SPRING',
+  'season.summer': 'SUMMER',
+  'season.autumn': 'AUTUMN',
+  'season.winter': 'WINTER',
+
+  // Region Card
+  'region.harvest': 'Harvest',
+  'region.battle': 'Battle {number}',
+
+  // Kami Effects
+  'kami.amaterasu.effect': 'Figures of highest-honor player in this Province cannot be killed by others.',
+  'kami.fujin.effect': 'Double Harvest reward here. War winner also gets Harvest reward.',
+  'kami.hachiman.effect': 'Ronin count as Force 2 each in this Province.',
+  'kami.raijin.effect': 'Only Bushi and Kami count Force in this Province.',
+  'kami.ryujin.effect': 'Force 1 per different season card type owned by controller.',
+  'kami.susanoo.effect': 'Non-Kami figures cannot Move out of this Province.',
+  'kami.tsukuyomi.effect': 'Before war here, all players with Force gain 4 Coins.',
+
+  // Deck Indicator
+  'deck.indicator': 'Core + {name}',
+
   // Kami Modal
   'kamiModal.shintoFigures': 'Shinto Figures',
 } as const;

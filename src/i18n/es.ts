@@ -140,4 +140,26 @@ export const es: Record<TranslationKey, string> = {
 
   // Kami Modal
   'kamiModal.shintoFigures': 'Figuras Sintoistas',
+
+  // Seasons
+  'season.spring': 'PRIMAVERA',
+  'season.summer': 'VERANO',
+  'season.autumn': 'OTOÑO',
+  'season.winter': 'INVIERNO',
+
+  // Region Card
+  'region.harvest': 'Cosecha',
+  'region.battle': 'Batalla {number}',
+
+  // Kami Effects
+  'kami.amaterasu.effect': 'Las figuras del jugador con el Honor más alto en esta Provincia no pueden ser asesinadas por los otros jugadores.',
+  'kami.fujin.effect': 'Dobla la Recompensa de Cosecha en esta Provincia. Al ganar el símbolo de Guerra de esta Provincia, también obtienes su Recompensa de Cosecha.',
+  'kami.hachiman.effect': 'En esta Provincia, los símbolos de Ronin cuentan como Fuerza 2 cada uno.',
+  'kami.raijin.effect': 'Solo las figuras de Bushi y Kami cuentan su Fuerza en esta Provincia.',
+  'kami.ryujin.effect': 'Ryujin cuenta como Fuerza 1 por cada tipo diferente de carta de Estación que tenga quien lo controla.',
+  'kami.susanoo.effect': 'Las figuras que no son Kami no se pueden Mover fuera de esta Provincia.',
+  'kami.tsukuyomi.effect': 'Antes de resolver la Guerra en esta Provincia, todos los jugadores con Fuerza en ella ganan 4 Monedas.',
+
+  // Deck Indicator
+  'deck.indicator': 'Core + {name}',
 };

@@ -194,6 +194,7 @@ export function createInitialGameState(
     springDeck,
     summerDeck,
     autumnDeck,
+    activeDeckGroup: resolvedDeck,
     turnOrder,
     allianceProposals: [],
     politicsMandateCount: 0,

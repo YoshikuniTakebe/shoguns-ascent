@@ -153,6 +153,7 @@ export interface GameState {
   springDeck: SeasonCard[];
   summerDeck: SeasonCard[];
   autumnDeck: SeasonCard[];
+  activeDeckGroup: DeckName | null;
   turnOrder: string[];
   allianceProposals: AllianceProposal[];
   politicsMandateCount: number;

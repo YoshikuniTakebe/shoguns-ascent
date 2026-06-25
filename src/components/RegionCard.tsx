@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCES_DATA } from '../types/game';
 import type { Figure } from '../types/game';
+import { useT } from '../i18n';
 
 const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
   const icons: Record<string, string> = {
@@ -21,6 +22,7 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
 
 export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSProperties }) => {
   const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures } = useGameStore();
+  const t = useT();
   if (!gameState) return null;
 
   const province = gameState.provinces[regionId];
@@ -67,8 +69,8 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
       onClick={handleClick}
     >
       <div className="region-name">{province.name}</div>
-      <div className="region-reward">Harvest: {province.harvestReward}</div>
-      {warSlot && <div className="war-token">War #{warSlot.number}</div>}
+      <div className="region-reward">{t('region.harvest')}: {province.harvestReward}</div>
+      {warSlot && <div className="war-token">{t('region.battle', { number: String(warSlot.number) })}</div>}
       <div className="region-forces">
         {Object.entries(figuresByOwner).map(([ownerId, figures]) => {
           const player = gameState.players.find(p => p.id === ownerId);

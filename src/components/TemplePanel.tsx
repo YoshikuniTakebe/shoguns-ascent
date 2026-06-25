@@ -116,7 +116,7 @@ export const TemplePanel = () => {
                   {kami?.name || temple.kamiType}
                 </div>
                 <div className="kami-slot-effect">
-                  {kami?.effect || ''}
+                  {kami ? t(`kami.${kami.type}.effect` as any) : ''}
                 </div>
               </div>
               {temple.figures.length > 0 && (
@@ -166,7 +166,7 @@ export const TemplePanel = () => {
             >
               {selectedKamiData.name}
             </h3>
-            <p className="kami-modal-effect">{selectedKamiData.effect}</p>
+            <p className="kami-modal-effect">{t(`kami.${selectedKami}.effect` as any)}</p>
             {figuresByClan.length > 0 && (
               <div className="kami-modal-figures">
                 <h4 className="kami-modal-figures-title">{t('kamiModal.shintoFigures')}</h4>

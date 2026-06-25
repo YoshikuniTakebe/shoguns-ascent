@@ -91,11 +91,7 @@ export const PlayerPanel = () => {
                   <span className="extra-item">Hostages: {player.hostages.length}</span>
                 )}
               </div>
-              {player.allies.length > 0 && (
-                <div className="player-allies">
-                  Allies: {player.allies.map(id => gameState.players.find(p => p.id === id)?.name).join(', ')}
-                </div>
-              )}
+
             </div>
           );
         })}
