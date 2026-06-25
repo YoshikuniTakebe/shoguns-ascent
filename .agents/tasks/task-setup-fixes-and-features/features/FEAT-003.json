@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Add English/Spanish i18n system with language selector in MainMenu and translation of all UI strings",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/i18n/index.ts that exports: (1) a Language type ('en' | 'es'), (2) a translations object with keys for all UI strings (phase names, button labels, menu text, etc.) with 'en' and 'es' values, (3) a useTranslation hook or helper function t(key: string) => string that reads the current language from the store",
     "Create src/i18n/en.ts with English translations for all UI strings: menu titles, button labels (Start, Back, Join, Leave), phase names (Spring, Summer, Autumn, Winter, Tea Ceremony, Politics, War, Cleanup), action panel labels (Draw Mandate Tiles, Choose Mandate, Move Forces, Buy Card, Skip, etc.), deck config labels, player setup labels, clan names",
@@ -20,5 +20,5 @@
   ],
   "verification": ["npx tsc -b && npx vite build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation complete. Created i18n system with useT() hook that re-renders on language change. Store uses localStorage key 'shoguns-ascent-language' for persistence, defaults to 'es'. All 6 main UI components translated. Clan names and kami names kept untranslated as specified."
 }
