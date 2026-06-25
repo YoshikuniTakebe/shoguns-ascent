@@ -13,14 +13,14 @@ import { AllianceDisplay } from './AllianceDisplay';
 import { PoliticsTrack } from './PoliticsTrack';
 
 const positions: Record<string, { x: number; y: number }> = {
-  hokkaido: { x: 620, y: 75 },
-  oshu: { x: 590, y: 190 },
-  edo: { x: 560, y: 310 },
-  kanto: { x: 490, y: 260 },
-  kansai: { x: 390, y: 340 },
-  nagato: { x: 270, y: 400 },
-  shikoku: { x: 370, y: 450 },
-  kyushu: { x: 200, y: 490 },
+  hokkaido: { x: 501, y: 156 },
+  oshu: { x: 527, y: 284 },
+  edo: { x: 443, y: 381 },
+  kanto: { x: 624, y: 428 },
+  kansai: { x: 370, y: 448 },
+  nagato: { x: 232, y: 397 },
+  shikoku: { x: 276, y: 530 },
+  kyushu: { x: 160, y: 530 },
 };
 
 export const GameBoard = () => {
