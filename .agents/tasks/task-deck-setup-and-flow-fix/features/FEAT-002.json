@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix the game flow so the game is actually playable end-to-end from setup through all 3 seasons to Winter scoring. Currently the flow is broken - the season setup phase doesn't auto-advance, the Tea phase doesn't advance to Politics properly, the politics phase mandate count and kami turns are confusing, and the war/cleanup/season-transition flow doesn't work smoothly in hotseat mode.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/utils/gameLogic.ts, fix the season setup flow: createInitialGameState should set currentPhase to 'seasonSetup' and the first call to setupSeason (via doSetupSeason in store) should transition to 'tea' phase automatically after setup is done.",
     "2. Fix the Tea Ceremony phase advancement: In advancePlayer when currentPhase is 'tea', track teaTurnIndex properly. When all players have had a tea turn (teaTurnIndex >= players.length), auto-advance to 'politics' phase. Currently doAdvancePlayer is generic and doesn't handle tea-specific logic.",
@@ -31,5 +31,5 @@
     "npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation complete. All flow issues fixed: (1) setupSeason now sets currentPhase to 'tea' directly instead of 'seasonSetup', so doSetupSeason transitions instantly. (2) advancePlayer checks currentPhase and dispatches to advanceTeaPlayer for tea phase, which increments teaTurnIndex and calls advancePhase when done. (3) Politics advancePlayer now clears trainMandateActive. (4) Train mandate flow: chooseMandateTile detects trainMandateActive and defers advancePlayer until buy/skip, then doBuySeasonCard and doSkipTrainPurchase both call advancePlayer after clearing the flag. (5) advancePhase('politics') now auto-checks if no battles were created and goes straight to cleanup. (6) advancePhase('cleanup') calls setupSeason for next season which handles full transition. (7) After autumn, resolveWinter is called automatically. TypeScript and Vite build both pass."
 }
