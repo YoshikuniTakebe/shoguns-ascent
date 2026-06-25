@@ -13,18 +13,18 @@ import { HonorTrack } from './HonorTrack';
 import { AllianceDisplay } from './AllianceDisplay';
 import { PoliticsTrack } from './PoliticsTrack';
 
-const MAP_WIDTH = 1200;
-const MAP_HEIGHT = 900;
+const MAP_WIDTH = 1672;
+const MAP_HEIGHT = 941;
 
 const positions: Record<string, { x: number; y: number }> = {
-  hokkaido: { x: 882, y: 231 },
-  oshu: { x: 858, y: 420 },
-  edo: { x: 794, y: 567 },
-  kanto: { x: 764, y: 623 },
-  kansai: { x: 563, y: 656 },
-  nagato: { x: 389, y: 596 },
-  shikoku: { x: 518, y: 791 },
-  kyushu: { x: 290, y: 786 },
+  hokkaido: { x: 1229, y: 242 },
+  oshu: { x: 1195, y: 439 },
+  edo: { x: 1106, y: 593 },
+  kanto: { x: 1064, y: 651 },
+  kansai: { x: 784, y: 686 },
+  nagato: { x: 542, y: 623 },
+  shikoku: { x: 722, y: 827 },
+  kyushu: { x: 404, y: 822 },
 };
 
 const DRAG_DEAD_ZONE = 5;
