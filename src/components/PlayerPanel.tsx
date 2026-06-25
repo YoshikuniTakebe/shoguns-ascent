@@ -46,10 +46,39 @@ export const PlayerPanel = () => {
                 </div>
               </div>
               <div className="player-reserves">
-                <span className="reserve-item" title="Bushi in reserve">Bushi: {player.bushi}</span>
-                <span className="reserve-item" title="Shinto in reserve">Shinto: {player.shinto}</span>
-                <span className="reserve-item" title="Fortresses in reserve">Fort: {player.fortresses}</span>
-                {player.hasDaimyo && <span className="reserve-item daimyo-indicator">Daimyo</span>}
+                <span className="reserve-item" title="Bushi in reserve">
+                  <svg className="reserve-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M5 20l3-3h8l3 3H5z" opacity="0.5"/>
+                    <path d="M7 17l1-7h8l1 7H7z"/>
+                    <path d="M9 10V7l3-4 3 4v3H9z"/>
+                    <path d="M11 7h2v3h-2z" opacity="0.7"/>
+                  </svg>
+                  <span className="reserve-count">{player.bushi}</span>
+                </span>
+                <span className="reserve-item" title="Shinto in reserve">
+                  <svg className="reserve-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="4" y="6" width="16" height="2" rx="1"/>
+                    <rect x="6" y="4" width="12" height="2" rx="0.5" opacity="0.7"/>
+                    <rect x="7" y="8" width="2" height="14"/>
+                    <rect x="15" y="8" width="2" height="14"/>
+                    <rect x="9" y="12" width="6" height="1.5" opacity="0.5"/>
+                  </svg>
+                  <span className="reserve-count">{player.shinto}</span>
+                </span>
+                <span className="reserve-item" title="Fortresses in reserve">
+                  <svg className="reserve-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="3" y="18" width="18" height="3"/>
+                    <rect x="5" y="12" width="14" height="6"/>
+                    <rect x="4" y="11" width="16" height="2" opacity="0.7"/>
+                    <rect x="7" y="6" width="10" height="6"/>
+                    <rect x="6" y="5" width="12" height="2" opacity="0.7"/>
+                    <rect x="10" y="2" width="4" height="4"/>
+                    <rect x="9" y="1" width="6" height="2" opacity="0.7"/>
+                    <rect x="10" y="14" width="4" height="4" fill="rgba(0,0,0,0.3)"/>
+                  </svg>
+                  <span className="reserve-count">{player.fortresses}</span>
+                </span>
+                {player.hasDaimyo && <span className="reserve-item daimyo-indicator">&#9813;</span>}
               </div>
               <div className="player-extras">
                 {player.warProvinceTokens.length > 0 && (
