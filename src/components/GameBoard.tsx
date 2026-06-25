@@ -66,11 +66,11 @@ export const GameBoard = () => {
       </div>
 
       <PoliticsTrack />
+      <TemplePanel />
 
       <div className="game-content">
         <div className="left-panel">
           <PlayerPanel />
-          <TemplePanel />
           <HonorTrack />
         </div>
         <div className="center-panel">

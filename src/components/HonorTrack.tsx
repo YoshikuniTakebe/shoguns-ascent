@@ -9,8 +9,8 @@ export const HonorTrack = () => {
   const players = gameState.players;
   const maxHonor = Math.max(8, ...players.map(p => p.honor));
 
-  // Sort players by honor descending for the track
-  const sortedPlayers = [...players].sort((a, b) => b.honor - a.honor);
+  // Sort players by honor ascending: honor 1 = best/highest position
+  const sortedPlayers = [...players].sort((a, b) => a.honor - b.honor);
 
   return (
     <div className="honor-track">
@@ -27,7 +27,7 @@ export const HonorTrack = () => {
         {sortedPlayers.map((player) => {
           const clan = CLANS.find(c => c.id === player.clanId);
           if (!clan) return null;
-          const progressPercent = maxHonor > 0 ? (player.honor / maxHonor) * 100 : 0;
+          const progressPercent = maxHonor > 0 ? ((maxHonor - player.honor + 1) / maxHonor) * 100 : 0;
           return (
             <div key={player.id} className="honor-track-entry">
               <div className="honor-hexagon" style={{ '--clan-color': clan.color } as React.CSSProperties}>
