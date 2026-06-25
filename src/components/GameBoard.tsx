@@ -37,32 +37,20 @@ function computeInitialPan(containerWidth: number, containerHeight: number) {
   };
 }
 
-/** Clamp pan values so the map edges stop at the viewport edges */
+/** Clamp pan values so at least MARGIN px of the map remains visible */
 function clampPan(rawX: number, rawY: number, containerWidth: number, containerHeight: number) {
-  let x: number;
-  let y: number;
+  // Allow free panning in all directions
+  // Constraint: at least 100px of the map must remain visible in the viewport
+  const MARGIN = 100;
+  const minX = -(MAP_WIDTH - MARGIN);
+  const maxX = containerWidth - MARGIN;
+  const minY = -(MAP_HEIGHT - MARGIN);
+  const maxY = containerHeight - MARGIN;
 
-  if (containerWidth >= MAP_WIDTH) {
-    // Container wider than map - center it, no horizontal pan needed
-    x = (containerWidth - MAP_WIDTH) / 2;
-  } else {
-    // Map overflows container horizontally - allow panning
-    const minX = containerWidth - MAP_WIDTH;
-    const maxX = 0;
-    x = Math.max(minX, Math.min(maxX, rawX));
-  }
-
-  if (containerHeight >= MAP_HEIGHT) {
-    // Container taller than map - center it, no vertical pan needed
-    y = (containerHeight - MAP_HEIGHT) / 2;
-  } else {
-    // Map overflows container vertically - allow panning
-    const minY = containerHeight - MAP_HEIGHT;
-    const maxY = 0;
-    y = Math.max(minY, Math.min(maxY, rawY));
-  }
-
-  return { x, y };
+  return {
+    x: Math.max(minX, Math.min(maxX, rawX)),
+    y: Math.max(minY, Math.min(maxY, rawY)),
+  };
 }
 
 export const GameBoard = () => {
