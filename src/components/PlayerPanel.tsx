@@ -25,7 +25,7 @@ export const PlayerPanel = () => {
                   {player.name}
                   {player.id === cp?.id && ' \u2B05'}
                 </span>
-                <span className="clan-badge">{clan.name}</span>
+                <span className="clan-badge" style={{ '--clan-color': clan.color } as React.CSSProperties}>{clan.name}</span>
               </div>
               <div className="player-stats">
                 <div className="stat">
