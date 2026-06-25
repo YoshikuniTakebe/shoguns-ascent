@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix HOME_PROVINCES mapping and add CLAN_INCOME constant, fix getSeasonalIncome to use fixed per-clan income",
+  "status": "in_progress",
+  "steps": [
+    "In src/types/game.ts, replace the HOME_PROVINCES constant (around line 207) with the correct clan-to-province mapping: koi: 'kanto', sol: 'shikoku', loto: 'nagato', tortuga: 'edo', libelula: 'hokkaido', zorro: 'kansai', bonsai: 'kyushu', luna: 'oshu'",
+    "In src/types/game.ts, add a new exported constant CLAN_INCOME after HOME_PROVINCES: { koi: 5, sol: 7, loto: 7, tortuga: 6, libelula: 6, zorro: 5, bonsai: 4, luna: 2 }",
+    "In src/utils/gameLogic.ts, import CLAN_INCOME from '../types/game'",
+    "In src/utils/gameLogic.ts, replace the getSeasonalIncome function body to: find the player by playerId, look up their clanId, and return CLAN_INCOME[player.clanId] (default to 1 if not found). Remove the province-control-based calculation entirely.",
+    "Verify that distributeSeasonalIncome calls getSeasonalIncome correctly (it does: player.coins += income). Per game rules coins should already be 0 at season start because cleanup phase sets coins to 0 - this is already handled by cleanupSeason in gameLogic.ts which sets coins: 0."
+  ],
+  "acceptance_criteria": [
+    "HOME_PROVINCES maps koi->kanto, sol->shikoku, loto->nagato, tortuga->edo, libelula->hokkaido, zorro->kansai, bonsai->kyushu, luna->oshu",
+    "CLAN_INCOME constant exists with koi:5, sol:7, loto:7, tortuga:6, libelula:6, zorro:5, bonsai:4, luna:2",
+    "getSeasonalIncome returns the fixed clan income value rather than calculating from province control",
+    "Build passes: npx tsc -b && npx vite build"
+  ],
+  "verification": ["npx tsc -b && npx vite build"],
+  "blocked_reason": null,
+  "findings": ""
+}

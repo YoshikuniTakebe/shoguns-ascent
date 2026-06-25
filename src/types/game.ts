@@ -205,14 +205,27 @@ export const PROVINCES_DATA: Province[] = [
 // --- Home Provinces (one per clan, in clan order) ---
 
 export const HOME_PROVINCES: { [clanId: string]: string } = {
-  koi: 'hokkaido',
-  sol: 'oshu',
-  loto: 'edo',
-  tortuga: 'kanto',
-  libelula: 'kansai',
-  zorro: 'nagato',
-  bonsai: 'shikoku',
-  luna: 'kyushu',
+  koi: 'kanto',
+  sol: 'shikoku',
+  loto: 'nagato',
+  tortuga: 'edo',
+  libelula: 'hokkaido',
+  zorro: 'kansai',
+  bonsai: 'kyushu',
+  luna: 'oshu',
+};
+
+// --- Clan Income (fixed per-clan income each season) ---
+
+export const CLAN_INCOME: { [clanId: string]: number } = {
+  koi: 5,
+  sol: 7,
+  loto: 7,
+  tortuga: 6,
+  libelula: 6,
+  zorro: 5,
+  bonsai: 4,
+  luna: 2,
 };
 
 // --- War Tactics (resolved left to right, order 1-4) ---

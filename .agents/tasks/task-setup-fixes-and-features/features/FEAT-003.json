@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Add English/Spanish i18n system with language selector in MainMenu and translation of all UI strings",
+  "status": "pending",
+  "steps": [
+    "Create src/i18n/index.ts that exports: (1) a Language type ('en' | 'es'), (2) a translations object with keys for all UI strings (phase names, button labels, menu text, etc.) with 'en' and 'es' values, (3) a useTranslation hook or helper function t(key: string) => string that reads the current language from the store",
+    "Create src/i18n/en.ts with English translations for all UI strings: menu titles, button labels (Start, Back, Join, Leave), phase names (Spring, Summer, Autumn, Winter, Tea Ceremony, Politics, War, Cleanup), action panel labels (Draw Mandate Tiles, Choose Mandate, Move Forces, Buy Card, Skip, etc.), deck config labels, player setup labels, clan names",
+    "Create src/i18n/es.ts with Spanish translations for all UI strings (the game already has some Spanish text like 'Configuracion del Mazo', 'Aleatorio', etc. - use those as reference for style/tone)",
+    "Add a 'language' field to the Zustand store in src/store/gameStore.ts with type 'en' | 'es', defaulting to 'es' (current language of the UI). Add a setLanguage action. Persist the choice to localStorage and read it on init.",
+    "In src/components/MainMenu.tsx, add a language toggle/selector (e.g., two buttons or a dropdown 'EN | ES') at the top of the menu, calling setLanguage from the store. Replace all hardcoded UI strings in MainMenu with t() calls.",
+    "Update src/components/ActionPanel.tsx, src/components/GameBoard.tsx, src/components/BattlePanel.tsx, src/components/GameOverScreen.tsx, and other component files to use t() for their UI strings instead of hardcoded text",
+    "Export the translations type from src/i18n/index.ts so it can be used for type-safe keys"
+  ],
+  "acceptance_criteria": [
+    "A language selector appears in MainMenu allowing switch between English and Spanish",
+    "Language choice persists across page reloads (localStorage)",
+    "All UI strings (menu, buttons, phase names, action labels) display in the selected language",
+    "Build passes: npx tsc -b && npx vite build"
+  ],
+  "verification": ["npx tsc -b && npx vite build"],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add click-to-zoom modal on kami slots in TemplePanel showing enlarged kami image, name, effect description, and shinto figures present by clan/color",
+  "status": "pending",
+  "steps": [
+    "In src/components/TemplePanel.tsx, add React state for the selected kami (useState<KamiType | null>(null))",
+    "Add an onClick handler on each .kami-slot.filled div that sets the selected kami state to that temple's kamiType",
+    "Add a modal overlay component (inline in the same file) that renders when selectedKami is set. The modal should show: (1) The kami image at a larger size (e.g., 200x200), (2) The kami name prominently, (3) The kami effect text, (4) A list of shinto figures present grouped by clan showing clan color dot + clan name + figure count, (5) An X close button in the top-right corner",
+    "Add click-outside-to-close behavior: clicking the backdrop overlay closes the modal",
+    "Add CSS styles for the modal in src/App.css: .kami-modal-backdrop (fixed overlay, dark semi-transparent background, z-index high, centered flex), .kami-modal (card-like container, max-width ~400px, padding, border-radius, background matching the game's dark theme), .kami-modal-close (absolute positioned X button top-right)",
+    "Use existing KAMI_IMAGES, KAMI_PALETTES, and KAMI_DATA already imported in the file to populate the modal content",
+    "Add cursor:pointer styling on .kami-slot.filled to indicate clickability"
+  ],
+  "acceptance_criteria": [
+    "Clicking a filled kami slot opens a modal overlay",
+    "Modal displays enlarged kami image, name, effect, and shinto figures by clan",
+    "Clicking X button or clicking outside the modal closes it",
+    "Build passes: npx tsc -b && npx vite build"
+  ],
+  "verification": ["npx tsc -b && npx vite build"],
+  "blocked_reason": null,
+  "findings": ""
+}

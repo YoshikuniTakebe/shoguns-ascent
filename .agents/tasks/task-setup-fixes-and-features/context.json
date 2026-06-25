@@ -1,0 +1,26 @@
+{
+  "project_type": "React board game (Shogun's Ascent) with TypeScript, Vite, and Zustand state management",
+  "language": "TypeScript/React",
+  "build_system": "Vite with TypeScript (tsc -b && vite build)",
+  "test_framework": "No test framework configured (no test files found)",
+  "build_command": "npx tsc -b && npx vite build",
+  "test_command": "npx tsc -b (type-checking only, no unit tests)",
+  "verification_instructions": "Run `npx tsc -b && npx vite build` to verify TypeScript compiles and Vite bundles without errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "node_modules already installed (package-lock.json present and node_modules dir exists)",
+  "environment_constraints": "No test suite. Verification is build-only. Dev server available via `npm run dev`.",
+  "contribution_requirements": "Push directly to main branch",
+  "key_patterns": "Zustand store (src/store/gameStore.ts) manages all game state. Game logic is in src/utils/gameLogic.ts. Types/constants in src/types/game.ts. Components in src/components/. No i18n exists yet. TemplePanel uses imported PNG images for kami. MainMenu has some Spanish text already mixed in.",
+  "relevant_files": [
+    "src/types/game.ts",
+    "src/utils/gameLogic.ts",
+    "src/store/gameStore.ts",
+    "src/components/TemplePanel.tsx",
+    "src/components/MainMenu.tsx",
+    "src/App.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/ActionPanel.tsx",
+    "src/App.css"
+  ],
+  "directory_structure": "src/types/ - type definitions and constants; src/utils/ - game logic; src/store/ - Zustand store; src/components/ - React components; src/img/ - kami PNG images; public/ - static assets"
+}

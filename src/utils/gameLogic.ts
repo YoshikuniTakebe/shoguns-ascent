@@ -6,7 +6,7 @@ import type {
 import {
   CLANS, PROVINCES_DATA, HOME_PROVINCES, WAR_TACTICS,
   KAMI_DATA, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS,
-  DECK_GROUPS,
+  DECK_GROUPS, CLAN_INCOME,
 } from '../types/game';
 
 // ============================================================
@@ -290,22 +290,9 @@ function distributeSeasonalIncome(state: GameState): GameState {
 }
 
 export function getSeasonalIncome(state: GameState, playerId: string): number {
-  // Income based on provinces controlled (where player has most force)
-  let income = 0;
-  Object.values(state.provinces).forEach((province) => {
-    const playerForce = calculateForce(province, playerId);
-    if (playerForce > 0) {
-      const isStrongest = state.players.every((other) => {
-        if (other.id === playerId) return true;
-        return calculateForce(province, other.id) <= playerForce;
-      });
-      if (isStrongest) {
-        income += province.harvestReward;
-      }
-    }
-  });
-  // Minimum income of 1 coin per season
-  return Math.max(income, 1);
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return 1;
+  return CLAN_INCOME[player.clanId] ?? 1;
 }
 
 function returnHostages(state: GameState): GameState {
