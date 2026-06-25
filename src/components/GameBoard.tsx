@@ -31,21 +31,38 @@ const DRAG_DEAD_ZONE = 5;
 
 /** Compute initial centered pan offset for a given container size */
 function computeInitialPan(containerWidth: number, containerHeight: number) {
-  const x = Math.min(0, (containerWidth - MAP_WIDTH) / 2);
-  const y = Math.min(0, (containerHeight - MAP_HEIGHT) / 2);
-  return { x, y };
+  return {
+    x: (containerWidth - MAP_WIDTH) / 2,
+    y: (containerHeight - MAP_HEIGHT) / 2,
+  };
 }
 
 /** Clamp pan values so the map edges stop at the viewport edges */
 function clampPan(rawX: number, rawY: number, containerWidth: number, containerHeight: number) {
-  const minX = Math.min(0, containerWidth - MAP_WIDTH);
-  const maxX = 0;
-  const minY = Math.min(0, containerHeight - MAP_HEIGHT);
-  const maxY = 0;
-  return {
-    x: Math.max(minX, Math.min(maxX, rawX)),
-    y: Math.max(minY, Math.min(maxY, rawY)),
-  };
+  let x: number;
+  let y: number;
+
+  if (containerWidth >= MAP_WIDTH) {
+    // Container wider than map - center it, no horizontal pan needed
+    x = (containerWidth - MAP_WIDTH) / 2;
+  } else {
+    // Map overflows container horizontally - allow panning
+    const minX = containerWidth - MAP_WIDTH;
+    const maxX = 0;
+    x = Math.max(minX, Math.min(maxX, rawX));
+  }
+
+  if (containerHeight >= MAP_HEIGHT) {
+    // Container taller than map - center it, no vertical pan needed
+    y = (containerHeight - MAP_HEIGHT) / 2;
+  } else {
+    // Map overflows container vertically - allow panning
+    const minY = containerHeight - MAP_HEIGHT;
+    const maxY = 0;
+    y = Math.max(minY, Math.min(maxY, rawY));
+  }
+
+  return { x, y };
 }
 
 export const GameBoard = () => {
