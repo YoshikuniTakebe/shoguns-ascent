@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, KAMI_DATA } from '../types/game';
 import type { KamiType } from '../types/game';
+import { useT } from '../i18n';
 
 import amaterasuImg from '../img/Amaterasu.png';
 import fujinImg from '../img/Fujin.png';
@@ -34,6 +35,7 @@ const KAMI_IMAGES: Record<KamiType, string> = {
 export const TemplePanel = () => {
   const { gameState } = useGameStore();
   const [selectedKami, setSelectedKami] = useState<KamiType | null>(null);
+  const t = useT();
 
   if (!gameState) return null;
   if (gameState.temples.length === 0) return null;
@@ -167,7 +169,7 @@ export const TemplePanel = () => {
             <p className="kami-modal-effect">{selectedKamiData.effect}</p>
             {figuresByClan.length > 0 && (
               <div className="kami-modal-figures">
-                <h4 className="kami-modal-figures-title">Shinto Figures</h4>
+                <h4 className="kami-modal-figures-title">{t('kamiModal.shintoFigures')}</h4>
                 {figuresByClan.map(({ clanId, clanName, color, count }) => (
                   <div key={clanId} className="kami-modal-figure-row">
                     <span

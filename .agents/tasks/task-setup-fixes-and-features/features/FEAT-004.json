@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-004",
+  "type": "fix",
+  "description": "Address review issues: fix i18n interpolation to use replaceAll, translate hardcoded TemplePanel string, update harvest mandate description",
+  "status": "in_progress",
+  "steps": [
+    "In src/i18n/index.ts, change both replace() calls in the t() function and useT() hook to use replaceAll() so repeated placeholders are substituted correctly",
+    "In src/components/TemplePanel.tsx, import useT from '../i18n' and replace the hardcoded 'Shinto Figures' heading with t('kamiModal.shintoFigures')",
+    "In src/i18n/en.ts, add a 'kamiModal.shintoFigures' key with value 'Shinto Figures'",
+    "In src/i18n/es.ts, add a 'kamiModal.shintoFigures' key with value 'Figuras Sintoistas'",
+    "In src/i18n/en.ts, update 'mandate.harvest' to 'Strongest player in each province gains its harvest reward'",
+    "In src/i18n/es.ts, update 'mandate.harvest' to 'El jugador mas fuerte en cada provincia obtiene su recompensa de cosecha'"
+  ],
+  "acceptance_criteria": [
+    "i18n interpolation uses replaceAll (or global regex) so repeated placeholders work",
+    "TemplePanel modal 'Shinto Figures' heading uses the i18n system",
+    "kamiModal.shintoFigures key exists in both en.ts and es.ts",
+    "mandate.harvest description accurately reflects what executeHarvest does",
+    "Build passes: npx tsc -b && npx vite build"
+  ],
+  "verification": ["npx tsc -b && npx vite build"],
+  "blocked_reason": null,
+  "findings": null
+}

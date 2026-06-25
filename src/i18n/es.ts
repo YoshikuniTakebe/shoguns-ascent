@@ -88,7 +88,7 @@ export const es: Record<TranslationKey, string> = {
   'mandate.recruit': 'A\u00F1adir figuras de la reserva a tu provincia de origen',
   'mandate.marshal': 'Mover tus figuras entre provincias',
   'mandate.train': 'Adquirir una carta de estaci\u00F3n del mercado',
-  'mandate.harvest': 'Ganar monedas de las provincias que controlas',
+  'mandate.harvest': 'El jugador mas fuerte en cada provincia obtiene su recompensa de cosecha',
   'mandate.betray': 'Reemplazar una figura del oponente con la tuya',
 
   // BattlePanel
@@ -137,4 +137,7 @@ export const es: Record<TranslationKey, string> = {
   'market.solLunaOnly': 'Sol/Luna solo puede comprar monstruos de Invasi\u00F3n Din\u00E1stica',
   'market.dynastyOnly': 'Solo los clanes Sol/Luna pueden comprar monstruos de Invasi\u00F3n Din\u00E1stica',
   'market.moreAvailable': '+{count} m\u00E1s disponibles',
+
+  // Kami Modal
+  'kamiModal.shintoFigures': 'Figuras Sintoistas',
 };

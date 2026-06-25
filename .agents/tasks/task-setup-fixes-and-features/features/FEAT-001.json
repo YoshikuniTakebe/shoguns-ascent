@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix HOME_PROVINCES mapping and add CLAN_INCOME constant, fix getSeasonalIncome to use fixed per-clan income",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/types/game.ts, replace the HOME_PROVINCES constant (around line 207) with the correct clan-to-province mapping: koi: 'kanto', sol: 'shikoku', loto: 'nagato', tortuga: 'edo', libelula: 'hokkaido', zorro: 'kansai', bonsai: 'kyushu', luna: 'oshu'",
     "In src/types/game.ts, add a new exported constant CLAN_INCOME after HOME_PROVINCES: { koi: 5, sol: 7, loto: 7, tortuga: 6, libelula: 6, zorro: 5, bonsai: 4, luna: 2 }",
@@ -18,5 +18,5 @@
   ],
   "verification": ["npx tsc -b && npx vite build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly. The calculateForce function is no longer used by getSeasonalIncome but is still used elsewhere so no dead code was introduced."
 }

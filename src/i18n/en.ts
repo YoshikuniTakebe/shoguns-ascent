@@ -86,7 +86,7 @@ export const en = {
   'mandate.recruit': 'Add figures from reserve to your home province',
   'mandate.marshal': 'Move your figures between provinces',
   'mandate.train': 'Acquire a season card from the market',
-  'mandate.harvest': 'Gain coins from provinces you control',
+  'mandate.harvest': 'Strongest player in each province gains its harvest reward',
   'mandate.betray': 'Replace an opponent figure with yours',
 
   // BattlePanel
@@ -135,6 +135,9 @@ export const en = {
   'market.solLunaOnly': 'Sol/Luna can only buy Dynasty Invasion monsters',
   'market.dynastyOnly': 'Only Sol/Luna clans can buy Dynasty Invasion monsters',
   'market.moreAvailable': '+{count} more available',
+
+  // Kami Modal
+  'kamiModal.shintoFigures': 'Shinto Figures',
 } as const;
 
 export type TranslationKey = keyof typeof en;

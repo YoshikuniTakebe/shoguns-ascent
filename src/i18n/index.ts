@@ -17,7 +17,7 @@ export function t(key: TranslationKey, params?: Record<string, string | number>)
   let value = translations[lang][key] || translations['en'][key] || key;
   if (params) {
     for (const [k, v] of Object.entries(params)) {
-      value = value.replace(`{${k}}`, String(v));
+      value = value.replaceAll(`{${k}}`, String(v));
     }
   }
   return value;
@@ -33,7 +33,7 @@ export function useT() {
     let value = translations[language][key] || translations['en'][key] || key;
     if (params) {
       for (const [k, v] of Object.entries(params)) {
-        value = value.replace(`{${k}}`, String(v));
+        value = value.replaceAll(`{${k}}`, String(v));
       }
     }
     return value;
