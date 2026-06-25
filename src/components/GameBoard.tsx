@@ -9,6 +9,7 @@ import { GameOverScreen } from './GameOverScreen';
 import { JapanMapBackground } from './JapanMapBackground';
 import { TemplePanel } from './TemplePanel';
 import { HonorTrack } from './HonorTrack';
+import { AllianceDisplay } from './AllianceDisplay';
 import { PoliticsTrack } from './PoliticsTrack';
 
 const positions: Record<string, { x: number; y: number }> = {
@@ -74,6 +75,7 @@ export const GameBoard = () => {
           <TemplePanel />
           <div className="map-container">
             <HonorTrack />
+            <AllianceDisplay />
             <JapanMapBackground />
             <svg viewBox="0 0 800 600" className="japan-map">
               {PROVINCES_DATA.map(r =>
