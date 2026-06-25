@@ -24,7 +24,7 @@ export const SeasonCardsMarket = () => {
     winterUpgrade: 'Winter Upgrade',
   };
 
-  const canBuy = gameState.currentPhase === 'politics';
+  const canBuy = gameState.currentPhase === 'politics' && gameState.trainMandateActive;
 
   const renderCard = (card: SeasonCard) => {
     const canAfford = activePlayer ? activePlayer.coins >= card.cost : false;

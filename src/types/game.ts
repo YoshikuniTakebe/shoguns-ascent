@@ -148,6 +148,7 @@ export interface GameState {
   teaTurnIndex: number;
   honorTrack: string[];
   warProvinceSlots: WarProvinceSlot[];
+  trainMandateActive: boolean;
   gameOver: boolean;
   winner?: string;
   log: string[];
