@@ -388,8 +388,9 @@ export function acceptAlliance(state: GameState, fromId: string, toId: string): 
 
   from.allies = [toId];
   to.allies = [fromId];
+  // Remove the accepted proposal and any other proposals involving either player
   newState.allianceProposals = newState.allianceProposals.filter(
-    (ap) => !(ap.from === fromId && ap.to === toId) && !(ap.from === toId && ap.to === fromId)
+    (ap) => ap.from !== fromId && ap.to !== fromId && ap.from !== toId && ap.to !== toId
   );
   newState.log = [...newState.log, `${from.name} and ${to.name} form an alliance!`];
   return newState;
@@ -1492,13 +1493,39 @@ export function advancePlayer(state: GameState): GameState {
 /**
  * Advance the tea phase: increment teaTurnIndex, and when all players
  * have had their turn, auto-advance to politics phase.
+ * If there are pending alliance proposals whose targets have not yet had
+ * their tea turn, give those targets a chance to respond before ending.
  */
 export function advanceTeaPlayer(state: GameState): GameState {
   const newState: GameState = { ...state, log: [...state.log] };
   newState.teaTurnIndex += 1;
 
-  // When all players have had a tea turn, move to politics
+  // When all players have had a tea turn, check for pending proposals
   if (newState.teaTurnIndex >= newState.players.length) {
+    // Check if there are pending proposals whose targets need a turn to respond
+    if (newState.allianceProposals.length > 0) {
+      // Find targets of pending proposals who are still unallied
+      const pendingTargets = newState.allianceProposals
+        .map(ap => ap.to)
+        .filter(toId => {
+          const targetPlayer = newState.players.find(p => p.id === toId);
+          return targetPlayer && targetPlayer.allies.length === 0;
+        });
+
+      if (pendingTargets.length > 0) {
+        // Give the first pending target their turn to accept/reject
+        const targetId = pendingTargets[0];
+        const targetIdx = newState.players.findIndex(p => p.id === targetId);
+        if (targetIdx >= 0) {
+          newState.currentPlayerIndex = targetIdx;
+          // Do not increment teaTurnIndex further - keep it at players.length
+          // so next advance will re-check
+          return newState;
+        }
+      }
+    }
+
+    // No pending proposals (or all targets already allied) - advance to politics
     newState.teaTurnIndex = 0;
     return advancePhase(newState);
   }

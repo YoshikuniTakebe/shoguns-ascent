@@ -162,7 +162,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'FORM_ALLIANCE', playerId: apid, payload: { fromPlayerId: from, accept: true } });
       return;
     }
-    set({ gameState: acceptAlliance(gameState, from, apid) });
+    let ns = acceptAlliance(gameState, from, apid);
+    // Bug fix: After accepting an alliance during tea phase, the player's turn ends immediately
+    if (ns.currentPhase === 'tea' && apid === cp?.id) {
+      ns = advancePlayer(ns);
+    }
+    set({ gameState: ns });
   },
 
   // --- Politics ---

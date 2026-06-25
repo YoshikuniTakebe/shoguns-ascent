@@ -76,12 +76,12 @@ export const ActionPanel = () => {
             </div>
           )}
 
-          {isMyTurn && (
+          {isMyTurn && (!cp || cp.allies.length === 0) && (
             <div className="alliance-options">
               <h5>Propose Alliance:</h5>
               {gameState.players
                 .filter(p => p.id !== (gameState.mode === 'hotseat' ? cp?.id : localPlayerId))
-                .filter(p => !cp?.allies.includes(p.id))
+                .filter(p => !cp?.allies.includes(p.id) && p.allies.length === 0)
                 .map(p => {
                   const clan = CLANS.find(c => c.id === p.clanId)!;
                   return (
