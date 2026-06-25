@@ -215,7 +215,7 @@ export const GameBoard = () => {
                     {
                       from: 'hokkaido',
                       to: 'kansai',
-                      path: `M ${positions.hokkaido.x} ${positions.hokkaido.y} C ${positions.hokkaido.x + 200} ${positions.hokkaido.y + 200}, ${positions.kansai.x + 250} ${positions.kansai.y - 250}, ${positions.kansai.x} ${positions.kansai.y}`,
+                      path: `M ${positions.hokkaido.x} ${positions.hokkaido.y} C ${positions.hokkaido.x - 200} ${positions.hokkaido.y + 200}, ${positions.kansai.x - 250} ${positions.kansai.y - 250}, ${positions.kansai.x} ${positions.kansai.y}`,
                     },
                     {
                       from: 'hokkaido',
@@ -243,9 +243,9 @@ export const GameBoard = () => {
                       key={`sea-${route.from}-${route.to}`}
                       d={route.path}
                       fill="none"
-                      stroke="rgba(80,160,220,0.5)"
-                      strokeWidth="2.5"
-                      strokeDasharray="6,4"
+                      stroke="rgba(80,180,240,0.8)"
+                      strokeWidth="3.5"
+                      strokeDasharray="8,5"
                       strokeLinecap="round"
                     />
                   ));
