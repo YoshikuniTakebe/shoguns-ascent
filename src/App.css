@@ -19,3 +19,33 @@
 .header-left{display:flex;align-items:center;gap:0.5rem}.deck-indicator{display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.8rem;background:rgba(15,52,96,0.6);border:1px solid rgba(200,169,81,0.25);border-radius:16px;backdrop-filter:blur(4px)}.deck-indicator-icon{color:var(--accent-gold);opacity:0.8;flex-shrink:0}.deck-indicator-text{font-size:0.75rem;color:var(--text-secondary);font-weight:500;letter-spacing:0.03em;white-space:nowrap}
 
 .harvest-hex{position:absolute;width:60px;height:60px;transform:translate(-50%,-50%);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;opacity:0.9;z-index:3;pointer-events:none}.harvest-hex-content{display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:wrap}.harvest-hex-content.layout-3{flex-direction:column;align-items:center;gap:0px}.harvest-hex-content.layout-3 .harvest-row-top{display:flex;justify-content:center}.harvest-hex-content.layout-3 .harvest-row-bottom{display:flex;justify-content:center;gap:2px}.harvest-hex-content.layout-4{display:grid;grid-template-columns:1fr 1fr;gap:1px;justify-items:center}.harvest-reward-item{display:flex;align-items:center;gap:0px}
+
+.season-cards-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0.4rem 1.2rem;background:linear-gradient(135deg,rgba(15,52,96,0.9),rgba(30,30,60,0.95));border:1.5px solid var(--accent-gold);color:var(--accent-gold);cursor:pointer;clip-path:polygon(10% 0%,90% 0%,100% 50%,90% 100%,10% 100%,0% 50%);min-width:72px;height:48px;transition:all 0.2s;margin-left:auto;flex-shrink:0}
+.season-cards-btn:hover{background:linear-gradient(135deg,rgba(200,169,81,0.2),rgba(15,52,96,0.9));box-shadow:0 0 12px rgba(200,169,81,0.4);border-color:var(--accent-gold)}
+.season-cards-btn-kanji{font-size:1.1rem;line-height:1;font-weight:bold;text-shadow:0 0 8px rgba(200,169,81,0.6)}
+.season-cards-btn-text{font-size:0.55rem;font-weight:bold;letter-spacing:0.08em;text-transform:uppercase}
+
+.season-cards-modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out}
+.season-cards-modal{position:relative;background:linear-gradient(145deg,var(--bg-medium),var(--bg-dark));border:1px solid var(--border-gold);border-radius:14px;padding:1.5rem;max-width:900px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,0.6)}
+.season-cards-modal-close{position:absolute;top:0.6rem;right:0.9rem;background:none;border:none;color:var(--text-secondary);font-size:1.8rem;cursor:pointer;line-height:1;padding:0.25rem;border-radius:4px;transition:color 0.2s;z-index:1}
+.season-cards-modal-close:hover{color:var(--text-primary)}
+.season-cards-modal-title{text-align:center;color:var(--accent-gold);font-size:1.3rem;font-weight:bold;letter-spacing:0.08em;margin-bottom:1.25rem;text-shadow:0 0 10px rgba(200,169,81,0.3)}
+
+.season-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}
+.season-card{background:linear-gradient(145deg,rgba(0,0,0,0.4),rgba(15,52,96,0.3));border:1px solid rgba(200,169,81,0.2);border-left:4px solid;border-radius:10px;padding:0.9rem;display:flex;flex-direction:column;gap:0.5rem;transition:transform 0.2s,box-shadow 0.2s}
+.season-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+
+.season-card-image-placeholder{width:100%;height:80px;background:linear-gradient(135deg,rgba(60,60,80,0.5),rgba(40,40,60,0.6));border-radius:6px;display:flex;align-items:center;justify-content:center;border:1px dashed rgba(200,169,81,0.15)}
+.season-card-image-icon{font-size:1.8rem;opacity:0.35}
+
+.season-card-header{display:flex;align-items:center;justify-content:space-between;gap:0.4rem}
+.season-card-name{font-size:0.85rem;font-weight:bold;color:var(--text-primary);line-height:1.2}
+.season-card-cost{display:flex;align-items:center;gap:3px;font-size:0.9rem;font-weight:bold;color:var(--accent-gold);flex-shrink:0}
+.season-card-coin{font-size:0.9rem;color:var(--accent-gold)}
+
+.season-card-type-badge{display:inline-block;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.65rem;font-weight:bold;color:#fff;letter-spacing:0.04em;text-transform:uppercase;align-self:flex-start}
+
+.season-card-effect{font-size:0.75rem;color:var(--text-secondary);line-height:1.4;flex:1}
+.season-card-force{display:flex;align-items:center;gap:4px;font-size:0.8rem;font-weight:bold;color:var(--accent-gold);padding-top:0.3rem;border-top:1px solid rgba(200,169,81,0.15)}
+.season-card-force-icon{font-size:0.85rem}
+

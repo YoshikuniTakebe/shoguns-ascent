@@ -1,0 +1,25 @@
+{
+  "project_type": "React SPA with TypeScript, Vite, Zustand state management",
+  "language": "TypeScript/TSX",
+  "build_system": "Vite with TypeScript compiler (tsc -b)",
+  "test_framework": "No test framework found",
+  "build_command": "npx tsc -b && npx vite build",
+  "test_command": "npx tsc -b",
+  "verification_instructions": "Run npx tsc -b && npx vite build to ensure no type errors and bundle builds correctly",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "node_modules already installed",
+  "environment_constraints": "No test framework, validation via TypeScript compilation and Vite build only",
+  "contribution_requirements": "None specified",
+  "key_patterns": "Components use Zustand store via useGameStore hook. i18n uses useT() hook returning a t() function. CSS is minified in App.css with one-line rules. Modals follow kami-modal pattern: fixed backdrop + centered content. Game data comes from gameState.seasonCardsDeck filtered by currentSeason.",
+  "relevant_files": [
+    "src/components/PoliticsTrack.tsx",
+    "src/components/SeasonCardsMarket.tsx",
+    "src/types/game.ts",
+    "src/store/gameStore.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/i18n/index.ts",
+    "src/App.css"
+  ],
+  "directory_structure": "src/components/ - React components; src/types/ - TypeScript types; src/store/ - Zustand store; src/i18n/ - translations (en.ts, es.ts, index.ts); src/App.css - all styles (minified)"
+}

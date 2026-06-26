@@ -1,0 +1,7 @@
+{
+  "task_id": "task-season-cards-button-modal",
+  "task_description": "Add an elongated hexagonal 'Cartas' button with kanji '旭' to the PoliticsTrack bar (far right), which opens a large popup modal showing all available season cards for the current season with attractive card layout, color-coded card types, cost, effect text, and image placeholder area",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

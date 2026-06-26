@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
+import { SeasonCardsModal } from './SeasonCardsModal';
 
 const MANDATE_LABELS: Record<MandateType, string> = {
   train: 'Entrenamiento',
@@ -169,6 +171,7 @@ function MandateIllustration({ type, size = 40 }: { type: MandateType; size?: nu
  */
 export const PoliticsTrack = () => {
   const { gameState } = useGameStore();
+  const [showSeasonCards, setShowSeasonCards] = useState(false);
   if (!gameState) return null;
 
   const mandates = gameState.mandatesThisTurn;
@@ -306,6 +309,19 @@ export const PoliticsTrack = () => {
           ))}
         </div>
       )}
+
+      {/* Season Cards Button */}
+      <button
+        className="season-cards-btn"
+        onClick={() => setShowSeasonCards(true)}
+        title="Cartas de Estacion"
+      >
+        <span className="season-cards-btn-kanji">旭</span>
+        <span className="season-cards-btn-text">Cartas</span>
+      </button>
+
+      {/* Season Cards Modal */}
+      <SeasonCardsModal open={showSeasonCards} onClose={() => setShowSeasonCards(false)} />
     </div>
   );
 };

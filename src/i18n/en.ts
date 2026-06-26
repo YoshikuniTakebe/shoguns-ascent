@@ -159,6 +159,10 @@ export const en = {
 
   // Kami Modal
   'kamiModal.shintoFigures': 'Shinto Figures',
+
+  // Season Cards Modal
+  'seasonCardsModal.title': 'Season Cards',
+  'seasonCardsModal.force': 'Force: {value}',
 } as const;
 
 export type TranslationKey = keyof typeof en;

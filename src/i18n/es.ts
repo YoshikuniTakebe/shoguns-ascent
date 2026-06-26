@@ -141,6 +141,10 @@ export const es: Record<TranslationKey, string> = {
   // Kami Modal
   'kamiModal.shintoFigures': 'Figuras Sintoistas',
 
+  // Season Cards Modal
+  'seasonCardsModal.title': 'Cartas de Estaci\u00F3n',
+  'seasonCardsModal.force': 'Fuerza: {value}',
+
   // Seasons
   'season.spring': 'PRIMAVERA',
   'season.summer': 'VERANO',
