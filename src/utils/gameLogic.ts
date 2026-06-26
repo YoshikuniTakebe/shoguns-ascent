@@ -851,6 +851,9 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
   // Validation: cannot target daimyo
   if (figure.type === 'daimyo') return state;
 
+  // Validation: cannot target fortress (fortresses are structures, not figures)
+  if (figure.type === 'fortress') return state;
+
   // Validation: cannot target shinto if it is in a temple
   if (figure.type === 'shinto') {
     const isInTemple = newState.temples.some((temple) =>
@@ -881,9 +884,6 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
       (card) => card.cardType === 'monster' && !deployedMonsterIds.has(card.id)
     );
     if (!hasUndeployedMonster) return state;
-  } else if (figure.type === 'fortress') {
-    // Fortresses cannot typically be betrayed, but check reserve
-    if (issuer.fortresses <= 0) return state;
   }
 
   // Perform the replacement
@@ -900,8 +900,6 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
     figureOwner.bushi += 1;
   } else if (figure.type === 'shinto') {
     figureOwner.shinto += 1;
-  } else if (figure.type === 'fortress') {
-    figureOwner.fortresses += 1;
   }
   // Monsters return to reserve implicitly (the card stays in seasonCards, just no figure on map)
 
@@ -910,8 +908,6 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
     issuer.bushi -= 1;
   } else if (figure.type === 'shinto') {
     issuer.shinto -= 1;
-  } else if (figure.type === 'fortress') {
-    issuer.fortresses -= 1;
   }
   // For monsters, no numeric reserve to decrement - the deployed figure uses the card
 

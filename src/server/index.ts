@@ -23,6 +23,8 @@ import {
   buySeasonCard,
   skipMarshalTurn,
   buildFortress,
+  betraySelectFigure,
+  skipBetrayTurn,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 
@@ -271,6 +273,30 @@ wss.on('connection', (ws: WebSocket) => {
           const { provinceId } = data.payload || {};
           if (!provinceId) return;
           l.gameState = buildFortress(l.gameState, data.playerId, provinceId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'BETRAY_SELECT_FIGURE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const { figureId, provinceId } = data.payload || {};
+          if (!figureId || !provinceId) return;
+          let s = betraySelectFigure(l.gameState, data.playerId, figureId, provinceId);
+          if (!s.betrayMandateActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'SKIP_BETRAY_TURN': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          let s = skipBetrayTurn(l.gameState);
+          s = advancePlayer(s);
+          l.gameState = s;
           broadcastState(l);
           break;
         }

@@ -12,7 +12,7 @@ export const ActionPanel = () => {
     doSkipTrainPurchase, setShowTrainModal,
     doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
     doSkipRecruitTurn, toggleRecruitMode, recruitMode, recruitFigureType, setRecruitFigureType,
-    doSkipBetrayTurn, toggleBetrayMode, betrayMode,
+    doSkipBetrayTurn,
     doResolveWinter,
   } = useGameStore();
   const t = useT();
@@ -220,10 +220,7 @@ export const ActionPanel = () => {
                 {t('actions.betrayNotice', { name: cp?.name || '' })}
               </p>
               <p>{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
-              <button className={`btn-secondary ${betrayMode ? 'active' : ''}`} onClick={toggleBetrayMode}>
-                {betrayMode ? t('actions.betraySelectTarget') : t('actions.betraySelectFigure')}
-              </button>
-              {betrayMode && <p className="move-instruction">{t('actions.betraySelectTarget')}</p>}
+              <p className="move-instruction">{t('actions.betraySelectTarget')}</p>
               <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipBetrayTurn}>
                 {t('actions.betrayEndTurn')}
               </button>
