@@ -1,10 +1,16 @@
+import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
+import type { Player } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { BushiIcon, CoinIcon, HonorIcon, VPIcon, RoninIcon, ShintoIcon, FortressIcon } from './Icons';
+import { PlayerCardsModal } from './PlayerCardsModal';
+import { useT } from '../i18n';
 
 export const PlayerPanel = () => {
   const { gameState, localPlayerId } = useGameStore();
+  const t = useT();
+  const [viewingCardsPlayer, setViewingCardsPlayer] = useState<Player | null>(null);
   if (!gameState) return null;
   const cp = gameState.players[gameState.currentPlayerIndex];
 
@@ -65,18 +71,28 @@ export const PlayerPanel = () => {
                 {player.warProvinceTokens.length > 0 && (
                   <span className="extra-item">War Tokens: {player.warProvinceTokens.length}</span>
                 )}
-                {player.seasonCards.length > 0 && (
-                  <span className="extra-item">Cards: {player.seasonCards.length}</span>
-                )}
                 {player.hostages.length > 0 && (
                   <span className="extra-item">Hostages: {player.hostages.length}</span>
                 )}
+                <button
+                  className="player-cards-btn"
+                  style={{ borderColor: clan.color }}
+                  onClick={(e) => { e.stopPropagation(); setViewingCardsPlayer(player); }}
+                >
+                  &#x1F3B4; {t('playerCards.button', { count: String(player.seasonCards.length) })}
+                </button>
               </div>
 
             </div>
           );
         })}
       </div>
+      {viewingCardsPlayer && (
+        <PlayerCardsModal
+          player={viewingCardsPlayer}
+          onClose={() => setViewingCardsPlayer(null)}
+        />
+      )}
     </div>
   );
 };

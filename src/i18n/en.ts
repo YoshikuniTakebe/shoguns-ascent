@@ -235,6 +235,11 @@ export const en = {
   'monster.komainuMap': 'Place on map',
   'monster.komainuPray': 'Send to worship',
   'monster.placed': '{name} placed in {province}',
+
+  // Player Cards Modal
+  'playerCards.title': '{name} ({clan}) - Cards',
+  'playerCards.button': 'Cards ({count})',
+  'playerCards.empty': 'No cards yet.',
 } as const;
 
 export type TranslationKey = keyof typeof en;

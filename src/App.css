@@ -73,3 +73,7 @@
 .train-active{border-color:rgba(139,69,19,0.25);background:rgba(139,69,19,0.05)}
 .action-panel .btn-primary,.action-panel .btn-secondary{margin-top:0.5rem}
 .action-panel .mandate-options{margin-top:0.5rem}
+
+.player-cards-btn{display:inline-flex;align-items:center;gap:4px;padding:0.2rem 0.5rem;background:rgba(0,0,0,0.3);border:1px solid;border-radius:4px;color:var(--text-primary);font-size:0.7rem;cursor:pointer;transition:all 0.2s;margin-top:0.2rem;width:100%;justify-content:center;font-weight:500}
+.player-cards-btn:hover{background:rgba(200,169,81,0.15);box-shadow:0 0 8px rgba(200,169,81,0.2)}
+.player-cards-empty{text-align:center;color:var(--text-secondary);font-size:0.9rem;padding:2rem 1rem;font-style:italic}
