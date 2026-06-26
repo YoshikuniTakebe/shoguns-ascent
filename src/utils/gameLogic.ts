@@ -212,6 +212,7 @@ export function createInitialGameState(
     marshalResolutionOrder: [],
     marshalResolutionIndex: 0,
     marshalMandateIssuerId: null,
+    marshalFortressBuiltBy: [],
     lastMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
@@ -521,6 +522,7 @@ function executeMarshal(state: GameState, issuerId: string): GameState {
     marshalResolutionOrder: resolutionOrder,
     marshalResolutionIndex: 0,
     marshalMandateIssuerId: issuerId,
+    marshalFortressBuiltBy: [],
     log: [...state.log, `Marshal mandate issued by ${issuer?.name ?? 'Player'} - all players may move figures in resolution order. Issuer and ally may also build a fortress (3 coins).`],
   };
   // Set currentPlayerIndex to the first player in resolution order
@@ -1602,6 +1604,7 @@ export function advancePhase(state: GameState): GameState {
       newState.marshalResolutionOrder = [];
       newState.marshalResolutionIndex = 0;
       newState.marshalMandateIssuerId = null;
+      newState.marshalFortressBuiltBy = [];
       newState.drawnMandates = [];
       newState.mandateChoicePhase = false;
 
@@ -1672,7 +1675,7 @@ export function advancePlayer(state: GameState): GameState {
   }
 
   // Politics phase advancement
-  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, log: [...state.log] };
+  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], log: [...state.log] };
   newState.politicsMandateCount += 1;
 
   // Helper: advance to the next player in seating order (turnOrder)
@@ -1820,6 +1823,7 @@ export function advanceMarshalResolution(state: GameState): GameState {
       marshalResolutionOrder: [],
       marshalResolutionIndex: 0,
       marshalMandateIssuerId: null,
+      marshalFortressBuiltBy: [],
     };
   }
   // Set currentPlayerIndex to the next player in resolution order
@@ -1839,6 +1843,7 @@ export function buildFortress(state: GameState, playerId: string, provinceId: st
   if (!state.marshalMandateActive) return state;
   if (!state.marshalMandateIssuerId) return state;
   if (!isIssuerOrAlly(state, playerId, state.marshalMandateIssuerId)) return state;
+  if (state.marshalFortressBuiltBy.includes(playerId)) return state;
 
   const player = state.players.find((p) => p.id === playerId);
   if (!player) return state;
@@ -1863,6 +1868,7 @@ export function buildFortress(state: GameState, playerId: string, provinceId: st
         figures: [...province.figures, createFigure('fortress', playerId)],
       },
     },
+    marshalFortressBuiltBy: [...state.marshalFortressBuiltBy, playerId],
     log: [...state.log, `${player.name} builds a fortress in ${province.name} (3 coins)`],
   };
   return newState;

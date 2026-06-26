@@ -153,6 +153,7 @@ export const ActionPanel = () => {
               </div>
               {gameState.marshalMandateIssuerId && cp &&
                 (cp.id === gameState.marshalMandateIssuerId || gameState.players.find(p => p.id === gameState.marshalMandateIssuerId)?.allies.includes(cp.id)) &&
+                !gameState.marshalFortressBuiltBy.includes(cp.id) &&
                 cp.fortresses > 0 && cp.coins >= 3 && (
                 <div style={{ marginTop: '6px' }}>
                   <button className={`btn-secondary ${buildFortressMode ? 'active' : ''}`} onClick={toggleBuildFortressMode}>

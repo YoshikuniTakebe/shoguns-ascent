@@ -171,6 +171,7 @@ export interface GameState {
   marshalResolutionOrder: string[];
   marshalResolutionIndex: number;
   marshalMandateIssuerId: string | null;
+  marshalFortressBuiltBy: string[];
   lastMandateIssuerId: string | null;
   gameOver: boolean;
   winner?: string;

@@ -21,6 +21,8 @@ import {
   initiateWarPhase,
   resolveWinter,
   buySeasonCard,
+  skipMarshalTurn,
+  buildFortress,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 
@@ -247,6 +249,28 @@ wss.on('connection', (ws: WebSocket) => {
           const { cardId } = data.payload || {};
           if (!cardId) return;
           l.gameState = buySeasonCard(l.gameState, data.playerId, cardId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'SKIP_MARSHAL_TURN': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          let s = skipMarshalTurn(l.gameState);
+          if (!s.marshalMandateActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'BUILD_FORTRESS': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const { provinceId } = data.payload || {};
+          if (!provinceId) return;
+          l.gameState = buildFortress(l.gameState, data.playerId, provinceId);
           broadcastState(l);
           break;
         }
