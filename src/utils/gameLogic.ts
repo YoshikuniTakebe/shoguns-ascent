@@ -777,12 +777,17 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
     }
 
     // Only grant the reward if the strongest player is one of the harvesters (issuer or ally)
+    // and the province has at least one non-zero reward value
     if (strongestId && maxForce > 0 && harvesters.includes(strongestId)) {
-      harvestPlayerRewards.push({
-        playerId: strongestId,
-        provinceId: province.id,
-        rewards: { ...province.harvestRewards },
-      });
+      const rewards = province.harvestRewards;
+      const hasReward = (rewards.vp && rewards.vp > 0) || (rewards.coins && rewards.coins > 0) || (rewards.ronin && rewards.ronin > 0) || (rewards.honor && rewards.honor > 0);
+      if (hasReward) {
+        harvestPlayerRewards.push({
+          playerId: strongestId,
+          provinceId: province.id,
+          rewards: { ...rewards },
+        });
+      }
     }
   });
 
