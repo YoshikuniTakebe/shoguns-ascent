@@ -728,7 +728,7 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
   newState.players.forEach((p) => {
     p.coins += 1;
   });
-  newState.log = [...newState.log, `All players receive +1 coin from Harvest`];
+  newState.log = [...newState.log, `Cosecha: todos los jugadores reciben +1 moneda`];
 
   // Only the issuer and their ally harvest from provinces where they have majority force
   const issuer = newState.players.find((p) => p.id === issuerId);
@@ -770,15 +770,15 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
     if (strongestId && maxForce > 0 && harvesters.includes(strongestId)) {
       const winner = newState.players.find((p) => p.id === strongestId)!;
       winner.coins += province.harvestReward;
-      newState.log = [...newState.log, `${winner.name} harvests ${province.name} (+${province.harvestReward} coins)`];
+      newState.log = [...newState.log, `${winner.name} obtiene la recompensa de ${province.name}: +${province.harvestReward} monedas (mayoria de fuerza)`];
     }
   });
 
   if (harvesters.length > 1) {
     const allyPlayer = newState.players.find((p) => p.id === issuer.allies[0]);
-    newState.log = [...newState.log, `Harvest resolved for ${issuer.name} and ally ${allyPlayer?.name ?? ''}`];
+    newState.log = [...newState.log, `Cosecha resuelta para ${issuer.name} y aliado ${allyPlayer?.name ?? ''}`];
   } else {
-    newState.log = [...newState.log, `Harvest resolved for ${issuer.name}`];
+    newState.log = [...newState.log, `Cosecha resuelta para ${issuer.name}`];
   }
 
   return newState;
