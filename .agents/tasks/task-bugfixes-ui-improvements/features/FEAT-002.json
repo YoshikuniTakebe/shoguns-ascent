@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix Harvest popup flow (add initial confirmation popup with coin icon), fix player name colors in PoliticsTrack, and improve Betray mandate styling",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/HarvestPopup.tsx: Add a first-stage popup before showing province rewards. When harvestPopupVisible first becomes true (harvestResolutionIndex === 0), show a confirmation popup that says 'Todos los jugadores han recibido' (or translated equivalent) with the same visual format as the harvest rewards popup, showing a coin icon below the text. Only after the user confirms this initial popup should the province-by-province reward popups appear.",
     "2. Add a new state field to track whether the initial harvest confirmation has been shown. Options: (a) add a boolean `harvestInitialConfirmed` to the GameState in src/types/game.ts, or (b) use a local React state in HarvestPopup.tsx that resets when harvestMandateActive becomes true. Option (b) is simpler - use local state in the component.",
@@ -19,5 +19,5 @@
   ],
   "verification": ["npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly. All three changes implemented: (1) HarvestPopup uses local useState to track initialConfirmed, resets when harvestMandateActive changes; (2) PoliticsTrack now correctly resolves player -> clan -> color instead of the broken CLANS.find by player ID; (3) Betray section has new CSS classes betray-header, betray-player-name, betray-mandate-label, betray-selections, betray-instruction for improved visual structure."
 }
