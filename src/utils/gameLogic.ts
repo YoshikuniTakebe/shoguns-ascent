@@ -643,11 +643,11 @@ function executeMarshal(state: GameState, issuerId: string): GameState {
 function executeTrain(state: GameState, issuerId: string): GameState {
   // Train: All players may buy 1 season card from the market by paying its cost
   // Bonus: issuer and ally get -1 cost discount when buying
-  // Resolution order: issuer goes FIRST, then clockwise by seating (turnOrder)
-  const issuerIdx = state.turnOrder.indexOf(issuerId);
+  // Resolution order: issuer goes FIRST, then clockwise by seating (players array order)
+  const issuerIdx = state.players.findIndex(p => p.id === issuerId);
   const resolutionOrder: string[] = [issuerId];
-  for (let i = 1; i < state.turnOrder.length; i++) {
-    resolutionOrder.push(state.turnOrder[(issuerIdx + i) % state.turnOrder.length]);
+  for (let i = 1; i < state.players.length; i++) {
+    resolutionOrder.push(state.players[(issuerIdx + i) % state.players.length].id);
   }
   const newState: GameState = {
     ...state,

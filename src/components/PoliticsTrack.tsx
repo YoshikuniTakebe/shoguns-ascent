@@ -177,8 +177,11 @@ export const PoliticsTrack = () => {
   useEffect(() => {
     if (gameState?.trainMandateActive) {
       setShowSeasonCards(true);
+    } else {
+      // Auto-close when train mandate completes
+      setShowSeasonCards(false);
     }
-  }, [gameState?.trainMandateActive, gameState?.trainResolutionIndex]);
+  }, [gameState?.trainMandateActive]);
 
   // Also open when triggered from outside (e.g. ActionPanel button)
   useEffect(() => {

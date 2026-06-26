@@ -263,8 +263,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     ns = advanceTrainResolution(ns);
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
+      set({ gameState: ns, showTrainModal: false });
+    } else {
+      set({ gameState: ns });
     }
-    set({ gameState: ns });
   },
 
   // --- Skip Train Purchase ---
@@ -275,8 +277,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // If train mandate is now resolved (all players done), advance to next mandate turn
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
+      set({ gameState: ns, showTrainModal: false });
+    } else {
+      set({ gameState: ns });
     }
-    set({ gameState: ns });
   },
 
   // --- Marshal Mandate Actions ---

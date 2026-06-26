@@ -191,6 +191,10 @@ export const en = {
   'seasonCardsModal.discount': '(discount -1)',
   'seasonCardsModal.buyButton': 'Buy',
   'seasonCardsModal.openMarket': 'Open Market',
+  'seasonCardsModal.skipPurchase': 'Skip Purchase',
+  'seasonCardsModal.chooseCard': 'Choose a card',
+  'seasonCardsModal.playerCoins': 'Coins: {coins}',
+  'seasonCardsModal.accept': 'Accept',
 
   // Marshal Mandate
   'actions.marshalNotice': 'Marshal mandate - {name} may move figures. {bonus}',
