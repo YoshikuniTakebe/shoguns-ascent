@@ -12,6 +12,7 @@ import { TemplePanel } from './TemplePanel';
 import { HonorTrack } from './HonorTrack';
 import { AllianceDisplay } from './AllianceDisplay';
 import { PoliticsTrack } from './PoliticsTrack';
+import { VPIcon, CoinIcon, RoninIcon } from './Icons';
 import { useT } from '../i18n';
 
 const MAP_WIDTH = 1672;
@@ -26,6 +27,17 @@ const positions: Record<string, { x: number; y: number }> = {
   nagato: { x: 448, y: 605 },
   shikoku: { x: 630, y: 807 },
   kyushu: { x: 276, y: 808 },
+};
+
+const HARVEST_REWARDS: Record<string, { rewards: { type: 'vp' | 'coin' | 'ronin'; count: number }[]; color: string; position: { x: number; y: number } }> = {
+  hokkaido: { rewards: [{ type: 'ronin', count: 2 }], color: '#5BC0EB', position: { x: 1229, y: 130 } },
+  oshu: { rewards: [{ type: 'coin', count: 3 }], color: '#9B8EC4', position: { x: 1290, y: 380 } },
+  kanto: { rewards: [{ type: 'vp', count: 2 }, { type: 'coin', count: 2 }], color: '#E63946', position: { x: 1320, y: 600 } },
+  edo: { rewards: [{ type: 'vp', count: 4 }], color: '#2D8B4E', position: { x: 970, y: 540 } },
+  kansai: { rewards: [{ type: 'vp', count: 3 }], color: '#F57C20', position: { x: 690, y: 620 } },
+  nagato: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }, { type: 'coin', count: 1 }], color: '#8B5CF6', position: { x: 360, y: 550 } },
+  shikoku: { rewards: [{ type: 'coin', count: 3 }], color: '#CD7F32', position: { x: 710, y: 850 } },
+  kyushu: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }, { type: 'coin', count: 1 }], color: '#F5D020', position: { x: 190, y: 750 } },
 };
 
 const DRAG_DEAD_ZONE = 5;
@@ -264,6 +276,23 @@ export const GameBoard = () => {
                     />
                   ));
                 })()}
+                {/* Harvest reward connecting lines */}
+                {Object.entries(HARVEST_REWARDS).map(([regionId, harvest]) => {
+                  const regionPos = positions[regionId];
+                  if (!regionPos) return null;
+                  return (
+                    <line
+                      key={`harvest-line-${regionId}`}
+                      x1={harvest.position.x}
+                      y1={harvest.position.y}
+                      x2={regionPos.x}
+                      y2={regionPos.y}
+                      stroke={harvest.color}
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  );
+                })}
               </svg>
               <div className="regions-overlay">
                 {PROVINCES_DATA.map(r => {
@@ -276,6 +305,29 @@ export const GameBoard = () => {
                     />
                   );
                 })}
+                {Object.entries(HARVEST_REWARDS).map(([regionId, harvest]) => (
+                  <div
+                    key={`harvest-${regionId}`}
+                    className="harvest-hex"
+                    style={{
+                      left: `${harvest.position.x}px`,
+                      top: `${harvest.position.y}px`,
+                      backgroundColor: harvest.color,
+                      borderColor: harvest.color,
+                    }}
+                  >
+                    <div className="harvest-hex-content">
+                      {harvest.rewards.map((reward, i) => (
+                        <span key={i} className="harvest-reward-item">
+                          <span className="harvest-reward-count">{reward.count}</span>
+                          {reward.type === 'vp' && <VPIcon size={12} color="#fff" />}
+                          {reward.type === 'coin' && <CoinIcon size={12} color="#fff" />}
+                          {reward.type === 'ronin' && <RoninIcon size={12} color="#fff" />}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

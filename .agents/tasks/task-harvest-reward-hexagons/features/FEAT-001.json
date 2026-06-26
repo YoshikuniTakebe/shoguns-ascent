@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add hexagonal harvest reward markers on the map showing each province's harvest rewards, connected to their RegionCard with colored lines.",
+  "status": "in_progress",
+  "steps": [
+    "1. Define HARVEST_REWARDS constant in GameBoard.tsx with reward data, colors, and positions for all 8 provinces",
+    "2. Add connecting lines in the SVG overlay from harvest hexagon positions to province RegionCard positions",
+    "3. Add harvest hexagon elements in the regions-overlay div, positioned absolutely",
+    "4. Add .harvest-hex CSS class in App.css with hexagonal clip-path, semi-transparent background, and icon styling"
+  ],
+  "acceptance_criteria": [
+    "Running npx tsc -b produces no type errors",
+    "Running npx vite build succeeds",
+    "Each province has a hexagonal marker showing its harvest reward icons",
+    "Each hexagon is positioned at the specified coordinates on the map",
+    "Each hexagon has a colored line connecting it to its RegionCard",
+    "The hexagons use clip-path for hexagonal shape with province-specific colors"
+  ],
+  "verification": [
+    "npx tsc -b",
+    "npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}
