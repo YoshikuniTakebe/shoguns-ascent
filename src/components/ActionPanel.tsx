@@ -57,7 +57,7 @@ export const ActionPanel = () => {
           <h4>{t('actions.teaCeremony')}</h4>
           <p className="phase-description">
             {t('actions.teaDesc')}{' '}
-            {t('actions.playerOf', { current: gameState.teaTurnIndex + 1, total: gameState.players.length })}
+            {t('actions.playerOf', { current: Math.min(gameState.teaTurnIndex + 1, gameState.players.length), total: gameState.players.length })}
           </p>
 
           {isMyTurn && (

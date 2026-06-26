@@ -234,7 +234,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'FORM_ALLIANCE', playerId: apid, payload: { toPlayerId: to } });
       return;
     }
-    set({ gameState: proposeAlliance(gameState, apid, to) });
+    let ns = proposeAlliance(gameState, apid, to);
+    // If the proposal resulted in an auto-accept (reverse proposal existed),
+    // the current player now has an ally. Advance their tea turn.
+    const updatedPlayer = ns.players.find(p => p.id === apid);
+    if (ns.currentPhase === 'tea' && updatedPlayer && updatedPlayer.allies.length > 0 && cp && cp.allies.length === 0) {
+      ns = advancePlayer(ns);
+    }
+    set({ gameState: ns });
   },
   doAcceptAlliance: (from) => {
     const { gameState, localPlayerId, ws } = get();
