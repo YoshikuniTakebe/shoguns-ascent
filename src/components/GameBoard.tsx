@@ -34,7 +34,7 @@ const HARVEST_REWARDS: Record<string, { rewards: { type: 'vp' | 'coin' | 'ronin'
   oshu: { rewards: [{ type: 'coin', count: 3 }], color: '#9B8EC4', position: { x: 1290, y: 380 } },
   kanto: { rewards: [{ type: 'vp', count: 2 }, { type: 'coin', count: 2 }], color: '#E63946', position: { x: 1320, y: 600 } },
   edo: { rewards: [{ type: 'vp', count: 4 }], color: '#2D8B4E', position: { x: 970, y: 540 } },
-  kansai: { rewards: [{ type: 'vp', count: 3 }], color: '#F57C20', position: { x: 690, y: 620 } },
+  kansai: { rewards: [{ type: 'vp', count: 3 }], color: '#F57C20', position: { x: 870, y: 630 } },
   nagato: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }, { type: 'coin', count: 1 }], color: '#8B5CF6', position: { x: 360, y: 550 } },
   shikoku: { rewards: [{ type: 'coin', count: 3 }], color: '#8B6914', position: { x: 755, y: 850 } },
   kyushu: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }, { type: 'coin', count: 1 }], color: '#F5D020', position: { x: 190, y: 750 } },
