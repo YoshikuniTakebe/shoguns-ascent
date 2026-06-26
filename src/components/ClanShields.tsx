@@ -40,9 +40,7 @@ export const ClanShield = ({ clanId, size = 48 }: ClanShieldProps) => {
       width={size}
       height={size}
       style={{
-        borderRadius: '50%',
-        border: `2px solid ${clan.color}`,
-        objectFit: 'cover',
+        objectFit: 'contain',
       }}
     />
   );
