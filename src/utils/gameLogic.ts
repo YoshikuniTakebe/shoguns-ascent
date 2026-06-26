@@ -1252,7 +1252,7 @@ export function initiateWarPhase(state: GameState): GameState {
         provinceId: slot.provinceId,
         participants: [],
         warTacticBids: {},
-        resolved: true,
+        resolved: false,
         uncontested: true,
       };
       newState.activeBattles.push(battle);
@@ -1270,7 +1270,7 @@ export function initiateWarPhase(state: GameState): GameState {
           provinceId: slot.provinceId,
           participants: [winnerId],
           warTacticBids: {},
-          resolved: true,
+          resolved: false,
           winner: winnerId,
           uncontested: true,
         };
@@ -1294,7 +1294,7 @@ export function initiateWarPhase(state: GameState): GameState {
           provinceId: slot.provinceId,
           participants: playerIds,
           warTacticBids: {},
-          resolved: true,
+          resolved: false,
           winner: winner.id,
           uncontested: true,
         };

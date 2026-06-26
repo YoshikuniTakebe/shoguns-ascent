@@ -368,7 +368,7 @@ export const GameBoard = () => {
           </div>
         </div>
         <div className="right-panel">
-          {(gameState.currentPhase === 'war' && gameState.activeBattles.some(b => !b.resolved)) ? <BattlePanel /> : <ActionPanel />}
+          {(gameState.currentPhase === 'war' && gameState.activeBattles.length > 0) ? <BattlePanel /> : <ActionPanel />}
           <GameLog />
         </div>
       </div>

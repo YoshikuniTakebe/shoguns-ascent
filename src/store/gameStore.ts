@@ -696,12 +696,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = initiateWarPhase(gameState);
-    // For step-by-step UI display, mark uncontested battles as unresolved so we can show popups
-    const updatedBattles = ns.activeBattles.map(b => ({
-      ...b,
-      resolved: b.uncontested ? false : b.resolved,
-    }));
-    set({ gameState: { ...ns, activeBattles: updatedBattles }, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
   },
   doSubmitWarTacticBids: (provinceId, tacticBids) => {
     const { gameState, localPlayerId, ws } = get();
@@ -781,11 +776,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     // Contested battle: transition from popup to bidding
-    if (gameState.mode === 'hotseat') {
-      set({ battleStepPhase: 'bidding' });
-    } else {
-      set({ battleStepPhase: 'bidding' });
-    }
+    set({ battleStepPhase: 'bidding' });
   },
 
   // --- Cleanup & Winter ---
