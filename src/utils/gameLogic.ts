@@ -1344,7 +1344,11 @@ export function initiateWarPhase(state: GameState): GameState {
     // 2+ non-allied players - full battle
     const battle: Battle = {
       provinceId: slot.provinceId,
-      participants: playerIds,
+      participants: playerIds.sort((a, b) => {
+        const aIdx = newState.turnOrder.indexOf(a);
+        const bIdx = newState.turnOrder.indexOf(b);
+        return aIdx - bIdx;
+      }),
       warTacticBids: {},
       resolved: false,
     };

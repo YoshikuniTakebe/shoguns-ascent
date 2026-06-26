@@ -86,8 +86,12 @@ export const BattlePanel = () => {
   // --- CONTESTED BATTLE ---
   const isHotseat = gameState.mode === 'hotseat';
 
+  // In hotseat mode: if battleStepPhase is null but we have a contested battle, treat as popup phase.
+  // This is a safety fallback in case battleStepPhase was not properly initialized.
+  const effectiveBattleStepPhase = (isHotseat && battleStepPhase === null) ? 'popup' : battleStepPhase;
+
   // In hotseat mode with popup phase: show "[Player] tiene que apostar" popup
-  if (isHotseat && battleStepPhase === 'popup') {
+  if (isHotseat && effectiveBattleStepPhase === 'popup') {
     const currentParticipant = battle.participants[battleCurrentBiddingIndex];
     const player = gameState.players.find(p => p.id === currentParticipant);
     const playerClan = player ? CLANS.find(c => c.id === player.clanId) : null;
@@ -110,7 +114,7 @@ export const BattlePanel = () => {
   }
 
   // In hotseat mode with bidding phase: show bidding UI for current participant
-  if (isHotseat && battleStepPhase === 'bidding') {
+  if (isHotseat && effectiveBattleStepPhase === 'bidding') {
     const currentParticipant = battle.participants[battleCurrentBiddingIndex];
     const player = gameState.players.find(p => p.id === currentParticipant);
     const playerClan = player ? CLANS.find(c => c.id === player.clanId) : null;

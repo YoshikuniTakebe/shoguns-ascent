@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix the recruit mandate bug (allowing 2 figures from same fortress) and remove the 'Abrir Mercado' button during Train mandate, and format Marshal instructions as numbered list",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/utils/gameLogic.ts, fix the recruitPlaceFigure function: Add state tracking for which fortresses have already been used for placement during this player's recruit turn. When a Bushi or Monster is placed in a province, mark that fortress as 'used'. A subsequent Bushi/Monster placement must go to a DIFFERENT fortress. The bonus placement (for issuer/ally) can go to ANY province the player has a fortress in, regardless of whether that fortress was already used. When a Shinto is placed (to a temple), it does NOT consume a specific fortress slot - it just decrements a counter from the available total. This means if a player has 2 fortresses and places a Shinto first, they can still place a Bushi/Monster at either fortress afterward.",
     "2. Add a new field to GameState in src/types/game.ts: `recruitUsedFortressProvinces: string[]` to track which fortress provinces have been used for non-Shinto placements during the current player's recruit turn. Reset this array when advancing to the next player in advanceRecruitResolution.",
@@ -21,5 +21,5 @@
   ],
   "verification": ["npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes successfully. The recruit fix uses the usedFortressProvinces array to track which fortress provinces have been used for base (non-Shinto) placements. The bonus placement (for issuer/ally) is allowed at any fortress province. Shinto placements never add to the used list. The array is reset when advancing to the next player in recruit resolution order. The setShowTrainModal import was removed from ActionPanel since the button was deleted."
 }
