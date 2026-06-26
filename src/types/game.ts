@@ -238,9 +238,21 @@ export const WAR_TACTICS: WarTactic[] = [
   { id: 'imperial-poets', name: 'Imperial Poets', order: 4 },
 ];
 
-// --- Kami Data ---
+// --- Kami Data (Base Game) ---
 
 export const KAMI_DATA: KamiData[] = [
+  { type: 'amaterasu', name: 'Amaterasu', effect: 'Allows worshiper to move clan marker to top of Honor Track.' },
+  { type: 'fujin', name: 'Fujin', effect: 'Allows worshiper to perform up to 2 Movements with their figures.' },
+  { type: 'hachiman', name: 'Hachiman', effect: 'Grants worshiper 2 Ronin tokens.' },
+  { type: 'raijin', name: 'Raijin', effect: 'Allows worshiper to Summon 1 Bushi to any Province.' },
+  { type: 'ryujin', name: 'Ryujin', effect: 'Allows worshiper to acquire a Season Card paying full cost.' },
+  { type: 'susanoo', name: 'Susanoo', effect: 'Grants worshiper VP equal to their number of Fortresses on the Map.' },
+  { type: 'tsukuyomi', name: 'Tsukuyomi', effect: 'Grants worshiper 2 Coins.' },
+];
+
+// --- Kami Data (Expansion) ---
+
+export const KAMI_DATA_EXPANSION: KamiData[] = [
   { type: 'amaterasu', name: 'Amaterasu', effect: 'Figures of highest-honor player in this Province cannot be killed by others.' },
   { type: 'fujin', name: 'Fujin', effect: 'Double Harvest reward here. War winner also gets Harvest reward.' },
   { type: 'hachiman', name: 'Hachiman', effect: 'Ronin count as Force 2 each in this Province.' },

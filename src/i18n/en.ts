@@ -145,14 +145,23 @@ export const en = {
   // Region Card
   'region.battle': 'Battle {number}',
 
-  // Kami Effects
-  'kami.amaterasu.effect': 'Figures of highest-honor player in this Province cannot be killed by others.',
-  'kami.fujin.effect': 'Double Harvest reward here. War winner also gets Harvest reward.',
-  'kami.hachiman.effect': 'Ronin count as Force 2 each in this Province.',
-  'kami.raijin.effect': 'Only Bushi and Kami count Force in this Province.',
-  'kami.ryujin.effect': 'Force 1 per different season card type owned by controller.',
-  'kami.susanoo.effect': 'Non-Kami figures cannot Move out of this Province.',
-  'kami.tsukuyomi.effect': 'Before war here, all players with Force gain 4 Coins.',
+  // Kami Effects (Base Game)
+  'kami.amaterasu.baseEffect': 'Sun Goddess. Allows the top worshiper to move their Clan marker directly to the top position of the Honor Track, displacing all others.',
+  'kami.fujin.baseEffect': 'Wind God. Allows the top worshiper to perform up to 2 Movements with their figures on the Map.',
+  'kami.raijin.baseEffect': 'Thunder God. Allows the top worshiper to Summon 1 Bushi from Reserve to any Province on the Map.',
+  'kami.ryujin.baseEffect': 'Sea God. Allows the top worshiper to acquire a Season Card from the market, paying its full cost.',
+  'kami.hachiman.baseEffect': 'War God. Grants the top worshiper 2 Ronin tokens from the common supply.',
+  'kami.susanoo.baseEffect': 'Storm God. Grants the top worshiper Victory Points equal to their number of Fortresses currently on the Map.',
+  'kami.tsukuyomi.baseEffect': 'Moon God. Grants the top worshiper 2 Coins from the common supply.',
+
+  // Kami Effects (Expansion)
+  'kami.amaterasu.expansionEffect': 'Figures of highest-honor player in this Province cannot be killed by others.',
+  'kami.fujin.expansionEffect': 'Double Harvest reward here. War winner also gets Harvest reward.',
+  'kami.hachiman.expansionEffect': 'Ronin count as Force 2 each in this Province.',
+  'kami.raijin.expansionEffect': 'Only Bushi and Kami count Force in this Province.',
+  'kami.ryujin.expansionEffect': 'Force 1 per different season card type owned by controller.',
+  'kami.susanoo.expansionEffect': 'Non-Kami figures cannot Move out of this Province.',
+  'kami.tsukuyomi.expansionEffect': 'Before war here, all players with Force gain 4 Coins.',
 
   // Deck Names
   'deck.archway': 'Archway',

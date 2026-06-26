@@ -1,7 +1,7 @@
 import type {
   GameState, Player, Province, Season, MandateType,
   Battle, Figure, Temple, WarProvinceSlot, SeasonCard,
-  AllianceProposal, Hostage, DeckConfig, DeckName,
+  AllianceProposal, Hostage, DeckConfig, DeckName, KamiType,
 } from '../types/game';
 import {
   CLANS, PROVINCES_DATA, HOME_PROVINCES, WAR_TACTICS,
@@ -738,11 +738,84 @@ function executeBetray(state: GameState, issuerId: string): GameState {
 // Kami Turns
 // ============================================================
 
+export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerId: string): GameState {
+  let newState: GameState = {
+    ...state,
+    players: state.players.map((p) => ({ ...p })),
+    honorTrack: [...state.honorTrack],
+    provinces: { ...state.provinces },
+    log: [...state.log],
+  };
+
+  const player = newState.players.find((p) => p.id === playerId);
+  if (!player) return state;
+
+  switch (kamiType) {
+    case 'amaterasu': {
+      // Move player to the top (end) of the honor track
+      const currentIdx = newState.honorTrack.indexOf(playerId);
+      if (currentIdx >= 0 && currentIdx < newState.honorTrack.length - 1) {
+        newState.honorTrack = newState.honorTrack.filter((id) => id !== playerId);
+        newState.honorTrack.push(playerId);
+        newState.log = [...newState.log, `${player.name} moves to top of Honor Track (Amaterasu)`];
+      }
+      break;
+    }
+    case 'hachiman': {
+      // Grant +2 ronin tokens
+      player.ronin += 2;
+      newState.log = [...newState.log, `${player.name} gains 2 Ronin tokens (Hachiman)`];
+      break;
+    }
+    case 'susanoo': {
+      // Grant VP equal to number of fortresses on the map
+      let fortressCount = 0;
+      Object.values(newState.provinces).forEach((province) => {
+        fortressCount += province.figures.filter(
+          (f) => f.owner === playerId && f.type === 'fortress'
+        ).length;
+      });
+      player.victoryPoints += fortressCount;
+      newState.log = [...newState.log, `${player.name} gains ${fortressCount} VP from Fortresses (Susanoo)`];
+      break;
+    }
+    case 'tsukuyomi': {
+      // Grant +2 coins
+      player.coins += 2;
+      newState.log = [...newState.log, `${player.name} gains 2 Coins (Tsukuyomi)`];
+      break;
+    }
+    case 'fujin': {
+      // UI-driven: player needs to perform up to 2 movements via UI
+      newState.log = [...newState.log, `${player.name} may perform up to 2 Movements (Fujin) - use Move Forces`];
+      break;
+    }
+    case 'raijin': {
+      // UI-driven: player needs to choose province to summon bushi
+      // For now, decrement reserve if possible (placement needs UI)
+      if (player.bushi > 0) {
+        newState.log = [...newState.log, `${player.name} may Summon 1 Bushi to any Province (Raijin) - use the map to place`];
+      } else {
+        newState.log = [...newState.log, `${player.name} has no Bushi in reserve (Raijin - no effect)`];
+      }
+      break;
+    }
+    case 'ryujin': {
+      // UI-driven: player needs to choose a season card to buy
+      newState.log = [...newState.log, `${player.name} may acquire a Season Card paying full cost (Ryujin)`];
+      break;
+    }
+  }
+
+  return newState;
+}
+
 export function resolveKamiTurn(state: GameState): GameState {
-  const newState: GameState = {
+  let newState: GameState = {
     ...state,
     players: state.players.map((p) => ({ ...p })),
     temples: state.temples.map((t) => ({ ...t, figures: [...t.figures] })),
+    honorTrack: [...state.honorTrack],
     log: [...state.log, 'Kami Turn - resolving temple majorities'],
   };
 
@@ -781,6 +854,8 @@ export function resolveKamiTurn(state: GameState): GameState {
       const kamiData = KAMI_DATA.find((k) => k.type === temple.kamiType);
       if (winner && kamiData) {
         newState.log = [...newState.log, `${winner.name} gains ${kamiData.name} ability at temple ${temple.position}`];
+        // Apply the kami ability
+        newState = resolveKamiAbility(newState, temple.kamiType, winnerId);
       }
     }
   }

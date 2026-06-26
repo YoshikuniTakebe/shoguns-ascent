@@ -154,14 +154,23 @@ export const es: Record<TranslationKey, string> = {
   // Region Card
   'region.battle': 'Batalla {number}',
 
-  // Kami Effects
-  'kami.amaterasu.effect': 'Las figuras del jugador con el Honor más alto en esta Provincia no pueden ser asesinadas por los otros jugadores.',
-  'kami.fujin.effect': 'Dobla la Recompensa de Cosecha en esta Provincia. Al ganar el símbolo de Guerra de esta Provincia, también obtienes su Recompensa de Cosecha.',
-  'kami.hachiman.effect': 'En esta Provincia, los símbolos de Ronin cuentan como Fuerza 2 cada uno.',
-  'kami.raijin.effect': 'Solo las figuras de Bushi y Kami cuentan su Fuerza en esta Provincia.',
-  'kami.ryujin.effect': 'Ryujin cuenta como Fuerza 1 por cada tipo diferente de carta de Estación que tenga quien lo controla.',
-  'kami.susanoo.effect': 'Las figuras que no son Kami no se pueden Mover fuera de esta Provincia.',
-  'kami.tsukuyomi.effect': 'Antes de resolver la Guerra en esta Provincia, todos los jugadores con Fuerza en ella ganan 4 Monedas.',
+  // Kami Effects (Base Game)
+  'kami.amaterasu.baseEffect': 'Diosa del Sol, Amaterasu permite a su adorador principal mover su marcador de Clan directamente a la posicion superior del Track de Honor. No importa que posicion ocupe, sube directamente a la posicion mas alta, desplazando a todos los demas en el proceso. IMPORTANTE: Ten en cuenta que esto puede cambiar el desempate de Honor al resolver los siguientes Santuarios en este Turno Kami.',
+  'kami.fujin.baseEffect': 'Dios del viento, Fujin permite a su devoto principal realizar hasta 2 Movimientos con sus figuras en el Mapa. El jugador puede Mover 2 de sus figuras a Provincias adyacentes, o Mover 1 de sus figuras dos veces seguidas. Al igual que en una Orden de Movilizar, la figura puede cruzar una Frontera o usar una Ruta Maritima entre Provincias.',
+  'kami.raijin.baseEffect': 'Dios del trueno, Raijin permite a su adorador principal Invocar 1 Bushi, cogiendolo de su Reserva y colocandolo en cualquier Provincia del Mapa, aunque no tengan una Fortaleza alli.',
+  'kami.ryujin.baseEffect': 'Dios del mar, Ryujin permite a su adorador principal adquirir una carta de Estacion de las disponibles junto al tablero, pagando su coste completo en Monedas, al igual que en una Orden de Entrenar.',
+  'kami.hachiman.baseEffect': 'Dios de la guerra, Hachiman concede a su principal adorador 2 fichas de Ronin, adquiridas del suministro comun.',
+  'kami.susanoo.baseEffect': 'Dios de las tormentas, Susanoo concede a su devoto principal un numero de Puntos de Victoria igual al numero de Fortalezas que tienen actualmente en el Mapa.',
+  'kami.tsukuyomi.baseEffect': 'Dios de la luna, Tsukuyomi concede a su adorador superior 2 Monedas, adquiridas del suministro comun.',
+
+  // Kami Effects (Expansion)
+  'kami.amaterasu.expansionEffect': 'Las figuras del jugador con el Honor más alto en esta Provincia no pueden ser asesinadas por los otros jugadores.',
+  'kami.fujin.expansionEffect': 'Dobla la Recompensa de Cosecha en esta Provincia. Al ganar el símbolo de Guerra de esta Provincia, también obtienes su Recompensa de Cosecha.',
+  'kami.hachiman.expansionEffect': 'En esta Provincia, los símbolos de Ronin cuentan como Fuerza 2 cada uno.',
+  'kami.raijin.expansionEffect': 'Solo las figuras de Bushi y Kami cuentan su Fuerza en esta Provincia.',
+  'kami.ryujin.expansionEffect': 'Ryujin cuenta como Fuerza 1 por cada tipo diferente de carta de Estación que tenga quien lo controla.',
+  'kami.susanoo.expansionEffect': 'Las figuras que no son Kami no se pueden Mover fuera de esta Provincia.',
+  'kami.tsukuyomi.expansionEffect': 'Antes de resolver la Guerra en esta Provincia, todos los jugadores con Fuerza en ella ganan 4 Monedas.',
 
   // Deck Names
   'deck.archway': 'Arco',
