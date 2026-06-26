@@ -1,10 +1,21 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, DECK_GROUPS } from '../types/game';
+import { CLANS, DECK_GROUPS, CLAN_INCOME } from '../types/game';
 import type { DeckConfig, DeckName } from '../types/game';
 import type { TranslationKey } from '../i18n';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
+
+const CLAN_POWERS: Record<string, string> = {
+  koi: 'Gana 1 VP cuando fuerza un Seppuku',
+  sol: 'Acceso exclusivo a Dioses de la Suerte (Dynasty Invasion)',
+  loto: 'Puede reclutar figuras Bushi como Shinto en templos',
+  tortuga: 'Sus Fortalezas pueden moverse durante Movilizar',
+  libelula: 'Puede colocar figuras en cualquier provincia',
+  zorro: 'Roba 1 moneda de cada oponente al reclutar',
+  bonsai: 'Gana 1 VP por cada figura propia en una batalla ganada',
+  luna: 'Acceso exclusivo a Dioses de la Suerte (Dynasty Invasion)',
+};
 
 export const MainMenu = () => {
   const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage } = useGameStore();
@@ -223,12 +234,14 @@ export const MainMenu = () => {
         <p>{t('menu.clans')}</p>
         <div className="clan-preview-list">
           {CLANS.map(c => (
-            <div key={c.id} className="clan-preview" style={{ borderColor: c.color }}>
-              <div className="clan-preview-seal">
-                <ClanShield clanId={c.id} size={80} />
+            <div key={c.id} className="clan-preview-seal-wrapper">
+              <ClanShield clanId={c.id} size={110} />
+              <div className="clan-tooltip" style={{ borderColor: c.color }}>
+                <span className="clan-tooltip-name" style={{ color: c.color }}>{c.name}</span>
+                <span className="clan-tooltip-stat">Honor inicial: {c.initialHonor}</span>
+                <span className="clan-tooltip-stat">Ingresos: {CLAN_INCOME[c.id] ?? 0}</span>
+                <span className="clan-tooltip-power">Poder: {CLAN_POWERS[c.id] ?? ''}</span>
               </div>
-              <span className="clan-name" style={{ color: c.color }}>{c.name}</span>
-              <span className="clan-honor">{t('menu.initialHonor')} {c.initialHonor}</span>
             </div>
           ))}
         </div>
