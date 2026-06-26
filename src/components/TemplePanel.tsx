@@ -44,7 +44,7 @@ const KAMI_IMAGES: Record<KamiType, string> = {
 };
 
 export const TemplePanel = () => {
-  const { gameState } = useGameStore();
+  const { gameState, komainuPrayMode, doKomainuPlaceAtTemple } = useGameStore();
   const [selectedKami, setSelectedKami] = useState<KamiType | null>(null);
   const t = useT();
 
@@ -106,12 +106,21 @@ export const TemplePanel = () => {
           return (
             <div
               key={temple.id}
-              className="kami-slot filled"
+              className={`kami-slot filled${komainuPrayMode ? ' komainu-target' : ''}`}
               style={{
                 borderColor: palette.primary,
-                boxShadow: `0 0 12px ${palette.glow}, inset 0 0 20px ${palette.glow}`,
+                boxShadow: komainuPrayMode
+                  ? `0 0 16px rgba(255,215,0,0.7), 0 0 32px rgba(255,215,0,0.4), inset 0 0 20px ${palette.glow}`
+                  : `0 0 12px ${palette.glow}, inset 0 0 20px ${palette.glow}`,
+                cursor: komainuPrayMode ? 'pointer' : undefined,
               }}
-              onClick={() => setSelectedKami(temple.kamiType)}
+              onClick={() => {
+                if (komainuPrayMode) {
+                  doKomainuPlaceAtTemple(temple.id);
+                } else {
+                  setSelectedKami(temple.kamiType);
+                }
+              }}
             >
               <div className="kami-slot-illustration">
                 <img

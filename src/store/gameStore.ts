@@ -102,10 +102,13 @@ interface GameStore {
   monsterPlacementPlayerId: string | null;
   monsterPlacementPopupVisible: boolean;
   komainuChoiceVisible: boolean;
+  komainuPrayMode: boolean;
+  komainuPrayPlayerId: string | null;
   confirmMonsterPlacement: () => void;
   doPlaceMonster: (provinceId: string) => void;
   doKomainuChoosePray: () => void;
   doKomainuChooseMap: () => void;
+  doKomainuPlaceAtTemple: (templeId: string) => void;
   cancelMonsterPlacement: () => void;
 
   // Kami
@@ -154,6 +157,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   monsterPlacementPlayerId: null,
   monsterPlacementPopupVisible: false,
   komainuChoiceVisible: false,
+  komainuPrayMode: false,
+  komainuPrayPlayerId: null,
   language: (localStorage.getItem('shoguns-ascent-language') as 'en' | 'es') || 'es',
   setLanguage: (lang) => {
     localStorage.setItem('shoguns-ascent-language', lang);
@@ -492,12 +497,59 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, monsterPlacementCard, monsterPlacementPlayerId } = get();
     if (!gameState || !monsterPlacementCard || !monsterPlacementPlayerId) return;
 
-    // Skip map placement - Komainu acts as a Shinto sent to worship
-    // Just advance the train resolution normally
-    let ns: GameState = {
+    // Enter komainu pray mode: close popup, show temple selection
+    const ns: GameState = {
       ...gameState,
       log: [...gameState.log, `${monsterPlacementCard.name} sent to worship at a temple`],
+    };
+
+    set({
+      gameState: ns,
+      komainuChoiceVisible: false,
+      monsterPlacementPopupVisible: false,
+      monsterPlacementMode: false,
+      monsterPlacementCard: null,
+      komainuPrayMode: true,
+      komainuPrayPlayerId: monsterPlacementPlayerId,
+    });
+  },
+
+  doKomainuChooseMap: () => {
+    // Transition from komainu choice to normal placement popup
+    set({ komainuChoiceVisible: false, monsterPlacementPopupVisible: true });
+  },
+
+  doKomainuPlaceAtTemple: (templeId: string) => {
+    const { gameState, komainuPrayPlayerId } = get();
+    if (!gameState || !komainuPrayPlayerId) return;
+
+    const templeIndex = gameState.temples.findIndex(t => t.id === templeId);
+    if (templeIndex === -1) return;
+
+    const temple = gameState.temples[templeIndex];
+    const figureId = Math.random().toString(36).substring(2, 10);
+
+    // Add shinto figure to the temple
+    const updatedTemples = [...gameState.temples];
+    updatedTemples[templeIndex] = {
+      ...temple,
+      figures: [...temple.figures, { playerId: komainuPrayPlayerId, figureId }],
+    };
+
+    // Decrement player's shinto count
+    const updatedPlayers = gameState.players.map(p => {
+      if (p.id === komainuPrayPlayerId) {
+        return { ...p, shinto: Math.max(0, p.shinto - 1) };
+      }
+      return p;
+    });
+
+    let ns: GameState = {
+      ...gameState,
+      temples: updatedTemples,
+      players: updatedPlayers,
       trainResolutionIndex: gameState.trainResolutionIndex + 1,
+      log: [...gameState.log, `Shinto placed at ${temple.kamiType} temple`],
     };
     ns = advanceTrainResolution(ns);
 
@@ -506,27 +558,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({
         gameState: ns,
         showTrainModal: false,
-        monsterPlacementMode: false,
-        monsterPlacementCard: null,
+        komainuPrayMode: false,
+        komainuPrayPlayerId: null,
         monsterPlacementPlayerId: null,
-        monsterPlacementPopupVisible: false,
-        komainuChoiceVisible: false,
       });
     } else {
       set({
         gameState: ns,
-        monsterPlacementMode: false,
-        monsterPlacementCard: null,
+        showTrainModal: true,
+        komainuPrayMode: false,
+        komainuPrayPlayerId: null,
         monsterPlacementPlayerId: null,
-        monsterPlacementPopupVisible: false,
-        komainuChoiceVisible: false,
       });
     }
-  },
-
-  doKomainuChooseMap: () => {
-    // Transition from komainu choice to normal placement popup
-    set({ komainuChoiceVisible: false, monsterPlacementPopupVisible: true });
   },
 
   cancelMonsterPlacement: () => {

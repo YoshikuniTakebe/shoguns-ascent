@@ -234,12 +234,12 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
           </div>
         )}
 
-        {/* Player turn indicator overlay - shows INSIDE modal but blocks interaction until accepted */}
+        {/* Player turn indicator overlay - FIXED position so it stays centered on viewport */}
         {showPlayerIndicator && currentPlayer && (
           <div
             className="season-cards-player-indicator"
             style={{
-              position: 'absolute',
+              position: 'fixed',
               top: 0,
               left: 0,
               right: 0,
@@ -248,8 +248,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              zIndex: 1000,
-              borderRadius: 'inherit',
+              zIndex: 10000,
             }}
             onClick={(e) => e.stopPropagation()}
           >

@@ -237,6 +237,7 @@ export const es: Record<TranslationKey, string> = {
   'monster.komainuMap': 'Colocar en mapa',
   'monster.komainuPray': 'Enviar a rezar',
   'monster.placed': '{name} colocado en {province}',
+  'monster.selectTemple': 'Selecciona un templo para el Shinto',
 
   // Player Cards Modal
   'playerCards.title': '{name} ({clan}) - Cartas',

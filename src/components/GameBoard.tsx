@@ -67,7 +67,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray } = useGameStore();
+  const { gameState, localPlayerId, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray } = useGameStore();
   const t = useT();
 
   const [translateX, setTranslateX] = useState(0);
@@ -381,6 +381,13 @@ export const GameBoard = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Komainu Pray Mode Overlay */}
+      {komainuPrayMode && (
+        <div className="komainu-pray-overlay">
+          <span>{t('monster.selectTemple')}</span>
         </div>
       )}
     </div>

@@ -235,6 +235,7 @@ export const en = {
   'monster.komainuMap': 'Place on map',
   'monster.komainuPray': 'Send to worship',
   'monster.placed': '{name} placed in {province}',
+  'monster.selectTemple': 'Select a temple for the Shinto',
 
   // Player Cards Modal
   'playerCards.title': '{name} ({clan}) - Cards',
