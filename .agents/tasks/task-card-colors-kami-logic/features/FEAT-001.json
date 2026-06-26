@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Card UI changes (3:4 aspect ratio, color swaps) + i18n fixes for deck group names in setup",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/components/SeasonCardsModal.tsx, change CARD_TYPE_COLORS: monster becomes bronze '#cd7f32', virtue gets the old monster purple '#9b59b6', upgrade becomes green '#27ae60'. warUpgrade '#e74c3c' and winterUpgrade '#5bc0eb' remain unchanged.",
     "In src/App.css, change .season-card-image-placeholder height from 80px to a value that creates a 3:4 card aspect ratio. The image placeholder should be approximately square or slightly vertical. Change minmax(220px,1fr) in .season-card-grid to approximately 180px to accommodate narrower cards. Adjust .season-card aspect ratio by setting aspect-ratio: 3/4 on the .season-card class or equivalent approach so cards display in 3:4 ratio.",
@@ -20,5 +20,5 @@
     "npx tsc -b && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes applied cleanly. Build passes. monster=#cd7f32, virtue=#9b59b6, upgrade=#27ae60. Cards use aspect-ratio:3/4, grid uses minmax(180px,1fr), image placeholder uses aspect-ratio:1/1. Deck name translations added to both en.ts and es.ts, MainMenu uses DECK_NAME_KEYS mapping with t() calls."
 }
