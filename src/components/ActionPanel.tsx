@@ -3,6 +3,7 @@ import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
+import { BushiIcon, ShintoIcon } from './Icons';
 
 export const ActionPanel = () => {
   const {
@@ -172,7 +173,7 @@ export const ActionPanel = () => {
 
           {/* Recruit mandate active - show figure type selector and place/end turn options */}
           {gameState.recruitMandateActive && (
-            <div className="recruit-active">
+            <div className="recruit-active" style={{ borderColor: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan ? clan.color : undefined; })() }}>
               <p className="recruit-notice">
                 {t('actions.recruitNotice', {
                   name: cp?.name || '',
@@ -187,26 +188,27 @@ export const ActionPanel = () => {
               {cp && cp.clanId === 'libelula' && (
                 <p className="move-instruction">{t('actions.recruitDragonflyHint')}</p>
               )}
-              <div style={{ marginTop: '6px', marginBottom: '6px' }}>
-                <span>{t('actions.recruitFigureType')} </span>
+              <div className="recruit-buttons">
                 <button
-                  className={`btn-secondary ${recruitFigureType === 'bushi' ? 'active' : ''}`}
-                  onClick={() => setRecruitFigureType('bushi')}
-                  style={{ marginRight: '4px' }}
+                  className={`recruit-type-btn ${recruitFigureType === 'bushi' ? 'active' : ''}`}
+                  onClick={() => { setRecruitFigureType('bushi'); if (!recruitMode) toggleRecruitMode(); }}
+                  style={{ '--recruit-clan-color': (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() } as React.CSSProperties}
                 >
-                  {t('actions.recruitBushi')} ({cp?.bushi ?? 0})
+                  <BushiIcon size={18} color={recruitFigureType === 'bushi' ? (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() : 'var(--text-secondary)'} />
+                  <span className="recruit-type-label">{t('actions.recruitBushi')}</span>
+                  <span className="recruit-type-count">{cp?.bushi ?? 0}</span>
                 </button>
                 <button
-                  className={`btn-secondary ${recruitFigureType === 'shinto' ? 'active' : ''}`}
-                  onClick={() => setRecruitFigureType('shinto')}
+                  className={`recruit-type-btn ${recruitFigureType === 'shinto' ? 'active' : ''}`}
+                  onClick={() => { setRecruitFigureType('shinto'); if (!recruitMode) toggleRecruitMode(); }}
+                  style={{ '--recruit-clan-color': (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() } as React.CSSProperties}
                 >
-                  {t('actions.recruitShinto')} ({cp?.shinto ?? 0})
+                  <ShintoIcon size={18} color={recruitFigureType === 'shinto' ? (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() : 'var(--text-secondary)'} />
+                  <span className="recruit-type-label">{t('actions.recruitShinto')}</span>
+                  <span className="recruit-type-count">{cp?.shinto ?? 0}</span>
                 </button>
               </div>
-              <button className={`btn-secondary ${recruitMode ? 'active' : ''}`} onClick={toggleRecruitMode}>
-                {recruitMode ? t('actions.recruitCancelPlace') : t('actions.recruitPlaceFigure')}
-              </button>
-              {recruitMode && <p className="move-instruction">{t('actions.recruitSelectProvince')}</p>}
+              {recruitMode && <p className="move-instruction">{recruitFigureType === 'shinto' ? t('actions.recruitSelectProvinceOrTemple') : t('actions.recruitSelectProvince')}</p>}
               <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipRecruitTurn}>
                 {t('actions.endRecruitTurn')}
               </button>

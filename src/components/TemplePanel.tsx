@@ -44,7 +44,7 @@ const KAMI_IMAGES: Record<KamiType, string> = {
 };
 
 export const TemplePanel = () => {
-  const { gameState, komainuPrayMode, doKomainuPlaceAtTemple } = useGameStore();
+  const { gameState, komainuPrayMode, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto } = useGameStore();
   const [selectedKami, setSelectedKami] = useState<KamiType | null>(null);
   const t = useT();
 
@@ -102,21 +102,24 @@ export const TemplePanel = () => {
 
           const kami = KAMI_DATA.find(k => k.type === temple.kamiType);
           const palette = KAMI_PALETTES[temple.kamiType];
+          const isRecruitShintoTarget = recruitMode && recruitFigureType === 'shinto';
 
           return (
             <div
               key={temple.id}
-              className={`kami-slot filled${komainuPrayMode ? ' komainu-target' : ''}`}
+              className={`kami-slot filled${komainuPrayMode ? ' komainu-target' : ''}${isRecruitShintoTarget ? ' recruit-target' : ''}`}
               style={{
                 borderColor: palette.primary,
-                boxShadow: komainuPrayMode
+                boxShadow: komainuPrayMode || isRecruitShintoTarget
                   ? `0 0 16px rgba(255,215,0,0.7), 0 0 32px rgba(255,215,0,0.4), inset 0 0 20px ${palette.glow}`
                   : `0 0 12px ${palette.glow}, inset 0 0 20px ${palette.glow}`,
-                cursor: komainuPrayMode ? 'pointer' : undefined,
+                cursor: komainuPrayMode || isRecruitShintoTarget ? 'pointer' : undefined,
               }}
               onClick={() => {
                 if (komainuPrayMode) {
                   doKomainuPlaceAtTemple(temple.id);
+                } else if (isRecruitShintoTarget) {
+                  doRecruitPlaceTempleShinto(temple.id);
                 } else {
                   setSelectedKami(temple.kamiType);
                 }

@@ -212,6 +212,7 @@ export const en = {
   'actions.recruitNoBonus': '',
   'actions.endRecruitTurn': 'End Recruit Turn',
   'actions.recruitSelectProvince': 'Select a province to place a figure.',
+  'actions.recruitSelectProvinceOrTemple': 'Select a province or temple to place a shinto.',
   'actions.recruitPlacementsLeft': 'Placements remaining: {count}',
   'actions.recruitFigureType': 'Figure type:',
   'actions.recruitBushi': 'Bushi',

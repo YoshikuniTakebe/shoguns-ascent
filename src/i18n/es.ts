@@ -214,6 +214,7 @@ export const es: Record<TranslationKey, string> = {
   'actions.recruitNoBonus': '',
   'actions.endRecruitTurn': 'Terminar Turno de Reclutar',
   'actions.recruitSelectProvince': 'Selecciona una provincia para colocar una figura.',
+  'actions.recruitSelectProvinceOrTemple': 'Selecciona una provincia o un templo para colocar un shinto.',
   'actions.recruitPlacementsLeft': 'Colocaciones restantes: {count}',
   'actions.recruitFigureType': 'Tipo de figura:',
   'actions.recruitBushi': 'Bushi',

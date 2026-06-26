@@ -100,3 +100,13 @@
 .region-detail-figure-icon{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(0,0,0,0.3);border:1.5px solid;transition:transform 0.15s,box-shadow 0.15s}
 .region-detail-figure:hover .region-detail-figure-icon{transform:scale(1.1);box-shadow:0 0 12px rgba(200,169,81,0.3)}
 .region-detail-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(15,15,25,0.95);border:1px solid var(--border-gold);border-radius:6px;padding:0.4rem 0.6rem;font-size:0.75rem;color:var(--text-primary);white-space:nowrap;z-index:1100;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.5);max-width:250px;white-space:normal;text-align:center}
+
+.region-card.recruit-target{border-color:#87CEEB;box-shadow:0 0 15px rgba(135,206,235,0.5);animation:pulse-recruit 1s infinite;cursor:pointer}
+.region-card.recruit-dimmed{opacity:0.4;pointer-events:none}
+@keyframes pulse-recruit{0%,100%{box-shadow:0 0 12px rgba(135,206,235,0.3)}50%{box-shadow:0 0 22px rgba(135,206,235,0.7)}}
+.recruit-buttons{display:flex;gap:0.5rem;margin-top:0.5rem;margin-bottom:0.5rem}
+.recruit-type-btn{display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.75rem;background:var(--bg-dark);border:1.5px solid rgba(135,206,235,0.3);border-radius:8px;color:var(--text-primary);cursor:pointer;transition:all 0.2s;flex:1;justify-content:center}
+.recruit-type-btn:hover{border-color:var(--recruit-clan-color,#87CEEB);background:rgba(135,206,235,0.08)}
+.recruit-type-btn.active{border-color:var(--recruit-clan-color,#87CEEB);background:rgba(135,206,235,0.12);box-shadow:0 0 10px rgba(135,206,235,0.25)}
+.recruit-type-label{font-size:0.8rem;font-weight:600}
+.recruit-type-count{font-size:0.75rem;color:var(--accent-gold);font-weight:bold;background:rgba(0,0,0,0.3);padding:0.1rem 0.35rem;border-radius:4px}

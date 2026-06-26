@@ -76,6 +76,29 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
     }
   }
 
+  // Recruit province highlighting logic
+  let isRecruitTarget = false;
+  let isRecruitDimmed = false;
+  if (recruitMode && !monsterPlacementMode) {
+    const cp = gameState.players[gameState.currentPlayerIndex];
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (apid) {
+      const activePlayer = gameState.players.find(p => p.id === apid);
+      const isDragonfly = activePlayer?.clanId === 'libelula';
+      if (isDragonfly) {
+        // Dragonfly clan can place in any province
+        isRecruitTarget = true;
+      } else {
+        const hasFortress = province.figures.some(f => f.type === 'fortress' && f.owner === apid);
+        if (hasFortress) {
+          isRecruitTarget = true;
+        } else {
+          isRecruitDimmed = true;
+        }
+      }
+    }
+  }
+
   const handleClick = () => {
     if (monsterPlacementMode) {
       if (isMonsterTarget) {
@@ -88,6 +111,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
       return;
     }
     if (recruitMode) {
+      if (isRecruitDimmed) return;
       doRecruitPlaceFigure(regionId);
       return;
     }
@@ -132,7 +156,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
 
   return (
     <div
-      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''}`}
+      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''}`}
       style={style}
       onClick={handleClick}
     >

@@ -88,6 +88,7 @@ interface GameStore {
   toggleRecruitMode: () => void;
   setRecruitFigureType: (figureType: 'bushi' | 'shinto') => void;
   doRecruitPlaceFigure: (provinceId: string) => void;
+  doRecruitPlaceTempleShinto: (templeId: string) => void;
   doSkipRecruitTurn: () => void;
 
   // Betray mandate actions
@@ -376,6 +377,60 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = recruitPlaceFigure(gameState, apid, provinceId, recruitFigureType);
+    // Auto-advance when placements reach 0
+    if (ns.recruitPlacementsRemaining <= 0) {
+      let advanced = skipRecruitTurn(ns);
+      if (!advanced.recruitMandateActive) {
+        advanced = advancePlayer(advanced);
+      }
+      set({ gameState: advanced, recruitMode: advanced.recruitMandateActive });
+    } else {
+      set({ gameState: ns });
+    }
+  },
+  doRecruitPlaceTempleShinto: (templeId: string) => {
+    const { gameState, localPlayerId, recruitFigureType } = get();
+    if (!gameState || !localPlayerId) return;
+    if (recruitFigureType !== 'shinto') return;
+    if (!gameState.recruitMandateActive) return;
+    if (gameState.recruitPlacementsRemaining <= 0) return;
+
+    const cp = getCurrentPlayer(gameState);
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (!apid) return;
+
+    const player = gameState.players.find(p => p.id === apid);
+    if (!player || player.shinto <= 0) return;
+
+    const templeIndex = gameState.temples.findIndex(t => t.id === templeId);
+    if (templeIndex === -1) return;
+
+    const temple = gameState.temples[templeIndex];
+    const figureId = Math.random().toString(36).substring(2, 10);
+
+    // Add shinto figure to the temple
+    const updatedTemples = [...gameState.temples];
+    updatedTemples[templeIndex] = {
+      ...temple,
+      figures: [...temple.figures, { playerId: apid, figureId }],
+    };
+
+    // Decrement player's shinto count
+    const updatedPlayers = gameState.players.map(p => {
+      if (p.id === apid) {
+        return { ...p, shinto: Math.max(0, p.shinto - 1) };
+      }
+      return p;
+    });
+
+    let ns: GameState = {
+      ...gameState,
+      temples: updatedTemples,
+      players: updatedPlayers,
+      recruitPlacementsRemaining: gameState.recruitPlacementsRemaining - 1,
+      log: [...gameState.log, `${player.name} places a shinto at ${temple.kamiType} temple`],
+    };
+
     // Auto-advance when placements reach 0
     if (ns.recruitPlacementsRemaining <= 0) {
       let advanced = skipRecruitTurn(ns);
