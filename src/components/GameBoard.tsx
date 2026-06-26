@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCES_DATA } from '../types/game';
 import { RegionCard } from './RegionCard';
@@ -305,30 +305,46 @@ export const GameBoard = () => {
                     />
                   );
                 })}
-                {Object.entries(HARVEST_REWARDS).map(([regionId, harvest]) => (
-                  <div
-                    key={`harvest-${regionId}`}
-                    className="harvest-hex"
-                    style={{
-                      left: `${harvest.position.x}px`,
-                      top: `${harvest.position.y}px`,
-                      backgroundColor: harvest.color,
-                      borderColor: harvest.color,
-                    }}
-                  >
-                    <div className="harvest-hex-content">
-                      {harvest.rewards.map((reward, i) =>
-                        Array.from({ length: reward.count }).map((_, j) => (
-                          <span key={`${i}-${j}`} className="harvest-reward-item">
-                            {reward.type === 'vp' && <VPIcon size={20} color="#fff" />}
-                            {reward.type === 'coin' && <CoinIcon size={20} color="#fff" />}
-                            {reward.type === 'ronin' && <RoninIcon size={20} color="#fff" />}
-                          </span>
-                        ))
-                      )}
+                {Object.entries(HARVEST_REWARDS).map(([regionId, harvest]) => {
+                  const allIcons: ReactNode[] = [];
+                  harvest.rewards.forEach((reward, i) => {
+                    Array.from({ length: reward.count }).forEach((_, j) => {
+                      const key = `${i}-${j}`;
+                      allIcons.push(
+                        <span key={key} className="harvest-reward-item">
+                          {reward.type === 'vp' && <VPIcon size={20} color="#fff" />}
+                          {reward.type === 'coin' && <CoinIcon size={20} color="#fff" />}
+                          {reward.type === 'ronin' && <RoninIcon size={20} color="#fff" />}
+                        </span>
+                      );
+                    });
+                  });
+                  const totalIcons = allIcons.length;
+                  const layoutClass = totalIcons === 3 ? 'layout-3' : totalIcons === 4 ? 'layout-4' : '';
+                  return (
+                    <div
+                      key={`harvest-${regionId}`}
+                      className="harvest-hex"
+                      style={{
+                        left: `${harvest.position.x}px`,
+                        top: `${harvest.position.y}px`,
+                        backgroundColor: harvest.color,
+                        borderColor: harvest.color,
+                      }}
+                    >
+                      <div className={`harvest-hex-content ${layoutClass}`}>
+                        {totalIcons === 3 ? (
+                          <>
+                            <div className="harvest-row-top">{allIcons[0]}</div>
+                            <div className="harvest-row-bottom">{allIcons[1]}{allIcons[2]}</div>
+                          </>
+                        ) : (
+                          allIcons
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
