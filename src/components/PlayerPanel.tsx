@@ -1,7 +1,7 @@
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { BushiIcon, CoinIcon, HonorIcon, VPIcon } from './Icons';
+import { BushiIcon, CoinIcon, HonorIcon, VPIcon, RoninIcon } from './Icons';
 
 export const PlayerPanel = () => {
   const { gameState, localPlayerId } = useGameStore();
@@ -42,7 +42,7 @@ export const PlayerPanel = () => {
                   <span className="stat-value">{player.honor} honor</span>
                 </div>
                 <div className="stat">
-                  <span className="stat-icon">&#9812;</span>
+                  <span className="stat-icon"><RoninIcon size={16} /></span>
                   <span className="stat-value">{player.ronin} ronin</span>
                 </div>
               </div>

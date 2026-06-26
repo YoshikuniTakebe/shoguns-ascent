@@ -49,7 +49,7 @@ export const CoinIcon = ({ size = 24, color = 'currentColor', className }: IconP
   </svg>
 );
 
-/** Traditional Japanese folding fan (sensu) - used for Honor */
+/** Japanese war fan (gunbai) - used for Honor */
 export const HonorIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
@@ -62,16 +62,22 @@ export const HonorIcon = ({ size = 24, color = 'currentColor', className }: Icon
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    {/* Fan wedge shape */}
-    <path d="M12 20 C12 20, 3 8, 5 5 C7 2, 17 2, 19 5 C21 8, 12 20, 12 20 Z" />
-    {/* Fan ribs */}
-    <line x1="12" y1="20" x2="7" y2="5" />
-    <line x1="12" y1="20" x2="12" y2="3" />
-    <line x1="12" y1="20" x2="17" y2="5" />
+    {/* Wide semicircular fan body */}
+    <path d="M3 11 C3 5, 8 2, 12 2 C16 2, 21 5, 21 11 C21 13, 18 14, 12 14 C6 14, 3 13, 3 11 Z" />
+    {/* Radiating ribs from handle pivot */}
+    <line x1="12" y1="14" x2="5" y2="5" />
+    <line x1="12" y1="14" x2="8" y2="3.5" />
+    <line x1="12" y1="14" x2="12" y2="2" />
+    <line x1="12" y1="14" x2="16" y2="3.5" />
+    <line x1="12" y1="14" x2="19" y2="5" />
+    {/* Sun circle in upper-center of fan */}
+    <circle cx="12" cy="7.5" r="2" fill={color} stroke="none" />
+    {/* Handle extending down */}
+    <line x1="12" y1="14" x2="12" y2="22" strokeWidth="2" />
   </svg>
 );
 
-/** Rising sun with rays - used for Victory Points */
+/** Rising sun war flag (kyokujitsu-ki) - used for Victory Points */
 export const VPIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
@@ -81,16 +87,17 @@ export const VPIcon = ({ size = 24, color = 'currentColor', className }: IconPro
     fill={color}
     stroke="none"
   >
-    {/* Horizon line */}
-    <rect x="2" y="15" width="20" height="1.5" rx="0.5" />
-    {/* Half circle (sun body) */}
-    <path d="M6 15 A6 6 0 0 1 18 15 Z" />
-    {/* Rays extending upward */}
-    <rect x="11.25" y="2" width="1.5" height="5" rx="0.5" />
-    <rect x="11.25" y="2" width="1.5" height="5" rx="0.5" transform="rotate(-30 12 15)" />
-    <rect x="11.25" y="2" width="1.5" height="5" rx="0.5" transform="rotate(30 12 15)" />
-    <rect x="11.25" y="2" width="1.5" height="5" rx="0.5" transform="rotate(-60 12 15)" />
-    <rect x="11.25" y="2" width="1.5" height="5" rx="0.5" transform="rotate(60 12 15)" />
+    {/* Triangular rays radiating from center in all directions */}
+    <polygon points="12,12 10,0 14,0" />
+    <polygon points="12,12 14,24 10,24" />
+    <polygon points="12,12 0,10 0,14" />
+    <polygon points="12,12 24,14 24,10" />
+    <polygon points="12,12 2.5,2.5 5.3,1.5 1.5,5.3" />
+    <polygon points="12,12 21.5,2.5 22.5,5.3 18.7,1.5" />
+    <polygon points="12,12 2.5,21.5 5.3,22.5 1.5,18.7" />
+    <polygon points="12,12 21.5,21.5 18.7,22.5 22.5,18.7" />
+    {/* Central sun circle */}
+    <circle cx="12" cy="12" r="4" />
   </svg>
 );
 
@@ -130,5 +137,59 @@ export const FortressIcon = ({ size = 24, color = 'currentColor', className }: I
     <rect x="10" y="2" width="4" height="4" />
     <rect x="9" y="1" width="6" height="2" opacity="0.7" />
     <rect x="10" y="14" width="4" height="4" fill="rgba(0,0,0,0.3)" />
+  </svg>
+);
+
+/** Samurai kabuto helmet with crescent crest - used for Daimyo on map */
+export const DaimyoIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    stroke="none"
+  >
+    {/* Crescent maedate crest on top */}
+    <path d="M4 8 C4 8, 7 4, 12 3 C17 4, 20 8, 20 8 C19 7, 16 5.5, 12 5 C8 5.5, 5 7, 4 8 Z" />
+    {/* Helmet bowl (hachi) */}
+    <path d="M5 12 C5 9, 8 7, 12 7 C16 7, 19 9, 19 12 L19 14 L5 14 Z" />
+    {/* Shikoro (neck guard flaps) */}
+    <path d="M4 14 L20 14 L21 16 L3 16 Z" />
+    <path d="M3 16 L21 16 L22 18 L2 18 Z" />
+    {/* Face opening */}
+    <rect x="9" y="18" width="6" height="4" rx="1" opacity="0.4" />
+  </svg>
+);
+
+/** Small warrior with sword raised overhead - used for Ronin */
+export const RoninIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    stroke={color}
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* Head */}
+    <circle cx="12" cy="7" r="2.5" fill={color} stroke="none" />
+    {/* Body */}
+    <line x1="12" y1="9.5" x2="12" y2="17" />
+    {/* Left arm raised holding sword */}
+    <line x1="12" y1="11" x2="8" y2="8" />
+    {/* Right arm raised holding sword */}
+    <line x1="12" y1="11" x2="16" y2="8" />
+    {/* Sword blade held overhead */}
+    <line x1="7" y1="3" x2="17" y2="3" strokeWidth="2" />
+    {/* Sword handle */}
+    <line x1="10" y1="5" x2="14" y2="5" strokeWidth="1" />
+    {/* Left leg */}
+    <line x1="12" y1="17" x2="9" y2="22" />
+    {/* Right leg */}
+    <line x1="12" y1="17" x2="15" y2="22" />
   </svg>
 );

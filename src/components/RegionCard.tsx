@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCES_DATA } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
-import { BushiIcon, ShintoIcon, FortressIcon } from './Icons';
+import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon } from './Icons';
 
 const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
   // SVG-based icons for bushi, shinto, fortress; Unicode for others
@@ -28,9 +28,15 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
       </span>
     );
   }
+  if (figure.type === 'daimyo') {
+    return (
+      <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
+        <DaimyoIcon size={14} color={color} />
+      </span>
+    );
+  }
 
   const icons: Record<string, string> = {
-    daimyo: '\u265A',
     monster: '\u2620',
     kami: '\u2728',
   };
