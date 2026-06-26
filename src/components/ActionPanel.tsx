@@ -37,7 +37,7 @@ export const ActionPanel = () => {
       {/* Season Setup Phase */}
       {gameState.currentPhase === 'seasonSetup' && (
         <div className="phase-section">
-          <h4>{t('actions.seasonSetup')} - {gameState.currentSeason.toUpperCase()}</h4>
+          <h4>{t('actions.seasonSetup')} - {t(`season.${gameState.currentSeason}` as any)}</h4>
           <p className="phase-description">{t('actions.seasonSetupDesc')}</p>
           {isMyTurn && (
             <button className="btn-primary advance-btn" onClick={doSetupSeason}>
