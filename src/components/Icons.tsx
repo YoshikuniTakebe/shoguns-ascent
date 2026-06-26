@@ -49,7 +49,7 @@ export const CoinIcon = ({ size = 24, color = 'currentColor', className }: IconP
   </svg>
 );
 
-/** Classic Japanese folding fan (sensu) - used for Honor */
+/** Classic Japanese folding fan (sensu) - widely open, used for Honor */
 export const HonorIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
@@ -62,18 +62,20 @@ export const HonorIcon = ({ size = 24, color = 'currentColor', className }: Icon
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    {/* Fan body - quarter circle opening upward from bottom pivot */}
-    <path d="M3 5 A14 14 0 0 1 21 5 L12 20 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="1.5" />
-    {/* Curved top arc */}
-    <path d="M3 5 A14 14 0 0 1 21 5" fill="none" stroke={color} strokeWidth="1.5" />
-    {/* Fold/rib lines radiating from pivot to top arc */}
-    <line x1="12" y1="20" x2="3.5" y2="5.5" />
-    <line x1="12" y1="20" x2="5.8" y2="3.5" />
-    <line x1="12" y1="20" x2="8.5" y2="2.3" />
-    <line x1="12" y1="20" x2="12" y2="1.8" />
-    <line x1="12" y1="20" x2="15.5" y2="2.3" />
-    <line x1="12" y1="20" x2="18.2" y2="3.5" />
-    <line x1="12" y1="20" x2="20.5" y2="5.5" />
+    {/* Fan body - wide semicircle opening from bottom pivot, nearly 180 degrees */}
+    <path d="M1 12 A11 11 0 0 1 23 12 L12 20 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="1.5" />
+    {/* Curved top arc - wide semicircle */}
+    <path d="M1 12 A11 11 0 0 1 23 12" fill="none" stroke={color} strokeWidth="1.5" />
+    {/* Fold/rib lines radiating widely from pivot to top arc */}
+    <line x1="12" y1="20" x2="1.5" y2="12" />
+    <line x1="12" y1="20" x2="2.5" y2="8.5" />
+    <line x1="12" y1="20" x2="5" y2="5.5" />
+    <line x1="12" y1="20" x2="8.5" y2="3.5" />
+    <line x1="12" y1="20" x2="12" y2="2.8" />
+    <line x1="12" y1="20" x2="15.5" y2="3.5" />
+    <line x1="12" y1="20" x2="19" y2="5.5" />
+    <line x1="12" y1="20" x2="21.5" y2="8.5" />
+    <line x1="12" y1="20" x2="22.5" y2="12" />
     {/* Pivot knob at the bottom */}
     <circle cx="12" cy="21" r="1.3" fill={color} stroke="none" />
   </svg>
@@ -165,7 +167,7 @@ export const DaimyoIcon = ({ size = 24, color = 'currentColor', className }: Ico
   </svg>
 );
 
-/** Samurai warrior in attacking stance - used for Ronin */
+/** Samurai warrior in attacking stance with sword held by arm - used for Ronin */
 export const RoninIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
@@ -176,19 +178,21 @@ export const RoninIcon = ({ size = 24, color = 'currentColor', className }: Icon
     stroke="none"
   >
     {/* Head */}
-    <circle cx="14" cy="4.5" r="2.2" />
-    {/* Sword raised behind/above head - diagonal slash pose */}
-    <rect x="5" y="0.5" width="1.4" height="10" rx="0.5" transform="rotate(30 5 0.5)" />
-    {/* Sword handle/grip */}
-    <rect x="9.5" y="8" width="1" height="3.5" rx="0.3" transform="rotate(30 9.5 8)" />
-    {/* Torso leaning forward aggressively */}
-    <path d="M13 7 L10 15 L14 15 L16 7 Z" />
-    {/* Back arm reaching up to sword */}
-    <path d="M14 8 L11 5 L9.5 6.5 L12 9 Z" />
-    {/* Front arm extended forward */}
-    <path d="M12 9 L7 12 L7.5 13.5 L13 10.5 Z" />
-    {/* Back leg extended behind - wide stance */}
-    <path d="M13 15 L17 22 L19 21.5 L15 15 Z" />
+    <circle cx="13" cy="4.5" r="2.2" />
+    {/* Torso */}
+    <path d="M11.5 7 L10 15 L14.5 15 L15.5 7 Z" />
+    {/* Right arm reaching up to sword - clearly connects shoulder to handle */}
+    <path d="M15 7.5 L16.5 6 L18 4.5 L19.5 3.5 L20 4.5 L18.5 5.5 L17 7 L15.5 9 Z" />
+    {/* Left arm also reaching to sword for two-handed grip */}
+    <path d="M12 8 L14 6.5 L16 5 L17 4 L17.5 5 L15.5 6.5 L13.5 8.5 L12.5 9.5 Z" />
+    {/* Long diagonal sword blade - held from above ready to strike */}
+    <rect x="18.5" y="0" width="1.2" height="12" rx="0.4" transform="rotate(35 19 0)" />
+    {/* Sword guard (tsuba) */}
+    <rect x="18" y="3.2" width="3" height="1" rx="0.5" transform="rotate(35 19 3.5)" />
+    {/* Sword handle (tsuka) */}
+    <rect x="17" y="4.5" width="1" height="3.5" rx="0.3" transform="rotate(35 17.5 5)" />
+    {/* Back leg - wide stance */}
+    <path d="M13 15 L16 22 L18 21.5 L15 15 Z" />
     {/* Front leg forward in lunge */}
     <path d="M11 15 L7 22 L9 22.5 L12 15 Z" />
   </svg>
