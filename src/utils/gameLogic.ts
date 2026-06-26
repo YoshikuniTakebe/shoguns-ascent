@@ -1714,7 +1714,7 @@ export function moveForces(
     // Track figure as moved
     newState.marshalMovedFigures = [...state.marshalMovedFigures, figureId];
 
-    newState.log = [...newState.log, `${player.name} moves ${figure.type} from ${fromProvince.name} to ${toProvince.name}`];
+    newState.log = [...newState.log, `${player.name} mueve ${figure.type} de ${fromProvince.name} a ${toProvince.name}`];
 
     return newState;
   }
@@ -1738,7 +1738,7 @@ export function moveForces(
 
   const player = newState.players.find((p) => p.id === playerId);
   if (player) {
-    newState.log = [...newState.log, `${player.name} moves ${figureIds.length} figure(s) from ${fromProvince.name} to ${toProvince.name}`];
+    newState.log = [...newState.log, `${player.name} mueve ${figureIds.length} figura(s) de ${fromProvince.name} a ${toProvince.name}`];
   }
 
   return newState;
