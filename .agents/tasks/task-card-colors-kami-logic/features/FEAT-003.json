@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Start implementing season card logic - apply passive effects from season cards during game actions",
+  "status": "in_progress",
+  "steps": [
+    "In src/utils/gameLogic.ts, create a helper function getPlayerSeasonCardEffects(state: GameState, playerId: string): SeasonCard[] that returns the season cards owned by a player.",
+    "Implement warUpgrade logic: In the initiateWarPhase or at the start of war resolution, iterate through all players and apply 'At start of War Phase' effects from their warUpgrade cards. Specifically: 'Way of the Shogun' (sp-way-of-the-shogun): +3 coins, 'Way of the Righteous' (sp-way-of-the-righteous): take 1 coin from each player with less honor, 'Way of Bushido' (su-way-of-bushido): +2 coins and +2 VP per different virtue owned, 'Way of Naginata' (su-way-of-naginata / au-way-of-naginata): placeholder (movement is UI-driven), 'Way of the Ashigaru' (su-way-of-the-ashigaru): placeholder (province selection is UI-driven), 'Way of the Ronin' (su-way-of-the-ronin): +2 ronin, 'Way of the Katana' (au-way-of-the-katana): mark bushi as force 2 (store a flag or handle in calculateForce), 'Way of the Keiri' (au-way-of-the-keiri): placeholder (requires province selection), 'Way of the Moneylender' (au-way-of-the-moneylender): +5 coins.",
+    "Enhance calculateForce function to account for season card effects that modify force: 'Path of the Lion' (sp-path-of-the-lion): Daimyo +1 force, 'Path of the Dragon' (au-path-of-the-dragon): Daimyo +3 force, 'Path of the Favored' (su-path-of-the-favored): Shinto counts as Force 3 in provinces where owner has highest honor, 'Way of the Katana' (au-way-of-the-katana): all bushi have Force 2 during war. Modify calculateForce to accept the full GameState so it can check player cards.",
+    "Update all callers of calculateForce to pass the GameState parameter (executeHarvest, resolveNextBattle, and any other places it is called)."
+  ],
+  "acceptance_criteria": [
+    "getPlayerSeasonCardEffects helper exists and works",
+    "War upgrade cards that grant coins/ronin/VP are applied at start of war phase in initiateWarPhase",
+    "calculateForce accounts for Daimyo force upgrades (Path of the Lion +1, Path of the Dragon +3)",
+    "All callers of calculateForce updated with new signature",
+    "Build passes with npx tsc -b && npx vite build"
+  ],
+  "verification": [
+    "npx tsc -b && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

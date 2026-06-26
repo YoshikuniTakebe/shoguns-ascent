@@ -608,7 +608,7 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
     let tied = false;
 
     newState.players.forEach((player) => {
-      const force = calculateForce(province, player.id);
+      const force = calculateForce(province, player.id, newState);
       if (force > maxForce) {
         maxForce = force;
         strongestId = player.id;
@@ -621,7 +621,7 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
     // Ties broken by honor (higher honor wins)
     if (tied && maxForce > 0) {
       const tiedPlayers = newState.players.filter(
-        (p) => calculateForce(province, p.id) === maxForce
+        (p) => calculateForce(province, p.id, newState) === maxForce
       );
       strongestId = tiedPlayers.sort((a, b) => {
         const aIdx = newState.honorTrack.indexOf(a.id);
@@ -645,11 +645,11 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
       if (!player) return;
       // Find a province where player is present but not strongest
       const bonusProvince = Object.values(newState.provinces).find((province) => {
-        const force = calculateForce(province, pid);
+        const force = calculateForce(province, pid, newState);
         if (force <= 0) return false;
         const isStrongest = newState.players.every((other) => {
           if (other.id === pid) return true;
-          return calculateForce(province, other.id) < force;
+          return calculateForce(province, other.id, newState) < force;
         });
         return !isStrongest;
       });
@@ -867,14 +867,88 @@ export function resolveKamiTurn(state: GameState): GameState {
 // War Phase
 // ============================================================
 
+function applyWarUpgrades(state: GameState): void {
+  for (const player of state.players) {
+    const warUpgradeCards = player.seasonCards.filter((c) => c.cardType === 'warUpgrade');
+    for (const card of warUpgradeCards) {
+      switch (card.id) {
+        case 'sp-way-of-the-shogun': {
+          // +3 coins
+          player.coins += 3;
+          state.log = [...state.log, `${player.name} gains 3 Coins (Way of the Shogun)`];
+          break;
+        }
+        case 'sp-way-of-the-righteous': {
+          // Take 1 coin from each player with less honor
+          const playerHonorIdx = state.honorTrack.indexOf(player.id);
+          for (const other of state.players) {
+            if (other.id === player.id) continue;
+            const otherHonorIdx = state.honorTrack.indexOf(other.id);
+            if (otherHonorIdx < playerHonorIdx && other.coins > 0) {
+              other.coins -= 1;
+              player.coins += 1;
+            }
+          }
+          state.log = [...state.log, `${player.name} takes coins from less honorable players (Way of the Righteous)`];
+          break;
+        }
+        case 'su-way-of-bushido': {
+          // +2 coins and +2 VP per different virtue owned
+          const virtueCount = player.seasonCards.filter((c) => c.cardType === 'virtue').length;
+          player.coins += 2;
+          player.victoryPoints += 2 * virtueCount;
+          state.log = [...state.log, `${player.name} gains 2 Coins and ${2 * virtueCount} VP (Way of Bushido, ${virtueCount} virtues)`];
+          break;
+        }
+        case 'su-way-of-the-ronin': {
+          // +2 ronin
+          player.ronin += 2;
+          state.log = [...state.log, `${player.name} gains 2 Ronin (Way of the Ronin)`];
+          break;
+        }
+        case 'au-way-of-the-moneylender': {
+          // +5 coins
+          player.coins += 5;
+          state.log = [...state.log, `${player.name} gains 5 Coins (Way of the Moneylender)`];
+          break;
+        }
+        case 'su-way-of-naginata':
+        case 'au-way-of-naginata': {
+          // Movement is UI-driven, log only
+          state.log = [...state.log, `${player.name} may perform Naginata movement (Way of Naginata)`];
+          break;
+        }
+        case 'su-way-of-the-ashigaru': {
+          // Province selection is UI-driven, log only
+          state.log = [...state.log, `${player.name} may place Ashigaru (Way of the Ashigaru)`];
+          break;
+        }
+        case 'au-way-of-the-katana': {
+          // Bushi force 2 during war is handled in calculateForce
+          state.log = [...state.log, `${player.name}'s Bushi have Force 2 during War (Way of the Katana)`];
+          break;
+        }
+        case 'au-way-of-the-keiri': {
+          // Kill up to 2 figures is UI-driven, log only
+          state.log = [...state.log, `${player.name} may kill up to 2 enemy figures (Way of the Keiri)`];
+          break;
+        }
+      }
+    }
+  }
+}
+
 export function initiateWarPhase(state: GameState): GameState {
   const newState: GameState = {
     ...state,
     currentPhase: 'war' as const,
     activeBattles: [],
-    players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens] })),
+    players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], seasonCards: [...p.seasonCards] })),
     log: [...state.log, 'War Phase begins - resolving battles'],
   };
+
+  // Apply war upgrade card effects at start of war phase
+  applyWarUpgrades(newState);
 
   // Sort war province slots by number (ascending order)
   const sortedSlots = [...newState.warProvinceSlots].sort((a, b) => a.number - b.number);
@@ -910,8 +984,8 @@ export function initiateWarPhase(state: GameState): GameState {
       const p2 = newState.players.find((p) => p.id === playerIds[1]);
       if (p1 && p2 && p1.allies.includes(p2.id)) {
         // Two allies - strongest wins without battle
-        const force1 = calculateForce(province, p1.id);
-        const force2 = calculateForce(province, p2.id);
+        const force1 = calculateForce(province, p1.id, newState);
+        const force2 = calculateForce(province, p2.id, newState);
         const winner = force1 >= force2 ? p1 : p2;
         winner.warProvinceTokens = [...winner.warProvinceTokens, { season: slot.season, provinceId: slot.provinceId }];
         newState.log = [...newState.log, `${winner.name} wins war token in ${province.name} (allied - no battle)`];
@@ -1100,7 +1174,7 @@ export function resolveNextBattle(state: GameState): GameState {
 
   battle.participants.forEach((pid) => {
     const player = newState.players.find((p) => p.id === pid)!;
-    let force = calculateForce(finalProvince, pid);
+    let force = calculateForce(finalProvince, pid, newState);
     // Add ronin force only if this player won the hire-ronin tactic
     if (pid === hireRoninWinner) {
       force += player.ronin;
@@ -1428,9 +1502,57 @@ export function isValidMove(fromProvinceId: string, toProvinceId: string): boole
   return false;
 }
 
-export function calculateForce(province: Province & { figures: Figure[] }, playerId: string): number {
-  // All figures have force 1 unless stated otherwise
-  return province.figures.filter((f) => f.owner === playerId).length;
+// ============================================================
+// Season Card Helpers
+// ============================================================
+
+export function getPlayerSeasonCardEffects(state: GameState, playerId: string): SeasonCard[] {
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return [];
+  return player.seasonCards;
+}
+
+export function calculateForce(province: Province & { figures: Figure[] }, playerId: string, state?: GameState): number {
+  const playerFigures = province.figures.filter((f) => f.owner === playerId);
+  if (!state) {
+    // Fallback: simple count (backward compat if state not provided)
+    return playerFigures.length;
+  }
+
+  const playerCards = getPlayerSeasonCardEffects(state, playerId);
+  const cardIds = new Set(playerCards.map((c) => c.id));
+
+  let totalForce = 0;
+
+  for (const fig of playerFigures) {
+    let figForce = 1; // Base force for any figure
+
+    if (fig.type === 'daimyo') {
+      if (cardIds.has('sp-path-of-the-lion')) {
+        figForce += 1; // Daimyo +1 force
+      }
+      if (cardIds.has('au-path-of-the-dragon')) {
+        figForce += 3; // Daimyo +3 force
+      }
+    }
+
+    if (fig.type === 'shinto' && cardIds.has('su-path-of-the-favored')) {
+      // Shinto counts as Force 3 in provinces where owner has highest honor
+      const highestHonorPlayerId = state.honorTrack[state.honorTrack.length - 1];
+      if (highestHonorPlayerId === playerId) {
+        figForce = 3; // Replace base force with 3
+      }
+    }
+
+    if (fig.type === 'bushi' && cardIds.has('au-way-of-the-katana') && state.currentPhase === 'war') {
+      // All bushi have Force 2 during war phase
+      figForce = 2; // Replace base force with 2
+    }
+
+    totalForce += figForce;
+  }
+
+  return totalForce;
 }
 
 export function getHonorRank(state: GameState, playerId: string): number {
