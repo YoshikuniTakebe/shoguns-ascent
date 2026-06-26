@@ -270,7 +270,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Auto-enable recruitMode when recruit mandate first activates, betrayMode when betray activates
       set({ gameState: ns, recruitMode: ns.recruitMandateActive, betrayMode: ns.betrayMandateActive });
     } else {
-      set({ gameState: advancePlayer(ns) });
+      const advanced = advancePlayer(ns);
+      // Detect war phase transition and set up battle step phase for hotseat
+      if (advanced.currentPhase === 'war' && advanced.activeBattles.some(b => !b.resolved)) {
+        set({ gameState: advanced, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      } else {
+        set({ gameState: advanced });
+      }
     }
   },
 
@@ -323,7 +329,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     ns = advanceTrainResolution(ns);
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
-      set({ gameState: ns, showTrainModal: false });
+      // Detect war phase transition and set up battle step phase for hotseat
+      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+        set({ gameState: ns, showTrainModal: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      } else {
+        set({ gameState: ns, showTrainModal: false });
+      }
     } else {
       set({ gameState: ns });
     }
@@ -337,7 +348,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // If train mandate is now resolved (all players done), advance to next mandate turn
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
-      set({ gameState: ns, showTrainModal: false });
+      // Detect war phase transition and set up battle step phase for hotseat
+      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+        set({ gameState: ns, showTrainModal: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      } else {
+        set({ gameState: ns, showTrainModal: false });
+      }
     } else {
       set({ gameState: ns });
     }
@@ -355,7 +371,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.marshalMandateActive) {
       ns = advancePlayer(ns);
     }
-    set({ gameState: ns, buildFortressMode: false, moveMode: false, moveFrom: null, selectedFigures: [] });
+    // Detect war phase transition and set up battle step phase for hotseat
+    if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+      set({ gameState: ns, buildFortressMode: false, moveMode: false, moveFrom: null, selectedFigures: [], battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    } else {
+      set({ gameState: ns, buildFortressMode: false, moveMode: false, moveFrom: null, selectedFigures: [] });
+    }
   },
   doBuildFortress: (provinceId: string) => {
     const { gameState, localPlayerId, ws } = get();
@@ -392,7 +413,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!advanced.recruitMandateActive) {
         advanced = advancePlayer(advanced);
       }
-      set({ gameState: advanced, recruitMode: advanced.recruitMandateActive });
+      // Detect war phase transition and set up battle step phase for hotseat
+      if (advanced.currentPhase === 'war' && advanced.activeBattles.some(b => !b.resolved)) {
+        set({ gameState: advanced, recruitMode: advanced.recruitMandateActive, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      } else {
+        set({ gameState: advanced, recruitMode: advanced.recruitMandateActive });
+      }
     } else {
       set({ gameState: ns });
     }
@@ -446,7 +472,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!advanced.recruitMandateActive) {
         advanced = advancePlayer(advanced);
       }
-      set({ gameState: advanced, recruitMode: advanced.recruitMandateActive });
+      // Detect war phase transition and set up battle step phase for hotseat
+      if (advanced.currentPhase === 'war' && advanced.activeBattles.some(b => !b.resolved)) {
+        set({ gameState: advanced, recruitMode: advanced.recruitMandateActive, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      } else {
+        set({ gameState: advanced, recruitMode: advanced.recruitMandateActive });
+      }
     } else {
       set({ gameState: ns });
     }
@@ -462,8 +493,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.recruitMandateActive) {
       ns = advancePlayer(ns);
     }
-    // Auto-enable recruitMode for next player if mandate is still active
-    set({ gameState: ns, recruitMode: ns.recruitMandateActive });
+    // Detect war phase transition and set up battle step phase for hotseat
+    if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+      set({ gameState: ns, recruitMode: ns.recruitMandateActive, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    } else {
+      // Auto-enable recruitMode for next player if mandate is still active
+      set({ gameState: ns, recruitMode: ns.recruitMandateActive });
+    }
   },
 
   // --- Betray Mandate Actions ---
@@ -481,7 +517,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const ns = betraySelectFigure(gameState, apid, figureId, provinceId);
     if (!ns.betrayMandateActive) {
       const advanced = advancePlayer(ns);
-      set({ gameState: advanced, betrayMode: false });
+      // Detect war phase transition and set up battle step phase for hotseat
+      if (advanced.currentPhase === 'war' && advanced.activeBattles.some(b => !b.resolved)) {
+        set({ gameState: advanced, betrayMode: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      } else {
+        set({ gameState: advanced, betrayMode: false });
+      }
     } else {
       set({ gameState: ns });
     }
@@ -495,7 +536,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     let ns = skipBetrayTurn(gameState);
     ns = advancePlayer(ns);
-    set({ gameState: ns, betrayMode: false });
+    // Detect war phase transition and set up battle step phase for hotseat
+    if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+      set({ gameState: ns, betrayMode: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    } else {
+      set({ gameState: ns, betrayMode: false });
+    }
   },
 
   // --- Harvest Acknowledgement ---
@@ -506,8 +552,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.harvestMandateActive) {
       // Harvest fully resolved, advance player
       ns = advancePlayer(ns);
+      // Detect war phase transition and set up battle step phase for hotseat
+      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+        set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      } else {
+        set({ gameState: ns });
+      }
+    } else {
+      set({ gameState: ns });
     }
-    set({ gameState: ns });
   },
 
   // --- Monster Placement Actions ---
@@ -548,15 +601,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
-      set({
-        gameState: ns,
-        showTrainModal: false,
-        monsterPlacementMode: false,
-        monsterPlacementCard: null,
-        monsterPlacementPlayerId: null,
-        monsterPlacementPopupVisible: false,
-        komainuChoiceVisible: false,
-      });
+      // Detect war phase transition and set up battle step phase for hotseat
+      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+        set({
+          gameState: ns,
+          showTrainModal: false,
+          monsterPlacementMode: false,
+          monsterPlacementCard: null,
+          monsterPlacementPlayerId: null,
+          monsterPlacementPopupVisible: false,
+          komainuChoiceVisible: false,
+          battleStepPhase: 'popup',
+          battleCurrentBiddingIndex: 0,
+        });
+      } else {
+        set({
+          gameState: ns,
+          showTrainModal: false,
+          monsterPlacementMode: false,
+          monsterPlacementCard: null,
+          monsterPlacementPlayerId: null,
+          monsterPlacementPopupVisible: false,
+          komainuChoiceVisible: false,
+        });
+      }
     } else {
       set({
         gameState: ns,
@@ -624,13 +692,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
-      set({
-        gameState: ns,
-        showTrainModal: false,
-        komainuPrayMode: false,
-        komainuPrayPlayerId: null,
-        monsterPlacementPlayerId: null,
-      });
+      // Detect war phase transition and set up battle step phase for hotseat
+      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+        set({
+          gameState: ns,
+          showTrainModal: false,
+          komainuPrayMode: false,
+          komainuPrayPlayerId: null,
+          monsterPlacementPlayerId: null,
+          battleStepPhase: 'popup',
+          battleCurrentBiddingIndex: 0,
+        });
+      } else {
+        set({
+          gameState: ns,
+          showTrainModal: false,
+          komainuPrayMode: false,
+          komainuPrayPlayerId: null,
+          monsterPlacementPlayerId: null,
+        });
+      }
     } else {
       set({
         gameState: ns,
@@ -655,15 +736,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
-      set({
-        gameState: ns,
-        showTrainModal: false,
-        monsterPlacementMode: false,
-        monsterPlacementCard: null,
-        monsterPlacementPlayerId: null,
-        monsterPlacementPopupVisible: false,
-        komainuChoiceVisible: false,
-      });
+      // Detect war phase transition and set up battle step phase for hotseat
+      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+        set({
+          gameState: ns,
+          showTrainModal: false,
+          monsterPlacementMode: false,
+          monsterPlacementCard: null,
+          monsterPlacementPlayerId: null,
+          monsterPlacementPopupVisible: false,
+          komainuChoiceVisible: false,
+          battleStepPhase: 'popup',
+          battleCurrentBiddingIndex: 0,
+        });
+      } else {
+        set({
+          gameState: ns,
+          showTrainModal: false,
+          monsterPlacementMode: false,
+          monsterPlacementCard: null,
+          monsterPlacementPlayerId: null,
+          monsterPlacementPopupVisible: false,
+          komainuChoiceVisible: false,
+        });
+      }
     } else {
       set({
         gameState: ns,
@@ -818,12 +914,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'ADVANCE_PHASE', playerId: get().localPlayerId });
       return;
     }
-    set({ gameState: advancePhase(gameState) });
+    const ns = advancePhase(gameState);
+    // Detect war phase transition and set up battle step phase for hotseat
+    if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+      set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    } else {
+      set({ gameState: ns });
+    }
   },
   doAdvancePlayer: () => {
     const { gameState } = get();
     if (!gameState) return;
-    set({ gameState: advancePlayer(gameState) });
+    const ns = advancePlayer(gameState);
+    // Detect war phase transition and set up battle step phase for hotseat
+    if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
+      set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    } else {
+      set({ gameState: ns });
+    }
   },
 
   // --- Online ---

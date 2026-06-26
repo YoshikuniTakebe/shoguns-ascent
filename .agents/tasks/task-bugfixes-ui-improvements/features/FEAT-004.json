@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "fix",
   "description": "Fix the battle flow bug in hotseat mode - battles get stuck calling wrong player (Player 1 who is not in the battle). The correct flow: determine battle, identify involved players, call each one by seat order with popup, open betting window, confirm, next player, resolve when all done.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "1. DIAGNOSIS: In src/components/BattlePanel.tsx, the hotseat popup phase uses `battle.participants[battleCurrentBiddingIndex]` to determine who should bet. The bug is that battleCurrentBiddingIndex may not correctly correspond to the actual participants. Also, the issue may be in how the war phase is initiated - the `currentPlayerIndex` in the GameState is still pointing at Player 1 (the politics phase player), but the BattlePanel should not rely on currentPlayerIndex at all for determining who bets - it should only use battle.participants.",
     "2. In src/components/BattlePanel.tsx: Verify that when battleStepPhase === 'popup', the `currentParticipant` is derived from `battle.participants[battleCurrentBiddingIndex]`. If battleCurrentBiddingIndex is 0 and battle.participants only includes players actually in the province, then the issue must be that battle.participants is incorrectly populated, OR that battleCurrentBiddingIndex is pointing beyond the array.",
