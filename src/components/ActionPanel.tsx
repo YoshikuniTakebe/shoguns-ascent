@@ -229,7 +229,7 @@ export const ActionPanel = () => {
                 <span className="betray-player-name" style={{ color: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#DC143C'; })() }}>
                   {cp?.name || ''}
                 </span>
-                <span className="betray-mandate-label">{t('actions.betrayNotice', { name: '' }).replace(' -  ', '').trim()}</span>
+                <span className="betray-mandate-label">{t('actions.betrayMandateLabel')}</span>
               </div>
               <p className="betray-selections">{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
               <p className="betray-instruction">{t('actions.betrayClickInstruction')}</p>

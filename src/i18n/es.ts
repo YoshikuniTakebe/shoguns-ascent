@@ -233,6 +233,7 @@ export const es: Record<TranslationKey, string> = {
   'actions.recruitPlaceFigure': 'Colocar Figura',
 
   // Betray Mandate
+  'actions.betrayMandateLabel': 'Mandato Traicionar',
   'actions.betrayNotice': 'Mandato Traicionar - {name} puede reemplazar hasta 2 figuras enemigas.',
   'actions.betraySelectionsLeft': 'Reemplazos restantes: {count}',
   'actions.betrayEndTurn': 'Terminar Turno de Traicionar',

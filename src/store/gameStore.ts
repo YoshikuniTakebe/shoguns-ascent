@@ -30,6 +30,17 @@ import {
   advanceHarvestResolution,
 } from '../utils/gameLogic';
 
+/**
+ * Detects if the given state has transitioned to a war phase with unresolved battles.
+ * Returns partial store state to set battleStepPhase if war is active, empty object otherwise.
+ */
+function detectWarTransition(state: GameState): Partial<{ battleStepPhase: 'popup' | 'bidding' | null; battleCurrentBiddingIndex: number }> {
+  if (state.currentPhase === 'war' && state.activeBattles.some(b => !b.resolved)) {
+    return { battleStepPhase: 'popup' as const, battleCurrentBiddingIndex: 0 };
+  }
+  return {};
+}
+
 interface GameStore {
   gameState: GameState | null;
   localPlayerId: string | null;
@@ -272,11 +283,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else {
       const advanced = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      if (advanced.currentPhase === 'war' && advanced.activeBattles.some(b => !b.resolved)) {
-        set({ gameState: advanced, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-      } else {
-        set({ gameState: advanced });
-      }
+      set({ gameState: advanced, ...detectWarTransition(advanced) });
     }
   },
 
@@ -330,11 +337,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-        set({ gameState: ns, showTrainModal: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-      } else {
-        set({ gameState: ns, showTrainModal: false });
-      }
+      set({ gameState: ns, showTrainModal: false, ...detectWarTransition(ns) });
     } else {
       set({ gameState: ns });
     }
@@ -349,11 +352,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-        set({ gameState: ns, showTrainModal: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-      } else {
-        set({ gameState: ns, showTrainModal: false });
-      }
+      set({ gameState: ns, showTrainModal: false, ...detectWarTransition(ns) });
     } else {
       set({ gameState: ns });
     }
@@ -372,11 +371,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ns = advancePlayer(ns);
     }
     // Detect war phase transition and set up battle step phase for hotseat
-    if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-      set({ gameState: ns, buildFortressMode: false, moveMode: false, moveFrom: null, selectedFigures: [], battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-    } else {
-      set({ gameState: ns, buildFortressMode: false, moveMode: false, moveFrom: null, selectedFigures: [] });
-    }
+    set({ gameState: ns, buildFortressMode: false, moveMode: false, moveFrom: null, selectedFigures: [], ...detectWarTransition(ns) });
   },
   doBuildFortress: (provinceId: string) => {
     const { gameState, localPlayerId, ws } = get();
@@ -414,11 +409,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         advanced = advancePlayer(advanced);
       }
       // Detect war phase transition and set up battle step phase for hotseat
-      if (advanced.currentPhase === 'war' && advanced.activeBattles.some(b => !b.resolved)) {
-        set({ gameState: advanced, recruitMode: advanced.recruitMandateActive, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-      } else {
-        set({ gameState: advanced, recruitMode: advanced.recruitMandateActive });
-      }
+      set({ gameState: advanced, recruitMode: advanced.recruitMandateActive, ...detectWarTransition(advanced) });
     } else {
       set({ gameState: ns });
     }
@@ -473,11 +464,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         advanced = advancePlayer(advanced);
       }
       // Detect war phase transition and set up battle step phase for hotseat
-      if (advanced.currentPhase === 'war' && advanced.activeBattles.some(b => !b.resolved)) {
-        set({ gameState: advanced, recruitMode: advanced.recruitMandateActive, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-      } else {
-        set({ gameState: advanced, recruitMode: advanced.recruitMandateActive });
-      }
+      set({ gameState: advanced, recruitMode: advanced.recruitMandateActive, ...detectWarTransition(advanced) });
     } else {
       set({ gameState: ns });
     }
@@ -494,8 +481,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ns = advancePlayer(ns);
     }
     // Detect war phase transition and set up battle step phase for hotseat
-    if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-      set({ gameState: ns, recruitMode: ns.recruitMandateActive, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    const warTransition = detectWarTransition(ns);
+    if (Object.keys(warTransition).length > 0) {
+      set({ gameState: ns, recruitMode: ns.recruitMandateActive, ...warTransition });
     } else {
       // Auto-enable recruitMode for next player if mandate is still active
       set({ gameState: ns, recruitMode: ns.recruitMandateActive });
@@ -518,11 +506,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.betrayMandateActive) {
       const advanced = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      if (advanced.currentPhase === 'war' && advanced.activeBattles.some(b => !b.resolved)) {
-        set({ gameState: advanced, betrayMode: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-      } else {
-        set({ gameState: advanced, betrayMode: false });
-      }
+      set({ gameState: advanced, betrayMode: false, ...detectWarTransition(advanced) });
     } else {
       set({ gameState: ns });
     }
@@ -537,11 +521,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     let ns = skipBetrayTurn(gameState);
     ns = advancePlayer(ns);
     // Detect war phase transition and set up battle step phase for hotseat
-    if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-      set({ gameState: ns, betrayMode: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-    } else {
-      set({ gameState: ns, betrayMode: false });
-    }
+    set({ gameState: ns, betrayMode: false, ...detectWarTransition(ns) });
   },
 
   // --- Harvest Acknowledgement ---
@@ -553,11 +533,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Harvest fully resolved, advance player
       ns = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-        set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-      } else {
-        set({ gameState: ns });
-      }
+      set({ gameState: ns, ...detectWarTransition(ns) });
     } else {
       set({ gameState: ns });
     }
@@ -602,29 +578,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-        set({
-          gameState: ns,
-          showTrainModal: false,
-          monsterPlacementMode: false,
-          monsterPlacementCard: null,
-          monsterPlacementPlayerId: null,
-          monsterPlacementPopupVisible: false,
-          komainuChoiceVisible: false,
-          battleStepPhase: 'popup',
-          battleCurrentBiddingIndex: 0,
-        });
-      } else {
-        set({
-          gameState: ns,
-          showTrainModal: false,
-          monsterPlacementMode: false,
-          monsterPlacementCard: null,
-          monsterPlacementPlayerId: null,
-          monsterPlacementPopupVisible: false,
-          komainuChoiceVisible: false,
-        });
-      }
+      set({
+        gameState: ns,
+        showTrainModal: false,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+        ...detectWarTransition(ns),
+      });
     } else {
       set({
         gameState: ns,
@@ -693,25 +656,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-        set({
-          gameState: ns,
-          showTrainModal: false,
-          komainuPrayMode: false,
-          komainuPrayPlayerId: null,
-          monsterPlacementPlayerId: null,
-          battleStepPhase: 'popup',
-          battleCurrentBiddingIndex: 0,
-        });
-      } else {
-        set({
-          gameState: ns,
-          showTrainModal: false,
-          komainuPrayMode: false,
-          komainuPrayPlayerId: null,
-          monsterPlacementPlayerId: null,
-        });
-      }
+      set({
+        gameState: ns,
+        showTrainModal: false,
+        komainuPrayMode: false,
+        komainuPrayPlayerId: null,
+        monsterPlacementPlayerId: null,
+        ...detectWarTransition(ns),
+      });
     } else {
       set({
         gameState: ns,
@@ -737,29 +689,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-        set({
-          gameState: ns,
-          showTrainModal: false,
-          monsterPlacementMode: false,
-          monsterPlacementCard: null,
-          monsterPlacementPlayerId: null,
-          monsterPlacementPopupVisible: false,
-          komainuChoiceVisible: false,
-          battleStepPhase: 'popup',
-          battleCurrentBiddingIndex: 0,
-        });
-      } else {
-        set({
-          gameState: ns,
-          showTrainModal: false,
-          monsterPlacementMode: false,
-          monsterPlacementCard: null,
-          monsterPlacementPlayerId: null,
-          monsterPlacementPopupVisible: false,
-          komainuChoiceVisible: false,
-        });
-      }
+      set({
+        gameState: ns,
+        showTrainModal: false,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+        ...detectWarTransition(ns),
+      });
     } else {
       set({
         gameState: ns,
@@ -916,22 +855,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     const ns = advancePhase(gameState);
     // Detect war phase transition and set up battle step phase for hotseat
-    if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-      set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-    } else {
-      set({ gameState: ns });
-    }
+    set({ gameState: ns, ...detectWarTransition(ns) });
   },
   doAdvancePlayer: () => {
     const { gameState } = get();
     if (!gameState) return;
     const ns = advancePlayer(gameState);
     // Detect war phase transition and set up battle step phase for hotseat
-    if (ns.currentPhase === 'war' && ns.activeBattles.some(b => !b.resolved)) {
-      set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
-    } else {
-      set({ gameState: ns });
-    }
+    set({ gameState: ns, ...detectWarTransition(ns) });
   },
 
   // --- Online ---

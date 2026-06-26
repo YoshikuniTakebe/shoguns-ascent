@@ -57,7 +57,7 @@ export const GameLog = () => {
         </div>
       )}
       <div className="log-entries" ref={ref}>
-        {displayLog.slice(-20).map((e, i) => (
+        {(activeTab === currentSeason ? displayLog.slice(-20) : displayLog).map((e, i) => (
           <div key={i} className="log-entry">{e}</div>
         ))}
       </div>

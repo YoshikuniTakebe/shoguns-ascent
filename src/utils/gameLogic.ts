@@ -532,7 +532,7 @@ function calculateRecruitPlacements(state: GameState, playerId: string, issuerId
  * Place a figure during the recruit mandate.
  * Player chooses bushi or shinto, and a province (must have their fortress, or ANY if Dragonfly).
  */
-export function recruitPlaceFigure(state: GameState, playerId: string, provinceId: string, figureType: 'bushi' | 'shinto'): GameState {
+export function recruitPlaceFigure(state: GameState, playerId: string, provinceId: string, figureType: 'bushi' | 'shinto' | 'monster'): GameState {
   if (!state.recruitMandateActive) return state;
   if (state.recruitPlacementsRemaining <= 0) return state;
 
@@ -542,6 +542,7 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
   // Check reserve
   if (figureType === 'bushi' && player.bushi <= 0) return state;
   if (figureType === 'shinto' && player.shinto <= 0) return state;
+  // Monsters don't come from reserve - they come from purchased cards
 
   const province = state.provinces[provinceId];
   if (!province) return state;
@@ -555,7 +556,7 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
 
   // For bushi (and monster) placements, enforce one-per-fortress-province rule.
   // Shinto placements do NOT consume a fortress slot (they go to temples).
-  if (figureType === 'bushi') {
+  if (figureType === 'bushi' || figureType === 'monster') {
     // Calculate how many base placements (= number of fortresses) and bonus placements (= 1 if issuer/ally).
     let totalFortresses = 0;
     for (const prov of Object.values(state.provinces)) {
@@ -584,7 +585,7 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
     provinces: { ...state.provinces },
     players: state.players.map((p) => ({ ...p })),
     recruitPlacementsRemaining: state.recruitPlacementsRemaining - 1,
-    recruitUsedFortressProvinces: figureType === 'bushi'
+    recruitUsedFortressProvinces: (figureType === 'bushi' || figureType === 'monster')
       ? [...state.recruitUsedFortressProvinces, provinceId]
       : [...state.recruitUsedFortressProvinces],
     log: [...state.log, `${player.name} summons a ${figureType} in ${province.name}`],
@@ -598,9 +599,10 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
   const updatedPlayer = newState.players.find((p) => p.id === playerId)!;
   if (figureType === 'bushi') {
     updatedPlayer.bushi -= 1;
-  } else {
+  } else if (figureType === 'shinto') {
     updatedPlayer.shinto -= 1;
   }
+  // Monsters don't decrement a reserve
 
   return newState;
 }
