@@ -231,6 +231,7 @@ export const en = {
   'actions.recruitPlaceFigure': 'Place Figure',
 
   // Betray Mandate
+  'actions.betrayMandateLabel': 'Betray Mandate',
   'actions.betrayNotice': 'Betray mandate - {name} may replace up to 2 enemy figures.',
   'actions.betraySelectionsLeft': 'Replacements remaining: {count}',
   'actions.betrayEndTurn': 'End Betray Turn',
