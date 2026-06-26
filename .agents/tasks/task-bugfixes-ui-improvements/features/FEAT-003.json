@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Add season-based log history with clickable season buttons to view past season logs",
+  "status": "pending",
+  "steps": [
+    "1. In src/types/game.ts: Add a new field to GameState: `logHistory: { [season: string]: string[] }` to store logs per season. This will contain entries like { spring: [...], summer: [...], autumn: [...] }.",
+    "2. In src/utils/gameLogic.ts: When a season transitions (in setupSeason or cleanupSeason), save the current log to logHistory under the outgoing season's key before clearing/resetting it. The current behavior loses the log - instead, archive it.",
+    "3. In src/components/GameLog.tsx: Rewrite the component to include clickable season tab buttons at the top. Show buttons for each season that has been played (only seasons with entries in logHistory, plus the current season). The currently-viewed season tab is highlighted. Default to showing the current season's log. When clicking a past season button, show that season's archived log entries.",
+    "4. Add i18n keys for season tab labels if needed (can reuse existing 'season.spring', 'season.summer', 'season.autumn' keys but in shorter form for buttons).",
+    "5. Add CSS styles in src/App.css for the season tab buttons: small, compact buttons in a row at the top of the log panel, with active state styling."
+  ],
+  "acceptance_criteria": [
+    "Build passes with npm run build",
+    "When season changes, the previous season's log is preserved in logHistory",
+    "GameLog component shows clickable season buttons for each played season",
+    "Clicking a past season button shows that season's log entries",
+    "Current season log is shown by default"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}

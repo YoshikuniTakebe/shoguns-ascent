@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix Harvest popup flow (add initial confirmation popup with coin icon), fix player name colors in PoliticsTrack, and improve Betray mandate styling",
+  "status": "pending",
+  "steps": [
+    "1. In src/components/HarvestPopup.tsx: Add a first-stage popup before showing province rewards. When harvestPopupVisible first becomes true (harvestResolutionIndex === 0), show a confirmation popup that says 'Todos los jugadores han recibido' (or translated equivalent) with the same visual format as the harvest rewards popup, showing a coin icon below the text. Only after the user confirms this initial popup should the province-by-province reward popups appear.",
+    "2. Add a new state field to track whether the initial harvest confirmation has been shown. Options: (a) add a boolean `harvestInitialConfirmed` to the GameState in src/types/game.ts, or (b) use a local React state in HarvestPopup.tsx that resets when harvestMandateActive becomes true. Option (b) is simpler - use local state in the component.",
+    "3. Add i18n keys: 'harvest.allPlayersReceived' = 'Todos los jugadores han recibido' (es) / 'All players have received' (en). Add to both src/i18n/en.ts and src/i18n/es.ts.",
+    "4. In src/components/PoliticsTrack.tsx: The slot-player-name span already has `style={{ color: clanColor }}` set correctly via the `clanColor` variable derived from CLANS.find. Verify this works. The issue might be that `mandate.issuer` stores a playerId but it's being used to look up a clan. Check: the code does `const clan = CLANS.find((c) => c.id === mandate.issuer)` which is WRONG - mandate.issuer is a PLAYER ID, not a clan ID. Fix: look up the player first, then get their clan. Change to: find player by mandate.issuer in gameState.players, then find clan by player.clanId.",
+    "5. In src/components/ActionPanel.tsx: Improve the betray-active section styling. The player name should always display in their clan color. Add more visual structure: show the player name prominently with clan color, add a brief descriptive icon or visual element, ensure the 'betrayClickInstruction' text is clearly separated and styled as italic guidance. Add appropriate CSS classes.",
+    "6. Add CSS in src/App.css for the improved betray section: better padding, a subtle gradient background, the player name in larger font with clan color, and better spacing between elements."
+  ],
+  "acceptance_criteria": [
+    "Build passes with npm run build",
+    "When Harvest mandate fires, first popup shows 'Todos los jugadores han recibido' with a coin icon, requiring user confirmation before province rewards appear",
+    "Player names in the PoliticsTrack mandate slots display with their correct clan color",
+    "Betray mandate section shows player name in clan color with improved layout"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}

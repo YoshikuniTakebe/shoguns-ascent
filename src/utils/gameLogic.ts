@@ -219,6 +219,7 @@ export function createInitialGameState(
     recruitResolutionIndex: 0,
     recruitMandateIssuerId: null,
     recruitPlacementsRemaining: 0,
+    recruitUsedFortressProvinces: [],
     betrayMandateActive: false,
     betraySelectionsRemaining: 0,
     betraySelectedOwners: [],
@@ -501,6 +502,7 @@ function executeRecruit(state: GameState, issuerId: string): GameState {
     recruitResolutionIndex: 0,
     recruitMandateIssuerId: issuerId,
     recruitPlacementsRemaining: 0,
+    recruitUsedFortressProvinces: [],
     log: [...state.log, `Recruit mandate issued by ${issuer?.name ?? 'Player'} - all players may summon figures at their fortresses in resolution order. Issuer and ally get +1 bonus placement.`],
   };
 
@@ -546,11 +548,40 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
     if (!hasFortress) return state;
   }
 
+  // For bushi (and monster) placements, enforce one-per-fortress-province rule.
+  // Shinto placements do NOT consume a fortress slot (they go to temples).
+  if (figureType === 'bushi') {
+    // Calculate how many base placements (= number of fortresses) and bonus placements (= 1 if issuer/ally).
+    let totalFortresses = 0;
+    for (const prov of Object.values(state.provinces)) {
+      totalFortresses += prov.figures.filter(f => f.owner === playerId && f.type === 'fortress').length;
+    }
+    const isBonus = state.recruitMandateIssuerId ? isIssuerOrAlly(state, playerId, state.recruitMandateIssuerId) : false;
+    const bonusPlacements = isBonus ? 1 : 0;
+    const basePlacements = totalFortresses;
+    const usedBaseProvinces = state.recruitUsedFortressProvinces;
+
+    // If all base placements have been used, this must be a bonus placement (can go anywhere with a fortress).
+    // If base placements are still available, enforce the restriction: province must not already be used.
+    if (usedBaseProvinces.length < basePlacements) {
+      // This is a base placement - province must not be already used
+      if (usedBaseProvinces.includes(provinceId)) return state;
+    } else if (usedBaseProvinces.length >= basePlacements && bonusPlacements > 0) {
+      // This is a bonus placement - can go to any fortress province (no restriction)
+    } else {
+      // No placements available
+      return state;
+    }
+  }
+
   const newState: GameState = {
     ...state,
     provinces: { ...state.provinces },
     players: state.players.map((p) => ({ ...p })),
     recruitPlacementsRemaining: state.recruitPlacementsRemaining - 1,
+    recruitUsedFortressProvinces: figureType === 'bushi'
+      ? [...state.recruitUsedFortressProvinces, provinceId]
+      : [...state.recruitUsedFortressProvinces],
     log: [...state.log, `${player.name} summons a ${figureType} in ${province.name}`],
   };
 
@@ -599,6 +630,7 @@ function advanceRecruitResolution(state: GameState): GameState {
       recruitResolutionIndex: 0,
       recruitMandateIssuerId: null,
       recruitPlacementsRemaining: 0,
+      recruitUsedFortressProvinces: [],
     };
   }
   // Set currentPlayerIndex to the next player in resolution order and calculate their placements
@@ -617,7 +649,7 @@ function advanceRecruitResolution(state: GameState): GameState {
   }
 
   if (nextPlayerIdx >= 0) {
-    return { ...state, currentPlayerIndex: nextPlayerIdx, recruitPlacementsRemaining: placements };
+    return { ...state, currentPlayerIndex: nextPlayerIdx, recruitPlacementsRemaining: placements, recruitUsedFortressProvinces: [] };
   }
   return state;
 }
@@ -2020,7 +2052,7 @@ export function advancePlayer(state: GameState): GameState {
   }
 
   // Politics phase advancement
-  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], marshalMovedFigures: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, betrayMandateActive: false, betraySelectionsRemaining: 0, betraySelectedOwners: [], betrayMandateIssuerId: null, log: [...state.log] };
+  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], marshalMovedFigures: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, recruitUsedFortressProvinces: [], betrayMandateActive: false, betraySelectionsRemaining: 0, betraySelectedOwners: [], betrayMandateIssuerId: null, log: [...state.log] };
   newState.politicsMandateCount += 1;
 
   // Helper: advance to the next player in seating order (turnOrder)

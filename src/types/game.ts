@@ -179,6 +179,7 @@ export interface GameState {
   recruitResolutionIndex: number;
   recruitMandateIssuerId: string | null;
   recruitPlacementsRemaining: number;
+  recruitUsedFortressProvinces: string[];
   betrayMandateActive: boolean;
   betraySelectionsRemaining: number;
   betraySelectedOwners: string[];
