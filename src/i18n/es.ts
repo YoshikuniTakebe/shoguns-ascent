@@ -243,4 +243,10 @@ export const es: Record<TranslationKey, string> = {
   'playerCards.title': '{name} ({clan}) - Cartas',
   'playerCards.button': 'Cartas ({count})',
   'playerCards.empty': 'Sin cartas todavia.',
+
+  // Region Detail Modal
+  'regionDetail.daimyo': 'Daimyo',
+  'regionDetail.fortress': 'Fortaleza',
+  'regionDetail.monster': 'Monstruo',
+  'regionDetail.empty': 'No hay figuras en esta provincia.',
 };

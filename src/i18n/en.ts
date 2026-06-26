@@ -241,6 +241,12 @@ export const en = {
   'playerCards.title': '{name} ({clan}) - Cards',
   'playerCards.button': 'Cards ({count})',
   'playerCards.empty': 'No cards yet.',
+
+  // Region Detail Modal
+  'regionDetail.daimyo': 'Daimyo',
+  'regionDetail.fortress': 'Fortress',
+  'regionDetail.monster': 'Monster',
+  'regionDetail.empty': 'No figures in this province.',
 } as const;
 
 export type TranslationKey = keyof typeof en;

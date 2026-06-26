@@ -12,6 +12,7 @@ import { TemplePanel } from './TemplePanel';
 import { HonorTrack } from './HonorTrack';
 import { AllianceDisplay } from './AllianceDisplay';
 import { PoliticsTrack } from './PoliticsTrack';
+import { RegionDetailModal } from './RegionDetailModal';
 import { VPIcon, CoinIcon, RoninIcon } from './Icons';
 import { useT } from '../i18n';
 
@@ -67,7 +68,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray } = useGameStore();
   const t = useT();
 
   const [translateX, setTranslateX] = useState(0);
@@ -389,6 +390,11 @@ export const GameBoard = () => {
         <div className="komainu-pray-overlay">
           <span>{t('monster.selectTemple')}</span>
         </div>
+      )}
+
+      {/* Region Detail Modal */}
+      {selectedRegion && !moveMode && !recruitMode && !betrayMode && !monsterPlacementMode && !buildFortressMode && (
+        <RegionDetailModal regionId={selectedRegion} onClose={() => selectRegion(null)} />
       )}
     </div>
   );
