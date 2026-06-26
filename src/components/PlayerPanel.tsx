@@ -65,9 +65,9 @@ export const PlayerPanel = () => {
                   <ShintoIcon size={24} color={clan.color} className="reserve-icon" />
                   <span className="reserve-count">{player.shinto}</span>
                 </span>
-                <span className="reserve-item" title="Fortresses in reserve">
+                <span className="reserve-item" title="Total fortresses">
                   <FortressIcon size={24} color={clan.color} className="reserve-icon" />
-                  <span className="reserve-count">{player.fortresses}</span>
+                  <span className="reserve-count">{player.fortresses + Object.values(gameState.provinces).reduce((count, prov) => count + prov.figures.filter(f => f.type === 'fortress' && f.owner === player.id).length, 0)}</span>
                 </span>
                 {player.hasDaimyo && <span className="reserve-item daimyo-indicator">&#9813;</span>}
               </div>
