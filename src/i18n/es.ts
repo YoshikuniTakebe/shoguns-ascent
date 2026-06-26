@@ -229,4 +229,12 @@ export const es: Record<TranslationKey, string> = {
   'actions.betraySelectTarget': 'Haz clic en una figura enemiga en el mapa para reemplazarla.',
   'actions.betrayNoTargets': 'No hay objetivos validos disponibles.',
   'actions.betraySelectFigure': 'Seleccionar Objetivo',
+
+  // Monster Placement
+  'monster.selectPlacement': 'Selecciona donde sacar {name}',
+  'monster.accept': 'Aceptar',
+  'monster.komainuChoice': 'Komainu: Colocar en mapa o enviar a rezar a un templo?',
+  'monster.komainuMap': 'Colocar en mapa',
+  'monster.komainuPray': 'Enviar a rezar',
+  'monster.placed': '{name} colocado en {province}',
 };

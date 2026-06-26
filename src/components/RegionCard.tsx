@@ -49,7 +49,7 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
 };
 
 export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSProperties }) => {
-  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure } = useGameStore();
+  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure, monsterPlacementMode, monsterPlacementPlayerId, doPlaceMonster } = useGameStore();
   const t = useT();
   if (!gameState) return null;
 
@@ -61,7 +61,28 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   const adjacents = provinceData ? [...provinceData.adjacentProvinces, ...provinceData.seaRoutes] : [];
   const isMoveTarget = moveMode && moveFrom && moveFrom !== regionId && adjacents.includes(moveFrom);
 
+  // Monster placement target logic
+  let isMonsterTarget = false;
+  if (monsterPlacementMode && monsterPlacementPlayerId) {
+    const placingPlayer = gameState.players.find(p => p.id === monsterPlacementPlayerId);
+    if (placingPlayer) {
+      if (placingPlayer.clanId === 'libelula') {
+        // Libelula can place anywhere
+        isMonsterTarget = true;
+      } else {
+        // Can only place where the player has a fortress
+        isMonsterTarget = province.figures.some(f => f.type === 'fortress' && f.owner === monsterPlacementPlayerId);
+      }
+    }
+  }
+
   const handleClick = () => {
+    if (monsterPlacementMode) {
+      if (isMonsterTarget) {
+        doPlaceMonster(regionId);
+      }
+      return;
+    }
     if (betrayMode) {
       // In betray mode, clicking the province does nothing - figures handle clicks individually
       return;
@@ -111,7 +132,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
 
   return (
     <div
-      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''}`}
+      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''}`}
       style={style}
       onClick={handleClick}
     >

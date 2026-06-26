@@ -67,7 +67,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId } = useGameStore();
+  const { gameState, localPlayerId, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray } = useGameStore();
   const t = useT();
 
   const [translateX, setTranslateX] = useState(0);
@@ -354,6 +354,35 @@ export const GameBoard = () => {
           <GameLog />
         </div>
       </div>
+
+      {/* Monster Placement Popup */}
+      {monsterPlacementPopupVisible && monsterPlacementCard && (
+        <div className="monster-placement-popup">
+          <div className="monster-placement-popup-content">
+            <p>{t('monster.selectPlacement', { name: monsterPlacementCard.name })}</p>
+            <button className="monster-placement-btn" onClick={confirmMonsterPlacement}>
+              {t('monster.accept')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Komainu Choice Popup */}
+      {komainuChoiceVisible && monsterPlacementCard && (
+        <div className="monster-placement-popup">
+          <div className="monster-placement-popup-content">
+            <p>{t('monster.komainuChoice')}</p>
+            <div className="monster-placement-popup-buttons">
+              <button className="monster-placement-btn" onClick={doKomainuChooseMap}>
+                {t('monster.komainuMap')}
+              </button>
+              <button className="monster-placement-btn secondary" onClick={doKomainuChoosePray}>
+                {t('monster.komainuPray')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -170,7 +170,7 @@ function MandateIllustration({ type, size = 40 }: { type: MandateType; size?: nu
  * Each mandate tile has a feudal Japanese illustration style.
  */
 export const PoliticsTrack = () => {
-  const { gameState, showTrainModal, setShowTrainModal } = useGameStore();
+  const { gameState, showTrainModal, setShowTrainModal, monsterPlacementPopupVisible, monsterPlacementMode, komainuChoiceVisible } = useGameStore();
   const [showSeasonCards, setShowSeasonCards] = useState(false);
 
   // Auto-open the season cards modal when trainMandateActive becomes true
@@ -182,6 +182,13 @@ export const PoliticsTrack = () => {
       setShowSeasonCards(false);
     }
   }, [gameState?.trainMandateActive]);
+
+  // Close the modal when monster placement is active
+  useEffect(() => {
+    if (monsterPlacementPopupVisible || monsterPlacementMode || komainuChoiceVisible) {
+      setShowSeasonCards(false);
+    }
+  }, [monsterPlacementPopupVisible, monsterPlacementMode, komainuChoiceVisible]);
 
   // Also open when triggered from outside (e.g. ActionPanel button)
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, MandateType, DeckConfig } from '../types/game';
+import type { GameState, MandateType, DeckConfig, SeasonCard } from '../types/game';
 import {
   createInitialGameState,
   setupSeason,
@@ -96,6 +96,18 @@ interface GameStore {
   doBetraySelectFigure: (figureId: string, provinceId: string) => void;
   doSkipBetrayTurn: () => void;
 
+  // Monster placement actions
+  monsterPlacementMode: boolean;
+  monsterPlacementCard: SeasonCard | null;
+  monsterPlacementPlayerId: string | null;
+  monsterPlacementPopupVisible: boolean;
+  komainuChoiceVisible: boolean;
+  confirmMonsterPlacement: () => void;
+  doPlaceMonster: (provinceId: string) => void;
+  doKomainuChoosePray: () => void;
+  doKomainuChooseMap: () => void;
+  cancelMonsterPlacement: () => void;
+
   // Kami
   doResolveKami: () => void;
 
@@ -137,6 +149,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   recruitMode: false,
   recruitFigureType: 'bushi',
   betrayMode: false,
+  monsterPlacementMode: false,
+  monsterPlacementCard: null,
+  monsterPlacementPlayerId: null,
+  monsterPlacementPopupVisible: false,
+  komainuChoiceVisible: false,
   language: (localStorage.getItem('shoguns-ascent-language') as 'en' | 'es') || 'es',
   setLanguage: (lang) => {
     localStorage.setItem('shoguns-ascent-language', lang);
@@ -254,7 +271,35 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     let ns = buySeasonCard(gameState, apid, cardId);
-    // Advance to next player in train resolution order using the pure helper
+
+    // Check if the bought card is a monster - if so, enter monster placement flow
+    const boughtCard = ns.players.find(p => p.id === apid)?.seasonCards.find(c => c.id === cardId);
+    if (boughtCard && boughtCard.cardType === 'monster') {
+      // Komainu special case: show choice between map and pray
+      if (boughtCard.id === 'sp-komainu') {
+        set({
+          gameState: ns,
+          monsterPlacementCard: boughtCard,
+          monsterPlacementPlayerId: apid,
+          komainuChoiceVisible: true,
+          monsterPlacementPopupVisible: false,
+          monsterPlacementMode: false,
+        });
+      } else {
+        // Show popup asking where to place the monster
+        set({
+          gameState: ns,
+          monsterPlacementCard: boughtCard,
+          monsterPlacementPlayerId: apid,
+          monsterPlacementPopupVisible: true,
+          monsterPlacementMode: false,
+          komainuChoiceVisible: false,
+        });
+      }
+      return;
+    }
+
+    // Non-monster card: advance normally
     ns = {
       ...ns,
       trainResolutionIndex: ns.trainResolutionIndex + 1,
@@ -382,6 +427,140 @@ export const useGameStore = create<GameStore>((set, get) => ({
     let ns = skipBetrayTurn(gameState);
     ns = advancePlayer(ns);
     set({ gameState: ns, betrayMode: false });
+  },
+
+  // --- Monster Placement Actions ---
+  confirmMonsterPlacement: () => {
+    set({ monsterPlacementPopupVisible: false, monsterPlacementMode: true });
+  },
+
+  doPlaceMonster: (provinceId: string) => {
+    const { gameState, monsterPlacementCard, monsterPlacementPlayerId } = get();
+    if (!gameState || !monsterPlacementCard || !monsterPlacementPlayerId) return;
+
+    const province = gameState.provinces[provinceId];
+    if (!province) return;
+
+    // Place a monster figure in the province
+    const figureId = Math.random().toString(36).substring(2, 10);
+    const newFigure = { type: 'monster' as const, owner: monsterPlacementPlayerId, id: figureId };
+    const updatedProvinces = {
+      ...gameState.provinces,
+      [provinceId]: {
+        ...province,
+        figures: [...province.figures, newFigure],
+      },
+    };
+
+    let ns: GameState = {
+      ...gameState,
+      provinces: updatedProvinces,
+      log: [...gameState.log, `${monsterPlacementCard.name} placed in ${province.name}`],
+    };
+
+    // Advance train resolution
+    ns = {
+      ...ns,
+      trainResolutionIndex: ns.trainResolutionIndex + 1,
+    };
+    ns = advanceTrainResolution(ns);
+
+    if (!ns.trainMandateActive) {
+      ns = advancePlayer(ns);
+      set({
+        gameState: ns,
+        showTrainModal: false,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+    } else {
+      set({
+        gameState: ns,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+    }
+  },
+
+  doKomainuChoosePray: () => {
+    const { gameState, monsterPlacementCard, monsterPlacementPlayerId } = get();
+    if (!gameState || !monsterPlacementCard || !monsterPlacementPlayerId) return;
+
+    // Skip map placement - Komainu acts as a Shinto sent to worship
+    // Just advance the train resolution normally
+    let ns: GameState = {
+      ...gameState,
+      log: [...gameState.log, `${monsterPlacementCard.name} sent to worship at a temple`],
+      trainResolutionIndex: gameState.trainResolutionIndex + 1,
+    };
+    ns = advanceTrainResolution(ns);
+
+    if (!ns.trainMandateActive) {
+      ns = advancePlayer(ns);
+      set({
+        gameState: ns,
+        showTrainModal: false,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+    } else {
+      set({
+        gameState: ns,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+    }
+  },
+
+  doKomainuChooseMap: () => {
+    // Transition from komainu choice to normal placement popup
+    set({ komainuChoiceVisible: false, monsterPlacementPopupVisible: true });
+  },
+
+  cancelMonsterPlacement: () => {
+    const { gameState, monsterPlacementPlayerId } = get();
+    if (!gameState || !monsterPlacementPlayerId) return;
+
+    // Cancel placement - advance train without placing
+    let ns: GameState = {
+      ...gameState,
+      trainResolutionIndex: gameState.trainResolutionIndex + 1,
+    };
+    ns = advanceTrainResolution(ns);
+
+    if (!ns.trainMandateActive) {
+      ns = advancePlayer(ns);
+      set({
+        gameState: ns,
+        showTrainModal: false,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+    } else {
+      set({
+        gameState: ns,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+    }
   },
 
   // --- Kami ---

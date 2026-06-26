@@ -227,6 +227,14 @@ export const en = {
   'actions.betraySelectTarget': 'Click on an enemy figure on the map to replace it.',
   'actions.betrayNoTargets': 'No valid targets available.',
   'actions.betraySelectFigure': 'Select Target',
+
+  // Monster Placement
+  'monster.selectPlacement': 'Select where to place {name}',
+  'monster.accept': 'Accept',
+  'monster.komainuChoice': 'Komainu: Place on map or send to worship at a temple?',
+  'monster.komainuMap': 'Place on map',
+  'monster.komainuPray': 'Send to worship',
+  'monster.placed': '{name} placed in {province}',
 } as const;
 
 export type TranslationKey = keyof typeof en;
