@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Add a 'Cartas' hexagonal button to the PoliticsTrack bar (far right) and implement a large popup/modal that displays all available season cards with attractive card layout, color-coded types, cost, effect text, and image placeholder",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create a new component src/components/SeasonCardsModal.tsx that: (1) receives open/onClose props, (2) reads gameState.seasonCardsDeck filtered by gameState.currentSeason from useGameStore, (3) renders a fixed backdrop overlay (following kami-modal-backdrop pattern from App.css), (4) shows a grid of cards (3-4 per row), (5) each card shows: name, cost with coin icon, type badge with color coding (monster=#9b59b6, virtue=#c8a951, upgrade=#3498db, warUpgrade=#e74c3c, winterUpgrade=#5bc0eb), effect text, force if applicable, and a placeholder area for future images, (6) close via X button or clicking the backdrop, (7) scrollable content area",
     "Modify src/components/PoliticsTrack.tsx to: (1) add a useState for modal open state, (2) add an elongated hexagonal button at the far right end of the politics-track div (after the exhausted mandates section or after the war icon), (3) the button should display 'Cartas' text and the kanji character '旭', (4) on click it opens the SeasonCardsModal, (5) import and render SeasonCardsModal conditionally",
@@ -24,5 +24,5 @@
     "Run 'npx vite build' in the project root to confirm the bundle builds successfully"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implemented all 5 Train mandate fixes: (1) Confirmation popup now uses position:fixed for viewport-centered display regardless of scroll. (2) Resolution order now uses players array (seating order) instead of turnOrder (honor order). (3) Player turn indicator shows 'Elige carta - PlayerName (ClanName)' with Aceptar button; cards are not interactable until accepted; resets when trainResolutionIndex changes. (4) Auto-close modal on train completion via store and PoliticsTrack useEffect. (5) Skip Purchase button visible after player confirms turn."
 }
