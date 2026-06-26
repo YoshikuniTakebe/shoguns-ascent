@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Implement the Train mandate correctly: (1) Change the +1 coin bonus to a -1 cost DISCOUNT for issuer/ally when buying cards, (2) Change resolution order so issuer goes FIRST then clockwise by seating order (turnOrder), (3) Auto-open the SeasonCardsModal when it is a player's turn to train, (4) Cards the player cannot afford should appear disabled/dimmed and not be clickable, (5) Clicking an affordable card shows a confirmation popup before buying. Also add state field lastMandateIssuerId to track who played the last mandate turn for politics turn order in subsequent seasons.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/types/game.ts GameState interface: Add 'lastMandateIssuerId: string | null' field. Add 'trainDiscount: boolean' field to track whether the current train resolution player gets a discount (issuer or ally).",
     "In src/utils/gameLogic.ts, function executeTrain(): Remove the +1 coin bonus to issuer/ally. Instead, set up the resolution order as: [issuerId, ...clockwise from next seat after issuer]. The clockwise seating order is turnOrder (which is fixed from game start based on initial honor, highest first). So the issuer goes first, then we continue clockwise from the player sitting to the issuer's LEFT in turnOrder.",
@@ -28,5 +28,5 @@
     "npx tsc -b && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly with npx tsc -b && npx vite build. All changes compile without errors. The Train mandate now: (1) gives issuer first in resolution order, (2) applies -1 cost discount instead of +1 coin bonus, (3) auto-opens the modal, (4) dims unaffordable cards, (5) shows confirmation popup. lastMandateIssuerId is set in chooseMandateTile and persists through cleanupSeason for next season use."
 }
