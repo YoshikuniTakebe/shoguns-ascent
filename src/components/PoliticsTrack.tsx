@@ -238,7 +238,7 @@ export const PoliticsTrack = () => {
           title={`${MANDATE_LABELS[mandate.type]} - ${clan?.name || 'Unknown'}`}
         >
           <div className="slot-illustration">
-            <MandateIllustration type={mandate.type} size={32} />
+            <MandateIllustration type={mandate.type} size={40} />
           </div>
           <span className="slot-mandate-label" style={{ color: MANDATE_COLORS[mandate.type] }}>
             {MANDATE_LABELS[mandate.type]}
