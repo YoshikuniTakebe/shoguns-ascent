@@ -34,7 +34,7 @@ export const PlayerPanel = () => {
             >
               <div className="player-header">
                 <span className="player-name" style={{ color: clan.color }}>
-                  <ClanShield clanId={player.clanId} size={24} />
+                  <ClanShield clanId={player.clanId} size={48} />
                   {player.name}
                   {player.id === cp?.id && ' \u2B05'}
                 </span>
