@@ -601,6 +601,12 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
 function executeHarvest(state: GameState, issuerId: string): GameState {
   const newState: GameState = { ...state, players: state.players.map((p) => ({ ...p })), log: [...state.log] };
 
+  // ALL players receive +1 coin when harvest is executed
+  newState.players.forEach((p) => {
+    p.coins += 1;
+  });
+  newState.log = [...newState.log, `All players receive +1 coin from Harvest`];
+
   // Only the issuer and their ally harvest from provinces where they have majority force
   const issuer = newState.players.find((p) => p.id === issuerId);
   if (!issuer) return newState;
@@ -625,7 +631,7 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
       }
     });
 
-    // Ties broken by honor (higher honor wins - higher index in honorTrack)
+    // Ties broken by honor (lower index = higher honor = wins tiebreaker)
     if (tied && maxForce > 0) {
       const tiedPlayers = newState.players.filter(
         (p) => calculateForce(province, p.id, newState) === maxForce
@@ -633,7 +639,7 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
       strongestId = tiedPlayers.sort((a, b) => {
         const aIdx = newState.honorTrack.indexOf(a.id);
         const bIdx = newState.honorTrack.indexOf(b.id);
-        return bIdx - aIdx; // Higher index = higher honor
+        return aIdx - bIdx; // Lower index = higher honor = wins
       })[0]?.id ?? null;
     }
 
@@ -832,10 +838,10 @@ export function resolveKamiTurn(state: GameState): GameState {
         maxForce = force;
         winnerId = pid;
       } else if (force === maxForce) {
-        // Ties broken by honor (higher honor wins)
+        // Ties broken by honor (lower index = higher honor = wins)
         const currentWinnerHonor = newState.honorTrack.indexOf(winnerId!);
         const challengerHonor = newState.honorTrack.indexOf(pid);
-        if (challengerHonor > currentWinnerHonor) {
+        if (challengerHonor < currentWinnerHonor) {
           winnerId = pid;
         }
       }
@@ -876,7 +882,7 @@ function applyWarUpgrades(state: GameState): void {
           for (const other of state.players) {
             if (other.id === player.id) continue;
             const otherHonorIdx = state.honorTrack.indexOf(other.id);
-            if (otherHonorIdx < playerHonorIdx && other.coins > 0) {
+            if (otherHonorIdx > playerHonorIdx && other.coins > 0) {
               other.coins -= 1;
               player.coins += 1;
             }
@@ -1177,7 +1183,7 @@ export function resolveNextBattle(state: GameState): GameState {
     } else if (force === maxForce && force > 0) {
       const currentWinnerHonor = newState.honorTrack.indexOf(winnerId!);
       const challengerHonor = newState.honorTrack.indexOf(pid);
-      if (challengerHonor > currentWinnerHonor) {
+      if (challengerHonor < currentWinnerHonor) {
         winnerId = pid;
       }
     }
@@ -1364,7 +1370,7 @@ export function resolveWinter(state: GameState): GameState {
     } else if (player.victoryPoints === maxVP) {
       const currentWinnerHonor = newState.honorTrack.indexOf(winnerId!);
       const challengerHonor = newState.honorTrack.indexOf(player.id);
-      if (challengerHonor > currentWinnerHonor) {
+      if (challengerHonor < currentWinnerHonor) {
         winnerId = player.id;
       }
     }

@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix honor tiebreaker in Harvest and other places. Fix the honorTrack comparison logic: index 0 = honor position 1 = HIGHEST/BEST honor. Currently the code uses 'bIdx - aIdx' (favoring higher index = lower honor) which is WRONG. It should favor LOWER index (index 0 = best honor). Also fix the Harvest mandate: (1) ALL players receive 1 coin when harvest is executed, (2) Only issuer+ally harvest from provinces where they have majority, (3) Fix the honor tiebreaker sort to correctly compare (lower index = better honor = wins tie).",
+  "status": "in_progress",
+  "steps": [
+    "In src/utils/gameLogic.ts, function executeHarvest() around line 601: Add logic to give ALL players +1 coin at the start of the harvest resolution (before checking majority).",
+    "In src/utils/gameLogic.ts, function executeHarvest() around line 634: Fix the honor tiebreaker sort. Current code: 'return bIdx - aIdx' which favors higher index. Change to 'return aIdx - bIdx' so that LOWER index (honor position 1 = best honor) wins the tiebreaker.",
+    "Search for all other places in gameLogic.ts where honor tiebreaker is used (resolveKamiTurn, resolveNextBattle, resolveWinter, applyWarUpgrades) and verify they correctly use the same logic: lower honorTrack index = better honor = wins. Current pattern 'challengerHonor > currentWinnerHonor' with indexOf is WRONG - it should be 'challengerHonor < currentWinnerHonor' since lower index = better. Fix ALL occurrences.",
+    "Update i18n/en.ts and i18n/es.ts to add a log message translation for the +1 coin to all players if needed (or just use a game log entry)."
+  ],
+  "acceptance_criteria": [
+    "Running 'npx tsc -b && npx vite build' passes without errors.",
+    "In executeHarvest: all players receive +1 coin before majority resolution.",
+    "Honor tiebreaker consistently uses lower honorTrack index as BETTER across all functions.",
+    "Only issuer and ally harvest provinces where they have majority force."
+  ],
+  "verification": [
+    "npx tsc -b && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
