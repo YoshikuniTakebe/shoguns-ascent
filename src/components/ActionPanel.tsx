@@ -225,11 +225,14 @@ export const ActionPanel = () => {
           {/* Betray mandate active - issuer selects enemy figures to replace */}
           {gameState.betrayMandateActive && (
             <div className="betray-active">
-              <p className="betray-notice">
-                {t('actions.betrayNotice', { name: cp?.name || '' })}
-              </p>
-              <p>{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
-              <p className="move-instruction">{t('actions.betrayClickInstruction')}</p>
+              <div className="betray-header">
+                <span className="betray-player-name" style={{ color: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#DC143C'; })() }}>
+                  {cp?.name || ''}
+                </span>
+                <span className="betray-mandate-label">{t('actions.betrayNotice', { name: '' }).replace(' -  ', '').trim()}</span>
+              </div>
+              <p className="betray-selections">{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
+              <p className="betray-instruction">{t('actions.betrayClickInstruction')}</p>
               <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipBetrayTurn}>
                 {t('actions.betrayEndTurn')}
               </button>

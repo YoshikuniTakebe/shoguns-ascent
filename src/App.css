@@ -80,6 +80,12 @@
 .tea-phase p:last-child,.politics-phase p:last-child,.marshal-active p:last-child,.recruit-active p:last-child,.betray-active p:last-child,.train-active p:last-child{margin-bottom:0}
 .train-notice,.marshal-notice,.recruit-notice,.betray-notice{margin-bottom:0.6rem}
 
+.betray-header{display:flex;flex-direction:column;align-items:center;gap:0.3rem;margin-bottom:0.7rem;padding-bottom:0.6rem;border-bottom:1px solid rgba(220,20,60,0.2)}
+.betray-player-name{font-size:1.2rem;font-weight:700;letter-spacing:0.5px;text-shadow:0 0 8px currentColor}
+.betray-mandate-label{font-size:0.8rem;color:var(--text-secondary);opacity:0.8}
+.betray-selections{font-size:0.95rem;font-weight:600;color:var(--text-primary);text-align:center}
+.betray-instruction{font-style:italic;font-size:0.85rem;color:var(--text-secondary);text-align:center;opacity:0.85;margin-top:0.3rem}
+
 .player-cards-btn{display:inline-flex;align-items:center;gap:4px;padding:0.2rem 0.5rem;background:rgba(0,0,0,0.3);border:1px solid;border-radius:4px;color:var(--text-primary);font-size:0.7rem;cursor:pointer;transition:all 0.2s;margin-top:0.2rem;width:100%;justify-content:center;font-weight:500}
 .player-cards-btn:hover{background:rgba(200,169,81,0.15);box-shadow:0 0 8px rgba(200,169,81,0.2)}
 .player-cards-empty{text-align:center;color:var(--text-secondary);font-size:0.9rem;padding:2rem 1rem;font-style:italic}
