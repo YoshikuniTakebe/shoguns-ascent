@@ -1512,12 +1512,8 @@ export function getPlayerSeasonCardEffects(state: GameState, playerId: string): 
   return player.seasonCards;
 }
 
-export function calculateForce(province: Province & { figures: Figure[] }, playerId: string, state?: GameState): number {
+export function calculateForce(province: Province & { figures: Figure[] }, playerId: string, state: GameState): number {
   const playerFigures = province.figures.filter((f) => f.owner === playerId);
-  if (!state) {
-    // Fallback: simple count (backward compat if state not provided)
-    return playerFigures.length;
-  }
 
   const playerCards = getPlayerSeasonCardEffects(state, playerId);
   const cardIds = new Set(playerCards.map((c) => c.id));

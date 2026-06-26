@@ -2,7 +2,18 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, KAMI_DATA } from '../types/game';
 import type { KamiType } from '../types/game';
+import type { TranslationKey } from '../i18n';
 import { useT } from '../i18n';
+
+const KAMI_BASE_EFFECT_KEYS: Record<KamiType, TranslationKey> = {
+  amaterasu: 'kami.amaterasu.baseEffect',
+  fujin: 'kami.fujin.baseEffect',
+  hachiman: 'kami.hachiman.baseEffect',
+  raijin: 'kami.raijin.baseEffect',
+  ryujin: 'kami.ryujin.baseEffect',
+  susanoo: 'kami.susanoo.baseEffect',
+  tsukuyomi: 'kami.tsukuyomi.baseEffect',
+};
 
 import amaterasuImg from '../img/Amaterasu.png';
 import fujinImg from '../img/Fujin.png';
@@ -116,7 +127,7 @@ export const TemplePanel = () => {
                   {kami?.name || temple.kamiType}
                 </div>
                 <div className="kami-slot-effect">
-                  {kami ? t(`kami.${kami.type}.baseEffect` as any) : ''}
+                  {kami ? t(KAMI_BASE_EFFECT_KEYS[kami.type]) : ''}
                 </div>
               </div>
               {temple.figures.length > 0 && (
@@ -166,7 +177,7 @@ export const TemplePanel = () => {
             >
               {selectedKamiData.name}
             </h3>
-            <p className="kami-modal-effect">{t(`kami.${selectedKami}.baseEffect` as any)}</p>
+            <p className="kami-modal-effect">{t(KAMI_BASE_EFFECT_KEYS[selectedKami])}</p>
             {figuresByClan.length > 0 && (
               <div className="kami-modal-figures">
                 <h4 className="kami-modal-figures-title">{t('kamiModal.shintoFigures')}</h4>
