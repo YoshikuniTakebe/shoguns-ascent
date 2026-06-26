@@ -601,8 +601,15 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
 function executeHarvest(state: GameState, issuerId: string): GameState {
   const newState: GameState = { ...state, players: state.players.map((p) => ({ ...p })), log: [...state.log] };
 
-  // For each province, the player with the most force gains the harvest reward
+  // Only the issuer and their ally harvest from provinces where they have majority force
+  const issuer = newState.players.find((p) => p.id === issuerId);
+  if (!issuer) return newState;
+
+  const harvesters = [issuerId, ...(issuer.allies || [])];
+
+  // For each province, check if a harvester has majority force there
   Object.values(newState.provinces).forEach((province) => {
+    // Determine who has the most force in this province (considering all players)
     let maxForce = 0;
     let strongestId: string | null = null;
     let tied = false;
@@ -618,7 +625,7 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
       }
     });
 
-    // Ties broken by honor (higher honor wins)
+    // Ties broken by honor (higher honor wins - higher index in honorTrack)
     if (tied && maxForce > 0) {
       const tiedPlayers = newState.players.filter(
         (p) => calculateForce(province, p.id, newState) === maxForce
@@ -630,36 +637,21 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
       })[0]?.id ?? null;
     }
 
-    if (strongestId && maxForce > 0) {
+    // Only grant the reward if the strongest player is one of the harvesters (issuer or ally)
+    if (strongestId && maxForce > 0 && harvesters.includes(strongestId)) {
       const winner = newState.players.find((p) => p.id === strongestId)!;
       winner.coins += province.harvestReward;
+      newState.log = [...newState.log, `${winner.name} harvests ${province.name} (+${province.harvestReward} coins)`];
     }
   });
 
-  // Bonus: issuer (and ally) gain reward from 1 additional province where they are present
-  const issuer = newState.players.find((p) => p.id === issuerId);
-  if (issuer) {
-    const bonusRecipients = [issuerId, ...(issuer.allies || [])];
-    bonusRecipients.forEach((pid) => {
-      const player = newState.players.find((p) => p.id === pid);
-      if (!player) return;
-      // Find a province where player is present but not strongest
-      const bonusProvince = Object.values(newState.provinces).find((province) => {
-        const force = calculateForce(province, pid, newState);
-        if (force <= 0) return false;
-        const isStrongest = newState.players.every((other) => {
-          if (other.id === pid) return true;
-          return calculateForce(province, other.id, newState) < force;
-        });
-        return !isStrongest;
-      });
-      if (bonusProvince) {
-        player.coins += bonusProvince.harvestReward;
-      }
-    });
+  if (harvesters.length > 1) {
+    const allyPlayer = newState.players.find((p) => p.id === issuer.allies[0]);
+    newState.log = [...newState.log, `Harvest resolved for ${issuer.name} and ally ${allyPlayer?.name ?? ''}`];
+  } else {
+    newState.log = [...newState.log, `Harvest resolved for ${issuer.name}`];
   }
 
-  newState.log = [...newState.log, 'Harvest rewards distributed to strongest players in each province'];
   return newState;
 }
 
