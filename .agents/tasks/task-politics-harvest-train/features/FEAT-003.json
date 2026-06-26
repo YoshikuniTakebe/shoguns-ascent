@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Implement correct politics phase turn order: (1) In Spring, the player with honor position 1 (index 0 in honorTrack = best honor) starts the first mandate turn. (2) In subsequent seasons (Summer, Autumn), the first player to take a mandate turn is the one sitting to the LEFT (clockwise in turnOrder/seating) of whoever played the LAST mandate turn in the previous season (tracked by lastMandateIssuerId). (3) Ensure the lastMandateIssuerId persists across seasons (not cleared during cleanup). (4) For normal mandates (not Train), resolution starts from the player to the LEFT of the issuer in seating order (already getResolutionOrder). For Train, issuer goes first (FEAT-002). Validate this is working correctly.",
+  "status": "completed",
+  "steps": [
+    "In src/utils/gameLogic.ts, function advancePhase() case 'tea' -> 'politics': Set currentPlayerIndex to the correct starting player. In Spring, find the player with the best honor (honorTrack[0]) and set currentPlayerIndex to their index in players array. In Summer/Autumn, find the player to the LEFT (next clockwise in turnOrder) of lastMandateIssuerId and set currentPlayerIndex to their index.",
+    "In src/utils/gameLogic.ts, function cleanupSeason(): Do NOT reset lastMandateIssuerId. It must persist across seasons so the next season knows who played last.",
+    "In src/utils/gameLogic.ts, ensure that advancePlayer() for politics phase cycles through players in seating order (turnOrder) starting from the correct first player. The currentPlayerIndex should advance through the turnOrder sequence.",
+    "Verify that the GameState.turnOrder is indeed the fixed seating order (set once at game start based on initial honor descending) and never changes.",
+    "Update any log messages that reference the first player of politics to be descriptive."
+  ],
+  "acceptance_criteria": [
+    "Running 'npx tsc -b && npx vite build' passes without errors.",
+    "In Spring politics, the player with honor position 1 (honorTrack[0]) starts first.",
+    "In Summer/Autumn, the player to the left (clockwise) of lastMandateIssuerId starts first.",
+    "lastMandateIssuerId persists across season cleanup.",
+    "Politics mandate turns cycle through players in seating order (turnOrder)."
+  ],
+  "verification": [
+    "npx tsc -b && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": "Build passes cleanly. All 3 changes implemented: (1) advancePhase tea->politics sets currentPlayerIndex based on honor position 1 in Spring or clockwise-from-lastMandateIssuerId in Summer/Autumn, (2) cleanupSeason already preserved lastMandateIssuerId (it uses spread from state and does not override it), (3) advancePlayer now uses turnOrder to determine next player in seating order. The helper advanceToNextInSeating looks up the current player in turnOrder and gets the next one clockwise."
+}
