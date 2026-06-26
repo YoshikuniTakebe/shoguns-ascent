@@ -214,13 +214,13 @@ export const CLANS: Clan[] = [
 // --- Provinces ---
 
 export const PROVINCES_DATA: Province[] = [
-  { id: 'hokkaido', name: 'Hokkaido', adjacentProvinces: [], seaRoutes: ['oshu', 'kansai', 'kyushu'], harvestRewards: { vp: 1, ronin: 1 } },
-  { id: 'oshu', name: 'Oshu', adjacentProvinces: ['edo', 'kanto'], seaRoutes: ['hokkaido'], harvestRewards: { vp: 1, coins: 1 } },
-  { id: 'edo', name: 'Edo', adjacentProvinces: ['oshu', 'kanto', 'kansai'], seaRoutes: [], harvestRewards: { vp: 1, honor: 1, coins: 1 } },
-  { id: 'kanto', name: 'Kanto', adjacentProvinces: ['oshu', 'edo'], seaRoutes: [], harvestRewards: { vp: 1, coins: 1 } },
-  { id: 'kansai', name: 'Kansai', adjacentProvinces: ['edo', 'nagato'], seaRoutes: ['hokkaido', 'kyushu', 'shikoku'], harvestRewards: { vp: 1, ronin: 1, coins: 1 } },
-  { id: 'nagato', name: 'Nagato', adjacentProvinces: ['kansai'], seaRoutes: [], harvestRewards: { vp: 1, ronin: 1 } },
-  { id: 'shikoku', name: 'Shikoku', adjacentProvinces: [], seaRoutes: ['kansai', 'kyushu'], harvestRewards: { vp: 1, coins: 1 } },
+  { id: 'hokkaido', name: 'Hokkaido', adjacentProvinces: [], seaRoutes: ['oshu', 'kansai', 'kyushu'], harvestRewards: { ronin: 2 } },
+  { id: 'oshu', name: 'Oshu', adjacentProvinces: ['edo', 'kanto'], seaRoutes: ['hokkaido'], harvestRewards: { coins: 3 } },
+  { id: 'edo', name: 'Edo', adjacentProvinces: ['oshu', 'kanto', 'kansai'], seaRoutes: [], harvestRewards: { vp: 4 } },
+  { id: 'kanto', name: 'Kanto', adjacentProvinces: ['oshu', 'edo'], seaRoutes: [], harvestRewards: { vp: 2, coins: 2 } },
+  { id: 'kansai', name: 'Kansai', adjacentProvinces: ['edo', 'nagato'], seaRoutes: ['hokkaido', 'kyushu', 'shikoku'], harvestRewards: { vp: 3 } },
+  { id: 'nagato', name: 'Nagato', adjacentProvinces: ['kansai'], seaRoutes: [], harvestRewards: { vp: 1, coins: 1, ronin: 1 } },
+  { id: 'shikoku', name: 'Shikoku', adjacentProvinces: [], seaRoutes: ['kansai', 'kyushu'], harvestRewards: { coins: 3 } },
   { id: 'kyushu', name: 'Kyushu', adjacentProvinces: [], seaRoutes: ['shikoku', 'kansai', 'hokkaido'], harvestRewards: { vp: 1, coins: 1, ronin: 1 } },
 ];
 
