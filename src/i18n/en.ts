@@ -170,6 +170,10 @@ export const en = {
   'deck.horseman': 'Horseman',
   'deck.ship': 'Ship',
   'deck.mountain': 'Mountain',
+  'deck.core': 'Core',
+  'deck.dynastyInvasion': 'Dynasty Invasion',
+  'deck.monsterPack': 'Monster Pack',
+  'deck.kickstarterExclusive': 'Kickstarter Exclusive',
 
   // Deck Indicator
   'deck.indicator': '{name}',

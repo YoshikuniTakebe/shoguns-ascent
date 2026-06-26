@@ -179,6 +179,10 @@ export const es: Record<TranslationKey, string> = {
   'deck.horseman': 'Jinete',
   'deck.ship': 'Barco',
   'deck.mountain': 'Montana',
+  'deck.core': 'Base',
+  'deck.dynastyInvasion': 'Invasion Dinastica',
+  'deck.monsterPack': 'Pack de Monstruos',
+  'deck.kickstarterExclusive': 'Exclusivo Kickstarter',
 
   // Deck Indicator
   'deck.indicator': '{name}',

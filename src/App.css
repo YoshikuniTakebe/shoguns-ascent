@@ -45,6 +45,8 @@
 
 .season-card-type-badge{display:inline-block;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.65rem;font-weight:bold;color:#fff;letter-spacing:0.04em;text-transform:uppercase;align-self:flex-start}
 
+.season-card-group-badge{display:inline-block;padding:0.1rem 0.4rem;border-radius:3px;font-size:0.6rem;font-weight:500;color:var(--text-secondary);border:1px solid rgba(200,169,81,0.3);letter-spacing:0.02em;align-self:flex-start;opacity:0.8}
+
 .season-card-effect{font-size:0.75rem;color:var(--text-secondary);line-height:1.4;flex:1}
 .season-card-force{display:flex;align-items:center;gap:4px;font-size:0.8rem;font-weight:bold;color:var(--accent-gold);padding-top:0.3rem;border-top:1px solid rgba(200,169,81,0.15)}
 .season-card-force-icon{font-size:0.85rem}
