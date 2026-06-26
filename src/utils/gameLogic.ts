@@ -358,11 +358,20 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string):
   // Cannot propose if either already has an ally
   if (from.allies.length > 0 || to.allies.length > 0) return state;
 
-  // Check for duplicate proposals
-  const existing = newState.allianceProposals.find(
-    (ap) => (ap.from === fromId && ap.to === toId) || (ap.from === toId && ap.to === fromId)
+  // Check if fromId already proposed to toId (exact duplicate)
+  const duplicateProposal = newState.allianceProposals.find(
+    (ap) => ap.from === fromId && ap.to === toId
   );
-  if (existing) return state;
+  if (duplicateProposal) return state;
+
+  // If the target already proposed to us, auto-accept that proposal instead
+  const reverseProposal = newState.allianceProposals.find(
+    (ap) => ap.from === toId && ap.to === fromId
+  );
+  if (reverseProposal) {
+    // Treat this as accepting the existing proposal from toId to fromId
+    return acceptAlliance(state, toId, fromId);
+  }
 
   const proposal: AllianceProposal = { from: fromId, to: toId };
   newState.allianceProposals.push(proposal);
@@ -2109,6 +2118,44 @@ export function advancePlayer(state: GameState): GameState {
  */
 export function advanceTeaPlayer(state: GameState): GameState {
   const newState: GameState = { ...state, log: [...state.log] };
+
+  // If teaTurnIndex is already >= players.length, we are in the "pending proposals" resolution phase.
+  // Do NOT increment teaTurnIndex further.
+  if (newState.teaTurnIndex >= newState.players.length) {
+    // Check if there are pending proposals whose targets need a turn to respond
+    if (newState.allianceProposals.length > 0) {
+      // Find targets of pending proposals who are still unallied and are not the current player
+      const currentPlayer = newState.players[newState.currentPlayerIndex];
+      // Remove any proposals TO the current player (they chose to pass/end their turn)
+      newState.allianceProposals = newState.allianceProposals.filter(
+        ap => ap.to !== currentPlayer?.id
+      );
+
+      // Find remaining pending targets
+      const pendingTargets = newState.allianceProposals
+        .map(ap => ap.to)
+        .filter(toId => {
+          const targetPlayer = newState.players.find(p => p.id === toId);
+          return targetPlayer && targetPlayer.allies.length === 0;
+        });
+
+      if (pendingTargets.length > 0) {
+        // Give the first pending target their turn to accept/reject
+        const targetId = pendingTargets[0];
+        const targetIdx = newState.players.findIndex(p => p.id === targetId);
+        if (targetIdx >= 0) {
+          newState.currentPlayerIndex = targetIdx;
+          return newState;
+        }
+      }
+    }
+
+    // No pending proposals remaining - advance to politics
+    newState.teaTurnIndex = 0;
+    return advancePhase(newState);
+  }
+
+  // Normal turn advancement: increment teaTurnIndex
   newState.teaTurnIndex += 1;
 
   // When all players have had a tea turn, check for pending proposals
@@ -2129,8 +2176,6 @@ export function advanceTeaPlayer(state: GameState): GameState {
         const targetIdx = newState.players.findIndex(p => p.id === targetId);
         if (targetIdx >= 0) {
           newState.currentPlayerIndex = targetIdx;
-          // Do not increment teaTurnIndex further - keep it at players.length
-          // so next advance will re-check
           return newState;
         }
       }
