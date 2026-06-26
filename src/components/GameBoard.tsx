@@ -13,7 +13,8 @@ import { HonorTrack } from './HonorTrack';
 import { AllianceDisplay } from './AllianceDisplay';
 import { PoliticsTrack } from './PoliticsTrack';
 import { RegionDetailModal } from './RegionDetailModal';
-import { VPIcon, CoinIcon, RoninIcon } from './Icons';
+import { HarvestPopup } from './HarvestPopup';
+import { VPIcon, CoinIcon, RoninIcon, HonorIcon } from './Icons';
 import { useT } from '../i18n';
 
 const MAP_WIDTH = 1672;
@@ -30,15 +31,15 @@ const positions: Record<string, { x: number; y: number }> = {
   kyushu: { x: 276, y: 808 },
 };
 
-const HARVEST_REWARDS: Record<string, { rewards: { type: 'vp' | 'coin' | 'ronin'; count: number }[]; color: string; position: { x: number; y: number } }> = {
-  hokkaido: { rewards: [{ type: 'ronin', count: 2 }], color: '#5BC0EB', position: { x: 1350, y: 180 } },
-  oshu: { rewards: [{ type: 'coin', count: 3 }], color: '#9B8EC4', position: { x: 1290, y: 380 } },
-  kanto: { rewards: [{ type: 'vp', count: 2 }, { type: 'coin', count: 2 }], color: '#E63946', position: { x: 1320, y: 600 } },
-  edo: { rewards: [{ type: 'vp', count: 4 }], color: '#2D8B4E', position: { x: 970, y: 540 } },
-  kansai: { rewards: [{ type: 'vp', count: 3 }], color: '#F57C20', position: { x: 870, y: 630 } },
-  nagato: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }, { type: 'coin', count: 1 }], color: '#8B5CF6', position: { x: 360, y: 550 } },
-  shikoku: { rewards: [{ type: 'coin', count: 3 }], color: '#8B6914', position: { x: 755, y: 850 } },
-  kyushu: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }, { type: 'coin', count: 1 }], color: '#F5D020', position: { x: 190, y: 750 } },
+const HARVEST_REWARDS: Record<string, { rewards: { type: 'vp' | 'coin' | 'ronin' | 'honor'; count: number }[]; color: string; position: { x: number; y: number } }> = {
+  hokkaido: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }], color: '#5BC0EB', position: { x: 1350, y: 180 } },
+  oshu: { rewards: [{ type: 'vp', count: 1 }, { type: 'coin', count: 1 }], color: '#9B8EC4', position: { x: 1290, y: 380 } },
+  kanto: { rewards: [{ type: 'vp', count: 1 }, { type: 'coin', count: 1 }], color: '#E63946', position: { x: 1320, y: 600 } },
+  edo: { rewards: [{ type: 'vp', count: 1 }, { type: 'honor', count: 1 }, { type: 'coin', count: 1 }], color: '#2D8B4E', position: { x: 970, y: 540 } },
+  kansai: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }, { type: 'coin', count: 1 }], color: '#F57C20', position: { x: 870, y: 630 } },
+  nagato: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }], color: '#8B5CF6', position: { x: 360, y: 550 } },
+  shikoku: { rewards: [{ type: 'vp', count: 1 }, { type: 'coin', count: 1 }], color: '#8B6914', position: { x: 755, y: 850 } },
+  kyushu: { rewards: [{ type: 'vp', count: 1 }, { type: 'coin', count: 1 }, { type: 'ronin', count: 1 }], color: '#F5D020', position: { x: 190, y: 750 } },
 };
 
 const DRAG_DEAD_ZONE = 5;
@@ -316,6 +317,7 @@ export const GameBoard = () => {
                           {reward.type === 'vp' && <VPIcon size={20} color="#fff" />}
                           {reward.type === 'coin' && <CoinIcon size={20} color="#fff" />}
                           {reward.type === 'ronin' && <RoninIcon size={20} color="#fff" />}
+                          {reward.type === 'honor' && <HonorIcon size={20} color="#fff" />}
                         </span>
                       );
                     });
@@ -396,6 +398,9 @@ export const GameBoard = () => {
       {selectedRegion && !moveMode && !recruitMode && !betrayMode && !monsterPlacementMode && !buildFortressMode && (
         <RegionDetailModal regionId={selectedRegion} onClose={() => selectRegion(null)} />
       )}
+
+      {/* Harvest Popup */}
+      <HarvestPopup />
     </div>
   );
 };

@@ -35,7 +35,7 @@ export interface Province {
   name: string;
   adjacentProvinces: string[];
   seaRoutes: string[];
-  harvestReward: number;
+  harvestRewards: { vp?: number; coins?: number; ronin?: number; honor?: number };
 }
 
 export interface Temple {
@@ -182,6 +182,11 @@ export interface GameState {
   betraySelectionsRemaining: number;
   betraySelectedOwners: string[];
   betrayMandateIssuerId: string | null;
+  harvestMandateActive: boolean;
+  harvestResolutionOrder: string[];
+  harvestResolutionIndex: number;
+  harvestPlayerRewards: { playerId: string; provinceId: string; rewards: { vp?: number; coins?: number; ronin?: number; honor?: number } }[];
+  harvestPopupVisible: boolean;
   lastMandateIssuerId: string | null;
   gameOver: boolean;
   winner?: string;
@@ -209,14 +214,14 @@ export const CLANS: Clan[] = [
 // --- Provinces ---
 
 export const PROVINCES_DATA: Province[] = [
-  { id: 'hokkaido', name: 'Hokkaido', adjacentProvinces: [], seaRoutes: ['oshu', 'kansai', 'kyushu'], harvestReward: 2 },
-  { id: 'oshu', name: 'Oshu', adjacentProvinces: ['edo', 'kanto'], seaRoutes: ['hokkaido'], harvestReward: 3 },
-  { id: 'edo', name: 'Edo', adjacentProvinces: ['oshu', 'kanto', 'kansai'], seaRoutes: [], harvestReward: 4 },
-  { id: 'kanto', name: 'Kanto', adjacentProvinces: ['oshu', 'edo'], seaRoutes: [], harvestReward: 3 },
-  { id: 'kansai', name: 'Kansai', adjacentProvinces: ['edo', 'nagato'], seaRoutes: ['hokkaido', 'kyushu', 'shikoku'], harvestReward: 3 },
-  { id: 'nagato', name: 'Nagato', adjacentProvinces: ['kansai'], seaRoutes: [], harvestReward: 2 },
-  { id: 'shikoku', name: 'Shikoku', adjacentProvinces: [], seaRoutes: ['kansai', 'kyushu'], harvestReward: 2 },
-  { id: 'kyushu', name: 'Kyushu', adjacentProvinces: [], seaRoutes: ['shikoku', 'kansai', 'hokkaido'], harvestReward: 3 },
+  { id: 'hokkaido', name: 'Hokkaido', adjacentProvinces: [], seaRoutes: ['oshu', 'kansai', 'kyushu'], harvestRewards: { vp: 1, ronin: 1 } },
+  { id: 'oshu', name: 'Oshu', adjacentProvinces: ['edo', 'kanto'], seaRoutes: ['hokkaido'], harvestRewards: { vp: 1, coins: 1 } },
+  { id: 'edo', name: 'Edo', adjacentProvinces: ['oshu', 'kanto', 'kansai'], seaRoutes: [], harvestRewards: { vp: 1, honor: 1, coins: 1 } },
+  { id: 'kanto', name: 'Kanto', adjacentProvinces: ['oshu', 'edo'], seaRoutes: [], harvestRewards: { vp: 1, coins: 1 } },
+  { id: 'kansai', name: 'Kansai', adjacentProvinces: ['edo', 'nagato'], seaRoutes: ['hokkaido', 'kyushu', 'shikoku'], harvestRewards: { vp: 1, ronin: 1, coins: 1 } },
+  { id: 'nagato', name: 'Nagato', adjacentProvinces: ['kansai'], seaRoutes: [], harvestRewards: { vp: 1, ronin: 1 } },
+  { id: 'shikoku', name: 'Shikoku', adjacentProvinces: [], seaRoutes: ['kansai', 'kyushu'], harvestRewards: { vp: 1, coins: 1 } },
+  { id: 'kyushu', name: 'Kyushu', adjacentProvinces: [], seaRoutes: ['shikoku', 'kansai', 'hokkaido'], harvestRewards: { vp: 1, coins: 1, ronin: 1 } },
 ];
 
 // --- Home Provinces (one per clan, in clan order) ---

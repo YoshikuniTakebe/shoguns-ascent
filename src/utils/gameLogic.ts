@@ -223,6 +223,11 @@ export function createInitialGameState(
     betraySelectionsRemaining: 0,
     betraySelectedOwners: [],
     betrayMandateIssuerId: null,
+    harvestMandateActive: false,
+    harvestResolutionOrder: [],
+    harvestResolutionIndex: 0,
+    harvestPlayerRewards: [],
+    harvestPopupVisible: false,
     lastMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
@@ -234,11 +239,11 @@ export function createInitialGameState(
 
 function shuffleMandates(): MandateType[] {
   return shuffle<MandateType>([
-    'recruit', 'recruit', 'recruit', 'recruit', 'recruit', 'recruit',
-    'marshal', 'marshal', 'marshal', 'marshal', 'marshal', 'marshal',
-    'train', 'train', 'train', 'train', 'train',
-    'harvest', 'harvest', 'harvest', 'harvest', 'harvest', 'harvest',
-    'betray', 'betray', 'betray', 'betray', 'betray',
+    'recruit', 'recruit',
+    'marshal', 'marshal',
+    'train', 'train',
+    'harvest', 'harvest',
+    'betray', 'betray',
   ]);
 }
 
@@ -738,6 +743,9 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
 
   const harvesters = [issuerId, ...(issuer.allies || [])];
 
+  // Compute all rewards per player without immediately granting them
+  const harvestPlayerRewards: { playerId: string; provinceId: string; rewards: { vp?: number; coins?: number; ronin?: number; honor?: number } }[] = [];
+
   // For each province, check if a harvester has majority force there
   Object.values(newState.provinces).forEach((province) => {
     // Determine who has the most force in this province (considering all players)
@@ -770,17 +778,79 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
 
     // Only grant the reward if the strongest player is one of the harvesters (issuer or ally)
     if (strongestId && maxForce > 0 && harvesters.includes(strongestId)) {
-      const winner = newState.players.find((p) => p.id === strongestId)!;
-      winner.coins += province.harvestReward;
-      newState.log = [...newState.log, `${winner.name} obtiene la recompensa de ${province.name}: +${province.harvestReward} monedas (mayoria de fuerza)`];
+      harvestPlayerRewards.push({
+        playerId: strongestId,
+        provinceId: province.id,
+        rewards: { ...province.harvestRewards },
+      });
     }
   });
 
-  if (harvesters.length > 1) {
-    const allyPlayer = newState.players.find((p) => p.id === issuer.allies[0]);
-    newState.log = [...newState.log, `Cosecha resuelta para ${issuer.name} y aliado ${allyPlayer?.name ?? ''}`];
+  // If there are rewards to show, set up interactive popup flow
+  if (harvestPlayerRewards.length > 0) {
+    newState.harvestMandateActive = true;
+    newState.harvestResolutionOrder = harvestPlayerRewards.map(r => r.playerId);
+    newState.harvestResolutionIndex = 0;
+    newState.harvestPlayerRewards = harvestPlayerRewards;
+    newState.harvestPopupVisible = true;
   } else {
-    newState.log = [...newState.log, `Cosecha resuelta para ${issuer.name}`];
+    if (harvesters.length > 1) {
+      const allyPlayer = newState.players.find((p) => p.id === issuer.allies[0]);
+      newState.log = [...newState.log, `Cosecha resuelta para ${issuer.name} y aliado ${allyPlayer?.name ?? ''}`];
+    } else {
+      newState.log = [...newState.log, `Cosecha resuelta para ${issuer.name}`];
+    }
+  }
+
+  return newState;
+}
+
+/**
+ * Advance harvest resolution: grant rewards for the current harvest entry and move to next.
+ * When all entries are processed, clear harvest state.
+ */
+export function advanceHarvestResolution(state: GameState): GameState {
+  const newState: GameState = { ...state, players: state.players.map((p) => ({ ...p })), log: [...state.log] };
+  const idx = newState.harvestResolutionIndex;
+  const entry = newState.harvestPlayerRewards[idx];
+
+  if (entry) {
+    const player = newState.players.find((p) => p.id === entry.playerId);
+    if (player) {
+      const rewards = entry.rewards;
+      if (rewards.vp) player.victoryPoints += rewards.vp;
+      if (rewards.coins) player.coins += rewards.coins;
+      if (rewards.ronin) player.ronin += rewards.ronin;
+      if (rewards.honor) {
+        // Move player up in honor track
+        const currentIdx = newState.honorTrack.indexOf(player.id);
+        if (currentIdx > 0) {
+          newState.honorTrack = [...newState.honorTrack];
+          newState.honorTrack.splice(currentIdx, 1);
+          newState.honorTrack.splice(currentIdx - 1, 0, player.id);
+        }
+      }
+      const provinceName = newState.provinces[entry.provinceId]?.name || entry.provinceId;
+      const rewardParts: string[] = [];
+      if (rewards.vp) rewardParts.push(`${rewards.vp} PV`);
+      if (rewards.coins) rewardParts.push(`${rewards.coins} moneda(s)`);
+      if (rewards.ronin) rewardParts.push(`${rewards.ronin} ronin`);
+      if (rewards.honor) rewardParts.push(`${rewards.honor} honor`);
+      newState.log = [...newState.log, `${player.name} obtiene recompensa de ${provinceName}: ${rewardParts.join(', ')}`];
+    }
+  }
+
+  const nextIdx = idx + 1;
+  if (nextIdx >= newState.harvestPlayerRewards.length) {
+    // All rewards granted - clear harvest state
+    newState.harvestMandateActive = false;
+    newState.harvestResolutionOrder = [];
+    newState.harvestResolutionIndex = 0;
+    newState.harvestPlayerRewards = [];
+    newState.harvestPopupVisible = false;
+  } else {
+    newState.harvestResolutionIndex = nextIdx;
+    newState.harvestPopupVisible = true;
   }
 
   return newState;

@@ -231,6 +231,7 @@ export const es: Record<TranslationKey, string> = {
   'actions.betraySelectionsLeft': 'Reemplazos restantes: {count}',
   'actions.betrayEndTurn': 'Terminar Turno de Traicionar',
   'actions.betraySelectTarget': 'Haz clic en una figura enemiga en el mapa para reemplazarla.',
+  'actions.betrayClickInstruction': 'Pulsa sobre la figura que quieras sustituir en el mapa',
   'actions.betrayNoTargets': 'No hay objetivos validos disponibles.',
   'actions.betraySelectFigure': 'Seleccionar Objetivo',
 
@@ -253,4 +254,8 @@ export const es: Record<TranslationKey, string> = {
   'regionDetail.fortress': 'Fortaleza',
   'regionDetail.monster': 'Monstruo',
   'regionDetail.empty': 'No hay figuras en esta provincia.',
+
+  // Harvest Popup
+  'harvest.received': '{name} ha recibido:',
+  'harvest.accept': 'Aceptar',
 };

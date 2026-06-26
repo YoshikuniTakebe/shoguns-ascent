@@ -226,7 +226,7 @@ export const ActionPanel = () => {
                 {t('actions.betrayNotice', { name: cp?.name || '' })}
               </p>
               <p>{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
-              <p className="move-instruction">{t('actions.betraySelectTarget')}</p>
+              <p className="move-instruction">{t('actions.betrayClickInstruction')}</p>
               <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipBetrayTurn}>
                 {t('actions.betrayEndTurn')}
               </button>
@@ -258,14 +258,6 @@ export const ActionPanel = () => {
                   <span className="mandate-desc">{t(mandateDescKeys[m])}</span>
                 </button>
               ))}
-            </div>
-          )}
-
-          {/* Last executed mandate display */}
-          {gameState.mandatesThisTurn.length > 0 && !gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && (
-            <div className="current-mandate">
-              <h5>{t('actions.lastMandate')} {gameState.mandatesThisTurn[gameState.mandatesThisTurn.length - 1]?.type.toUpperCase()}</h5>
-              <p className="mandate-info">{t('actions.mandateResolved')}</p>
             </div>
           )}
 

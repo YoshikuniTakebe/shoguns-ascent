@@ -147,13 +147,21 @@ export const TemplePanel = () => {
                   {temple.figures.map((fig, i) => {
                     const player = gameState.players.find(pl => pl.id === fig.playerId);
                     const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
+                    const figColor = clan?.color || '#666';
                     return (
                       <span
                         key={i}
                         className="kami-figure-dot"
-                        style={{ backgroundColor: clan?.color || '#666' }}
                         title={player?.name || ''}
-                      />
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill={figColor} stroke="none">
+                          <rect x="4" y="6" width="16" height="2" rx="1" />
+                          <rect x="6" y="4" width="12" height="2" rx="0.5" opacity="0.7" />
+                          <rect x="7" y="8" width="2" height="14" />
+                          <rect x="15" y="8" width="2" height="14" />
+                          <rect x="9" y="12" width="6" height="1.5" opacity="0.5" />
+                        </svg>
+                      </span>
                     );
                   })}
                 </div>

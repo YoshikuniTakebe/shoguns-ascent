@@ -229,6 +229,7 @@ export const en = {
   'actions.betraySelectionsLeft': 'Replacements remaining: {count}',
   'actions.betrayEndTurn': 'End Betray Turn',
   'actions.betraySelectTarget': 'Click on an enemy figure on the map to replace it.',
+  'actions.betrayClickInstruction': 'Click on the figure you want to replace on the map',
   'actions.betrayNoTargets': 'No valid targets available.',
   'actions.betraySelectFigure': 'Select Target',
 
@@ -251,6 +252,10 @@ export const en = {
   'regionDetail.fortress': 'Fortress',
   'regionDetail.monster': 'Monster',
   'regionDetail.empty': 'No figures in this province.',
+
+  // Harvest Popup
+  'harvest.received': '{name} has received:',
+  'harvest.accept': 'Accept',
 } as const;
 
 export type TranslationKey = keyof typeof en;

@@ -27,6 +27,7 @@ import {
   skipRecruitTurn,
   betraySelectFigure,
   skipBetrayTurn,
+  advanceHarvestResolution,
 } from '../utils/gameLogic';
 
 interface GameStore {
@@ -96,6 +97,9 @@ interface GameStore {
   toggleBetrayMode: () => void;
   doBetraySelectFigure: (figureId: string, provinceId: string) => void;
   doSkipBetrayTurn: () => void;
+
+  // Harvest acknowledgement
+  doAcknowledgeHarvest: () => void;
 
   // Monster placement actions
   monsterPlacementMode: boolean;
@@ -256,8 +260,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = chooseMandateTile(gameState, mandate, apid);
-    // If train or marshal or recruit or betray mandate is active, wait for resolution before advancing
-    if (ns.trainMandateActive || ns.marshalMandateActive || ns.recruitMandateActive || ns.betrayMandateActive) {
+    // If train or marshal or recruit or betray or harvest mandate is active, wait for resolution before advancing
+    if (ns.trainMandateActive || ns.marshalMandateActive || ns.recruitMandateActive || ns.betrayMandateActive || ns.harvestMandateActive) {
       // Auto-enable recruitMode when recruit mandate first activates, betrayMode when betray activates
       set({ gameState: ns, recruitMode: ns.recruitMandateActive, betrayMode: ns.betrayMandateActive });
     } else {
@@ -489,6 +493,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameState: ns, betrayMode: false });
   },
 
+  // --- Harvest Acknowledgement ---
+  doAcknowledgeHarvest: () => {
+    const { gameState } = get();
+    if (!gameState || !gameState.harvestMandateActive) return;
+    let ns = advanceHarvestResolution(gameState);
+    if (!ns.harvestMandateActive) {
+      // Harvest fully resolved, advance player
+      ns = advancePlayer(ns);
+    }
+    set({ gameState: ns });
+  },
+
   // --- Monster Placement Actions ---
   confirmMonsterPlacement: () => {
     set({ monsterPlacementPopupVisible: false, monsterPlacementMode: true });
@@ -539,6 +555,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else {
       set({
         gameState: ns,
+        showTrainModal: true,
         monsterPlacementMode: false,
         monsterPlacementCard: null,
         monsterPlacementPlayerId: null,
