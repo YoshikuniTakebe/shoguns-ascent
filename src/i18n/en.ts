@@ -215,6 +215,14 @@ export const en = {
   'actions.recruitDragonflyHint': 'Dragonfly clan: can place in any province.',
   'actions.recruitCancelPlace': 'Cancel Placement',
   'actions.recruitPlaceFigure': 'Place Figure',
+
+  // Betray Mandate
+  'actions.betrayNotice': 'Betray mandate - {name} may replace up to 2 enemy figures.',
+  'actions.betraySelectionsLeft': 'Replacements remaining: {count}',
+  'actions.betrayEndTurn': 'End Betray Turn',
+  'actions.betraySelectTarget': 'Click on an enemy figure on the map to replace it.',
+  'actions.betrayNoTargets': 'No valid targets available.',
+  'actions.betraySelectFigure': 'Select Target',
 } as const;
 
 export type TranslationKey = keyof typeof en;

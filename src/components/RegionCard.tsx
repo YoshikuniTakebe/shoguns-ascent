@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import React from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCES_DATA } from '../types/game';
 import type { Figure } from '../types/game';
@@ -48,7 +49,7 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
 };
 
 export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSProperties }) => {
-  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure } = useGameStore();
+  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure } = useGameStore();
   const t = useT();
   if (!gameState) return null;
 
@@ -61,6 +62,10 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   const isMoveTarget = moveMode && moveFrom && moveFrom !== regionId && adjacents.includes(moveFrom);
 
   const handleClick = () => {
+    if (betrayMode) {
+      // In betray mode, clicking the province does nothing - figures handle clicks individually
+      return;
+    }
     if (recruitMode) {
       doRecruitPlaceFigure(regionId);
       return;
@@ -87,6 +92,13 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
     }
   };
 
+  const handleFigureClick = (figureId: string, e: React.MouseEvent) => {
+    if (betrayMode) {
+      e.stopPropagation();
+      doBetraySelectFigure(figureId, regionId);
+    }
+  };
+
   // Group figures by owner
   const figuresByOwner: Record<string, Figure[]> = {};
   for (const fig of province.figures) {
@@ -110,10 +122,20 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
           const player = gameState.players.find(p => p.id === ownerId);
           const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
           const ownerColor = clan?.color || '#666';
+          const cp = gameState.players[gameState.currentPlayerIndex];
+          const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+          const isEnemy = betrayMode && ownerId !== apid;
           return (
             <div key={ownerId} className="force-group" style={{ borderColor: ownerColor }}>
               {figures.map(fig => (
-                <FigureIcon key={fig.id} figure={fig} color={ownerColor} />
+                <span
+                  key={fig.id}
+                  onClick={(e) => handleFigureClick(fig.id, e)}
+                  style={isEnemy ? { cursor: 'pointer', opacity: 1 } : undefined}
+                  className={isEnemy ? 'betray-target' : undefined}
+                >
+                  <FigureIcon figure={fig} color={ownerColor} />
+                </span>
               ))}
             </div>
           );

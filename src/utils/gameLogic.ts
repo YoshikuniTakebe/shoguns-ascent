@@ -218,6 +218,10 @@ export function createInitialGameState(
     recruitResolutionIndex: 0,
     recruitMandateIssuerId: null,
     recruitPlacementsRemaining: 0,
+    betrayMandateActive: false,
+    betraySelectionsRemaining: 0,
+    betraySelectedOwners: [],
+    betrayMandateIssuerId: null,
     lastMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
@@ -784,71 +788,162 @@ function executeBetray(state: GameState, issuerId: string): GameState {
   const newState: GameState = {
     ...state,
     provinces: { ...state.provinces },
-    players: state.players.map((p) => ({ ...p })),
+    players: state.players.map((p) => ({ ...p, allies: [...p.allies] })),
     honorTrack: [...state.honorTrack],
     log: [...state.log],
   };
 
-  const order = getResolutionOrder(state, issuerId);
+  const issuer = newState.players.find((p) => p.id === issuerId)!;
 
-  for (const pid of order) {
-    const player = newState.players.find((p) => p.id === pid)!;
-    if (player.bushi <= 0) continue;
-
-    // Find a province where player shares with an opponent's Bushi
-    const sharedProvince = Object.entries(newState.provinces).find(([_id, prov]) => {
-      const hasOwn = prov.figures.some((f) => f.owner === pid && (f.type === 'bushi' || f.type === 'daimyo'));
-      const hasEnemy = prov.figures.some((f) => f.owner !== pid && f.type === 'bushi');
-      return hasOwn && hasEnemy;
-    });
-
-    if (sharedProvince) {
-      const [provId, prov] = sharedProvince;
-      // Replace 1 enemy Bushi with own Bushi from reserve
-      const enemyBushi = prov.figures.find((f) => f.owner !== pid && f.type === 'bushi');
-      if (enemyBushi) {
-        const newFigures = prov.figures.filter((f) => f.id !== enemyBushi.id);
-        newFigures.push(createFigure('bushi', pid));
-        newState.provinces[provId] = { ...prov, figures: newFigures };
-        player.bushi -= 1;
-
-        // Return the replaced figure to its owner's reserve
-        const victim = newState.players.find((p) => p.id === enemyBushi.owner);
-        if (victim) {
-          victim.bushi += 1;
-        }
-
-        // Lose honor
-        loseHonor(newState, pid);
-      }
+  // If issuer has an alliance, break ONLY the issuer's alliance and lose honor
+  if (issuer.allies.length > 0) {
+    const allyId = issuer.allies[0];
+    const ally = newState.players.find((p) => p.id === allyId);
+    if (ally) {
+      ally.allies = ally.allies.filter((id) => id !== issuerId);
     }
-
-    // Bonus: issuer and ally replace 1 additional figure
-    if (isIssuerOrAlly(newState, pid, issuerId) && player.bushi > 0) {
-      const bonusProvince = Object.entries(newState.provinces).find(([_id, prov]) => {
-        const hasOwn = prov.figures.some((f) => f.owner === pid && (f.type === 'bushi' || f.type === 'daimyo'));
-        const hasEnemy = prov.figures.some((f) => f.owner !== pid && f.type === 'bushi');
-        return hasOwn && hasEnemy;
-      });
-      if (bonusProvince) {
-        const [provId, prov] = bonusProvince;
-        const enemyBushi = prov.figures.find((f) => f.owner !== pid && f.type === 'bushi');
-        if (enemyBushi) {
-          const newFigures = prov.figures.filter((f) => f.id !== enemyBushi.id);
-          newFigures.push(createFigure('bushi', pid));
-          newState.provinces[provId] = { ...prov, figures: newFigures };
-          player.bushi -= 1;
-          const victim = newState.players.find((p) => p.id === enemyBushi.owner);
-          if (victim) {
-            victim.bushi += 1;
-          }
-        }
-      }
-    }
+    issuer.allies = [];
+    loseHonor(newState, issuerId);
+    newState.log = [...newState.log, `${issuer.name} breaks their alliance and loses honor`];
   }
 
-  newState.log = [...newState.log, 'Betray mandate resolved - players may replace enemy figures'];
+  // Set up interactive betray state - only the issuer acts
+  newState.betrayMandateActive = true;
+  newState.betraySelectionsRemaining = 2;
+  newState.betraySelectedOwners = [];
+  newState.betrayMandateIssuerId = issuerId;
+
+  // Set current player to the issuer so they can interact
+  const issuerIdx = newState.players.findIndex((p) => p.id === issuerId);
+  if (issuerIdx >= 0) {
+    newState.currentPlayerIndex = issuerIdx;
+  }
+
   return newState;
+}
+
+export function betraySelectFigure(state: GameState, issuerId: string, figureId: string, provinceId: string): GameState {
+  if (!state.betrayMandateActive || state.betrayMandateIssuerId !== issuerId) return state;
+
+  const newState: GameState = {
+    ...state,
+    provinces: { ...state.provinces },
+    players: state.players.map((p) => ({ ...p, seasonCards: [...p.seasonCards] })),
+    honorTrack: [...state.honorTrack],
+    log: [...state.log],
+    betraySelectedOwners: [...state.betraySelectedOwners],
+  };
+
+  const province = newState.provinces[provinceId];
+  if (!province) return state;
+
+  // Find the figure in the province
+  const figure = province.figures.find((f) => f.id === figureId);
+  if (!figure) return state;
+
+  const issuer = newState.players.find((p) => p.id === issuerId)!;
+  const figureOwner = newState.players.find((p) => p.id === figure.owner);
+  if (!figureOwner) return state;
+
+  // Validation: cannot target own figure
+  if (figure.owner === issuerId) return state;
+
+  // Validation: cannot target daimyo
+  if (figure.type === 'daimyo') return state;
+
+  // Validation: cannot target shinto if it is in a temple
+  if (figure.type === 'shinto') {
+    const isInTemple = newState.temples.some((temple) =>
+      temple.figures.some((tf) => tf.figureId === figureId)
+    );
+    if (isInTemple) return state;
+  }
+
+  // Validation: cannot target same owner twice
+  if (newState.betraySelectedOwners.includes(figure.owner)) return state;
+
+  // Validation: issuer must have a same-type figure in reserve
+  if (figure.type === 'bushi') {
+    if (issuer.bushi <= 0) return state;
+  } else if (figure.type === 'shinto') {
+    if (issuer.shinto <= 0) return state;
+  } else if (figure.type === 'monster') {
+    // Check if issuer has an undeployed monster card
+    const deployedMonsterIds = new Set<string>();
+    Object.values(newState.provinces).forEach((prov) => {
+      prov.figures.forEach((f) => {
+        if (f.type === 'monster' && f.owner === issuerId) {
+          deployedMonsterIds.add(f.id);
+        }
+      });
+    });
+    const hasUndeployedMonster = issuer.seasonCards.some(
+      (card) => card.cardType === 'monster' && !deployedMonsterIds.has(card.id)
+    );
+    if (!hasUndeployedMonster) return state;
+  } else if (figure.type === 'fortress') {
+    // Fortresses cannot typically be betrayed, but check reserve
+    if (issuer.fortresses <= 0) return state;
+  }
+
+  // Perform the replacement
+  // Remove the target figure from the province
+  const newFigures = province.figures.filter((f) => f.id !== figureId);
+
+  // Create a replacement figure of the same type owned by the issuer
+  const replacementFigure = createFigure(figure.type, issuerId);
+  newFigures.push(replacementFigure);
+  newState.provinces[provinceId] = { ...province, figures: newFigures };
+
+  // Return the original figure to its owner's reserve
+  if (figure.type === 'bushi') {
+    figureOwner.bushi += 1;
+  } else if (figure.type === 'shinto') {
+    figureOwner.shinto += 1;
+  } else if (figure.type === 'fortress') {
+    figureOwner.fortresses += 1;
+  }
+  // Monsters return to reserve implicitly (the card stays in seasonCards, just no figure on map)
+
+  // Decrement issuer's reserve
+  if (figure.type === 'bushi') {
+    issuer.bushi -= 1;
+  } else if (figure.type === 'shinto') {
+    issuer.shinto -= 1;
+  } else if (figure.type === 'fortress') {
+    issuer.fortresses -= 1;
+  }
+  // For monsters, no numeric reserve to decrement - the deployed figure uses the card
+
+  // Track the owner so they can't be targeted again
+  newState.betraySelectedOwners.push(figure.owner);
+  newState.betraySelectionsRemaining -= 1;
+
+  newState.log = [...newState.log, `${issuer.name} replaces ${figureOwner.name}'s ${figure.type} in ${province.name}`];
+
+  // If no selections remaining, finalize
+  if (newState.betraySelectionsRemaining <= 0) {
+    return finalizeBetray(newState);
+  }
+
+  return newState;
+}
+
+function finalizeBetray(state: GameState): GameState {
+  const newState: GameState = {
+    ...state,
+    betrayMandateActive: false,
+    betraySelectionsRemaining: 0,
+    betraySelectedOwners: [],
+    betrayMandateIssuerId: null,
+    log: [...state.log, 'Betray mandate resolved'],
+  };
+  return newState;
+}
+
+export function skipBetrayTurn(state: GameState): GameState {
+  if (!state.betrayMandateActive) return state;
+  return finalizeBetray(state);
 }
 
 // ============================================================
@@ -1707,6 +1802,10 @@ export function advancePhase(state: GameState): GameState {
       newState.marshalResolutionIndex = 0;
       newState.marshalMandateIssuerId = null;
       newState.marshalFortressBuiltBy = [];
+      newState.betrayMandateActive = false;
+      newState.betraySelectionsRemaining = 0;
+      newState.betraySelectedOwners = [];
+      newState.betrayMandateIssuerId = null;
       newState.drawnMandates = [];
       newState.mandateChoicePhase = false;
 
@@ -1777,7 +1876,7 @@ export function advancePlayer(state: GameState): GameState {
   }
 
   // Politics phase advancement
-  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, log: [...state.log] };
+  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, betrayMandateActive: false, betraySelectionsRemaining: 0, betraySelectedOwners: [], betrayMandateIssuerId: null, log: [...state.log] };
   newState.politicsMandateCount += 1;
 
   // Helper: advance to the next player in seating order (turnOrder)

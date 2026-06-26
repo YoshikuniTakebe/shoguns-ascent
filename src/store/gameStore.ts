@@ -25,6 +25,8 @@ import {
   buildFortress,
   recruitPlaceFigure,
   skipRecruitTurn,
+  betraySelectFigure,
+  skipBetrayTurn,
 } from '../utils/gameLogic';
 
 interface GameStore {
@@ -88,6 +90,12 @@ interface GameStore {
   doRecruitPlaceFigure: (provinceId: string) => void;
   doSkipRecruitTurn: () => void;
 
+  // Betray mandate actions
+  betrayMode: boolean;
+  toggleBetrayMode: () => void;
+  doBetraySelectFigure: (figureId: string, provinceId: string) => void;
+  doSkipBetrayTurn: () => void;
+
   // Kami
   doResolveKami: () => void;
 
@@ -128,6 +136,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   buildFortressMode: false,
   recruitMode: false,
   recruitFigureType: 'bushi',
+  betrayMode: false,
   language: (localStorage.getItem('shoguns-ascent-language') as 'en' | 'es') || 'es',
   setLanguage: (lang) => {
     localStorage.setItem('shoguns-ascent-language', lang);
@@ -224,10 +233,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = chooseMandateTile(gameState, mandate, apid);
-    // If train or marshal or recruit mandate is active, wait for resolution before advancing
-    if (ns.trainMandateActive || ns.marshalMandateActive || ns.recruitMandateActive) {
-      // Auto-enable recruitMode when recruit mandate first activates
-      set({ gameState: ns, recruitMode: ns.recruitMandateActive });
+    // If train or marshal or recruit or betray mandate is active, wait for resolution before advancing
+    if (ns.trainMandateActive || ns.marshalMandateActive || ns.recruitMandateActive || ns.betrayMandateActive) {
+      // Auto-enable recruitMode when recruit mandate first activates, betrayMode when betray activates
+      set({ gameState: ns, recruitMode: ns.recruitMandateActive, betrayMode: ns.betrayMandateActive });
     } else {
       set({ gameState: advancePlayer(ns) });
     }
@@ -300,7 +309,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   toggleBuildFortressMode: () => set((s) => ({ buildFortressMode: !s.buildFortressMode, moveMode: false, moveFrom: null, selectedFigures: [] })),
 
   // --- Recruit Mandate Actions ---
-  toggleRecruitMode: () => set((s) => ({ recruitMode: !s.recruitMode, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false })),
+  toggleRecruitMode: () => set((s) => ({ recruitMode: !s.recruitMode, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false, betrayMode: false })),
   setRecruitFigureType: (figureType) => set({ recruitFigureType: figureType }),
   doRecruitPlaceFigure: (provinceId: string) => {
     const { gameState, localPlayerId, recruitFigureType, ws } = get();
@@ -337,6 +346,38 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     // Auto-enable recruitMode for next player if mandate is still active
     set({ gameState: ns, recruitMode: ns.recruitMandateActive });
+  },
+
+  // --- Betray Mandate Actions ---
+  toggleBetrayMode: () => set((s) => ({ betrayMode: !s.betrayMode, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false, recruitMode: false })),
+  doBetraySelectFigure: (figureId: string, provinceId: string) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState || !localPlayerId) return;
+    const cp = getCurrentPlayer(gameState);
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (!apid) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'BETRAY_SELECT_FIGURE', playerId: apid, payload: { figureId, provinceId } });
+      return;
+    }
+    const ns = betraySelectFigure(gameState, apid, figureId, provinceId);
+    if (!ns.betrayMandateActive) {
+      const advanced = advancePlayer(ns);
+      set({ gameState: advanced, betrayMode: false });
+    } else {
+      set({ gameState: ns });
+    }
+  },
+  doSkipBetrayTurn: () => {
+    const { gameState, ws } = get();
+    if (!gameState) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'SKIP_BETRAY_TURN', playerId: get().localPlayerId });
+      return;
+    }
+    let ns = skipBetrayTurn(gameState);
+    ns = advancePlayer(ns);
+    set({ gameState: ns, betrayMode: false });
   },
 
   // --- Kami ---

@@ -177,6 +177,10 @@ export interface GameState {
   recruitResolutionIndex: number;
   recruitMandateIssuerId: string | null;
   recruitPlacementsRemaining: number;
+  betrayMandateActive: boolean;
+  betraySelectionsRemaining: number;
+  betraySelectedOwners: string[];
+  betrayMandateIssuerId: string | null;
   lastMandateIssuerId: string | null;
   gameOver: boolean;
   winner?: string;

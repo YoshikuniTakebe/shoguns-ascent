@@ -12,6 +12,7 @@ export const ActionPanel = () => {
     doSkipTrainPurchase, setShowTrainModal,
     doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
     doSkipRecruitTurn, toggleRecruitMode, recruitMode, recruitFigureType, setRecruitFigureType,
+    doSkipBetrayTurn, toggleBetrayMode, betrayMode,
     doResolveWinter,
   } = useGameStore();
   const t = useT();
@@ -212,7 +213,24 @@ export const ActionPanel = () => {
             </div>
           )}
 
-          {!gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
+          {/* Betray mandate active - issuer selects enemy figures to replace */}
+          {gameState.betrayMandateActive && (
+            <div className="betray-active">
+              <p className="betray-notice">
+                {t('actions.betrayNotice', { name: cp?.name || '' })}
+              </p>
+              <p>{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
+              <button className={`btn-secondary ${betrayMode ? 'active' : ''}`} onClick={toggleBetrayMode}>
+                {betrayMode ? t('actions.betraySelectTarget') : t('actions.betraySelectFigure')}
+              </button>
+              {betrayMode && <p className="move-instruction">{t('actions.betraySelectTarget')}</p>}
+              <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipBetrayTurn}>
+                {t('actions.betrayEndTurn')}
+              </button>
+            </div>
+          )}
+
+          {!gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
             <button className="btn-primary" onClick={doDrawMandateTiles}>
               {t('actions.drawMandateTiles')}
             </button>
@@ -241,14 +259,14 @@ export const ActionPanel = () => {
           )}
 
           {/* Last executed mandate display */}
-          {gameState.mandatesThisTurn.length > 0 && !gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && (
+          {gameState.mandatesThisTurn.length > 0 && !gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && (
             <div className="current-mandate">
               <h5>{t('actions.lastMandate')} {gameState.mandatesThisTurn[gameState.mandatesThisTurn.length - 1]?.type.toUpperCase()}</h5>
               <p className="mandate-info">{t('actions.mandateResolved')}</p>
             </div>
           )}
 
-          {!gameState.marshalMandateActive && !gameState.recruitMandateActive && (
+          {!gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && (
             <div className="march-controls">
               <button className={`btn-secondary ${moveMode ? 'active' : ''}`} onClick={toggleMoveMode}>
                 {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
