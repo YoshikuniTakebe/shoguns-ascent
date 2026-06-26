@@ -103,7 +103,7 @@ export const MainMenu = () => {
               return (
                 <div key={i} className="player-setup-row">
                   <div className="player-setup-clan-icon">
-                    <ClanShield clanId={clans[i]} size={24} />
+                    <ClanShield clanId={clans[i]} size={48} />
                   </div>
                   <input
                     value={names[i]}
@@ -235,7 +235,7 @@ export const MainMenu = () => {
         <div className="clan-preview-list">
           {CLANS.map(c => (
             <div key={c.id} className="clan-preview-seal-wrapper">
-              <ClanShield clanId={c.id} size={110} />
+              <ClanShield clanId={c.id} size={150} />
               <div className="clan-tooltip" style={{ borderColor: c.color }}>
                 <span className="clan-tooltip-name" style={{ color: c.color }}>{c.name}</span>
                 <span className="clan-tooltip-stat">Honor inicial: {c.initialHonor}</span>
