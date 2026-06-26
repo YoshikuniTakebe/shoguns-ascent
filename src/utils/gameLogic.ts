@@ -1885,6 +1885,11 @@ export function advancePlayer(state: GameState): GameState {
     return nextPlayerIdx >= 0 ? nextPlayerIdx : (currentIndex + 1) % newState.players.length;
   };
 
+  // Determine the issuer of the last mandate to compute the next chooser
+  const lastIssuer = newState.mandatesThisTurn[newState.mandatesThisTurn.length - 1]?.issuer;
+  const issuerPlayerIdx = lastIssuer ? newState.players.findIndex(p => p.id === lastIssuer) : -1;
+  const referenceIdx = issuerPlayerIdx >= 0 ? issuerPlayerIdx : newState.currentPlayerIndex;
+
   // Check if we need a kami turn
   if (isKamiTurn(newState.politicsMandateCount)) {
     const kamiState = resolveKamiTurn(newState);
@@ -1892,7 +1897,7 @@ export function advancePlayer(state: GameState): GameState {
     if (newState.politicsMandateCount >= newState.maxMandates) {
       return advancePhase(kamiState);
     }
-    return { ...kamiState, currentPlayerIndex: advanceToNextInSeating(newState.currentPlayerIndex) };
+    return { ...kamiState, currentPlayerIndex: advanceToNextInSeating(referenceIdx) };
   }
 
   // Check if politics phase is done
@@ -1900,8 +1905,8 @@ export function advancePlayer(state: GameState): GameState {
     return advancePhase(newState);
   }
 
-  // Move to next player in seating order (turnOrder)
-  newState.currentPlayerIndex = advanceToNextInSeating(newState.currentPlayerIndex);
+  // Move to next player in seating order after the MANDATE ISSUER (not after currentPlayerIndex)
+  newState.currentPlayerIndex = advanceToNextInSeating(referenceIdx);
   return newState;
 }
 

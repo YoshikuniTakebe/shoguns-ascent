@@ -591,20 +591,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       figures: [...temple.figures, { playerId: komainuPrayPlayerId, figureId }],
     };
 
-    // Decrement player's shinto count
-    const updatedPlayers = gameState.players.map(p => {
-      if (p.id === komainuPrayPlayerId) {
-        return { ...p, shinto: Math.max(0, p.shinto - 1) };
-      }
-      return p;
-    });
-
+    // Komainu itself counts as the shinto figure - do NOT decrement player's shinto reserve
     let ns: GameState = {
       ...gameState,
       temples: updatedTemples,
-      players: updatedPlayers,
       trainResolutionIndex: gameState.trainResolutionIndex + 1,
-      log: [...gameState.log, `Shinto placed at ${temple.kamiType} temple`],
+      log: [...gameState.log, `Komainu placed as shinto at ${temple.kamiType} temple`],
     };
     ns = advanceTrainResolution(ns);
 
