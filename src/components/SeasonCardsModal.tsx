@@ -4,9 +4,9 @@ import type { TranslationKey } from '../i18n';
 import type { CardType } from '../types/game';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
-  monster: '#9b59b6',
-  virtue: '#c8a951',
-  upgrade: '#3498db',
+  monster: '#cd7f32',
+  virtue: '#9b59b6',
+  upgrade: '#27ae60',
   warUpgrade: '#e74c3c',
   winterUpgrade: '#5bc0eb',
 };

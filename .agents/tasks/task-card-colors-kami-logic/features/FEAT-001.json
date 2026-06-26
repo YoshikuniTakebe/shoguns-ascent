@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Card UI changes (3:4 aspect ratio, color swaps) + i18n fixes for deck group names in setup",
+  "status": "in_progress",
+  "steps": [
+    "In src/components/SeasonCardsModal.tsx, change CARD_TYPE_COLORS: monster becomes bronze '#cd7f32', virtue gets the old monster purple '#9b59b6', upgrade becomes green '#27ae60'. warUpgrade '#e74c3c' and winterUpgrade '#5bc0eb' remain unchanged.",
+    "In src/App.css, change .season-card-image-placeholder height from 80px to a value that creates a 3:4 card aspect ratio. The image placeholder should be approximately square or slightly vertical. Change minmax(220px,1fr) in .season-card-grid to approximately 180px to accommodate narrower cards. Adjust .season-card aspect ratio by setting aspect-ratio: 3/4 on the .season-card class or equivalent approach so cards display in 3:4 ratio.",
+    "Add translation keys for the 6 deck group names in src/i18n/en.ts: 'deck.archway': 'Archway', 'deck.tower': 'Tower', 'deck.teapot': 'Teapot', 'deck.horseman': 'Horseman', 'deck.ship': 'Ship', 'deck.mountain': 'Mountain'.",
+    "Add Spanish translations in src/i18n/es.ts: 'deck.archway': 'Arco', 'deck.tower': 'Torre', 'deck.teapot': 'Tetera', 'deck.horseman': 'Jinete', 'deck.ship': 'Barco', 'deck.mountain': 'Montana'.",
+    "In src/components/MainMenu.tsx, replace the raw deck group name {g} with t() calls using the new translation keys. Create a mapping from DeckName to TranslationKey (e.g., const DECK_NAME_KEYS: Record<DeckName, TranslationKey> = { Archway: 'deck.archway', Tower: 'deck.tower', ... }) and use it in the DECK_GROUPS.map rendering."
+  ],
+  "acceptance_criteria": [
+    "CARD_TYPE_COLORS monster is '#cd7f32' (bronze), virtue is '#9b59b6' (purple), upgrade is '#27ae60' (green)",
+    "Season cards display with 3:4 aspect ratio",
+    "Deck group names in setup screen are translated when Spanish is selected",
+    "Build passes with npx tsc -b && npx vite build"
+  ],
+  "verification": [
+    "npx tsc -b && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -163,6 +163,14 @@ export const es: Record<TranslationKey, string> = {
   'kami.susanoo.effect': 'Las figuras que no son Kami no se pueden Mover fuera de esta Provincia.',
   'kami.tsukuyomi.effect': 'Antes de resolver la Guerra en esta Provincia, todos los jugadores con Fuerza en ella ganan 4 Monedas.',
 
+  // Deck Names
+  'deck.archway': 'Arco',
+  'deck.tower': 'Torre',
+  'deck.teapot': 'Tetera',
+  'deck.horseman': 'Jinete',
+  'deck.ship': 'Barco',
+  'deck.mountain': 'Montana',
+
   // Deck Indicator
   'deck.indicator': '{name}',
 };

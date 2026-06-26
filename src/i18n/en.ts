@@ -154,6 +154,14 @@ export const en = {
   'kami.susanoo.effect': 'Non-Kami figures cannot Move out of this Province.',
   'kami.tsukuyomi.effect': 'Before war here, all players with Force gain 4 Coins.',
 
+  // Deck Names
+  'deck.archway': 'Archway',
+  'deck.tower': 'Tower',
+  'deck.teapot': 'Teapot',
+  'deck.horseman': 'Horseman',
+  'deck.ship': 'Ship',
+  'deck.mountain': 'Mountain',
+
   // Deck Indicator
   'deck.indicator': '{name}',
 

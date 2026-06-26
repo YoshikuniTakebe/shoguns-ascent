@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, DECK_GROUPS } from '../types/game';
 import type { DeckConfig, DeckName } from '../types/game';
+import type { TranslationKey } from '../i18n';
 import { ClanShield } from './ClanShields';
 import { DaimyoPortrait } from './DaimyoPortraits';
 import { useT } from '../i18n';
@@ -23,6 +24,15 @@ export const MainMenu = () => {
   const [lid, setLid] = useState('');
 
   const hasSolOrLuna = clans.slice(0, pc).some(id => id === 'sol' || id === 'luna');
+
+  const DECK_NAME_KEYS: Record<DeckName, TranslationKey> = {
+    Archway: 'deck.archway',
+    Tower: 'deck.tower',
+    Teapot: 'deck.teapot',
+    Horseman: 'deck.horseman',
+    Ship: 'deck.ship',
+    Mountain: 'deck.mountain',
+  };
 
   const getDeckConfig = (): DeckConfig => ({
     chosenDeck,
@@ -127,7 +137,7 @@ export const MainMenu = () => {
                     className={`deck-group-btn${chosenDeck === g ? ' active' : ''}`}
                     onClick={() => setChosenDeck(g)}
                   >
-                    {g}
+                    {t(DECK_NAME_KEYS[g])}
                   </button>
                 ))}
               </div>
