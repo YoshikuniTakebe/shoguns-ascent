@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Restructure Kami data: store current effects as expansion, replace with base game effects, add base game kami logic function, add i18n for all kami texts",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/types/game.ts, rename current KAMI_DATA to KAMI_DATA_EXPANSION (keep as export). Create new KAMI_DATA with the same structure but base game effects in Spanish. The base game effects are: Amaterasu: 'Allows worshiper to move clan marker to top of Honor Track.', Fujin: 'Allows worshiper to perform up to 2 Movements with their figures.', Raijin: 'Allows worshiper to Summon 1 Bushi to any Province.', Ryujin: 'Allows worshiper to acquire a Season Card paying full cost.', Hachiman: 'Grants worshiper 2 Ronin tokens.', Susanoo: 'Grants worshiper VP equal to their number of Fortresses on the Map.', Tsukuyomi: 'Grants worshiper 2 Coins.'",
     "Add base game kami effect translation keys to src/i18n/en.ts: 'kami.amaterasu.baseEffect', 'kami.fujin.baseEffect', etc. with the English effect text.",
@@ -23,5 +23,5 @@
     "npx tsc -b && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Successfully restructured Kami data. KAMI_DATA now contains base game effects, KAMI_DATA_EXPANSION stores the old expansion effects. Both en.ts and es.ts have kami.*.baseEffect and kami.*.expansionEffect keys. resolveKamiAbility implements amaterasu (honor track top), hachiman (+2 ronin), susanoo (VP per fortress), tsukuyomi (+2 coins), with placeholders for fujin/raijin/ryujin (UI-driven). resolveKamiTurn now calls resolveKamiAbility for each temple winner. TemplePanel.tsx updated to display baseEffect. Build passes cleanly."
 }
