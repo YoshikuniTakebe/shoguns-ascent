@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Start implementing season card logic - apply passive effects from season cards during game actions",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/utils/gameLogic.ts, create a helper function getPlayerSeasonCardEffects(state: GameState, playerId: string): SeasonCard[] that returns the season cards owned by a player.",
     "Implement warUpgrade logic: In the initiateWarPhase or at the start of war resolution, iterate through all players and apply 'At start of War Phase' effects from their warUpgrade cards. Specifically: 'Way of the Shogun' (sp-way-of-the-shogun): +3 coins, 'Way of the Righteous' (sp-way-of-the-righteous): take 1 coin from each player with less honor, 'Way of Bushido' (su-way-of-bushido): +2 coins and +2 VP per different virtue owned, 'Way of Naginata' (su-way-of-naginata / au-way-of-naginata): placeholder (movement is UI-driven), 'Way of the Ashigaru' (su-way-of-the-ashigaru): placeholder (province selection is UI-driven), 'Way of the Ronin' (su-way-of-the-ronin): +2 ronin, 'Way of the Katana' (au-way-of-the-katana): mark bushi as force 2 (store a flag or handle in calculateForce), 'Way of the Keiri' (au-way-of-the-keiri): placeholder (requires province selection), 'Way of the Moneylender' (au-way-of-the-moneylender): +5 coins.",
@@ -20,5 +20,5 @@
     "npx tsc -b && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Successfully implemented all season card logic. Created getPlayerSeasonCardEffects helper. Added applyWarUpgrades function that applies coins/ronin/VP effects at war phase start (Way of the Shogun +3 coins, Way of the Righteous takes coins from less honorable, Way of Bushido +2 coins + VP per virtue, Way of the Ronin +2 ronin, Way of the Moneylender +5 coins, plus placeholders for UI-driven cards). Enhanced calculateForce with optional GameState parameter to support Path of the Lion (Daimyo +1), Path of the Dragon (Daimyo +3), Path of the Favored (Shinto force 3 if highest honor), and Way of the Katana (Bushi force 2 during war). Updated all 7 callers of calculateForce with the new signature. Build passes cleanly."
 }
