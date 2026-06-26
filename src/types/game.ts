@@ -110,6 +110,7 @@ export interface Battle {
   warTacticBids: { [playerId: string]: { [tacticId: string]: number } };
   resolved: boolean;
   winner?: string;
+  uncontested?: boolean;
 }
 
 export interface AllianceProposal {

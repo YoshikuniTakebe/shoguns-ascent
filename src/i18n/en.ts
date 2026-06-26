@@ -106,6 +106,12 @@ export const en = {
   'battle.notPart': 'You are not part of this battle.',
   'battle.previousResults': 'Previous Results:',
   'battle.endWar': 'End War',
+  'battle.uncontestedWin': '{name} wins war token in {region}',
+  'battle.playerMustBet': '{name} must place bets',
+  'battle.battleNumber': 'Battle {number}',
+  'battle.discarded': 'No figures - token discarded',
+  'battle.alliedWin': '{name} wins war token in {region} (allied)',
+  'battle.accept': 'Accept',
 
   // GameOverScreen
   'gameOver.title': 'GAME OVER',

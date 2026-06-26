@@ -1247,7 +1247,15 @@ export function initiateWarPhase(state: GameState): GameState {
     const playerIds = [...new Set(province.figures.map((f) => f.owner))];
 
     if (playerIds.length === 0) {
-      // Empty province - discard token
+      // Empty province - discard token (show as uncontested with no winner)
+      const battle: Battle = {
+        provinceId: slot.provinceId,
+        participants: [],
+        warTacticBids: {},
+        resolved: true,
+        uncontested: true,
+      };
+      newState.activeBattles.push(battle);
       newState.log = [...newState.log, `${province.name}: empty - war token discarded`];
       continue;
     }
@@ -1258,6 +1266,15 @@ export function initiateWarPhase(state: GameState): GameState {
       const winner = newState.players.find((p) => p.id === winnerId);
       if (winner) {
         winner.warProvinceTokens = [...winner.warProvinceTokens, { season: slot.season, provinceId: slot.provinceId }];
+        const battle: Battle = {
+          provinceId: slot.provinceId,
+          participants: [winnerId],
+          warTacticBids: {},
+          resolved: true,
+          winner: winnerId,
+          uncontested: true,
+        };
+        newState.activeBattles.push(battle);
         newState.log = [...newState.log, `${winner.name} wins war token in ${province.name} (uncontested)`];
       }
       continue;
@@ -1273,6 +1290,15 @@ export function initiateWarPhase(state: GameState): GameState {
         const force2 = calculateForce(province, p2.id, newState);
         const winner = force1 >= force2 ? p1 : p2;
         winner.warProvinceTokens = [...winner.warProvinceTokens, { season: slot.season, provinceId: slot.provinceId }];
+        const battle: Battle = {
+          provinceId: slot.provinceId,
+          participants: playerIds,
+          warTacticBids: {},
+          resolved: true,
+          winner: winner.id,
+          uncontested: true,
+        };
+        newState.activeBattles.push(battle);
         newState.log = [...newState.log, `${winner.name} wins war token in ${province.name} (allied - no battle)`];
         continue;
       }
@@ -1326,7 +1352,7 @@ export function allBidsSubmitted(state: GameState, provinceId: string): boolean 
 }
 
 export function resolveNextBattle(state: GameState): GameState {
-  const unresolvedIdx = state.activeBattles.findIndex((b) => !b.resolved);
+  const unresolvedIdx = state.activeBattles.findIndex((b) => !b.resolved && !b.uncontested);
   if (unresolvedIdx === -1) return state;
 
   const newState: GameState = {

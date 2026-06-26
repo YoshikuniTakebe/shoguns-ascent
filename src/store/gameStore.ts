@@ -42,6 +42,8 @@ interface GameStore {
   lobbyId: string | null;
   currentMandateResolutionIndex: number;
   warTacticBidsSubmitted: boolean;
+  battleStepPhase: 'popup' | 'bidding' | null;
+  battleCurrentBiddingIndex: number;
   showTrainModal: boolean;
   buildFortressMode: boolean;
   language: 'en' | 'es';
@@ -123,6 +125,7 @@ interface GameStore {
   doInitiateWar: () => void;
   doSubmitWarTacticBids: (provinceId: string, tacticBids: { [tacticId: string]: number }) => void;
   doResolveNextBattle: () => void;
+  doAcceptBattlePopup: () => void;
 
   // Cleanup & Winter
   doResolveWinter: () => void;
@@ -152,6 +155,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   lobbyId: null,
   currentMandateResolutionIndex: 0,
   warTacticBidsSubmitted: false,
+  battleStepPhase: null,
+  battleCurrentBiddingIndex: 0,
   showTrainModal: false,
   buildFortressMode: false,
   recruitMode: false,
@@ -690,25 +695,56 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'INITIATE_WAR', playerId: get().localPlayerId });
       return;
     }
-    set({ gameState: initiateWarPhase(gameState) });
+    const ns = initiateWarPhase(gameState);
+    // For step-by-step UI display, mark uncontested battles as unresolved so we can show popups
+    const updatedBattles = ns.activeBattles.map(b => ({
+      ...b,
+      resolved: b.uncontested ? false : b.resolved,
+    }));
+    set({ gameState: { ...ns, activeBattles: updatedBattles }, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
   },
   doSubmitWarTacticBids: (provinceId, tacticBids) => {
     const { gameState, localPlayerId, ws } = get();
     if (!gameState || !localPlayerId) return;
-    const cp = getCurrentPlayer(gameState);
-    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
-    if (!apid) return;
+
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'SUBMIT_WAR_BIDS', playerId: apid, payload: { provinceId, tacticBids } });
+      get().sendAction({ type: 'SUBMIT_WAR_BIDS', playerId: localPlayerId, payload: { provinceId, tacticBids } });
       return;
     }
-    let ns = submitWarTacticBids(gameState, provinceId, apid, tacticBids);
-    // In hotseat mode, auto-resolve once all participants have submitted
-    if (allBidsSubmitted(ns, provinceId)) {
-      ns = resolveNextBattle(ns);
-      set({ gameState: ns, warTacticBidsSubmitted: false });
+
+    // Determine which player is submitting bids
+    let apid: string;
+    if (gameState.mode === 'hotseat') {
+      // In hotseat, the current bidding participant is determined by battleCurrentBiddingIndex
+      const battle = gameState.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
+      if (!battle) return;
+      apid = battle.participants[get().battleCurrentBiddingIndex];
     } else {
-      set({ gameState: ns, warTacticBidsSubmitted: true });
+      apid = localPlayerId;
+    }
+    if (!apid) return;
+
+    let ns = submitWarTacticBids(gameState, provinceId, apid, tacticBids);
+
+    if (gameState.mode === 'hotseat') {
+      // In hotseat: after current player bids, check if all done
+      if (allBidsSubmitted(ns, provinceId)) {
+        ns = resolveNextBattle(ns);
+        // Battle resolved, advance to popup for next battle
+        set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      } else {
+        // More participants need to bid - show popup for next participant
+        const { battleCurrentBiddingIndex } = get();
+        set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: battleCurrentBiddingIndex + 1 });
+      }
+    } else {
+      // Online mode: auto-resolve once all participants have submitted
+      if (allBidsSubmitted(ns, provinceId)) {
+        ns = resolveNextBattle(ns);
+        set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      } else {
+        set({ gameState: ns, warTacticBidsSubmitted: true });
+      }
     }
   },
   doResolveNextBattle: () => {
@@ -718,7 +754,38 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'RESOLVE_BATTLE', playerId: get().localPlayerId });
       return;
     }
-    set({ gameState: resolveNextBattle(gameState), warTacticBidsSubmitted: false });
+    set({ gameState: resolveNextBattle(gameState), warTacticBidsSubmitted: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+  },
+  doAcceptBattlePopup: () => {
+    const { gameState } = get();
+    if (!gameState) return;
+
+    const currentBattleIndex = gameState.activeBattles.findIndex(b => !b.resolved);
+    if (currentBattleIndex === -1) {
+      set({ battleStepPhase: null, battleCurrentBiddingIndex: 0 });
+      return;
+    }
+
+    const battle = gameState.activeBattles[currentBattleIndex];
+
+    if (battle.uncontested) {
+      // Mark uncontested battle as resolved (user accepted the popup)
+      const updatedBattles = [...gameState.activeBattles];
+      updatedBattles[currentBattleIndex] = { ...battle, resolved: true };
+      set({
+        gameState: { ...gameState, activeBattles: updatedBattles },
+        battleStepPhase: 'popup',
+        battleCurrentBiddingIndex: 0,
+      });
+      return;
+    }
+
+    // Contested battle: transition from popup to bidding
+    if (gameState.mode === 'hotseat') {
+      set({ battleStepPhase: 'bidding' });
+    } else {
+      set({ battleStepPhase: 'bidding' });
+    }
   },
 
   // --- Cleanup & Winter ---

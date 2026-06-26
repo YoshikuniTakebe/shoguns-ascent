@@ -108,6 +108,12 @@ export const es: Record<TranslationKey, string> = {
   'battle.notPart': 'No eres parte de esta batalla.',
   'battle.previousResults': 'Resultados Anteriores:',
   'battle.endWar': 'Terminar Guerra',
+  'battle.uncontestedWin': '{name} gana loseta de guerra de {region}',
+  'battle.playerMustBet': '{name} tiene que apostar',
+  'battle.battleNumber': 'Batalla {number}',
+  'battle.discarded': 'Sin figuras - loseta descartada',
+  'battle.alliedWin': '{name} gana loseta de guerra de {region} (aliados)',
+  'battle.accept': 'Aceptar',
 
   // GameOverScreen
   'gameOver.title': 'FIN DEL JUEGO',
