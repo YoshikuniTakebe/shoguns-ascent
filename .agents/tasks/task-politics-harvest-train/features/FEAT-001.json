@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix honor tiebreaker in Harvest and other places. Fix the honorTrack comparison logic: index 0 = honor position 1 = HIGHEST/BEST honor. Currently the code uses 'bIdx - aIdx' (favoring higher index = lower honor) which is WRONG. It should favor LOWER index (index 0 = best honor). Also fix the Harvest mandate: (1) ALL players receive 1 coin when harvest is executed, (2) Only issuer+ally harvest from provinces where they have majority, (3) Fix the honor tiebreaker sort to correctly compare (lower index = better honor = wins tie).",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/utils/gameLogic.ts, function executeHarvest() around line 601: Add logic to give ALL players +1 coin at the start of the harvest resolution (before checking majority).",
     "In src/utils/gameLogic.ts, function executeHarvest() around line 634: Fix the honor tiebreaker sort. Current code: 'return bIdx - aIdx' which favors higher index. Change to 'return aIdx - bIdx' so that LOWER index (honor position 1 = best honor) wins the tiebreaker.",
@@ -19,5 +19,5 @@
     "npx tsc -b && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All honor tiebreaker comparisons fixed across 6 locations in gameLogic.ts. The pattern was consistent: index 0 = honor position 1 = BEST honor, so lower index wins. Log messages use direct English strings (not i18n keys), so no i18n file changes were needed for the +1 coin log message. Build passes cleanly."
 }
