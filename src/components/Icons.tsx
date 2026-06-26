@@ -49,7 +49,7 @@ export const CoinIcon = ({ size = 24, color = 'currentColor', className }: IconP
   </svg>
 );
 
-/** Japanese war fan (gunbai) - used for Honor */
+/** Classic Japanese folding fan (sensu) - used for Honor */
 export const HonorIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
@@ -58,26 +58,28 @@ export const HonorIcon = ({ size = 24, color = 'currentColor', className }: Icon
     viewBox="0 0 24 24"
     fill="none"
     stroke={color}
-    strokeWidth="1.5"
+    strokeWidth="1.2"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    {/* Wide semicircular fan body */}
-    <path d="M3 11 C3 5, 8 2, 12 2 C16 2, 21 5, 21 11 C21 13, 18 14, 12 14 C6 14, 3 13, 3 11 Z" />
-    {/* Radiating ribs from handle pivot */}
-    <line x1="12" y1="14" x2="5" y2="5" />
-    <line x1="12" y1="14" x2="8" y2="3.5" />
-    <line x1="12" y1="14" x2="12" y2="2" />
-    <line x1="12" y1="14" x2="16" y2="3.5" />
-    <line x1="12" y1="14" x2="19" y2="5" />
-    {/* Sun circle in upper-center of fan */}
-    <circle cx="12" cy="7.5" r="2" fill={color} stroke="none" />
-    {/* Handle extending down */}
-    <line x1="12" y1="14" x2="12" y2="22" strokeWidth="2" />
+    {/* Fan body - quarter circle opening upward from bottom pivot */}
+    <path d="M3 5 A14 14 0 0 1 21 5 L12 20 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="1.5" />
+    {/* Curved top arc */}
+    <path d="M3 5 A14 14 0 0 1 21 5" fill="none" stroke={color} strokeWidth="1.5" />
+    {/* Fold/rib lines radiating from pivot to top arc */}
+    <line x1="12" y1="20" x2="3.5" y2="5.5" />
+    <line x1="12" y1="20" x2="5.8" y2="3.5" />
+    <line x1="12" y1="20" x2="8.5" y2="2.3" />
+    <line x1="12" y1="20" x2="12" y2="1.8" />
+    <line x1="12" y1="20" x2="15.5" y2="2.3" />
+    <line x1="12" y1="20" x2="18.2" y2="3.5" />
+    <line x1="12" y1="20" x2="20.5" y2="5.5" />
+    {/* Pivot knob at the bottom */}
+    <circle cx="12" cy="21" r="1.3" fill={color} stroke="none" />
   </svg>
 );
 
-/** Rising sun war flag (kyokujitsu-ki) - used for Victory Points */
+/** Rising sun (top half only) - used for Victory Points */
 export const VPIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
@@ -87,17 +89,18 @@ export const VPIcon = ({ size = 24, color = 'currentColor', className }: IconPro
     fill={color}
     stroke="none"
   >
-    {/* Triangular rays radiating from center in all directions */}
-    <polygon points="12,12 10,0 14,0" />
-    <polygon points="12,12 14,24 10,24" />
-    <polygon points="12,12 0,10 0,14" />
-    <polygon points="12,12 24,14 24,10" />
-    <polygon points="12,12 2.5,2.5 5.3,1.5 1.5,5.3" />
-    <polygon points="12,12 21.5,2.5 22.5,5.3 18.7,1.5" />
-    <polygon points="12,12 2.5,21.5 5.3,22.5 1.5,18.7" />
-    <polygon points="12,12 21.5,21.5 18.7,22.5 22.5,18.7" />
-    {/* Central sun circle */}
-    <circle cx="12" cy="12" r="4" />
+    {/* Horizon line */}
+    <rect x="1" y="16" width="22" height="1.5" rx="0.5" />
+    {/* Semicircle sitting on horizon */}
+    <path d="M7 16.5 A5 5 0 0 1 17 16.5 Z" />
+    {/* Thick wedge/triangle rays emanating upward only */}
+    <polygon points="11,11 13,11 12,3" />
+    <polygon points="9.2,12 11,11.2 7.5,4.5" />
+    <polygon points="13,11.2 14.8,12 16.5,4.5" />
+    <polygon points="7.5,13.5 9,12.2 4,7" />
+    <polygon points="15,12.2 16.5,13.5 20,7" />
+    <polygon points="5.5,15.5 7,13.8 2,10.5" />
+    <polygon points="17,13.8 18.5,15.5 22,10.5" />
   </svg>
 );
 
@@ -162,7 +165,7 @@ export const DaimyoIcon = ({ size = 24, color = 'currentColor', className }: Ico
   </svg>
 );
 
-/** Small warrior with sword raised overhead - used for Ronin */
+/** Samurai warrior in attacking stance - used for Ronin */
 export const RoninIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
@@ -170,26 +173,23 @@ export const RoninIcon = ({ size = 24, color = 'currentColor', className }: Icon
     height={size}
     viewBox="0 0 24 24"
     fill={color}
-    stroke={color}
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
+    stroke="none"
   >
     {/* Head */}
-    <circle cx="12" cy="7" r="2.5" fill={color} stroke="none" />
-    {/* Body */}
-    <line x1="12" y1="9.5" x2="12" y2="17" />
-    {/* Left arm raised holding sword */}
-    <line x1="12" y1="11" x2="8" y2="8" />
-    {/* Right arm raised holding sword */}
-    <line x1="12" y1="11" x2="16" y2="8" />
-    {/* Sword blade held overhead */}
-    <line x1="7" y1="3" x2="17" y2="3" strokeWidth="2" />
-    {/* Sword handle */}
-    <line x1="10" y1="5" x2="14" y2="5" strokeWidth="1" />
-    {/* Left leg */}
-    <line x1="12" y1="17" x2="9" y2="22" />
-    {/* Right leg */}
-    <line x1="12" y1="17" x2="15" y2="22" />
+    <circle cx="14" cy="4.5" r="2.2" />
+    {/* Sword raised behind/above head - diagonal slash pose */}
+    <rect x="5" y="0.5" width="1.4" height="10" rx="0.5" transform="rotate(30 5 0.5)" />
+    {/* Sword handle/grip */}
+    <rect x="9.5" y="8" width="1" height="3.5" rx="0.3" transform="rotate(30 9.5 8)" />
+    {/* Torso leaning forward aggressively */}
+    <path d="M13 7 L10 15 L14 15 L16 7 Z" />
+    {/* Back arm reaching up to sword */}
+    <path d="M14 8 L11 5 L9.5 6.5 L12 9 Z" />
+    {/* Front arm extended forward */}
+    <path d="M12 9 L7 12 L7.5 13.5 L13 10.5 Z" />
+    {/* Back leg extended behind - wide stance */}
+    <path d="M13 15 L17 22 L19 21.5 L15 15 Z" />
+    {/* Front leg forward in lunge */}
+    <path d="M11 15 L7 22 L9 22.5 L12 15 Z" />
   </svg>
 );
