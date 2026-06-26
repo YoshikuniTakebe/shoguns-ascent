@@ -193,6 +193,7 @@ export interface GameState {
   gameOver: boolean;
   winner?: string;
   log: string[];
+  logHistory: { [season: string]: string[] };
   hostId?: string;
 }
 
