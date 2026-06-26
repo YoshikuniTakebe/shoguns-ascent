@@ -1582,15 +1582,35 @@ export function advancePhase(state: GameState): GameState {
   let newState: GameState = { ...state, log: [...state.log] };
 
   switch (newState.currentPhase) {
-    case 'tea':
+    case 'tea': {
       newState.currentPhase = 'politics';
-      newState.currentPlayerIndex = 0;
       newState.politicsMandateCount = 0;
       newState.trainMandateActive = false;
       newState.drawnMandates = [];
       newState.mandateChoicePhase = false;
-      newState.log = [...newState.log, 'Politics Phase begins'];
+
+      // Determine the first player for mandate turns
+      let firstPlayerId: string;
+      if (newState.currentSeason === 'spring') {
+        // In Spring: the player with honor position 1 (honorTrack[0] = best honor) starts
+        firstPlayerId = newState.honorTrack[0];
+      } else {
+        // In Summer/Autumn: the player to the LEFT (clockwise in seating/turnOrder) of lastMandateIssuerId
+        if (newState.lastMandateIssuerId) {
+          const lastIssuerIdx = newState.turnOrder.indexOf(newState.lastMandateIssuerId);
+          firstPlayerId = newState.turnOrder[(lastIssuerIdx + 1) % newState.turnOrder.length];
+        } else {
+          // Fallback: use honor position 1 if no last issuer tracked
+          firstPlayerId = newState.honorTrack[0];
+        }
+      }
+      const firstPlayerIdx = newState.players.findIndex(p => p.id === firstPlayerId);
+      newState.currentPlayerIndex = firstPlayerIdx >= 0 ? firstPlayerIdx : 0;
+
+      const firstPlayer = newState.players[newState.currentPlayerIndex];
+      newState.log = [...newState.log, `Politics Phase begins - ${firstPlayer?.name ?? 'Player'} takes the first mandate turn`];
       break;
+    }
     case 'politics':
       newState = initiateWarPhase(newState);
       // If no battles were created, auto-advance to cleanup
@@ -1639,6 +1659,16 @@ export function advancePlayer(state: GameState): GameState {
   const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, log: [...state.log] };
   newState.politicsMandateCount += 1;
 
+  // Helper: advance to the next player in seating order (turnOrder)
+  const advanceToNextInSeating = (currentIndex: number): number => {
+    const currentPlayerId = newState.players[currentIndex]?.id;
+    const seatIdx = newState.turnOrder.indexOf(currentPlayerId);
+    const nextSeatIdx = (seatIdx + 1) % newState.turnOrder.length;
+    const nextPlayerId = newState.turnOrder[nextSeatIdx];
+    const nextPlayerIdx = newState.players.findIndex(p => p.id === nextPlayerId);
+    return nextPlayerIdx >= 0 ? nextPlayerIdx : (currentIndex + 1) % newState.players.length;
+  };
+
   // Check if we need a kami turn
   if (isKamiTurn(newState.politicsMandateCount)) {
     const kamiState = resolveKamiTurn(newState);
@@ -1646,7 +1676,7 @@ export function advancePlayer(state: GameState): GameState {
     if (newState.politicsMandateCount >= newState.maxMandates) {
       return advancePhase(kamiState);
     }
-    return { ...kamiState, currentPlayerIndex: (newState.currentPlayerIndex + 1) % newState.players.length };
+    return { ...kamiState, currentPlayerIndex: advanceToNextInSeating(newState.currentPlayerIndex) };
   }
 
   // Check if politics phase is done
@@ -1654,8 +1684,8 @@ export function advancePlayer(state: GameState): GameState {
     return advancePhase(newState);
   }
 
-  // Move to next player
-  newState.currentPlayerIndex = (newState.currentPlayerIndex + 1) % newState.players.length;
+  // Move to next player in seating order (turnOrder)
+  newState.currentPlayerIndex = advanceToNextInSeating(newState.currentPlayerIndex);
   return newState;
 }
 
