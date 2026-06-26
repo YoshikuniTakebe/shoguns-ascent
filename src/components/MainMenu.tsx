@@ -4,7 +4,6 @@ import { CLANS, DECK_GROUPS } from '../types/game';
 import type { DeckConfig, DeckName } from '../types/game';
 import type { TranslationKey } from '../i18n';
 import { ClanShield } from './ClanShields';
-import { DaimyoPortrait } from './DaimyoPortraits';
 import { useT } from '../i18n';
 
 export const MainMenu = () => {
@@ -225,14 +224,11 @@ export const MainMenu = () => {
         <div className="clan-preview-list">
           {CLANS.map(c => (
             <div key={c.id} className="clan-preview" style={{ borderColor: c.color }}>
-              <div className="clan-preview-header">
-                <ClanShield clanId={c.id} size={32} />
-                <span className="clan-name" style={{ color: c.color }}>{c.name}</span>
+              <div className="clan-preview-seal">
+                <ClanShield clanId={c.id} size={80} />
               </div>
-              <div className="clan-preview-body">
-                <DaimyoPortrait clanId={c.id} size={56} />
-                <span className="clan-honor">{t('menu.initialHonor')} {c.initialHonor}</span>
-              </div>
+              <span className="clan-name" style={{ color: c.color }}>{c.name}</span>
+              <span className="clan-honor">{t('menu.initialHonor')} {c.initialHonor}</span>
             </div>
           ))}
         </div>
