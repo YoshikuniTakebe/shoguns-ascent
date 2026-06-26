@@ -167,33 +167,55 @@ export const DaimyoIcon = ({ size = 24, color = 'currentColor', className }: Ico
   </svg>
 );
 
-/** Samurai warrior in attacking stance with sword held by arm - used for Ronin */
+/** Ronin warrior in attack pose framed in hexagon border */
 export const RoninIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
     width={size}
     height={size}
     viewBox="0 0 24 24"
-    fill={color}
+    fill="none"
     stroke="none"
   >
+    {/* Hexagon border */}
+    <polygon
+      points="12,1 21.5,6.5 21.5,17.5 12,23 2.5,17.5 2.5,6.5"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.2"
+      strokeLinejoin="round"
+    />
     {/* Head */}
-    <circle cx="13" cy="4.5" r="2.2" />
-    {/* Torso */}
-    <path d="M11.5 7 L10 15 L14.5 15 L15.5 7 Z" />
-    {/* Right arm reaching up to sword - clearly connects shoulder to handle */}
-    <path d="M15 7.5 L16.5 6 L18 4.5 L19.5 3.5 L20 4.5 L18.5 5.5 L17 7 L15.5 9 Z" />
-    {/* Left arm also reaching to sword for two-handed grip */}
-    <path d="M12 8 L14 6.5 L16 5 L17 4 L17.5 5 L15.5 6.5 L13.5 8.5 L12.5 9.5 Z" />
-    {/* Long diagonal sword blade - held from above ready to strike */}
-    <rect x="18.5" y="0" width="1.2" height="12" rx="0.4" transform="rotate(35 19 0)" />
-    {/* Sword guard (tsuba) */}
-    <rect x="18" y="3.2" width="3" height="1" rx="0.5" transform="rotate(35 19 3.5)" />
-    {/* Sword handle (tsuka) */}
-    <rect x="17" y="4.5" width="1" height="3.5" rx="0.3" transform="rotate(35 17.5 5)" />
-    {/* Back leg - wide stance */}
-    <path d="M13 15 L16 22 L18 21.5 L15 15 Z" />
-    {/* Front leg forward in lunge */}
-    <path d="M11 15 L7 22 L9 22.5 L12 15 Z" />
+    <circle cx="12" cy="8" r="1.8" fill={color} />
+    {/* Torso - wedge shape */}
+    <path d="M10.5 10 L9.5 16 L14.5 16 L13.5 10 Z" fill={color} />
+    {/* Right arm extending up from shoulder to sword handle */}
+    <path d="M13.5 10.5 L15 9 L16.5 7.5 L17 8.5 L15.5 10 L14 11.5 Z" fill={color} />
+    {/* Left arm extending up to sword for two-handed grip */}
+    <path d="M11 10.5 L12.5 9 L14.5 7 L15 8 L13 9.5 L11.5 11.5 Z" fill={color} />
+    {/* Katana blade - clear thick diagonal line above the head */}
+    <line
+      x1="8"
+      y1="9"
+      x2="18"
+      y2="4"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    {/* Sword guard (tsuba) - small perpendicular mark */}
+    <line
+      x1="14.5"
+      y1="6"
+      x2="15.5"
+      y2="8"
+      stroke={color}
+      strokeWidth="1.2"
+      strokeLinecap="round"
+    />
+    {/* Left leg - wide stance */}
+    <path d="M11 16 L8 21 L9.5 21.5 L12 16.5 Z" fill={color} />
+    {/* Right leg - wide stance */}
+    <path d="M13 16 L15.5 21 L17 20.5 L14 16 Z" fill={color} />
   </svg>
 );
