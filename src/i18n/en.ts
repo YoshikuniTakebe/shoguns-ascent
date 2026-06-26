@@ -83,10 +83,10 @@ export const en = {
   'actions.resolveWinterScoring': 'Resolve Winter Scoring',
 
   // Mandate descriptions
-  'mandate.recruit': 'Add figures from reserve to your home province',
+  'mandate.recruit': 'Summon 1 figure per fortress you own. Issuer and ally get +1 extra figure',
   'mandate.marshal': 'Move your figures between provinces',
   'mandate.train': 'Acquire a season card from the market',
-  'mandate.harvest': 'Strongest player in each province gains its harvest reward',
+  'mandate.harvest': 'All players gain 1 coin. Issuer and ally harvest provinces where they have majority',
   'mandate.betray': 'Replace an opponent figure with yours',
 
   // BattlePanel

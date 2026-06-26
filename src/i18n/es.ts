@@ -85,10 +85,10 @@ export const es: Record<TranslationKey, string> = {
   'actions.resolveWinterScoring': 'Resolver Puntuaci\u00F3n de Invierno',
 
   // Mandate descriptions
-  'mandate.recruit': 'A\u00F1adir figuras de la reserva a tu provincia de origen',
+  'mandate.recruit': 'Invocar 1 figura por fortaleza que tengas. Emisor y aliado obtienen +1 figura extra',
   'mandate.marshal': 'Mover tus figuras entre provincias',
   'mandate.train': 'Adquirir una carta de estaci\u00F3n del mercado',
-  'mandate.harvest': 'El jugador mas fuerte en cada provincia obtiene su recompensa de cosecha',
+  'mandate.harvest': 'Todos los jugadores ganan 1 moneda. Emisor y aliado cosechan provincias donde tengan mayoria',
   'mandate.betray': 'Reemplazar una figura del oponente con la tuya',
 
   // BattlePanel
