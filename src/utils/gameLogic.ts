@@ -1167,10 +1167,10 @@ export function resolveNextBattle(state: GameState): GameState {
         highestRoninBid = bid;
         hireRoninWinner = pid;
       } else if (bid === highestRoninBid && bid > 0) {
-        // Tie-breaking by honor (higher honor wins)
+        // Tie-breaking by honor (lower index = better honor = wins)
         const currentHonor = newState.honorTrack.indexOf(hireRoninWinner!);
         const challengerHonor = newState.honorTrack.indexOf(pid);
-        if (challengerHonor > currentHonor) {
+        if (challengerHonor < currentHonor) {
           hireRoninWinner = pid;
         }
       }
@@ -1265,6 +1265,7 @@ export function resolveNextBattle(state: GameState): GameState {
 export function cleanupSeason(state: GameState): GameState {
   const newState: GameState = {
     ...state,
+    lastMandateIssuerId: state.lastMandateIssuerId,
     players: state.players.map((p) => ({
       ...p,
       ronin: 0,
@@ -1539,7 +1540,8 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
 
     if (fig.type === 'shinto' && cardIds.has('su-path-of-the-favored')) {
       // Shinto counts as Force 3 in provinces where owner has highest honor
-      const highestHonorPlayerId = state.honorTrack[state.honorTrack.length - 1];
+      // honorTrack[0] = best honor (index 0 = honor position 1)
+      const highestHonorPlayerId = state.honorTrack[0];
       if (highestHonorPlayerId === playerId) {
         figForce = 3; // Replace base force with 3
       }
