@@ -263,14 +263,7 @@ export const ActionPanel = () => {
             </div>
           )}
 
-          {!gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && (
-            <div className="march-controls">
-              <button className={`btn-secondary ${moveMode ? 'active' : ''}`} onClick={toggleMoveMode}>
-                {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
-              </button>
-              {moveMode && <p className="move-instruction">{t('actions.moveInstruction')}</p>}
-            </div>
-          )}
+
         </div>
       )}
 

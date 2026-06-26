@@ -159,9 +159,9 @@ export function createInitialGameState(
   // Prepare mandate deck
   const mandatesDeck = shuffleMandates();
 
-  // Create turn order based on honor (highest honor goes first)
+  // Create turn order based on honor (lowest honor goes first = seating order)
   const turnOrder = [...gamePlayers]
-    .sort((a, b) => b.honor - a.honor)
+    .sort((a, b) => a.honor - b.honor)
     .map((p) => p.id);
 
   // Build season decks from config
