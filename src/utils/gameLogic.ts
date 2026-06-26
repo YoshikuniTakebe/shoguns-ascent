@@ -757,11 +757,11 @@ export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerI
 
   switch (kamiType) {
     case 'amaterasu': {
-      // Move player to the top (end) of the honor track
+      // Move player to the top of the honor track (index 0 = best honor)
       const currentIdx = newState.honorTrack.indexOf(playerId);
-      if (currentIdx >= 0 && currentIdx < newState.honorTrack.length - 1) {
+      if (currentIdx > 0) {
         newState.honorTrack = newState.honorTrack.filter((id) => id !== playerId);
-        newState.honorTrack.push(playerId);
+        newState.honorTrack.unshift(playerId);
         newState.log = [...newState.log, `${player.name} moves to top of Honor Track (Amaterasu)`];
       }
       break;
@@ -1562,15 +1562,17 @@ export function getHonorRank(state: GameState, playerId: string): number {
 
 function gainHonor(state: GameState, playerId: string): void {
   const idx = state.honorTrack.indexOf(playerId);
-  if (idx < state.honorTrack.length - 1) {
-    [state.honorTrack[idx], state.honorTrack[idx + 1]] = [state.honorTrack[idx + 1], state.honorTrack[idx]];
+  if (idx > 0) {
+    // Move toward index 0 = better honor (lower index = higher honor)
+    [state.honorTrack[idx], state.honorTrack[idx - 1]] = [state.honorTrack[idx - 1], state.honorTrack[idx]];
   }
 }
 
 function loseHonor(state: GameState, playerId: string): void {
   const idx = state.honorTrack.indexOf(playerId);
-  if (idx > 0) {
-    [state.honorTrack[idx], state.honorTrack[idx - 1]] = [state.honorTrack[idx - 1], state.honorTrack[idx]];
+  if (idx < state.honorTrack.length - 1) {
+    // Move toward higher index = worse honor (lower index = higher honor)
+    [state.honorTrack[idx], state.honorTrack[idx + 1]] = [state.honorTrack[idx + 1], state.honorTrack[idx]];
   }
 }
 
