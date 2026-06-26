@@ -227,6 +227,7 @@ export const PoliticsTrack = () => {
     if (mandate) {
       const clan = CLANS.find((c) => c.id === mandate.issuer);
       const clanColor = clan?.color || '#888';
+      const playerName = gameState.players.find(p => p.id === mandate.issuer)?.name;
       return (
         <div
           key={`slot-${slotIndex}`}
@@ -243,6 +244,11 @@ export const PoliticsTrack = () => {
           <span className="slot-mandate-label" style={{ color: MANDATE_COLORS[mandate.type] }}>
             {MANDATE_LABELS[mandate.type]}
           </span>
+          {playerName && (
+            <span className="slot-player-name" style={{ color: clanColor }}>
+              {playerName}
+            </span>
+          )}
           <span className="slot-clan-dot" style={{ backgroundColor: clanColor }} />
         </div>
       );
