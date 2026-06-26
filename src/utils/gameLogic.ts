@@ -1078,10 +1078,10 @@ export function resolveNextBattle(state: GameState): GameState {
         highestBid = playerBids[tactic.id];
         highestBidder = pid;
       } else if (playerBids && playerBids[tactic.id] === highestBid && highestBid > 0) {
-        // Tie-breaking by honor
+        // Tie-breaking by honor (lower index = better honor = wins)
         const currentHonor = newState.honorTrack.indexOf(highestBidder!);
         const challengerHonor = newState.honorTrack.indexOf(pid);
-        if (challengerHonor > currentHonor) {
+        if (challengerHonor < currentHonor) {
           highestBidder = pid;
         }
       }
