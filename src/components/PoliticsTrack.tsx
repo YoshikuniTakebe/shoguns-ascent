@@ -225,9 +225,10 @@ export const PoliticsTrack = () => {
     const isCurrent = slotIndex === mandateCount && gameState.currentPhase === 'politics';
 
     if (mandate) {
-      const clan = CLANS.find((c) => c.id === mandate.issuer);
+      const player = gameState.players.find(p => p.id === mandate.issuer);
+      const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
       const clanColor = clan?.color || '#888';
-      const playerName = gameState.players.find(p => p.id === mandate.issuer)?.name;
+      const playerName = player?.name;
       return (
         <div
           key={`slot-${slotIndex}`}

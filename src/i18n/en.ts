@@ -260,6 +260,7 @@ export const en = {
   'regionDetail.empty': 'No figures in this province.',
 
   // Harvest Popup
+  'harvest.allPlayersReceived': 'All players have received',
   'harvest.received': '{name} has received:',
   'harvest.accept': 'Accept',
 

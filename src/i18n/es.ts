@@ -262,6 +262,7 @@ export const es: Record<TranslationKey, string> = {
   'regionDetail.empty': 'No hay figuras en esta provincia.',
 
   // Harvest Popup
+  'harvest.allPlayersReceived': 'Todos los jugadores han recibido',
   'harvest.received': '{name} ha recibido:',
   'harvest.accept': 'Aceptar',
 
