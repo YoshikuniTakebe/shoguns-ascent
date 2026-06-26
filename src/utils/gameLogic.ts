@@ -208,6 +208,7 @@ export function createInitialGameState(
     trainResolutionOrder: [],
     trainResolutionIndex: 0,
     trainMandateIssuerId: null,
+    lastMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
     hostId,
@@ -408,6 +409,9 @@ export function chooseMandateTile(state: GameState, mandate: MandateType, player
   newState.drawnMandates = [];
   newState.mandateChoicePhase = false;
 
+  // Track who played the last mandate turn (for next season politics turn order)
+  newState.lastMandateIssuerId = playerId;
+
   // Execute the mandate
   newState = executeMandate(newState, mandate, playerId);
   return newState;
@@ -522,26 +526,23 @@ function executeMarshal(state: GameState, issuerId: string): GameState {
 
 function executeTrain(state: GameState, issuerId: string): GameState {
   // Train: All players may buy 1 season card from the market by paying its cost
-  // Bonus: buy at -1 cost or gain 1 coin
-  // Give bonus coin to issuer and ally
-  const bonusPlayers = state.players.map((p) => {
-    if (isIssuerOrAlly(state, p.id, issuerId)) {
-      return { ...p, coins: p.coins + 1 };
-    }
-    return { ...p };
-  });
-  // Set up resolution order so ALL players get the buy/skip opportunity (Issue 1 fix)
-  const resolutionOrder = getResolutionOrder(state, issuerId);
+  // Bonus: issuer and ally get -1 cost discount when buying
+  // Resolution order: issuer goes FIRST, then clockwise by seating (turnOrder)
+  const issuerIdx = state.turnOrder.indexOf(issuerId);
+  const resolutionOrder: string[] = [issuerId];
+  for (let i = 1; i < state.turnOrder.length; i++) {
+    resolutionOrder.push(state.turnOrder[(issuerIdx + i) % state.turnOrder.length]);
+  }
   const newState: GameState = {
     ...state,
-    players: bonusPlayers,
+    players: state.players.map((p) => ({ ...p })),
     trainMandateActive: true,
     trainResolutionOrder: resolutionOrder,
     trainResolutionIndex: 0,
     trainMandateIssuerId: issuerId,
-    log: [...state.log, 'Train mandate issued - all players may buy 1 season card from the market in resolution order.'],
+    log: [...state.log, 'Train mandate issued - all players may buy 1 season card from the market in resolution order. Issuer and ally get -1 cost discount.'],
   };
-  // Set currentPlayerIndex to the first player in resolution order
+  // Set currentPlayerIndex to the issuer (first in resolution order)
   const firstPlayerId = resolutionOrder[0];
   const firstPlayerIdx = newState.players.findIndex(p => p.id === firstPlayerId);
   if (firstPlayerIdx >= 0) {
@@ -576,8 +577,14 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
     }
   }
 
-  // Check if player can afford the card
-  if (player.coins < card.cost) return state;
+  // Apply -1 discount for issuer and ally
+  const isDiscounted = state.trainMandateIssuerId
+    ? isIssuerOrAlly(state, playerId, state.trainMandateIssuerId)
+    : false;
+  const effectiveCost = Math.max(0, card.cost - (isDiscounted ? 1 : 0));
+
+  // Check if player can afford the card (with discount applied)
+  if (player.coins < effectiveCost) return state;
 
   const newState: GameState = {
     ...state,
@@ -585,14 +592,14 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
       if (p.id === playerId) {
         return {
           ...p,
-          coins: p.coins - card.cost,
+          coins: p.coins - effectiveCost,
           seasonCards: [...p.seasonCards, card],
         };
       }
       return { ...p };
     }),
     seasonCardsDeck: state.seasonCardsDeck.filter((c) => c.id !== cardId),
-    log: [...state.log, `${player.name} buys ${card.name} for ${card.cost} coin(s)`],
+    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coin(s)${isDiscounted ? ' (discounted)' : ''}`],
   };
 
   return newState;

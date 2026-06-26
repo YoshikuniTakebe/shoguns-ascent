@@ -9,7 +9,7 @@ export const ActionPanel = () => {
     gameState, localPlayerId, moveMode, toggleMoveMode,
     doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance,
     doSetupSeason, doBreakAlliances, doDrawMandateTiles, doChooseMandateTile,
-    doSkipTrainPurchase,
+    doSkipTrainPurchase, setShowTrainModal,
     doResolveWinter,
   } = useGameStore();
   const t = useT();
@@ -122,6 +122,9 @@ export const ActionPanel = () => {
                 {t('actions.trainNotice', { name: cp?.name || '' })}{' '}
                 {t('actions.trainPlayer', { current: gameState.trainResolutionIndex + 1, total: gameState.trainResolutionOrder.length })}
               </p>
+              <button className="btn-primary" onClick={() => setShowTrainModal(true)} style={{ marginBottom: '6px' }}>
+                {t('seasonCardsModal.openMarket')}
+              </button>
               <button className="btn-secondary" onClick={doSkipTrainPurchase}>
                 {t('actions.skipCardPurchase')}
               </button>

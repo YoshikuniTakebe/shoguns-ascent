@@ -184,6 +184,13 @@ export const en = {
   // Season Cards Modal
   'seasonCardsModal.title': 'Season Cards',
   'seasonCardsModal.force': 'Force: {value}',
+  'seasonCardsModal.confirmTitle': 'Confirm Purchase',
+  'seasonCardsModal.confirmMessage': 'Buy {name} for {cost} coin(s)?',
+  'seasonCardsModal.confirm': 'Confirm',
+  'seasonCardsModal.cancel': 'Cancel',
+  'seasonCardsModal.discount': '(discount -1)',
+  'seasonCardsModal.buyButton': 'Buy',
+  'seasonCardsModal.openMarket': 'Open Market',
 } as const;
 
 export type TranslationKey = keyof typeof en;

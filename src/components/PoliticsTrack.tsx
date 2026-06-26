@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
@@ -170,8 +170,24 @@ function MandateIllustration({ type, size = 40 }: { type: MandateType; size?: nu
  * Each mandate tile has a feudal Japanese illustration style.
  */
 export const PoliticsTrack = () => {
-  const { gameState } = useGameStore();
+  const { gameState, showTrainModal, setShowTrainModal } = useGameStore();
   const [showSeasonCards, setShowSeasonCards] = useState(false);
+
+  // Auto-open the season cards modal when trainMandateActive becomes true
+  useEffect(() => {
+    if (gameState?.trainMandateActive) {
+      setShowSeasonCards(true);
+    }
+  }, [gameState?.trainMandateActive, gameState?.trainResolutionIndex]);
+
+  // Also open when triggered from outside (e.g. ActionPanel button)
+  useEffect(() => {
+    if (showTrainModal) {
+      setShowSeasonCards(true);
+      setShowTrainModal(false);
+    }
+  }, [showTrainModal, setShowTrainModal]);
+
   if (!gameState) return null;
 
   const mandates = gameState.mandatesThisTurn;

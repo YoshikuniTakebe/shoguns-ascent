@@ -167,6 +167,7 @@ export interface GameState {
   trainResolutionOrder: string[];
   trainResolutionIndex: number;
   trainMandateIssuerId: string | null;
+  lastMandateIssuerId: string | null;
   gameOver: boolean;
   winner?: string;
   log: string[];
