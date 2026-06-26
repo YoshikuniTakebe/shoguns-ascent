@@ -202,4 +202,17 @@ export const es: Record<TranslationKey, string> = {
   'actions.buildFortress': 'Construir Fortaleza (3 monedas)',
   'actions.endMarshalTurn': 'Terminar Turno de Movilizar',
   'actions.marshalSelectProvince': 'Selecciona una provincia para construir una fortaleza.',
+
+  // Recruit Mandate
+  'actions.recruitNotice': 'Mandato Reclutar - {name} puede invocar figuras en sus fortalezas. {bonus}',
+  'actions.recruitPlayer': '(Jugador {current} de {total})',
+  'actions.recruitBonus': '+1 colocacion extra (emisor/aliado).',
+  'actions.recruitNoBonus': '',
+  'actions.endRecruitTurn': 'Terminar Turno de Reclutar',
+  'actions.recruitSelectProvince': 'Selecciona una provincia para colocar una figura.',
+  'actions.recruitPlacementsLeft': 'Colocaciones restantes: {count}',
+  'actions.recruitFigureType': 'Tipo de figura:',
+  'actions.recruitBushi': 'Bushi',
+  'actions.recruitShinto': 'Shinto',
+  'actions.recruitDragonflyHint': 'Clan Libelula: puede colocar en cualquier provincia.',
 };

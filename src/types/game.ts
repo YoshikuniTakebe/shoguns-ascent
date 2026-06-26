@@ -172,6 +172,11 @@ export interface GameState {
   marshalResolutionIndex: number;
   marshalMandateIssuerId: string | null;
   marshalFortressBuiltBy: string[];
+  recruitMandateActive: boolean;
+  recruitResolutionOrder: string[];
+  recruitResolutionIndex: number;
+  recruitMandateIssuerId: string | null;
+  recruitPlacementsRemaining: number;
   lastMandateIssuerId: string | null;
   gameOver: boolean;
   winner?: string;

@@ -213,6 +213,11 @@ export function createInitialGameState(
     marshalResolutionIndex: 0,
     marshalMandateIssuerId: null,
     marshalFortressBuiltBy: [],
+    recruitMandateActive: false,
+    recruitResolutionOrder: [],
+    recruitResolutionIndex: 0,
+    recruitMandateIssuerId: null,
+    recruitPlacementsRemaining: 0,
     lastMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
@@ -473,41 +478,135 @@ function isIssuerOrAlly(state: GameState, playerId: string, issuerId: string): b
 // ============================================================
 
 function executeRecruit(state: GameState, issuerId: string): GameState {
-  const newState: GameState = { ...state, provinces: { ...state.provinces }, players: state.players.map((p) => ({ ...p })), log: [...state.log] };
+  // Recruit: each player may summon figures from reserve to provinces with their fortresses.
+  // Resolution order: next player after issuer clockwise, issuer goes last.
+  const resolutionOrder = getResolutionOrder(state, issuerId);
+  const issuer = state.players.find((p) => p.id === issuerId);
 
-  // Resolution order: starting from left of issuer
-  const order = getResolutionOrder(state, issuerId);
+  // Calculate placements for first player
+  const firstPlayerId = resolutionOrder[0];
+  const firstPlacements = calculateRecruitPlacements(state, firstPlayerId, issuerId);
 
-  // All players place 1 Bushi from reserve in a province with their Fortress
-  for (const pid of order) {
-    const player = newState.players.find((p) => p.id === pid)!;
-    if (player.bushi <= 0) continue;
+  const newState: GameState = {
+    ...state,
+    players: state.players.map((p) => ({ ...p })),
+    recruitMandateActive: true,
+    recruitResolutionOrder: resolutionOrder,
+    recruitResolutionIndex: 0,
+    recruitMandateIssuerId: issuerId,
+    recruitPlacementsRemaining: firstPlacements,
+    log: [...state.log, `Recruit mandate issued by ${issuer?.name ?? 'Player'} - all players may summon figures at their fortresses in resolution order. Issuer and ally get +1 bonus placement.`],
+  };
 
-    // Find a province with this player's fortress
-    const fortressProvince = Object.entries(newState.provinces).find(([_id, prov]) =>
-      prov.figures.some((f) => f.owner === pid && f.type === 'fortress')
-    );
-    if (fortressProvince) {
-      const [provId, prov] = fortressProvince;
-      newState.provinces[provId] = { ...prov, figures: [...prov.figures, createFigure('bushi', pid)] };
-      player.bushi -= 1;
-    }
+  // Set currentPlayerIndex to the first player in resolution order
+  const firstPlayerIdx = newState.players.findIndex(p => p.id === firstPlayerId);
+  if (firstPlayerIdx >= 0) {
+    newState.currentPlayerIndex = firstPlayerIdx;
+  }
+  return newState;
+}
 
-    // Bonus for issuer and ally: +1 extra Bushi
-    if (isIssuerOrAlly(newState, pid, issuerId) && player.bushi > 0) {
-      const bonusProvince = Object.entries(newState.provinces).find(([_id, prov]) =>
-        prov.figures.some((f) => f.owner === pid && f.type === 'fortress')
-      );
-      if (bonusProvince) {
-        const [provId, prov] = bonusProvince;
-        newState.provinces[provId] = { ...prov, figures: [...prov.figures, createFigure('bushi', pid)] };
-        player.bushi -= 1;
-      }
-    }
+/**
+ * Calculate how many figures a player can place during their recruit turn.
+ * Counts fortress figures on the map (per province) + 1 bonus if issuer/ally.
+ */
+function calculateRecruitPlacements(state: GameState, playerId: string, issuerId: string): number {
+  let totalFortresses = 0;
+  for (const prov of Object.values(state.provinces)) {
+    totalFortresses += prov.figures.filter(f => f.owner === playerId && f.type === 'fortress').length;
+  }
+  const bonus = isIssuerOrAlly(state, playerId, issuerId) ? 1 : 0;
+  return totalFortresses + bonus;
+}
+
+/**
+ * Place a figure during the recruit mandate.
+ * Player chooses bushi or shinto, and a province (must have their fortress, or ANY if Dragonfly).
+ */
+export function recruitPlaceFigure(state: GameState, playerId: string, provinceId: string, figureType: 'bushi' | 'shinto'): GameState {
+  if (!state.recruitMandateActive) return state;
+  if (state.recruitPlacementsRemaining <= 0) return state;
+
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return state;
+
+  // Check reserve
+  if (figureType === 'bushi' && player.bushi <= 0) return state;
+  if (figureType === 'shinto' && player.shinto <= 0) return state;
+
+  const province = state.provinces[provinceId];
+  if (!province) return state;
+
+  // Validate province: must have player's fortress, UNLESS player is Dragonfly (libelula)
+  const isDragonfly = player.clanId === 'libelula';
+  if (!isDragonfly) {
+    const hasFortress = province.figures.some(f => f.owner === playerId && f.type === 'fortress');
+    if (!hasFortress) return state;
   }
 
-  newState.log = [...newState.log, 'All players recruit Bushi at their Fortresses'];
+  const newState: GameState = {
+    ...state,
+    provinces: { ...state.provinces },
+    players: state.players.map((p) => ({ ...p })),
+    recruitPlacementsRemaining: state.recruitPlacementsRemaining - 1,
+    log: [...state.log, `${player.name} summons a ${figureType} in ${province.name}`],
+  };
+
+  // Place figure
+  const prov = newState.provinces[provinceId];
+  newState.provinces[provinceId] = { ...prov, figures: [...prov.figures, createFigure(figureType, playerId)] };
+
+  // Decrement reserve
+  const updatedPlayer = newState.players.find((p) => p.id === playerId)!;
+  if (figureType === 'bushi') {
+    updatedPlayer.bushi -= 1;
+  } else {
+    updatedPlayer.shinto -= 1;
+  }
+
   return newState;
+}
+
+/**
+ * Skip the current Recruit mandate turn (end the current player's recruit turn).
+ * Advances to the next player in the recruit resolution order,
+ * or clears the recruit state if all players have had their turn.
+ */
+export function skipRecruitTurn(state: GameState): GameState {
+  if (!state.recruitMandateActive) return state;
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const newState: GameState = {
+    ...state,
+    recruitResolutionIndex: state.recruitResolutionIndex + 1,
+    log: [...state.log, `${currentPlayer?.name ?? 'Player'} ends their recruit turn`],
+  };
+  return advanceRecruitResolution(newState);
+}
+
+/**
+ * Advance to the next player in the recruit resolution order.
+ * If all players have had their turn, clear the recruit state.
+ */
+function advanceRecruitResolution(state: GameState): GameState {
+  if (state.recruitResolutionIndex >= state.recruitResolutionOrder.length) {
+    // All players have had their turn - clear recruit mandate
+    return {
+      ...state,
+      recruitMandateActive: false,
+      recruitResolutionOrder: [],
+      recruitResolutionIndex: 0,
+      recruitMandateIssuerId: null,
+      recruitPlacementsRemaining: 0,
+    };
+  }
+  // Set currentPlayerIndex to the next player in resolution order and calculate their placements
+  const nextPlayerId = state.recruitResolutionOrder[state.recruitResolutionIndex];
+  const nextPlayerIdx = state.players.findIndex(p => p.id === nextPlayerId);
+  const placements = calculateRecruitPlacements(state, nextPlayerId, state.recruitMandateIssuerId!);
+  if (nextPlayerIdx >= 0) {
+    return { ...state, currentPlayerIndex: nextPlayerIdx, recruitPlacementsRemaining: placements };
+  }
+  return state;
 }
 
 function executeMarshal(state: GameState, issuerId: string): GameState {
@@ -1675,7 +1774,7 @@ export function advancePlayer(state: GameState): GameState {
   }
 
   // Politics phase advancement
-  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], log: [...state.log] };
+  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, log: [...state.log] };
   newState.politicsMandateCount += 1;
 
   // Helper: advance to the next player in seating order (turnOrder)

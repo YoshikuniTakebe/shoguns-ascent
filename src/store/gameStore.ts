@@ -23,6 +23,8 @@ import {
   advanceTrainResolution,
   skipMarshalTurn,
   buildFortress,
+  recruitPlaceFigure,
+  skipRecruitTurn,
 } from '../utils/gameLogic';
 
 interface GameStore {
@@ -78,6 +80,14 @@ interface GameStore {
   doBuildFortress: (provinceId: string) => void;
   toggleBuildFortressMode: () => void;
 
+  // Recruit mandate actions
+  recruitMode: boolean;
+  recruitFigureType: 'bushi' | 'shinto';
+  toggleRecruitMode: () => void;
+  setRecruitFigureType: (figureType: 'bushi' | 'shinto') => void;
+  doRecruitPlaceFigure: (provinceId: string) => void;
+  doSkipRecruitTurn: () => void;
+
   // Kami
   doResolveKami: () => void;
 
@@ -116,6 +126,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   warTacticBidsSubmitted: false,
   showTrainModal: false,
   buildFortressMode: false,
+  recruitMode: false,
+  recruitFigureType: 'bushi',
   language: (localStorage.getItem('shoguns-ascent-language') as 'en' | 'es') || 'es',
   setLanguage: (lang) => {
     localStorage.setItem('shoguns-ascent-language', lang);
@@ -212,8 +224,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = chooseMandateTile(gameState, mandate, apid);
-    // If train or marshal mandate is active, wait for resolution before advancing
-    if (ns.trainMandateActive || ns.marshalMandateActive) {
+    // If train or marshal or recruit mandate is active, wait for resolution before advancing
+    if (ns.trainMandateActive || ns.marshalMandateActive || ns.recruitMandateActive) {
       set({ gameState: ns });
     } else {
       set({ gameState: advancePlayer(ns) });
@@ -285,6 +297,36 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameState: ns, buildFortressMode: false });
   },
   toggleBuildFortressMode: () => set((s) => ({ buildFortressMode: !s.buildFortressMode, moveMode: false, moveFrom: null, selectedFigures: [] })),
+
+  // --- Recruit Mandate Actions ---
+  toggleRecruitMode: () => set((s) => ({ recruitMode: !s.recruitMode, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false })),
+  setRecruitFigureType: (figureType) => set({ recruitFigureType: figureType }),
+  doRecruitPlaceFigure: (provinceId: string) => {
+    const { gameState, localPlayerId, recruitFigureType, ws } = get();
+    if (!gameState || !localPlayerId) return;
+    const cp = getCurrentPlayer(gameState);
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (!apid) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RECRUIT_PLACE_FIGURE', playerId: apid, payload: { provinceId, figureType: recruitFigureType } });
+      return;
+    }
+    const ns = recruitPlaceFigure(gameState, apid, provinceId, recruitFigureType);
+    set({ gameState: ns });
+  },
+  doSkipRecruitTurn: () => {
+    const { gameState, ws } = get();
+    if (!gameState) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'SKIP_RECRUIT_TURN', playerId: get().localPlayerId });
+      return;
+    }
+    let ns = skipRecruitTurn(gameState);
+    if (!ns.recruitMandateActive) {
+      ns = advancePlayer(ns);
+    }
+    set({ gameState: ns, recruitMode: false });
+  },
 
   // --- Kami ---
   doResolveKami: () => {

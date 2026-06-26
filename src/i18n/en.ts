@@ -200,6 +200,19 @@ export const en = {
   'actions.buildFortress': 'Build Fortress (3 coins)',
   'actions.endMarshalTurn': 'End Marshal Turn',
   'actions.marshalSelectProvince': 'Select a province to build a fortress.',
+
+  // Recruit Mandate
+  'actions.recruitNotice': 'Recruit mandate - {name} may summon figures at their fortresses. {bonus}',
+  'actions.recruitPlayer': '(Player {current} of {total})',
+  'actions.recruitBonus': '+1 bonus placement (issuer/ally).',
+  'actions.recruitNoBonus': '',
+  'actions.endRecruitTurn': 'End Recruit Turn',
+  'actions.recruitSelectProvince': 'Select a province to place a figure.',
+  'actions.recruitPlacementsLeft': 'Placements remaining: {count}',
+  'actions.recruitFigureType': 'Figure type:',
+  'actions.recruitBushi': 'Bushi',
+  'actions.recruitShinto': 'Shinto',
+  'actions.recruitDragonflyHint': 'Dragonfly clan: can place in any province.',
 } as const;
 
 export type TranslationKey = keyof typeof en;

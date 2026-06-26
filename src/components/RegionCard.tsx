@@ -48,7 +48,7 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
 };
 
 export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSProperties }) => {
-  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress } = useGameStore();
+  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure } = useGameStore();
   const t = useT();
   if (!gameState) return null;
 
@@ -61,6 +61,10 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   const isMoveTarget = moveMode && moveFrom && moveFrom !== regionId && adjacents.includes(moveFrom);
 
   const handleClick = () => {
+    if (recruitMode) {
+      doRecruitPlaceFigure(regionId);
+      return;
+    }
     if (buildFortressMode) {
       doBuildFortress(regionId);
       return;

@@ -11,6 +11,7 @@ export const ActionPanel = () => {
     doSetupSeason, doBreakAlliances, doDrawMandateTiles, doChooseMandateTile,
     doSkipTrainPurchase, setShowTrainModal,
     doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
+    doSkipRecruitTurn, toggleRecruitMode, recruitMode, recruitFigureType, setRecruitFigureType,
     doResolveWinter,
   } = useGameStore();
   const t = useT();
@@ -168,6 +169,49 @@ export const ActionPanel = () => {
             </div>
           )}
 
+          {/* Recruit mandate active - show figure type selector and place/end turn options */}
+          {gameState.recruitMandateActive && (
+            <div className="recruit-active">
+              <p className="recruit-notice">
+                {t('actions.recruitNotice', {
+                  name: cp?.name || '',
+                  bonus: gameState.recruitMandateIssuerId && cp &&
+                    (cp.id === gameState.recruitMandateIssuerId || gameState.players.find(p => p.id === gameState.recruitMandateIssuerId)?.allies.includes(cp.id))
+                    ? t('actions.recruitBonus')
+                    : t('actions.recruitNoBonus'),
+                })}{' '}
+                {t('actions.recruitPlayer', { current: gameState.recruitResolutionIndex + 1, total: gameState.recruitResolutionOrder.length })}
+              </p>
+              <p>{t('actions.recruitPlacementsLeft', { count: gameState.recruitPlacementsRemaining })}</p>
+              {cp && cp.clanId === 'libelula' && (
+                <p className="move-instruction">{t('actions.recruitDragonflyHint')}</p>
+              )}
+              <div style={{ marginTop: '6px', marginBottom: '6px' }}>
+                <span>{t('actions.recruitFigureType')} </span>
+                <button
+                  className={`btn-secondary ${recruitFigureType === 'bushi' ? 'active' : ''}`}
+                  onClick={() => setRecruitFigureType('bushi')}
+                  style={{ marginRight: '4px' }}
+                >
+                  {t('actions.recruitBushi')} ({cp?.bushi ?? 0})
+                </button>
+                <button
+                  className={`btn-secondary ${recruitFigureType === 'shinto' ? 'active' : ''}`}
+                  onClick={() => setRecruitFigureType('shinto')}
+                >
+                  {t('actions.recruitShinto')} ({cp?.shinto ?? 0})
+                </button>
+              </div>
+              <button className={`btn-secondary ${recruitMode ? 'active' : ''}`} onClick={toggleRecruitMode}>
+                {recruitMode ? t('actions.recruitSelectProvince') : t('actions.recruitSelectProvince')}
+              </button>
+              {recruitMode && <p className="move-instruction">{t('actions.recruitSelectProvince')}</p>}
+              <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipRecruitTurn}>
+                {t('actions.endRecruitTurn')}
+              </button>
+            </div>
+          )}
+
           {!gameState.trainMandateActive && !gameState.marshalMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
             <button className="btn-primary" onClick={doDrawMandateTiles}>
               {t('actions.drawMandateTiles')}
@@ -197,14 +241,14 @@ export const ActionPanel = () => {
           )}
 
           {/* Last executed mandate display */}
-          {gameState.mandatesThisTurn.length > 0 && !gameState.trainMandateActive && !gameState.marshalMandateActive && (
+          {gameState.mandatesThisTurn.length > 0 && !gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && (
             <div className="current-mandate">
               <h5>{t('actions.lastMandate')} {gameState.mandatesThisTurn[gameState.mandatesThisTurn.length - 1]?.type.toUpperCase()}</h5>
               <p className="mandate-info">{t('actions.mandateResolved')}</p>
             </div>
           )}
 
-          {!gameState.marshalMandateActive && (
+          {!gameState.marshalMandateActive && !gameState.recruitMandateActive && (
             <div className="march-controls">
               <button className={`btn-secondary ${moveMode ? 'active' : ''}`} onClick={toggleMoveMode}>
                 {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
