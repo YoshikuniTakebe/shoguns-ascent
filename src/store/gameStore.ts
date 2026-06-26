@@ -727,7 +727,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = moveForces(gameState, apid, fromProvinceId, toProvinceId, figureIds);
-    set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [] });
+    // During marshal mandate, keep moveMode active so the player can move more figures
+    if (ns.marshalMandateActive) {
+      set({ gameState: ns, moveFrom: null, selectedFigures: [] });
+    } else {
+      set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [] });
+    }
   },
 
   // --- Phase/Turn advancement ---

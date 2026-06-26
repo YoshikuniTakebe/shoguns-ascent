@@ -213,6 +213,7 @@ export function createInitialGameState(
     marshalResolutionIndex: 0,
     marshalMandateIssuerId: null,
     marshalFortressBuiltBy: [],
+    marshalMovedFigures: [],
     recruitMandateActive: false,
     recruitResolutionOrder: [],
     recruitResolutionIndex: 0,
@@ -629,6 +630,7 @@ function executeMarshal(state: GameState, issuerId: string): GameState {
     marshalResolutionIndex: 0,
     marshalMandateIssuerId: issuerId,
     marshalFortressBuiltBy: [],
+    marshalMovedFigures: [],
     log: [...state.log, `Marshal mandate issued by ${issuer?.name ?? 'Player'} - all players may move figures in resolution order. Issuer and ally may also build a fortress (3 coins).`],
   };
   // Set currentPlayerIndex to the first player in resolution order
@@ -1674,6 +1676,50 @@ export function moveForces(
   const toProvince = newState.provinces[toProvinceId];
   if (!fromProvince || !toProvince) return state;
 
+  // During marshal mandate, enforce single-figure movement rules
+  if (state.marshalMandateActive) {
+    // Only accept a single figureId at a time
+    if (figureIds.length !== 1) return state;
+
+    const figureId = figureIds[0];
+
+    // Reject if figure already moved this turn
+    if (state.marshalMovedFigures.includes(figureId)) return state;
+
+    // Find the figure
+    const figure = fromProvince.figures.find(f => f.id === figureId && f.owner === playerId);
+    if (!figure) return state;
+
+    // Reject fortress movement unless player is Tortuga clan
+    const player = state.players.find(p => p.id === playerId);
+    if (!player) return state;
+
+    if (figure.type === 'fortress' && player.clanId !== 'tortuga') return state;
+
+    // Adjacency check: skip for Libelula clan (can move anywhere)
+    if (player.clanId !== 'libelula') {
+      if (!isValidMove(fromProvinceId, toProvinceId)) return state;
+    } else {
+      // Libelula can move to any province except the same one
+      if (fromProvinceId === toProvinceId) return state;
+    }
+
+    // Move the figure
+    const movedFigures = [figure];
+    const remainingFigures = fromProvince.figures.filter(f => f.id !== figureId);
+
+    newState.provinces[fromProvinceId] = { ...fromProvince, figures: remainingFigures };
+    newState.provinces[toProvinceId] = { ...toProvince, figures: [...toProvince.figures, ...movedFigures] };
+
+    // Track figure as moved
+    newState.marshalMovedFigures = [...state.marshalMovedFigures, figureId];
+
+    newState.log = [...newState.log, `${player.name} moves ${figure.type} from ${fromProvince.name} to ${toProvince.name}`];
+
+    return newState;
+  }
+
+  // Non-marshal movement (standard)
   // Check valid move (adjacent or sea route)
   if (!isValidMove(fromProvinceId, toProvinceId)) return state;
 
@@ -1798,6 +1844,7 @@ export function advancePhase(state: GameState): GameState {
       newState.marshalResolutionIndex = 0;
       newState.marshalMandateIssuerId = null;
       newState.marshalFortressBuiltBy = [];
+      newState.marshalMovedFigures = [];
       newState.betrayMandateActive = false;
       newState.betraySelectionsRemaining = 0;
       newState.betraySelectedOwners = [];
@@ -1872,7 +1919,7 @@ export function advancePlayer(state: GameState): GameState {
   }
 
   // Politics phase advancement
-  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, betrayMandateActive: false, betraySelectionsRemaining: 0, betraySelectedOwners: [], betrayMandateIssuerId: null, log: [...state.log] };
+  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], marshalMovedFigures: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, betrayMandateActive: false, betraySelectionsRemaining: 0, betraySelectedOwners: [], betrayMandateIssuerId: null, log: [...state.log] };
   newState.politicsMandateCount += 1;
 
   // Helper: advance to the next player in seating order (turnOrder)
@@ -2007,6 +2054,7 @@ export function skipMarshalTurn(state: GameState): GameState {
   const newState: GameState = {
     ...state,
     marshalResolutionIndex: state.marshalResolutionIndex + 1,
+    marshalMovedFigures: [],
     log: [...state.log, `${currentPlayer?.name ?? 'Player'} ends their marshal turn`],
   };
   return advanceMarshalResolution(newState);
@@ -2026,6 +2074,7 @@ export function advanceMarshalResolution(state: GameState): GameState {
       marshalResolutionIndex: 0,
       marshalMandateIssuerId: null,
       marshalFortressBuiltBy: [],
+      marshalMovedFigures: [],
     };
   }
   // Set currentPlayerIndex to the next player in resolution order

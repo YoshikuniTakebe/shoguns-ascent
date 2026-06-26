@@ -206,6 +206,9 @@ export const es: Record<TranslationKey, string> = {
   'actions.buildFortress': 'Construir Fortaleza (3 monedas)',
   'actions.endMarshalTurn': 'Terminar Turno de Movilizar',
   'actions.marshalSelectProvince': 'Selecciona una provincia para construir una fortaleza.',
+  'actions.marshalMoveInstruction': 'Selecciona una figura y luego la provincia destino. Cada figura solo se mueve una vez.',
+  'actions.marshalMoveSteps': '1. Haz clic en la provincia de origen. 2. Haz clic en la figura a mover. 3. Haz clic en el destino.',
+  'actions.marshalMovedCount': 'Figuras movidas este turno: {count}',
 
   // Recruit Mandate
   'actions.recruitNotice': 'Mandato Reclutar - {name} puede invocar figuras en sus fortalezas. {bonus}',

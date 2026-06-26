@@ -204,6 +204,9 @@ export const en = {
   'actions.buildFortress': 'Build Fortress (3 coins)',
   'actions.endMarshalTurn': 'End Marshal Turn',
   'actions.marshalSelectProvince': 'Select a province to build a fortress.',
+  'actions.marshalMoveInstruction': 'Select one figure at a time and move it to an adjacent province. Each figure can only move once.',
+  'actions.marshalMoveSteps': '1. Click source province. 2. Click the figure to move. 3. Click the destination.',
+  'actions.marshalMovedCount': 'Figures moved this turn: {count}',
 
   // Recruit Mandate
   'actions.recruitNotice': 'Recruit mandate - {name} may summon figures at their fortresses. {bonus}',

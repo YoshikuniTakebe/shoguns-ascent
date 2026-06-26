@@ -148,11 +148,15 @@ export const ActionPanel = () => {
                 })}{' '}
                 {t('actions.marshalPlayer', { current: gameState.marshalResolutionIndex + 1, total: gameState.marshalResolutionOrder.length })}
               </p>
+              <p className="move-instruction">{t('actions.marshalMoveInstruction')}</p>
+              {gameState.marshalMovedFigures.length > 0 && (
+                <p className="marshal-moved-count">{t('actions.marshalMovedCount', { count: gameState.marshalMovedFigures.length })}</p>
+              )}
               <div className="march-controls">
                 <button className={`btn-secondary ${moveMode ? 'active' : ''}`} onClick={toggleMoveMode}>
                   {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
                 </button>
-                {moveMode && <p className="move-instruction">{t('actions.moveInstruction')}</p>}
+                {moveMode && <p className="move-instruction">{t('actions.marshalMoveSteps')}</p>}
               </div>
               {gameState.marshalMandateIssuerId && cp &&
                 (cp.id === gameState.marshalMandateIssuerId || gameState.players.find(p => p.id === gameState.marshalMandateIssuerId)?.allies.includes(cp.id)) &&

@@ -56,10 +56,26 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   const province = gameState.provinces[regionId];
   if (!province) return null;
 
-  const provinceData = PROVINCES_DATA.find(p => p.id === regionId);
   const isSelected = selectedRegion === regionId;
-  const adjacents = provinceData ? [...provinceData.adjacentProvinces, ...provinceData.seaRoutes] : [];
-  const isMoveTarget = moveMode && moveFrom && moveFrom !== regionId && adjacents.includes(moveFrom);
+
+  // Determine active player during marshal
+  const cp = gameState.players[gameState.currentPlayerIndex];
+  const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+  const activePlayer = apid ? gameState.players.find(p => p.id === apid) : null;
+  const isMarshalMove = moveMode && gameState.marshalMandateActive;
+  const isLibelula = activePlayer?.clanId === 'libelula';
+
+  // Move target logic: for Libelula during marshal, all provinces except moveFrom are valid
+  let isMoveTarget = false;
+  if (moveMode && moveFrom && moveFrom !== regionId && selectedFigures.length > 0) {
+    if (isMarshalMove && isLibelula) {
+      isMoveTarget = true;
+    } else {
+      const moveFromData = PROVINCES_DATA.find(p => p.id === moveFrom);
+      const moveFromAdjacents = moveFromData ? [...moveFromData.adjacentProvinces, ...moveFromData.seaRoutes] : [];
+      isMoveTarget = moveFromAdjacents.includes(regionId);
+    }
+  }
 
   // Monster placement target logic
   let isMonsterTarget = false;
@@ -80,10 +96,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   let isRecruitTarget = false;
   let isRecruitDimmed = false;
   if (recruitMode && !monsterPlacementMode) {
-    const cp = gameState.players[gameState.currentPlayerIndex];
-    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (apid) {
-      const activePlayer = gameState.players.find(p => p.id === apid);
       const isDragonfly = activePlayer?.clanId === 'libelula';
       if (isDragonfly) {
         // Dragonfly clan can place in any province
@@ -124,13 +137,18 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
         doMoveForces(moveFrom, regionId, selectedFigures);
       }
     } else if (moveMode && !moveFrom) {
-      setMoveFrom(regionId);
-      // Pre-select all figures owned by current player in this province
-      const cp = gameState.players[gameState.currentPlayerIndex];
-      const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
-      if (apid) {
-        const myFigures = province.figures.filter(f => f.owner === apid);
-        setSelectedFigures(myFigures.map(f => f.id));
+      // During marshal: set moveFrom but do NOT auto-select all figures
+      // Player must click individual figures
+      if (isMarshalMove) {
+        setMoveFrom(regionId);
+        setSelectedFigures([]);
+      } else {
+        setMoveFrom(regionId);
+        // Non-marshal: pre-select all figures owned by current player in this province
+        if (apid) {
+          const myFigures = province.figures.filter(f => f.owner === apid);
+          setSelectedFigures(myFigures.map(f => f.id));
+        }
       }
     } else {
       selectRegion(isSelected ? null : regionId);
@@ -141,7 +159,47 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
     if (betrayMode) {
       e.stopPropagation();
       doBetraySelectFigure(figureId, regionId);
+      return;
     }
+
+    // Marshal move mode: clicking a figure in the source province selects it
+    if (isMarshalMove && moveFrom === regionId) {
+      e.stopPropagation();
+      const figure = province.figures.find(f => f.id === figureId);
+      if (!figure) return;
+
+      // Cannot select figures that are not owned by current player
+      if (figure.owner !== apid) return;
+
+      // Cannot select already-moved figures
+      if (gameState.marshalMovedFigures.includes(figureId)) return;
+
+      // Cannot select fortress unless Tortuga
+      if (figure.type === 'fortress' && activePlayer?.clanId !== 'tortuga') return;
+
+      // Toggle selection: if already selected, deselect; otherwise select only this one
+      if (selectedFigures.includes(figureId)) {
+        setSelectedFigures([]);
+      } else {
+        setSelectedFigures([figureId]);
+      }
+    }
+  };
+
+  // Check if a figure is dimmed (already moved during marshal)
+  const isFigureDimmed = (fig: Figure): boolean => {
+    if (!isMarshalMove) return false;
+    if (gameState.marshalMovedFigures.includes(fig.id)) return true;
+    return false;
+  };
+
+  // Check if a figure is unselectable during marshal move
+  const isFigureUnselectable = (fig: Figure): boolean => {
+    if (!isMarshalMove) return false;
+    if (fig.owner !== apid) return true;
+    if (gameState.marshalMovedFigures.includes(fig.id)) return true;
+    if (fig.type === 'fortress' && activePlayer?.clanId !== 'tortuga') return true;
+    return false;
   };
 
   // Group figures by owner
@@ -167,21 +225,30 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
           const player = gameState.players.find(p => p.id === ownerId);
           const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
           const ownerColor = clan?.color || '#666';
-          const cp = gameState.players[gameState.currentPlayerIndex];
-          const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
           const isEnemy = betrayMode && ownerId !== apid;
           return (
             <div key={ownerId} className="force-group" style={{ borderColor: ownerColor }}>
-              {figures.map(fig => (
-                <span
-                  key={fig.id}
-                  onClick={(e) => handleFigureClick(fig.id, e)}
-                  style={isEnemy ? { cursor: 'pointer', opacity: 1 } : undefined}
-                  className={isEnemy ? 'betray-target' : undefined}
-                >
-                  <FigureIcon figure={fig} color={ownerColor} />
-                </span>
-              ))}
+              {figures.map(fig => {
+                const dimmed = isFigureDimmed(fig);
+                const unselectable = isFigureUnselectable(fig);
+                const isSelectedFigure = selectedFigures.includes(fig.id);
+                const isMarshalClickable = isMarshalMove && moveFrom === regionId && !unselectable;
+                return (
+                  <span
+                    key={fig.id}
+                    onClick={(e) => handleFigureClick(fig.id, e)}
+                    style={{
+                      ...(isEnemy ? { cursor: 'pointer', opacity: 1 } : undefined),
+                      ...(dimmed ? { opacity: 0.3 } : undefined),
+                      ...(isMarshalClickable ? { cursor: 'pointer' } : undefined),
+                      ...(isSelectedFigure ? { outline: '2px solid #fff', borderRadius: '3px' } : undefined),
+                    }}
+                    className={`${isEnemy ? 'betray-target' : ''} ${isSelectedFigure ? 'marshal-selected' : ''}`}
+                  >
+                    <FigureIcon figure={fig} color={ownerColor} />
+                  </span>
+                );
+              })}
             </div>
           );
         })}
