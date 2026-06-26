@@ -143,7 +143,6 @@ export const en = {
   'season.winter': 'WINTER',
 
   // Region Card
-  'region.harvest': 'Harvest',
   'region.battle': 'Battle {number}',
 
   // Kami Effects

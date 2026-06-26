@@ -96,7 +96,6 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
       onClick={handleClick}
     >
       <div className="region-name">{province.name}</div>
-      <div className="region-reward">{t('region.harvest')}: {province.harvestReward}</div>
       {warSlot && <div className="war-token">{t('region.battle', { number: String(warSlot.number) })}</div>}
       <div className="region-forces">
         {Object.entries(figuresByOwner).map(([ownerId, figures]) => {

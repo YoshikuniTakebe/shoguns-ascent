@@ -148,7 +148,6 @@ export const es: Record<TranslationKey, string> = {
   'season.winter': 'INVIERNO',
 
   // Region Card
-  'region.harvest': 'Cosecha',
   'region.battle': 'Batalla {number}',
 
   // Kami Effects
