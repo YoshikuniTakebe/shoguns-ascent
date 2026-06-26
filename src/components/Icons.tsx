@@ -167,6 +167,52 @@ export const DaimyoIcon = ({ size = 24, color = 'currentColor', className }: Ico
   </svg>
 );
 
+/** Kanji character for 'war/battle' (戦) - used for War Province Tokens */
+export const WarTokenIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+  >
+    <text
+      x="12"
+      y="18"
+      textAnchor="middle"
+      fontSize="18"
+      fontWeight="bold"
+      fill={color}
+      fontFamily="serif"
+    >
+      戦
+    </text>
+  </svg>
+);
+
+/** Prison bars icon - used for Hostages */
+export const HostageIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+  >
+    {/* Vertical bars */}
+    <line x1="6" y1="3" x2="6" y2="21" />
+    <line x1="10" y1="3" x2="10" y2="21" />
+    <line x1="14" y1="3" x2="14" y2="21" />
+    <line x1="18" y1="3" x2="18" y2="21" />
+    {/* Horizontal bars */}
+    <line x1="4" y1="7" x2="20" y2="7" />
+    <line x1="4" y1="17" x2="20" y2="17" />
+  </svg>
+);
+
 /** Ronin warrior in attack pose framed in hexagon border */
 export const RoninIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg

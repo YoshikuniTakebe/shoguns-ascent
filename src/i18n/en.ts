@@ -262,6 +262,14 @@ export const en = {
   // Harvest Popup
   'harvest.received': '{name} has received:',
   'harvest.accept': 'Accept',
+
+  // War Tokens Modal
+  'warTokens.title': 'War Province Tokens',
+  'warTokens.empty': 'No war tokens',
+
+  // Hostages Modal
+  'hostages.title': 'Hostages',
+  'hostages.empty': 'No hostages',
 } as const;
 
 export type TranslationKey = keyof typeof en;

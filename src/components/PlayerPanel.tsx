@@ -3,14 +3,18 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { Player } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { BushiIcon, CoinIcon, HonorIcon, VPIcon, RoninIcon, ShintoIcon, FortressIcon } from './Icons';
+import { BushiIcon, CoinIcon, HonorIcon, VPIcon, RoninIcon, ShintoIcon, FortressIcon, WarTokenIcon, HostageIcon } from './Icons';
 import { PlayerCardsModal } from './PlayerCardsModal';
+import { WarTokensModal } from './WarTokensModal';
+import { HostagesModal } from './HostagesModal';
 import { useT } from '../i18n';
 
 export const PlayerPanel = () => {
   const { gameState, localPlayerId } = useGameStore();
   const t = useT();
   const [viewingCardsPlayer, setViewingCardsPlayer] = useState<Player | null>(null);
+  const [viewingWarTokensPlayer, setViewingWarTokensPlayer] = useState<Player | null>(null);
+  const [viewingHostagesPlayer, setViewingHostagesPlayer] = useState<Player | null>(null);
   if (!gameState) return null;
   const cp = gameState.players[gameState.currentPlayerIndex];
 
@@ -69,10 +73,24 @@ export const PlayerPanel = () => {
               </div>
               <div className="player-extras">
                 {player.warProvinceTokens.length > 0 && (
-                  <span className="extra-item">War Tokens: {player.warProvinceTokens.length}</span>
+                  <button
+                    className="war-token-btn"
+                    onClick={(e) => { e.stopPropagation(); setViewingWarTokensPlayer(player); }}
+                    title={t('warTokens.title')}
+                  >
+                    <WarTokenIcon size={16} color={clan.color} />
+                    <span className="icon-btn-badge">{player.warProvinceTokens.length}</span>
+                  </button>
                 )}
                 {player.hostages.length > 0 && (
-                  <span className="extra-item">Hostages: {player.hostages.length}</span>
+                  <button
+                    className="hostage-btn"
+                    onClick={(e) => { e.stopPropagation(); setViewingHostagesPlayer(player); }}
+                    title={t('hostages.title')}
+                  >
+                    <HostageIcon size={16} color={clan.color} />
+                    <span className="icon-btn-badge">{player.hostages.length}</span>
+                  </button>
                 )}
                 <button
                   className="player-cards-btn"
@@ -91,6 +109,18 @@ export const PlayerPanel = () => {
         <PlayerCardsModal
           player={viewingCardsPlayer}
           onClose={() => setViewingCardsPlayer(null)}
+        />
+      )}
+      {viewingWarTokensPlayer && (
+        <WarTokensModal
+          player={viewingWarTokensPlayer}
+          onClose={() => setViewingWarTokensPlayer(null)}
+        />
+      )}
+      {viewingHostagesPlayer && (
+        <HostagesModal
+          player={viewingHostagesPlayer}
+          onClose={() => setViewingHostagesPlayer(null)}
         />
       )}
     </div>

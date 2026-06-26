@@ -264,4 +264,12 @@ export const es: Record<TranslationKey, string> = {
   // Harvest Popup
   'harvest.received': '{name} ha recibido:',
   'harvest.accept': 'Aceptar',
+
+  // War Tokens Modal
+  'warTokens.title': 'Losetas de Provincia de Guerra',
+  'warTokens.empty': 'Sin losetas de guerra',
+
+  // Hostages Modal
+  'hostages.title': 'Rehenes',
+  'hostages.empty': 'Sin rehenes',
 };
