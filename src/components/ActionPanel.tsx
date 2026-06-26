@@ -10,7 +10,7 @@ export const ActionPanel = () => {
     gameState, localPlayerId, moveMode, toggleMoveMode,
     doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance,
     doSetupSeason, doBreakAlliances, doDrawMandateTiles, doChooseMandateTile,
-    doSkipTrainPurchase, setShowTrainModal,
+    doSkipTrainPurchase,
     doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
     doSkipRecruitTurn, toggleRecruitMode, recruitMode, recruitFigureType, setRecruitFigureType,
     doSkipBetrayTurn,
@@ -126,9 +126,6 @@ export const ActionPanel = () => {
                 {t('actions.trainNotice', { name: cp?.name || '' })}{' '}
                 {t('actions.trainPlayer', { current: gameState.trainResolutionIndex + 1, total: gameState.trainResolutionOrder.length })}
               </p>
-              <button className="btn-primary" onClick={() => setShowTrainModal(true)} style={{ marginBottom: '6px' }}>
-                {t('seasonCardsModal.openMarket')}
-              </button>
               <button className="btn-secondary" onClick={doSkipTrainPurchase}>
                 {t('actions.skipCardPurchase')}
               </button>
@@ -156,7 +153,13 @@ export const ActionPanel = () => {
                 <button className={`btn-secondary ${moveMode ? 'active' : ''}`} onClick={toggleMoveMode}>
                   {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
                 </button>
-                {moveMode && <p className="move-instruction">{t('actions.marshalMoveSteps')}</p>}
+                {moveMode && (
+                  <ol className="marshal-steps-list">
+                    {t('actions.marshalMoveSteps').split(/\d+\.\s/).filter(Boolean).map((step, idx) => (
+                      <li key={idx}>{step.trim()}</li>
+                    ))}
+                  </ol>
+                )}
               </div>
               {gameState.marshalMandateIssuerId && cp &&
                 (cp.id === gameState.marshalMandateIssuerId || gameState.players.find(p => p.id === gameState.marshalMandateIssuerId)?.allies.includes(cp.id)) &&

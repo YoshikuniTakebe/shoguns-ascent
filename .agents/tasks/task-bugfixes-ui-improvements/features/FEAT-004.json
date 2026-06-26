@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-004",
+  "type": "fix",
+  "description": "Fix the battle flow bug in hotseat mode - battles get stuck calling wrong player (Player 1 who is not in the battle). The correct flow: determine battle, identify involved players, call each one by seat order with popup, open betting window, confirm, next player, resolve when all done.",
+  "status": "pending",
+  "steps": [
+    "1. DIAGNOSIS: In src/components/BattlePanel.tsx, the hotseat popup phase uses `battle.participants[battleCurrentBiddingIndex]` to determine who should bet. The bug is that battleCurrentBiddingIndex may not correctly correspond to the actual participants. Also, the issue may be in how the war phase is initiated - the `currentPlayerIndex` in the GameState is still pointing at Player 1 (the politics phase player), but the BattlePanel should not rely on currentPlayerIndex at all for determining who bets - it should only use battle.participants.",
+    "2. In src/components/BattlePanel.tsx: Verify that when battleStepPhase === 'popup', the `currentParticipant` is derived from `battle.participants[battleCurrentBiddingIndex]`. If battleCurrentBiddingIndex is 0 and battle.participants only includes players actually in the province, then the issue must be that battle.participants is incorrectly populated, OR that battleCurrentBiddingIndex is pointing beyond the array.",
+    "3. In src/store/gameStore.ts doInitiateWar: After calling initiateWarPhase, the code sets `battleStepPhase: 'popup', battleCurrentBiddingIndex: 0`. This is correct. But the issue could be that for uncontested battles, the popup is shown and the player accepts, but the battleCurrentBiddingIndex is not properly reset when moving to the next contested battle.",
+    "4. Fix in src/store/gameStore.ts doAcceptBattlePopup: When an uncontested battle popup is accepted, it marks the battle as resolved and sets battleStepPhase: 'popup' and battleCurrentBiddingIndex: 0. This is correct for advancing to the next battle. However, the BattlePanel then looks for the NEXT unresolved battle. The problem may be that after resolving uncontested battles, when we reach a contested battle, the popup shows the wrong player because the GameBoard routes to BattlePanel based on currentPhase === 'war' && activeBattles.length > 0, which makes the BattlePanel render. The BattlePanel uses `localPlayerId` as fallback for online mode but in hotseat should ONLY use battle.participants[battleCurrentBiddingIndex].",
+    "5. In src/store/gameStore.ts doSubmitWarTacticBids: The hotseat flow - After a player submits bids, it checks allBidsSubmitted. If not all bids are in, it increments battleCurrentBiddingIndex and shows the popup for the next participant. If all bids are in, it resolves the battle and resets to popup/0 for the next battle. This logic looks correct. The bug might be that after resolving a battle, the next unresolved battle's participants array is different but battleCurrentBiddingIndex is correctly 0.",
+    "6. THE REAL BUG: Look at the online mode fallback section at the bottom of BattlePanel.tsx. The component uses `localPlayerId` to determine if the current user is a participant. In hotseat mode, `localPlayerId` is always Player 0 (set during createGame). The check `isPart = apid ? battle.participants.includes(apid) : false` uses localPlayerId which is Player 0/1. If Player 1 is not in the battle, the component shows 'You are not part of this battle.' In hotseat, we should NEVER reach the fallback section - we should always be in the `battleStepPhase === 'popup'` or `battleStepPhase === 'bidding'` branches. The fix is to ensure that `battleStepPhase` is correctly set to 'popup' when the war phase begins.",
+    "7. Fix: In src/store/gameStore.ts doInitiateWar: Ensure battleStepPhase is set to 'popup' for both hotseat and online modes. Also ensure that after doAcceptBattlePopup resolves an uncontested battle, if the next unresolved battle is also uncontested, the popup should auto-display for it. If no battles are found at all, set battleStepPhase to null.",
+    "8. Fix: In src/components/BattlePanel.tsx: Add a guard - if gameState.mode === 'hotseat' and battleStepPhase is null (or missing), and there's a contested unresolved battle, auto-set battleStepPhase to 'popup'. Also ensure the hotseat flow properly skips over battles that are already resolved or uncontested before showing the bidding popup.",
+    "9. ADDITIONAL FIX: Make the participant order in battles follow seat order (turnOrder). In src/utils/gameLogic.ts initiateWarPhase, when creating battle.participants, sort the playerIds by their position in state.turnOrder to ensure seat-order bidding."
+  ],
+  "acceptance_criteria": [
+    "Build passes with npm run build",
+    "In hotseat mode, battle flow correctly identifies only the players who have figures in the contested province",
+    "Battle popup shows the correct player name (a participant in the battle, not an outside player)",
+    "Players bid in seat order (turnOrder)",
+    "After all participants bid, the battle resolves and the next battle begins",
+    "The BattlePanel never shows 'You are not part of this battle' in hotseat mode for contested battles"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}

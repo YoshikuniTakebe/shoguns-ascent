@@ -1,0 +1,31 @@
+{
+  "project_type": "React + TypeScript digital board game (Rising Sun adaptation)",
+  "language": "TypeScript",
+  "build_system": "Vite + tsc",
+  "test_framework": "None (no test files found in project)",
+  "build_command": "npm run build",
+  "test_command": "npm run build (no test framework - build is the only verification)",
+  "verification_instructions": "Run `npm run build` from the project root. Exit code 0 means success.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install && npm run build",
+  "environment_constraints": "No test framework available. Validation is done via TypeScript compilation (tsc -b && vite build). Build already passes with exit code 0.",
+  "contribution_requirements": "None documented",
+  "key_patterns": "Zustand store in src/store/gameStore.ts manages all state. Game logic pure functions in src/utils/gameLogic.ts. UI components in src/components/. i18n with two files src/i18n/en.ts and src/i18n/es.ts with TranslationKey type. CLANS constant has clan colors. Hotseat mode uses gameState.currentPlayerIndex to track whose turn it is.",
+  "relevant_files": [
+    "src/store/gameStore.ts",
+    "src/utils/gameLogic.ts",
+    "src/types/game.ts",
+    "src/components/ActionPanel.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/components/GameLog.tsx",
+    "src/components/HarvestPopup.tsx",
+    "src/components/PoliticsTrack.tsx",
+    "src/components/RegionCard.tsx",
+    "src/components/SeasonCardsModal.tsx",
+    "src/components/GameBoard.tsx",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/App.css"
+  ],
+  "directory_structure": "src/components/ - UI components, src/store/ - Zustand store, src/utils/ - game logic, src/types/ - TypeScript types, src/i18n/ - translations, src/App.css - all styles"
+}
