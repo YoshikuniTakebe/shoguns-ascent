@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Implement the Betray mandate correctly as an interactive flow where ONLY the issuer selects up to 2 enemy figures from 2 different players to replace with same-type figures from their reserve. Includes state management, game logic, UI in ActionPanel/RegionCard, and i18n strings.",
+  "status": "completed",
+  "steps": [
+    "1. Add betray state fields to GameState in src/types/game.ts: betrayMandateActive (boolean), betraySelectionsRemaining (number, starts at 2), betraySelectedOwners (string[] - tracks which owners already targeted), betrayMandateIssuerId (string | null). Also add these fields to the initializer in createInitialGameState.",
+    "2. Rewrite executeBetray in src/utils/gameLogic.ts: Instead of the current loop through all players, set betrayMandateActive=true, betraySelectionsRemaining=2, betraySelectedOwners=[], betrayMandateIssuerId=issuerId. Handle alliance-breaking: if issuer has allies, break ONLY the issuer's alliance (remove issuer from ally's allies array and clear issuer's allies), then call loseHonor(state, issuerId). If no alliance, no honor loss. Set currentPlayerIndex to the issuer.",
+    "3. Create betraySelectFigure(state, issuerId, figureId) function in src/utils/gameLogic.ts: Validates the selection - figure must be on the map (provinces), figure owner != issuerId, figure type != 'daimyo', figure type != 'shinto' if in a temple (but shinto on map provinces CAN be replaced), owner must not already be in betraySelectedOwners, issuer must have a figure of the same type in their reserve (bushi: player.bushi > 0, shinto: player.shinto > 0, monster: issuer has an undeployed monster card - check seasonCards with cardType 'monster'). If valid: remove figure from province, add replacement figure (createFigure with same type, owned by issuer), return original figure to owner's reserve (increment owner.bushi/shinto as appropriate), add the original owner to betraySelectedOwners, decrement betraySelectionsRemaining, decrement issuer's reserve count for that type. If betraySelectionsRemaining reaches 0, call finalizeBetray to clear state.",
+    "4. Create finalizeBetray(state) function: sets betrayMandateActive=false, betraySelectionsRemaining=0, betraySelectedOwners=[], betrayMandateIssuerId=null. Adds log entry.",
+    "5. Create skipBetrayTurn(state) function (exported): allows the issuer to end betray early (with 0, 1, or 2 replacements made). Calls finalizeBetray.",
+    "6. Update gameStore.ts: Add betrayMode (boolean) UI state. Add store actions: doSkipBetrayTurn, doBetraySelectFigure(figureId, provinceId). In doChooseMandateTile, add betrayMandateActive to the condition that prevents auto-advance (line 228). The doBetraySelectFigure action calls betraySelectFigure, then if mandate is no longer active calls advancePlayer. Add toggleBetrayMode. Import the new functions from gameLogic.",
+    "7. Update ActionPanel.tsx: Add a section for gameState.betrayMandateActive that shows: notice text (issuer name, selections remaining), a button to toggle betray selection mode, and a button to end betray turn (skip). Similar structure to recruitMode section.",
+    "8. Update RegionCard.tsx: When betrayMode is active, clicking a figure in a province should call doBetraySelectFigure with that figure's id and province id. Add visual indication for valid target figures.",
+    "9. Add i18n keys to en.ts and es.ts: 'actions.betrayNotice', 'actions.betraySelectFigure', 'actions.betrayEndTurn', 'actions.betraySelectTarget', 'actions.betraySelectionsLeft', 'mandate.betray' description update if needed.",
+    "10. Reset betray state in advancePhase (tea->politics transition) alongside other mandate resets. Also ensure createInitialGameState includes the new fields with default values."
+  ],
+  "acceptance_criteria": [
+    "npx tsc -b compiles without errors",
+    "npx vite build succeeds",
+    "executeBetray no longer loops through all players - only sets up interactive state for the issuer",
+    "Alliance break only affects the issuer's alliance (not breakAllAlliances)",
+    "Honor is lost only if issuer had an alliance before betray",
+    "Validation: cannot target daimyo, cannot target shinto in temples, cannot target same owner twice, cannot replace without same type in reserve",
+    "Replaced figures return to owner's reserve (not killed)",
+    "Issuer can end betray early with fewer than 2 replacements",
+    "ActionPanel shows betray UI when betrayMandateActive is true",
+    "RegionCard handles betray figure selection clicks"
+  ],
+  "verification": [
+    "npx tsc -b --noEmit",
+    "npx tsc -b && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": "Implementation complete. All acceptance criteria met: executeBetray is now interactive (only issuer acts), alliance break is scoped to issuer only, honor loss only if allied, full validation for figure selection (daimyo, fortress, temple shinto, same owner twice, reserve check), replaced figures return to reserve, skip betray turn works, ActionPanel shows betray UI, RegionCard handles betray figure clicks. Build and type check pass cleanly. Review fixes applied: (1) fortress replacement blocked with early return, (2) BETRAY_SELECT_FIGURE and SKIP_BETRAY_TURN server handlers added, (3) UI toggle removed - betray mode auto-activates and always shows selection instruction."
+}
