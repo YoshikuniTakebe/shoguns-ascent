@@ -10,6 +10,7 @@ export const ActionPanel = () => {
     doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance,
     doSetupSeason, doBreakAlliances, doDrawMandateTiles, doChooseMandateTile,
     doSkipTrainPurchase, setShowTrainModal,
+    doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
     doResolveWinter,
   } = useGameStore();
   const t = useT();
@@ -131,7 +132,42 @@ export const ActionPanel = () => {
             </div>
           )}
 
-          {!gameState.trainMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
+          {/* Marshal mandate active - show move/build/end turn options */}
+          {gameState.marshalMandateActive && (
+            <div className="marshal-active">
+              <p className="marshal-notice">
+                {t('actions.marshalNotice', {
+                  name: cp?.name || '',
+                  bonus: gameState.marshalMandateIssuerId && cp &&
+                    (cp.id === gameState.marshalMandateIssuerId || gameState.players.find(p => p.id === gameState.marshalMandateIssuerId)?.allies.includes(cp.id))
+                    ? t('actions.marshalBonus')
+                    : t('actions.marshalNoBonus'),
+                })}{' '}
+                {t('actions.marshalPlayer', { current: gameState.marshalResolutionIndex + 1, total: gameState.marshalResolutionOrder.length })}
+              </p>
+              <div className="march-controls">
+                <button className={`btn-secondary ${moveMode ? 'active' : ''}`} onClick={toggleMoveMode}>
+                  {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
+                </button>
+                {moveMode && <p className="move-instruction">{t('actions.moveInstruction')}</p>}
+              </div>
+              {gameState.marshalMandateIssuerId && cp &&
+                (cp.id === gameState.marshalMandateIssuerId || gameState.players.find(p => p.id === gameState.marshalMandateIssuerId)?.allies.includes(cp.id)) &&
+                cp.fortresses > 0 && cp.coins >= 3 && (
+                <div style={{ marginTop: '6px' }}>
+                  <button className={`btn-secondary ${buildFortressMode ? 'active' : ''}`} onClick={toggleBuildFortressMode}>
+                    {t('actions.buildFortress')}
+                  </button>
+                  {buildFortressMode && <p className="move-instruction">{t('actions.marshalSelectProvince')}</p>}
+                </div>
+              )}
+              <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipMarshalTurn}>
+                {t('actions.endMarshalTurn')}
+              </button>
+            </div>
+          )}
+
+          {!gameState.trainMandateActive && !gameState.marshalMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
             <button className="btn-primary" onClick={doDrawMandateTiles}>
               {t('actions.drawMandateTiles')}
             </button>
@@ -160,19 +196,21 @@ export const ActionPanel = () => {
           )}
 
           {/* Last executed mandate display */}
-          {gameState.mandatesThisTurn.length > 0 && !gameState.trainMandateActive && (
+          {gameState.mandatesThisTurn.length > 0 && !gameState.trainMandateActive && !gameState.marshalMandateActive && (
             <div className="current-mandate">
               <h5>{t('actions.lastMandate')} {gameState.mandatesThisTurn[gameState.mandatesThisTurn.length - 1]?.type.toUpperCase()}</h5>
               <p className="mandate-info">{t('actions.mandateResolved')}</p>
             </div>
           )}
 
-          <div className="march-controls">
-            <button className={`btn-secondary ${moveMode ? 'active' : ''}`} onClick={toggleMoveMode}>
-              {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
-            </button>
-            {moveMode && <p className="move-instruction">{t('actions.moveInstruction')}</p>}
-          </div>
+          {!gameState.marshalMandateActive && (
+            <div className="march-controls">
+              <button className={`btn-secondary ${moveMode ? 'active' : ''}`} onClick={toggleMoveMode}>
+                {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
+              </button>
+              {moveMode && <p className="move-instruction">{t('actions.moveInstruction')}</p>}
+            </div>
+          )}
         </div>
       )}
 

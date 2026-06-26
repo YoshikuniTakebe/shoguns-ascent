@@ -21,6 +21,8 @@ import {
   buySeasonCard,
   skipTrainPurchase,
   advanceTrainResolution,
+  skipMarshalTurn,
+  buildFortress,
 } from '../utils/gameLogic';
 
 interface GameStore {
@@ -36,6 +38,7 @@ interface GameStore {
   currentMandateResolutionIndex: number;
   warTacticBidsSubmitted: boolean;
   showTrainModal: boolean;
+  buildFortressMode: boolean;
   language: 'en' | 'es';
   setLanguage: (lang: 'en' | 'es') => void;
   setShowTrainModal: (show: boolean) => void;
@@ -69,6 +72,11 @@ interface GameStore {
 
   // Skip Train card purchase
   doSkipTrainPurchase: () => void;
+
+  // Marshal mandate actions
+  doSkipMarshalTurn: () => void;
+  doBuildFortress: (provinceId: string) => void;
+  toggleBuildFortressMode: () => void;
 
   // Kami
   doResolveKami: () => void;
@@ -107,6 +115,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   currentMandateResolutionIndex: 0,
   warTacticBidsSubmitted: false,
   showTrainModal: false,
+  buildFortressMode: false,
   language: (localStorage.getItem('shoguns-ascent-language') as 'en' | 'es') || 'es',
   setLanguage: (lang) => {
     localStorage.setItem('shoguns-ascent-language', lang);
@@ -203,8 +212,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = chooseMandateTile(gameState, mandate, apid);
-    // If train mandate is active, wait for buy/skip before advancing
-    if (ns.trainMandateActive) {
+    // If train or marshal mandate is active, wait for resolution before advancing
+    if (ns.trainMandateActive || ns.marshalMandateActive) {
       set({ gameState: ns });
     } else {
       set({ gameState: advancePlayer(ns) });
@@ -247,6 +256,35 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     set({ gameState: ns });
   },
+
+  // --- Marshal Mandate Actions ---
+  doSkipMarshalTurn: () => {
+    const { gameState, ws } = get();
+    if (!gameState) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'SKIP_MARSHAL_TURN', playerId: get().localPlayerId });
+      return;
+    }
+    let ns = skipMarshalTurn(gameState);
+    if (!ns.marshalMandateActive) {
+      ns = advancePlayer(ns);
+    }
+    set({ gameState: ns, buildFortressMode: false, moveMode: false, moveFrom: null, selectedFigures: [] });
+  },
+  doBuildFortress: (provinceId: string) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState || !localPlayerId) return;
+    const cp = getCurrentPlayer(gameState);
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (!apid) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'BUILD_FORTRESS', playerId: apid, payload: { provinceId } });
+      return;
+    }
+    const ns = buildFortress(gameState, apid, provinceId);
+    set({ gameState: ns, buildFortressMode: false });
+  },
+  toggleBuildFortressMode: () => set((s) => ({ buildFortressMode: !s.buildFortressMode, moveMode: false, moveFrom: null, selectedFigures: [] })),
 
   // --- Kami ---
   doResolveKami: () => {

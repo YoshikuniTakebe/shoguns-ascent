@@ -193,4 +193,13 @@ export const es: Record<TranslationKey, string> = {
 
   // Deck Indicator
   'deck.indicator': '{name}',
+
+  // Marshal Mandate
+  'actions.marshalNotice': 'Mandato Movilizar - {name} puede mover figuras. {bonus}',
+  'actions.marshalPlayer': '(Jugador {current} de {total})',
+  'actions.marshalBonus': 'Tambien puede construir una fortaleza (3 monedas).',
+  'actions.marshalNoBonus': '',
+  'actions.buildFortress': 'Construir Fortaleza (3 monedas)',
+  'actions.endMarshalTurn': 'Terminar Turno de Movilizar',
+  'actions.marshalSelectProvince': 'Selecciona una provincia para construir una fortaleza.',
 };

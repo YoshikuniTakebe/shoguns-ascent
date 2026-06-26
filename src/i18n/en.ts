@@ -191,6 +191,15 @@ export const en = {
   'seasonCardsModal.discount': '(discount -1)',
   'seasonCardsModal.buyButton': 'Buy',
   'seasonCardsModal.openMarket': 'Open Market',
+
+  // Marshal Mandate
+  'actions.marshalNotice': 'Marshal mandate - {name} may move figures. {bonus}',
+  'actions.marshalPlayer': '(Player {current} of {total})',
+  'actions.marshalBonus': 'May also build a fortress (3 coins).',
+  'actions.marshalNoBonus': '',
+  'actions.buildFortress': 'Build Fortress (3 coins)',
+  'actions.endMarshalTurn': 'End Marshal Turn',
+  'actions.marshalSelectProvince': 'Select a province to build a fortress.',
 } as const;
 
 export type TranslationKey = keyof typeof en;

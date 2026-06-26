@@ -208,6 +208,10 @@ export function createInitialGameState(
     trainResolutionOrder: [],
     trainResolutionIndex: 0,
     trainMandateIssuerId: null,
+    marshalMandateActive: false,
+    marshalResolutionOrder: [],
+    marshalResolutionIndex: 0,
+    marshalMandateIssuerId: null,
     lastMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
@@ -506,21 +510,25 @@ function executeRecruit(state: GameState, issuerId: string): GameState {
 }
 
 function executeMarshal(state: GameState, issuerId: string): GameState {
-  // Marshal: Each player may move 1 figure to an adjacent province
-  // Bonus for issuer/ally: +1 extra move
-  // Movement is UI-driven: each player uses moveForces() through the UI.
-  // In hotseat mode, the current player can move during their turn.
+  // Marshal: Each player may move figures. Issuer+ally may also build a fortress (3 coins) in any province.
+  // Resolution order: starting from NEXT player after issuer (clockwise by seating/turnOrder).
+  const resolutionOrder = getResolutionOrder(state, issuerId);
   const issuer = state.players.find((p) => p.id === issuerId);
-  const bonusPlayers = state.players
-    .filter((p) => isIssuerOrAlly(state, p.id, issuerId))
-    .map((p) => p.name);
-  const bonusNote = bonusPlayers.length > 0
-    ? ` (${bonusPlayers.join(', ')} may move 1 additional figure)`
-    : '';
   const newState: GameState = {
     ...state,
-    log: [...state.log, `Marshal mandate issued by ${issuer?.name} - all players may move 1 figure to an adjacent province${bonusNote}. Use Move Forces to execute.`],
+    players: state.players.map((p) => ({ ...p })),
+    marshalMandateActive: true,
+    marshalResolutionOrder: resolutionOrder,
+    marshalResolutionIndex: 0,
+    marshalMandateIssuerId: issuerId,
+    log: [...state.log, `Marshal mandate issued by ${issuer?.name ?? 'Player'} - all players may move figures in resolution order. Issuer and ally may also build a fortress (3 coins).`],
   };
+  // Set currentPlayerIndex to the first player in resolution order
+  const firstPlayerId = resolutionOrder[0];
+  const firstPlayerIdx = newState.players.findIndex(p => p.id === firstPlayerId);
+  if (firstPlayerIdx >= 0) {
+    newState.currentPlayerIndex = firstPlayerIdx;
+  }
   return newState;
 }
 
@@ -1590,6 +1598,10 @@ export function advancePhase(state: GameState): GameState {
       newState.currentPhase = 'politics';
       newState.politicsMandateCount = 0;
       newState.trainMandateActive = false;
+      newState.marshalMandateActive = false;
+      newState.marshalResolutionOrder = [];
+      newState.marshalResolutionIndex = 0;
+      newState.marshalMandateIssuerId = null;
       newState.drawnMandates = [];
       newState.mandateChoicePhase = false;
 
@@ -1660,7 +1672,7 @@ export function advancePlayer(state: GameState): GameState {
   }
 
   // Politics phase advancement
-  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, log: [...state.log] };
+  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, log: [...state.log] };
   newState.politicsMandateCount += 1;
 
   // Helper: advance to the next player in seating order (turnOrder)
@@ -1777,6 +1789,83 @@ export function advanceTrainResolution(state: GameState): GameState {
     return { ...state, currentPlayerIndex: nextPlayerIdx };
   }
   return state;
+}
+
+/**
+ * Skip the current Marshal mandate turn (end the current player's marshal turn).
+ * Advances to the next player in the marshal resolution order,
+ * or clears the marshal state if all players have had their turn.
+ */
+export function skipMarshalTurn(state: GameState): GameState {
+  if (!state.marshalMandateActive) return state;
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const newState: GameState = {
+    ...state,
+    marshalResolutionIndex: state.marshalResolutionIndex + 1,
+    log: [...state.log, `${currentPlayer?.name ?? 'Player'} ends their marshal turn`],
+  };
+  return advanceMarshalResolution(newState);
+}
+
+/**
+ * Advance to the next player in the marshal resolution order.
+ * If all players have had their turn, clear the marshal state.
+ */
+export function advanceMarshalResolution(state: GameState): GameState {
+  if (state.marshalResolutionIndex >= state.marshalResolutionOrder.length) {
+    // All players have had their turn - clear marshal mandate
+    return {
+      ...state,
+      marshalMandateActive: false,
+      marshalResolutionOrder: [],
+      marshalResolutionIndex: 0,
+      marshalMandateIssuerId: null,
+    };
+  }
+  // Set currentPlayerIndex to the next player in resolution order
+  const nextPlayerId = state.marshalResolutionOrder[state.marshalResolutionIndex];
+  const nextPlayerIdx = state.players.findIndex(p => p.id === nextPlayerId);
+  if (nextPlayerIdx >= 0) {
+    return { ...state, currentPlayerIndex: nextPlayerIdx };
+  }
+  return state;
+}
+
+/**
+ * Build a fortress in any province during a Marshal mandate.
+ * Only issuer or ally can build, costs 3 coins, requires fortress in reserve.
+ */
+export function buildFortress(state: GameState, playerId: string, provinceId: string): GameState {
+  if (!state.marshalMandateActive) return state;
+  if (!state.marshalMandateIssuerId) return state;
+  if (!isIssuerOrAlly(state, playerId, state.marshalMandateIssuerId)) return state;
+
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return state;
+  if (player.coins < 3) return state;
+  if (player.fortresses <= 0) return state;
+
+  const province = state.provinces[provinceId];
+  if (!province) return state;
+
+  const newState: GameState = {
+    ...state,
+    players: state.players.map((p) => {
+      if (p.id === playerId) {
+        return { ...p, coins: p.coins - 3, fortresses: p.fortresses - 1 };
+      }
+      return { ...p };
+    }),
+    provinces: {
+      ...state.provinces,
+      [provinceId]: {
+        ...province,
+        figures: [...province.figures, createFigure('fortress', playerId)],
+      },
+    },
+    log: [...state.log, `${player.name} builds a fortress in ${province.name} (3 coins)`],
+  };
+  return newState;
 }
 
 export function getCurrentPlayer(state: GameState): Player | undefined {
