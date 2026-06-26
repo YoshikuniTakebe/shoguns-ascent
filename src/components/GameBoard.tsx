@@ -30,13 +30,13 @@ const positions: Record<string, { x: number; y: number }> = {
 };
 
 const HARVEST_REWARDS: Record<string, { rewards: { type: 'vp' | 'coin' | 'ronin'; count: number }[]; color: string; position: { x: number; y: number } }> = {
-  hokkaido: { rewards: [{ type: 'ronin', count: 2 }], color: '#5BC0EB', position: { x: 1229, y: 130 } },
+  hokkaido: { rewards: [{ type: 'ronin', count: 2 }], color: '#5BC0EB', position: { x: 1350, y: 180 } },
   oshu: { rewards: [{ type: 'coin', count: 3 }], color: '#9B8EC4', position: { x: 1290, y: 380 } },
   kanto: { rewards: [{ type: 'vp', count: 2 }, { type: 'coin', count: 2 }], color: '#E63946', position: { x: 1320, y: 600 } },
   edo: { rewards: [{ type: 'vp', count: 4 }], color: '#2D8B4E', position: { x: 970, y: 540 } },
   kansai: { rewards: [{ type: 'vp', count: 3 }], color: '#F57C20', position: { x: 690, y: 620 } },
   nagato: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }, { type: 'coin', count: 1 }], color: '#8B5CF6', position: { x: 360, y: 550 } },
-  shikoku: { rewards: [{ type: 'coin', count: 3 }], color: '#CD7F32', position: { x: 710, y: 850 } },
+  shikoku: { rewards: [{ type: 'coin', count: 3 }], color: '#8B6914', position: { x: 710, y: 850 } },
   kyushu: { rewards: [{ type: 'vp', count: 1 }, { type: 'ronin', count: 1 }, { type: 'coin', count: 1 }], color: '#F5D020', position: { x: 190, y: 750 } },
 };
 
@@ -317,14 +317,15 @@ export const GameBoard = () => {
                     }}
                   >
                     <div className="harvest-hex-content">
-                      {harvest.rewards.map((reward, i) => (
-                        <span key={i} className="harvest-reward-item">
-                          <span className="harvest-reward-count">{reward.count}</span>
-                          {reward.type === 'vp' && <VPIcon size={12} color="#fff" />}
-                          {reward.type === 'coin' && <CoinIcon size={12} color="#fff" />}
-                          {reward.type === 'ronin' && <RoninIcon size={12} color="#fff" />}
-                        </span>
-                      ))}
+                      {harvest.rewards.map((reward, i) =>
+                        Array.from({ length: reward.count }).map((_, j) => (
+                          <span key={`${i}-${j}`} className="harvest-reward-item">
+                            {reward.type === 'vp' && <VPIcon size={20} color="#fff" />}
+                            {reward.type === 'coin' && <CoinIcon size={20} color="#fff" />}
+                            {reward.type === 'ronin' && <RoninIcon size={20} color="#fff" />}
+                          </span>
+                        ))
+                      )}
                     </div>
                   </div>
                 ))}
