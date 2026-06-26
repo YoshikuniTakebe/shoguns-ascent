@@ -1,6 +1,7 @@
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
+import { BushiIcon, CoinIcon, HonorIcon, VPIcon } from './Icons';
 
 export const PlayerPanel = () => {
   const { gameState, localPlayerId } = useGameStore();
@@ -29,15 +30,15 @@ export const PlayerPanel = () => {
               </div>
               <div className="player-stats">
                 <div className="stat">
-                  <span className="stat-icon">&#9733;</span>
+                  <span className="stat-icon"><VPIcon size={16} /></span>
                   <span className="stat-value">{player.victoryPoints} VP</span>
                 </div>
                 <div className="stat">
-                  <span className="stat-icon">&#9790;</span>
+                  <span className="stat-icon"><CoinIcon size={16} /></span>
                   <span className="stat-value">{player.coins} coins</span>
                 </div>
                 <div className="stat">
-                  <span className="stat-icon">&#9876;</span>
+                  <span className="stat-icon"><HonorIcon size={16} /></span>
                   <span className="stat-value">{player.honor} honor</span>
                 </div>
                 <div className="stat">
@@ -47,12 +48,7 @@ export const PlayerPanel = () => {
               </div>
               <div className="player-reserves">
                 <span className="reserve-item" title="Bushi in reserve">
-                  <svg className="reserve-icon" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M5 20l3-3h8l3 3H5z" opacity="0.5"/>
-                    <path d="M7 17l1-7h8l1 7H7z"/>
-                    <path d="M9 10V7l3-4 3 4v3H9z"/>
-                    <path d="M11 7h2v3h-2z" opacity="0.7"/>
-                  </svg>
+                  <BushiIcon size={24} className="reserve-icon" />
                   <span className="reserve-count">{player.bushi}</span>
                 </span>
                 <span className="reserve-item" title="Shinto in reserve">
