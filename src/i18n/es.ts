@@ -215,4 +215,6 @@ export const es: Record<TranslationKey, string> = {
   'actions.recruitBushi': 'Bushi',
   'actions.recruitShinto': 'Shinto',
   'actions.recruitDragonflyHint': 'Clan Libelula: puede colocar en cualquier provincia.',
+  'actions.recruitCancelPlace': 'Cancelar Colocacion',
+  'actions.recruitPlaceFigure': 'Colocar Figura',
 };

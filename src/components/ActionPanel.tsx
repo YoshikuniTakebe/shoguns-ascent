@@ -203,7 +203,7 @@ export const ActionPanel = () => {
                 </button>
               </div>
               <button className={`btn-secondary ${recruitMode ? 'active' : ''}`} onClick={toggleRecruitMode}>
-                {recruitMode ? t('actions.recruitSelectProvince') : t('actions.recruitSelectProvince')}
+                {recruitMode ? t('actions.recruitCancelPlace') : t('actions.recruitPlaceFigure')}
               </button>
               {recruitMode && <p className="move-instruction">{t('actions.recruitSelectProvince')}</p>}
               <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipRecruitTurn}>

@@ -226,7 +226,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const ns = chooseMandateTile(gameState, mandate, apid);
     // If train or marshal or recruit mandate is active, wait for resolution before advancing
     if (ns.trainMandateActive || ns.marshalMandateActive || ns.recruitMandateActive) {
-      set({ gameState: ns });
+      // Auto-enable recruitMode when recruit mandate first activates
+      set({ gameState: ns, recruitMode: ns.recruitMandateActive });
     } else {
       set({ gameState: advancePlayer(ns) });
     }
@@ -312,7 +313,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = recruitPlaceFigure(gameState, apid, provinceId, recruitFigureType);
-    set({ gameState: ns });
+    // Auto-advance when placements reach 0
+    if (ns.recruitPlacementsRemaining <= 0) {
+      let advanced = skipRecruitTurn(ns);
+      if (!advanced.recruitMandateActive) {
+        advanced = advancePlayer(advanced);
+      }
+      set({ gameState: advanced, recruitMode: advanced.recruitMandateActive });
+    } else {
+      set({ gameState: ns });
+    }
   },
   doSkipRecruitTurn: () => {
     const { gameState, ws } = get();
@@ -325,7 +335,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.recruitMandateActive) {
       ns = advancePlayer(ns);
     }
-    set({ gameState: ns, recruitMode: false });
+    // Auto-enable recruitMode for next player if mandate is still active
+    set({ gameState: ns, recruitMode: ns.recruitMandateActive });
   },
 
   // --- Kami ---

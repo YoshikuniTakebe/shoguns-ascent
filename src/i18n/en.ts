@@ -213,6 +213,8 @@ export const en = {
   'actions.recruitBushi': 'Bushi',
   'actions.recruitShinto': 'Shinto',
   'actions.recruitDragonflyHint': 'Dragonfly clan: can place in any province.',
+  'actions.recruitCancelPlace': 'Cancel Placement',
+  'actions.recruitPlaceFigure': 'Place Figure',
 } as const;
 
 export type TranslationKey = keyof typeof en;

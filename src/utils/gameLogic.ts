@@ -483,10 +483,6 @@ function executeRecruit(state: GameState, issuerId: string): GameState {
   const resolutionOrder = getResolutionOrder(state, issuerId);
   const issuer = state.players.find((p) => p.id === issuerId);
 
-  // Calculate placements for first player
-  const firstPlayerId = resolutionOrder[0];
-  const firstPlacements = calculateRecruitPlacements(state, firstPlayerId, issuerId);
-
   const newState: GameState = {
     ...state,
     players: state.players.map((p) => ({ ...p })),
@@ -494,16 +490,12 @@ function executeRecruit(state: GameState, issuerId: string): GameState {
     recruitResolutionOrder: resolutionOrder,
     recruitResolutionIndex: 0,
     recruitMandateIssuerId: issuerId,
-    recruitPlacementsRemaining: firstPlacements,
+    recruitPlacementsRemaining: 0,
     log: [...state.log, `Recruit mandate issued by ${issuer?.name ?? 'Player'} - all players may summon figures at their fortresses in resolution order. Issuer and ally get +1 bonus placement.`],
   };
 
-  // Set currentPlayerIndex to the first player in resolution order
-  const firstPlayerIdx = newState.players.findIndex(p => p.id === firstPlayerId);
-  if (firstPlayerIdx >= 0) {
-    newState.currentPlayerIndex = firstPlayerIdx;
-  }
-  return newState;
+  // Use advanceRecruitResolution to set up the first player (auto-skips if 0 placements)
+  return advanceRecruitResolution(newState);
 }
 
 /**
@@ -603,6 +595,17 @@ function advanceRecruitResolution(state: GameState): GameState {
   const nextPlayerId = state.recruitResolutionOrder[state.recruitResolutionIndex];
   const nextPlayerIdx = state.players.findIndex(p => p.id === nextPlayerId);
   const placements = calculateRecruitPlacements(state, nextPlayerId, state.recruitMandateIssuerId!);
+
+  // Auto-skip players with 0 placements
+  if (placements <= 0) {
+    const skippedState: GameState = {
+      ...state,
+      recruitResolutionIndex: state.recruitResolutionIndex + 1,
+      log: [...state.log, `${state.players[nextPlayerIdx]?.name ?? 'Player'} has no placements available - skipped`],
+    };
+    return advanceRecruitResolution(skippedState);
+  }
+
   if (nextPlayerIdx >= 0) {
     return { ...state, currentPlayerIndex: nextPlayerIdx, recruitPlacementsRemaining: placements };
   }
