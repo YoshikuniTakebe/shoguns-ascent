@@ -232,6 +232,7 @@ export function createInitialGameState(
     lastMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
+    logHistory: {},
     hostId,
   };
 
@@ -253,6 +254,9 @@ function shuffleMandates(): MandateType[] {
 // ============================================================
 
 export function setupSeason(state: GameState, season: Season): GameState {
+  // Archive current season's log before transitioning
+  const archivedHistory = { ...state.logHistory, [state.currentSeason]: [...state.log] };
+
   let newState: GameState = {
     ...state,
     players: state.players.map((p) => ({ ...p, seasonCards: [...p.seasonCards], warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages], allies: [...p.allies] })),
@@ -262,7 +266,8 @@ export function setupSeason(state: GameState, season: Season): GameState {
     currentPhase: 'tea' as const,
     currentPlayerIndex: 0,
     teaTurnIndex: 0,
-    log: [...state.log, `Season Setup: ${season.charAt(0).toUpperCase() + season.slice(1)}`],
+    logHistory: archivedHistory,
+    log: [`Season Setup: ${season.charAt(0).toUpperCase() + season.slice(1)}`],
   };
 
   // Place war province tokens (numPlayers + 2) on random provinces
