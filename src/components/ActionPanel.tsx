@@ -212,7 +212,7 @@ export const ActionPanel = () => {
             </div>
           )}
 
-          {!gameState.trainMandateActive && !gameState.marshalMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
+          {!gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
             <button className="btn-primary" onClick={doDrawMandateTiles}>
               {t('actions.drawMandateTiles')}
             </button>
