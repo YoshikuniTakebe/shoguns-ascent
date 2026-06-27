@@ -213,7 +213,7 @@ export const HostageIcon = ({ size = 24, color = 'currentColor', className }: Ic
   </svg>
 );
 
-/** Round furry one-eyed monster with two curved horns - used for Monster units */
+/** Oni demon head with horns, fierce eyes, and fangs - used for Monster units */
 export const MonsterIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
@@ -222,33 +222,37 @@ export const MonsterIcon = ({ size = 24, color = 'currentColor', className }: Ic
     viewBox="0 0 32 32"
     fill="none"
   >
-    {/* Left curved horn */}
-    <path d="M10 12 C9 9, 7 6, 5 4 C6 5, 8 7, 10 10" fill={color} stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    {/* Right curved horn */}
-    <path d="M22 12 C23 9, 25 6, 27 4 C26 5, 24 7, 22 10" fill={color} stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-    {/* Shaggy/fuzzy body silhouette */}
+    {/* Left horn */}
+    <path d="M9 13 C8 10, 6 7, 5 4 C6 6, 8 8, 10 11" fill={color} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    {/* Right horn */}
+    <path d="M23 13 C24 10, 26 7, 27 4 C26 6, 24 8, 22 11" fill={color} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    {/* Wild spiky hair */}
+    <path d="M10 12 C11 9, 13 8, 16 8 C19 8, 21 9, 22 12" fill={color} stroke={color} strokeWidth="0.5" />
+    <path d="M12 10 L13 7.5 L14.5 10" fill={color} stroke={color} strokeWidth="0.5" />
+    <path d="M15 9.5 L16 6.5 L17 9.5" fill={color} stroke={color} strokeWidth="0.5" />
+    <path d="M18 10 L19 7.5 L20 10" fill={color} stroke={color} strokeWidth="0.5" />
+    {/* Face shape */}
     <path
-      d="M8 14 C6 14, 5 16, 5 18 C5 20, 6 22, 7 23 C7 24, 7 26, 9 27 L10 28 L13 28 L13 26 L19 26 L19 28 L22 28 L23 27 C25 26, 25 24, 25 23 C26 22, 27 20, 27 18 C27 16, 26 14, 24 14 C23 12, 21 11, 16 11 C11 11, 9 12, 8 14 Z"
+      d="M8 15 C8 12, 11 10, 16 10 C21 10, 24 12, 24 15 L24 21 C24 25, 21 27, 16 27 C11 27, 8 25, 8 21 Z"
       fill={color}
     />
-    {/* Fuzzy texture bumps on top */}
-    <path
-      d="M10 13 C10 12, 11 11, 12 11.5 M14 11 C14 10, 15 9.5, 16 10.5 M18 11 C18 10, 19 9.5, 20 10.5 M22 13 C22 12, 21 11, 20 11.5"
-      fill="none"
-      stroke={color}
-      strokeWidth="1"
-      strokeLinecap="round"
-    />
-    {/* Eye - white circle */}
-    <circle cx="16" cy="18" r="4.5" fill="white" />
-    {/* Pupil - dark crescent/circle */}
-    <circle cx="16" cy="18" r="2.5" fill="#1a1a2e" />
-    {/* Eye highlight */}
-    <circle cx="14.5" cy="16.5" r="1" fill="white" />
-    {/* Left leg */}
-    <ellipse cx="12" cy="28" rx="2" ry="1.2" fill={color} />
-    {/* Right leg */}
-    <ellipse cx="20" cy="28" rx="2" ry="1.2" fill={color} />
+    {/* Left angry eye */}
+    <path d="M10.5 16 L13 14.5 L14.5 16.5" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="12.5" cy="16.5" r="1.5" fill="white" />
+    <circle cx="12.5" cy="16.5" r="0.8" fill="#1a1a2e" />
+    {/* Right angry eye */}
+    <path d="M21.5 16 L19 14.5 L17.5 16.5" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="19.5" cy="16.5" r="1.5" fill="white" />
+    <circle cx="19.5" cy="16.5" r="0.8" fill="#1a1a2e" />
+    {/* Nose */}
+    <circle cx="15" cy="20" r="1" fill="#1a1a2e" opacity="0.6" />
+    <circle cx="17" cy="20" r="1" fill="#1a1a2e" opacity="0.6" />
+    {/* Mouth with fangs */}
+    <path d="M11 23 C13 25, 19 25, 21 23" fill="none" stroke="#1a1a2e" strokeWidth="1.2" strokeLinecap="round" />
+    {/* Left fang/tusk */}
+    <path d="M12 23 L11.5 26 L13 24" fill="white" stroke="white" strokeWidth="0.5" />
+    {/* Right fang/tusk */}
+    <path d="M20 23 L20.5 26 L19 24" fill="white" stroke="white" strokeWidth="0.5" />
   </svg>
 );
 

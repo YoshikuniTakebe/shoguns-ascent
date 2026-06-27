@@ -157,6 +157,7 @@ export const es: Record<TranslationKey, string> = {
 
   // Season Cards Modal
   'seasonCardsModal.title': 'Cartas de Estaci\u00F3n',
+  'seasonCardsModal.titleSeason': 'Cartas de {season}',
   'seasonCardsModal.force': 'Fuerza: {value}',
   'seasonCardsModal.confirmTitle': 'Confirmar Compra',
   'seasonCardsModal.confirmMessage': '\u00BFComprar {name} por {cost} moneda(s)?',
