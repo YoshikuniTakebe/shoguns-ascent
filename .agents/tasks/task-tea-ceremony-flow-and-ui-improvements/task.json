@@ -1,0 +1,14 @@
+{
+  "task_id": "task-tea-ceremony-flow-and-ui-improvements",
+  "task_description": "Fix tea ceremony turn order to follow honor/seating order, fix politics track name truncation, fix marshalNoBonus i18n key showing, standardize all mandate section formats, ensure player names use clan colors everywhere, fix marshal button width, and enhance GameLog with styled text (player names in clan color, mandates in mandate color, regions in bold italic, VP/ronin/coins with icons).",
+  "status": "completed",
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "skipped",
+    "docker_build": "skipped",
+    "summary": "npx tsc --noEmit passes cleanly. All 7 fixes implemented. Post-review fixes applied: tea ceremony now uses honorTrack[0] (dynamic) instead of turnOrder[0] (static) for starting player, and betray mandate now includes JUGADOR 1 DE 1 counter for consistency with other mandates."
+  },
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}
