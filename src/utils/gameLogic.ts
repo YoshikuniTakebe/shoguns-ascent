@@ -1840,6 +1840,15 @@ export function resolveWinter(state: GameState): GameState {
     }
   });
 
+  // Sol clan power: bonus on end-game VP tiebreak
+  if (winnerId) {
+    const tiedPlayers = newState.players.filter((p) => p.victoryPoints === maxVP);
+    if (tiedPlayers.length > 1) {
+      const losers = tiedPlayers.filter((p) => p.id !== winnerId).map((p) => p.id);
+      applySolTiebreakBonus(newState, winnerId, losers);
+    }
+  }
+
   // Check for allied players sharing victory
   if (winnerId) {
     const winner = newState.players.find((p) => p.id === winnerId)!;
@@ -2059,6 +2068,11 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
   let totalForce = 0;
 
   for (const fig of playerFigures) {
+    // Fortresses do NOT count as force for anyone except Tortuga (handled post-loop)
+    if (fig.type === 'fortress') {
+      continue;
+    }
+
     let figForce = isLuna ? 2 : 1; // Luna base force is 2, others 1
 
     if (fig.type === 'daimyo') {
@@ -2082,12 +2096,6 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
     if (fig.type === 'bushi' && cardIds.has('au-way-of-the-katana') && state.currentPhase === 'war') {
       // All bushi have Force 2 during war phase
       figForce = isLuna ? Math.max(2, figForce) : 2; // Replace base force with 2 (Luna already has 2)
-    }
-
-    // Luna: if a monster has force > 2, use monster's force (overrides luna base)
-    if (fig.type === 'monster' && isLuna) {
-      // Monster force comes from the season card; we already start at 2 for Luna
-      // If card upgrades give more, they stack on top
     }
 
     totalForce += figForce;
