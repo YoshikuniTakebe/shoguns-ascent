@@ -113,6 +113,7 @@ export interface Battle {
   resolved: boolean;
   winner?: string;
   uncontested?: boolean;
+  logStartIndex?: number;
 }
 
 export interface AllianceProposal {

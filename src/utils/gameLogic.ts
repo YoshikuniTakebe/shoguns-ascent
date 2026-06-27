@@ -1707,6 +1707,9 @@ export function resolveNextBattle(state: GameState): GameState {
     return newState;
   }
 
+  // Record the log index where this battle's entries begin
+  battle.logStartIndex = newState.log.length;
+
   // Resolve War Tactics (left to right: Seppuku, Take Hostage, Hire Ronin, Imperial Poets)
   const sortedTactics = [...WAR_TACTICS].sort((a, b) => a.order - b.order);
 
