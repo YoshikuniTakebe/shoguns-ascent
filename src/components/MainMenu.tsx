@@ -74,13 +74,42 @@ export const MainMenu = () => {
 
       {mode === 'select' && (
         <div className="menu-options">
+          <div className="crossed-katanas-decoration">
+            <svg viewBox="0 0 120 40" width="120" height="40" xmlns="http://www.w3.org/2000/svg">
+              <g stroke="#c8a84b" strokeWidth="1.5" fill="none" strokeLinecap="round">
+                {/* Left katana */}
+                <path d="M10 35 Q30 20 60 5" strokeWidth="2" />
+                <path d="M10 35 L6 37" strokeWidth="3" stroke="#8b6914" />
+                <ellipse cx="14" cy="33" rx="3" ry="1.5" stroke="#c8a84b" fill="#c8a84b" opacity="0.5" />
+                {/* Right katana */}
+                <path d="M110 35 Q90 20 60 5" strokeWidth="2" />
+                <path d="M110 35 L114 37" strokeWidth="3" stroke="#8b6914" />
+                <ellipse cx="106" cy="33" rx="3" ry="1.5" stroke="#c8a84b" fill="#c8a84b" opacity="0.5" />
+              </g>
+            </svg>
+          </div>
           <button className="menu-btn" onClick={() => setMode('hotseat')}>
-            <span className="btn-icon">&#9876;</span>
+            <span className="btn-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8" cy="7" r="3.5" />
+                <circle cx="16" cy="7" r="3.5" />
+                <path d="M1 20c0-3.5 3-6 7-6s7 2.5 7 6" opacity="0.7" />
+                <path d="M10 20c0-3.5 3-6 7-6s7 2.5 7 6" opacity="0.7" />
+              </svg>
+            </span>
             <span className="btn-text">{t('menu.hotseatMode')}</span>
             <span className="btn-desc">{t('menu.hotseatDesc')}</span>
           </button>
           <button className="menu-btn" onClick={() => setMode('online')}>
-            <span className="btn-icon">&#9733;</span>
+            <span className="btn-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" />
+                <ellipse cx="12" cy="12" rx="4.5" ry="10" />
+                <path d="M2 12h20" />
+                <path d="M4 7h16" />
+                <path d="M4 17h16" />
+              </svg>
+            </span>
             <span className="btn-text">{t('menu.onlineMode')}</span>
             <span className="btn-desc">{t('menu.onlineDesc')}</span>
           </button>
