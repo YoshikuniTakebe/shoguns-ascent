@@ -221,6 +221,27 @@ export const GameBoard = () => {
         <div className="center-panel">
           <PoliticsTrack />
           <TemplePanel />
+
+          {/* Fujin Interactive Overlay - between kami track and map */}
+          {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.fujinMovesRemaining > 0 && (() => {
+            const { doFujinDone } = useGameStore.getState();
+            return (
+              <div className="kami-action-overlay" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <span>{t('kami.resolution.fujinMoves', { count: String(gameState.fujinMovesRemaining) })}</span>
+                <button className="btn-primary" onClick={doFujinDone} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
+                  {t('kami.resolution.fujinDone')}
+                </button>
+              </div>
+            );
+          })()}
+
+          {/* Raijin Interactive Overlay - between kami track and map */}
+          {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.raijinPlacementActive && (
+            <div className="kami-action-overlay">
+              <span>{t('kami.resolution.raijinPlace')}</span>
+            </div>
+          )}
+
           <div
             className={`map-container${isDragging ? ' dragging' : ''}`}
             ref={containerRef}
@@ -443,25 +464,6 @@ export const GameBoard = () => {
       {/* Kami Resolution Popup */}
       <KamiResolutionPopup />
 
-      {/* Fujin Interactive Overlay */}
-      {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.fujinMovesRemaining > 0 && (() => {
-        const { doFujinDone } = useGameStore.getState();
-        return (
-          <div className="komainu-pray-overlay" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <span>{t('kami.resolution.fujinMoves', { count: String(gameState.fujinMovesRemaining) })}</span>
-            <button className="btn-primary" onClick={doFujinDone} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
-              {t('kami.resolution.fujinDone')}
-            </button>
-          </div>
-        );
-      })()}
-
-      {/* Raijin Interactive Overlay */}
-      {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.raijinPlacementActive && (
-        <div className="komainu-pray-overlay">
-          <span>{t('kami.resolution.raijinPlace')}</span>
-        </div>
-      )}
     </div>
   );
 };

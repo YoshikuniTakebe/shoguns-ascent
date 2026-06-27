@@ -1203,6 +1203,11 @@ export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerI
       if (currentIdx > 0) {
         newState.honorTrack = newState.honorTrack.filter((id) => id !== playerId);
         newState.honorTrack.unshift(playerId);
+        // Update player.honor values to match new positions
+        newState.honorTrack.forEach((pid, idx) => {
+          const p = newState.players.find(pl => pl.id === pid);
+          if (p) p.honor = idx + 1;
+        });
         newState.log = [...newState.log, `${player.name} moves to top of Honor Track (Amaterasu)`];
       }
       break;
@@ -1307,16 +1312,6 @@ export function resolveKamiTurn(state: GameState): GameState {
       continue;
     }
 
-    // Sol clan power: bonus on temple honor tiebreak
-    if (winnerId && forces.length > 1) {
-      const maxForce = Math.max(...forces.map(f => f.count));
-      const tiedInTemple = forces.filter(f => f.count === maxForce);
-      if (tiedInTemple.length > 1) {
-        const losers = tiedInTemple.filter(f => f.playerId !== winnerId).map(f => f.playerId);
-        applySolTiebreakBonus(newState, winnerId, losers);
-      }
-    }
-
     if (winnerId) {
       const winner = newState.players.find((p) => p.id === winnerId);
       if (winner && kamiInfo) {
@@ -1383,17 +1378,6 @@ export function resolveCurrentKamiReward(state: GameState): GameState {
 
   // Auto rewards - apply via resolveKamiAbility
   let newState = resolveKamiAbility(state, kamiType, winnerId);
-
-  // Sol clan tiebreak bonus (same logic as resolveKamiTurn)
-  const temple = newState.temples[currentTemple.templeIndex];
-  if (temple && currentTemple.forces.length > 1) {
-    const maxForce = Math.max(...currentTemple.forces.map(f => f.count));
-    const tiedInTemple = currentTemple.forces.filter(f => f.count === maxForce);
-    if (tiedInTemple.length > 1) {
-      const losers = tiedInTemple.filter(f => f.playerId !== winnerId).map(f => f.playerId);
-      applySolTiebreakBonus(newState, winnerId, losers);
-    }
-  }
 
   return newState;
 }
