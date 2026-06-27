@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Game log styling: VP/PV text in bold red with icon, and coin/moneda text in bold gold with icon",
+  "status": "completed",
+  "steps": [
+    "In src/components/GameLog.tsx, modify the VP pattern replacement (step 5 in renderLogEntry) to style the VP/PV text AND its adjacent number in bold red color (#E63946) alongside the VPIcon. The pattern should match sequences like '3 VP' or '4 PV' and render the number and keyword together in bold red with the icon.",
+    "In src/components/GameLog.tsx, modify the coin pattern replacement (step 7 in renderLogEntry) to style the coin/moneda text AND its adjacent number in bold gold color (#DAA520) alongside the CoinIcon. The pattern should match sequences like '3 monedas' or '5 coins' and render the number and keyword together in bold gold with the icon.",
+    "Ensure the regex patterns capture the preceding number so the entire amount+keyword is styled together (e.g., '4 VP' becomes bold red '4 VP' + icon)."
+  ],
+  "acceptance_criteria": [
+    "Log entries showing VP/PV amounts display the number and VP/PV keyword in bold red (#E63946) with the VP icon",
+    "Log entries showing coin/moneda amounts display the number and coin keyword in bold gold (#DAA520) with the coin icon",
+    "TypeScript compiles without errors"
+  ],
+  "verification": [
+    "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit` and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": "Modified VP and coin patterns in GameLog.tsx renderLogEntry to capture preceding numbers with optional pattern (/(\\ d+\\s*)?\\b/). Added color and fontWeight styles inline. Both tsc --noEmit and vite build pass cleanly."
+}
