@@ -134,3 +134,5 @@
 .clans-title{font-family:'Shippori Mincho',serif;font-size:2rem;font-weight:800;color:#c8a951;letter-spacing:0.2em;text-transform:uppercase;text-shadow:0 0 10px rgba(200,169,81,0.4)}
 
 .btn-randomize{background:transparent;color:var(--accent-gold);border:1px solid var(--accent-gold);padding:0.4rem 0.8rem;border-radius:6px;font-size:0.85rem;cursor:pointer;transition:all 0.2s;white-space:nowrap}.btn-randomize:hover{background:rgba(200,169,81,0.15);transform:translateY(-1px)}
+
+.politics-track-slot.hidden-mandate{background:linear-gradient(145deg,rgba(30,20,50,0.9),rgba(15,10,30,0.95));border:2px solid #4a3a6a;box-shadow:0 0 8px rgba(100,60,180,0.3)}.hidden-illustration{opacity:0.9}

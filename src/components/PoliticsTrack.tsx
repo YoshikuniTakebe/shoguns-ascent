@@ -229,6 +229,38 @@ export const PoliticsTrack = () => {
       const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
       const clanColor = clan?.color || '#888';
       const playerName = player?.name;
+
+      // Loto clan power: mandate tile is face down (hidden from other players)
+      if (mandate.hidden) {
+        return (
+          <div
+            key={`slot-${slotIndex}`}
+            className="politics-track-slot filled hidden-mandate"
+            style={{
+              borderColor: '#4a3a6a',
+              backgroundColor: 'rgba(30, 20, 50, 0.85)',
+            }}
+            title={`Mandato secreto - ${clan?.name || 'Loto'}`}
+          >
+            <div className="slot-illustration hidden-illustration">
+              <svg width={40} height={40} viewBox="0 0 64 64" fill="none">
+                <rect x="8" y="8" width="48" height="48" rx="6" fill="#1a1030" opacity="0.9" />
+                <text x="32" y="42" textAnchor="middle" fontSize="28" fill="#9b7fcf" opacity="0.9" fontFamily="serif">秘</text>
+              </svg>
+            </div>
+            <span className="slot-mandate-label" style={{ color: '#9b7fcf' }}>
+              Secreto
+            </span>
+            {playerName && (
+              <span className="slot-player-name" style={{ color: clanColor }}>
+                {playerName}
+              </span>
+            )}
+            <span className="slot-clan-dot" style={{ backgroundColor: clanColor }} />
+          </div>
+        );
+      }
+
       return (
         <div
           key={`slot-${slotIndex}`}
