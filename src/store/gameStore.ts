@@ -481,18 +481,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const player = gameState.players.find(p => p.id === apid);
     if (!player || player.shinto <= 0) return;
 
-    // Luna clan power: max 2 figures total across all temples
-    if (player.clanId === 'luna') {
-      const totalTempleShinto = gameState.temples.reduce(
-        (count, t) => count + t.figures.filter(f => f.playerId === apid).length, 0
-      );
-      if (totalTempleShinto >= 2) return;
-    }
-
     const templeIndex = gameState.temples.findIndex(t => t.id === templeId);
     if (templeIndex === -1) return;
 
     const temple = gameState.temples[templeIndex];
+    const shintoInThisTemple = temple.figures.filter(f => f.playerId === apid).length;
+
+    // Luna clan power: max 2 shinto per temple (instead of the normal 1)
+    if (player.clanId === 'luna') {
+      if (shintoInThisTemple >= 2) {
+        console.warn(`[Recruit] Luna player ${player.name} already has 2 shinto in ${temple.kamiType} temple`);
+        return;
+      }
+    } else {
+      // Non-Luna clans: max 1 shinto per temple
+      if (shintoInThisTemple >= 1) {
+        console.warn(`[Recruit] Player ${player.name} already has a shinto in ${temple.kamiType} temple`);
+        return;
+      }
+    }
+
     const figureId = Math.random().toString(36).substring(2, 10);
 
     // Add shinto figure to the temple
@@ -702,19 +710,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, komainuPrayPlayerId } = get();
     if (!gameState || !komainuPrayPlayerId) return;
 
-    // Luna clan power: max 2 figures total across all temples
+    // Luna clan power: max 2 figures per temple (non-Luna: max 1)
     const komainuPlayer = gameState.players.find(p => p.id === komainuPrayPlayerId);
-    if (komainuPlayer?.clanId === 'luna') {
-      const totalTempleShinto = gameState.temples.reduce(
-        (count, t) => count + t.figures.filter(f => f.playerId === komainuPrayPlayerId).length, 0
-      );
-      if (totalTempleShinto >= 2) return;
-    }
 
     const templeIndex = gameState.temples.findIndex(t => t.id === templeId);
     if (templeIndex === -1) return;
 
     const temple = gameState.temples[templeIndex];
+    const shintoInThisTemple = temple.figures.filter(f => f.playerId === komainuPrayPlayerId).length;
+
+    if (komainuPlayer?.clanId === 'luna') {
+      if (shintoInThisTemple >= 2) {
+        console.warn(`[Komainu] Luna player ${komainuPlayer.name} already has 2 shinto in ${temple.kamiType} temple`);
+        return;
+      }
+    } else {
+      if (shintoInThisTemple >= 1) {
+        console.warn(`[Komainu] Player ${komainuPlayer?.name} already has a shinto in ${temple.kamiType} temple`);
+        return;
+      }
+    }
+
     const figureId = Math.random().toString(36).substring(2, 10);
 
     // Add shinto figure to the temple
