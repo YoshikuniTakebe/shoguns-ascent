@@ -113,11 +113,24 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
     );
   });
 
-  // 4. Replace province names
+  // 4. Replace province names with colored styling
+  const PROVINCE_COLORS: Record<string, string> = {
+    hokkaido: '#5BC0EB',
+    oshu: '#9B8EC4',
+    edo: '#2D8B4E',
+    kanto: '#E63946',
+    kansai: '#F57C20',
+    nagato: '#8B5CF6',
+    shikoku: '#8B6914',
+    kyushu: '#F5D020',
+  };
   const provincePattern = new RegExp(`\\b(${PROVINCE_NAMES.join('|')})\\b`, 'gi');
-  segments = applyPattern(segments, provincePattern, (m, key) => (
-    <span key={key} style={{ fontWeight: 'bold', fontStyle: 'italic' }}>{m}</span>
-  ));
+  segments = applyPattern(segments, provincePattern, (m, key) => {
+    const color = PROVINCE_COLORS[m.toLowerCase()] || '#fff';
+    return (
+      <span key={key} style={{ fontWeight: 'bold', fontStyle: 'italic', color }}>{m}</span>
+    );
+  });
 
   // 5. Replace VP/PV keywords with icon
   const vpPattern = /\b(VP|PV)\b/gi;
