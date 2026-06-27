@@ -2,7 +2,7 @@
   "id": "FEAT-005",
   "type": "feat",
   "description": "Turn popup and Battle popup styling improvements: (1) Turn popup border in clan color. (2) Battle 'must bet' popup with clan-colored border, clan seal, and region name colored with the region's harvest hex color. (3) Battle bidding sidebar with clan name/seal, coin icon in Total display, and more elegant slider styling. (4) Battle result log with colored player names and clan seals.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "TURN POPUP: In src/components/GameBoard.tsx, in the turnPopupPlayer rendering block, add a border color style on .monster-placement-popup-content using the clan's color. Currently it uses the generic accent-gold border.",
     "BATTLE 'MUST BET' POPUP: In src/components/BattlePanel.tsx, in the hotseat popup phase rendering (effectiveBattleStepPhase === 'popup'), add ClanShield, make the border of .battle-popup-card use playerClan.color, and color the region name (province.name) with its HARVEST_BADGE_META color. Import HARVEST_BADGE_META from GameBoard or define a local mapping of province->color.",
@@ -19,5 +19,5 @@
   ],
   "verification": ["npx vite build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes implemented successfully. Build passes. Used ReactNode type from react for battle log rendering helper. CoinIcon imported from Icons.tsx. REGION_COLORS defined as a local constant mirroring HARVEST_BADGE_META colors."
 }
