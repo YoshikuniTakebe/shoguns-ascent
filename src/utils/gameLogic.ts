@@ -1761,6 +1761,8 @@ export function cleanupSeason(state: GameState): GameState {
     mandatesDeck: shuffleMandates(),
     drawnMandates: [],
     mandateChoicePhase: false,
+    lotoChoicePhase: false,
+    lotoDiscardedMandate: null,
     mandatesThisTurn: [],
     activeBattles: [],
     allianceProposals: [],
@@ -2177,6 +2179,8 @@ export function advancePhase(state: GameState): GameState {
       newState.betrayMandateIssuerId = null;
       newState.drawnMandates = [];
       newState.mandateChoicePhase = false;
+      newState.lotoChoicePhase = false;
+      newState.lotoDiscardedMandate = null;
 
       // Determine the first player for mandate turns
       let firstPlayerId: string;
