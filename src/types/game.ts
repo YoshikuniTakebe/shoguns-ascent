@@ -103,6 +103,7 @@ export interface Mandate {
   type: MandateType;
   issuer: string;
   executed: boolean;
+  hidden?: boolean;
 }
 
 export interface Battle {

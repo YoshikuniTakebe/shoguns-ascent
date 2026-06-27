@@ -461,11 +461,12 @@ export function chooseMandateTile(state: GameState, mandate: MandateType, player
 }
 
 export function executeMandate(state: GameState, mandate: MandateType, playerId: string): GameState {
+  const issuingPlayer = state.players.find((p) => p.id === playerId);
   const newState: GameState = {
     ...state,
     players: state.players.map((p) => ({ ...p, allies: [...p.allies], seasonCards: [...p.seasonCards] })),
     provinces: { ...state.provinces },
-    mandatesThisTurn: [...state.mandatesThisTurn, { type: mandate, issuer: playerId, executed: false }],
+    mandatesThisTurn: [...state.mandatesThisTurn, { type: mandate, issuer: playerId, executed: false, hidden: issuingPlayer?.clanId === 'loto' }],
     log: [...state.log],
   };
   const player = newState.players.find((p) => p.id === playerId);
