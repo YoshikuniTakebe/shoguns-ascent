@@ -15,6 +15,7 @@ import { PoliticsTrack } from './PoliticsTrack';
 import { RegionDetailModal } from './RegionDetailModal';
 import { HarvestPopup } from './HarvestPopup';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon } from './Icons';
+import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 
 const MAP_WIDTH = 1672;
@@ -84,7 +85,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, turnPopupPlayer, dismissTurnPopup } = useGameStore();
   const t = useT();
 
   const [translateX, setTranslateX] = useState(0);
@@ -200,6 +201,7 @@ export const GameBoard = () => {
           )}
         </div>
         <div className="turn-indicator">
+          <ClanShield clanId={cp?.clanId || ''} size={28} />
           <span className="current-player-name" style={{ color: CLANS.find(c => c.id === cp?.clanId)?.color }}>
             {t('game.turn', { name: cp?.name || '' })}
           </span>
@@ -413,6 +415,26 @@ export const GameBoard = () => {
       {selectedRegion && !moveMode && !recruitMode && !betrayMode && !monsterPlacementMode && !buildFortressMode && (
         <RegionDetailModal regionId={selectedRegion} onClose={() => selectRegion(null)} />
       )}
+
+      {/* Turn Popup (hotseat mandate transitions) */}
+      {turnPopupPlayer && gameState.mode === 'hotseat' && (() => {
+        const popupPlayer = gameState.players.find(p => p.id === turnPopupPlayer);
+        if (!popupPlayer) return null;
+        const clanColor = CLANS.find(c => c.id === popupPlayer.clanId)?.color;
+        return (
+          <div className="monster-placement-popup">
+            <div className="monster-placement-popup-content">
+              <ClanShield clanId={popupPlayer.clanId} size={48} />
+              <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem' }}>
+                {t('game.turn', { name: popupPlayer.name })}
+              </p>
+              <button className="monster-placement-btn" onClick={dismissTurnPopup}>
+                {t('game.turnPopupAccept')}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Harvest Popup */}
       <HarvestPopup />

@@ -1,0 +1,25 @@
+{
+  "project_type": "React SPA board game (Shogun's Ascent)",
+  "language": "TypeScript",
+  "build_system": "Vite with TypeScript",
+  "test_framework": "None detected (no test files found)",
+  "build_command": "npx tsc --noEmit",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "Run npx tsc --noEmit to verify no type errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install in project root",
+  "environment_constraints": "No test framework configured. Verification is via TypeScript type checking only.",
+  "contribution_requirements": "None found",
+  "key_patterns": "Zustand store in src/store/gameStore.ts. Game logic pure functions in src/utils/gameLogic.ts. Components in src/components/. i18n with en.ts and es.ts. ClanShield component accepts clanId and size props. CLANS array in src/types/game.ts has color field per clan. Popup pattern: overlay div with class monster-placement-popup used in GameBoard.tsx.",
+  "relevant_files": [
+    "src/utils/gameLogic.ts",
+    "src/components/GameBoard.tsx",
+    "src/store/gameStore.ts",
+    "src/components/ClanShields.tsx",
+    "src/types/game.ts",
+    "src/i18n/es.ts",
+    "src/i18n/en.ts",
+    "src/App.css"
+  ],
+  "directory_structure": "src/components/ - UI components. src/store/ - Zustand store. src/utils/ - game logic functions. src/types/ - TypeScript types. src/i18n/ - translations. src/img/ - clan images."
+}

@@ -278,6 +278,9 @@ export const en = {
   'harvest.received': '{name} has received:',
   'harvest.accept': 'Accept',
 
+  // Turn Popup
+  'game.turnPopupAccept': 'Accept',
+
   // War Tokens Modal
   'warTokens.title': 'War Province Tokens',
   'warTokens.empty': 'No war tokens',
