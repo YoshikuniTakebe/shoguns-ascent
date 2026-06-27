@@ -56,7 +56,7 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
 };
 
 export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSProperties }) => {
-  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure, monsterPlacementMode, monsterPlacementPlayerId, doPlaceMonster, doRaijinPlace } = useGameStore();
+  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure, monsterPlacementMode, monsterPlacementPlayerId, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi } = useGameStore();
   const t = useT();
   if (!gameState) return null;
 
@@ -111,6 +111,16 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
     }
   }
 
+  // Zorro placement target logic
+  let isZorroTarget = false;
+  if (gameState.zorroPlacementActive && gameState.zorroPlacementPlayerId) {
+    const isBattleProvince = gameState.warProvinceSlots.some(s => s.provinceId === regionId);
+    const hasZorroFigure = province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId);
+    if (isBattleProvince && !hasZorroFigure) {
+      isZorroTarget = true;
+    }
+  }
+
   // Recruit province highlighting logic
   let isRecruitTarget = false;
   let isRecruitDimmed = false;
@@ -134,6 +144,11 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   }
 
   const handleClick = () => {
+    // Zorro placement: click province to place bushi
+    if (gameState.zorroPlacementActive && isZorroTarget) {
+      doZorroPlaceBushi(regionId);
+      return;
+    }
     // Raijin placement: click province to summon bushi
     if (gameState.kamiResolutionActive && gameState.raijinPlacementActive) {
       doRaijinPlace(regionId);
@@ -255,7 +270,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
 
   return (
     <div
-      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''}`}
+      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${isZorroTarget ? 'recruit-target' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''}`}
       style={{ ...style, ...(hasTroopsForGlow ? { '--marshal-glow-color': marshalGlowColor } as React.CSSProperties : {}) }}
       onClick={handleClick}
     >

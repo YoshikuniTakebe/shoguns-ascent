@@ -39,7 +39,7 @@ import {
  * Returns partial store state to set battleStepPhase if war is active, empty object otherwise.
  */
 function detectWarTransition(state: GameState): Partial<{ battleStepPhase: 'popup' | 'bidding' | 'result' | null; battleCurrentBiddingIndex: number }> {
-  if (state.currentPhase === 'war' && state.activeBattles.some(b => !b.resolved)) {
+  if (state.currentPhase === 'war' && state.activeBattles.some(b => !b.resolved) && !state.zorroPlacementActive) {
     return { battleStepPhase: 'popup' as const, battleCurrentBiddingIndex: 0 };
   }
   return {};
@@ -146,6 +146,8 @@ interface GameStore {
 
   // War
   doInitiateWar: () => void;
+  doZorroPlaceBushi: (provinceId: string) => void;
+  doZorroSkipPlacement: () => void;
   doSubmitWarTacticBids: (provinceId: string, tacticBids: { [tacticId: string]: number }) => void;
   doResolveNextBattle: () => void;
   doAcceptBattlePopup: () => void;
@@ -1121,6 +1123,82 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = initiateWarPhase(gameState);
+    if (ns.zorroPlacementActive) {
+      // Zorro needs to place first, don't start battles yet
+      set({ gameState: ns, battleCurrentBiddingIndex: 0 });
+    } else {
+      set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    }
+  },
+
+  doZorroPlaceBushi: (provinceId: string) => {
+    const { gameState } = get();
+    if (!gameState) return;
+    if (!gameState.zorroPlacementActive || !gameState.zorroPlacementPlayerId) return;
+
+    const zorroPlayer = gameState.players.find(p => p.id === gameState.zorroPlacementPlayerId);
+    if (!zorroPlayer) return;
+
+    // Validate: province must be a battle province where Zorro has no figures
+    const isBattleProvince = gameState.warProvinceSlots.some(s => s.provinceId === provinceId);
+    if (!isBattleProvince) return;
+
+    const province = gameState.provinces[provinceId];
+    if (!province) return;
+
+    const hasOwnFigure = province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId);
+    if (hasOwnFigure) return;
+
+    if (zorroPlayer.bushi <= 0) return;
+
+    // Place bushi
+    const newPlayers = gameState.players.map(p => {
+      if (p.id === gameState.zorroPlacementPlayerId) {
+        return { ...p, bushi: p.bushi - 1 };
+      }
+      return p;
+    });
+
+    const newFigure = { type: 'bushi' as const, owner: gameState.zorroPlacementPlayerId!, id: `fig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` };
+    const newProvinces = {
+      ...gameState.provinces,
+      [provinceId]: { ...province, figures: [...province.figures, newFigure] },
+    };
+
+    const newRemaining = gameState.zorroPlacementsRemaining - 1;
+    const placementDone = newRemaining <= 0;
+
+    const newLog = [...gameState.log, `${zorroPlayer.name} (Zorro) coloca 1 Bushi en ${province.name}`];
+
+    const ns: GameState = {
+      ...gameState,
+      players: newPlayers,
+      provinces: newProvinces,
+      zorroPlacementsRemaining: newRemaining,
+      zorroPlacementActive: !placementDone,
+      zorroPlacementPlayerId: placementDone ? null : gameState.zorroPlacementPlayerId,
+      log: newLog,
+    };
+
+    if (placementDone) {
+      set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    } else {
+      set({ gameState: ns });
+    }
+  },
+
+  doZorroSkipPlacement: () => {
+    const { gameState } = get();
+    if (!gameState) return;
+    if (!gameState.zorroPlacementActive) return;
+
+    const ns: GameState = {
+      ...gameState,
+      zorroPlacementActive: false,
+      zorroPlacementPlayerId: null,
+      zorroPlacementsRemaining: 0,
+    };
+
     set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
   },
   doSubmitWarTacticBids: (provinceId, tacticBids) => {
