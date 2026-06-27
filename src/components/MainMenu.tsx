@@ -5,6 +5,7 @@ import type { DeckConfig, DeckName } from '../types/game';
 import type { TranslationKey } from '../i18n';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
+import { shuffle } from '../utils/gameLogic';
 
 const CLAN_POWERS: Record<string, string> = {
   koi: 'Monedas como Ronin. Al inicio de Guerra cambia Ronin por Monedas. En Contratar Ronin, sus Monedas suman Fuerza.',
@@ -130,6 +131,17 @@ export const MainMenu = () => {
               );
             })}
           </div>
+          <div className="setup-actions" style={{ justifyContent: 'flex-start', marginTop: '0.5rem', marginBottom: '1rem' }}>
+            <button
+              className="btn-secondary"
+              onClick={() => {
+                const shuffled = shuffle(CLANS.map(c => c.id));
+                setClans(shuffled);
+              }}
+            >
+              &#127922; Randomize
+            </button>
+          </div>
           <div className="deck-config-section">
             <h3>{t('deck.config')}</h3>
             <div className="deck-group-selector">
@@ -231,7 +243,7 @@ export const MainMenu = () => {
       )}
 
       <div className="menu-footer">
-        <p>{t('menu.clans')}</p>
+        <p className="clans-title">{t('menu.clans')}</p>
         <div className="clan-preview-list">
           {CLANS.map(c => (
             <div key={c.id} className="clan-preview-seal-wrapper">

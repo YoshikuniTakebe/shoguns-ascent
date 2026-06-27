@@ -15,6 +15,16 @@ const KAMI_BASE_EFFECT_KEYS: Record<KamiType, TranslationKey> = {
   tsukuyomi: 'kami.tsukuyomi.baseEffect',
 };
 
+const KAMI_SUMMARY_KEYS: Record<KamiType, TranslationKey> = {
+  amaterasu: 'kami.amaterasu.summary',
+  fujin: 'kami.fujin.summary',
+  hachiman: 'kami.hachiman.summary',
+  raijin: 'kami.raijin.summary',
+  ryujin: 'kami.ryujin.summary',
+  susanoo: 'kami.susanoo.summary',
+  tsukuyomi: 'kami.tsukuyomi.summary',
+};
+
 import amaterasuImg from '../img/Amaterasu.png';
 import fujinImg from '../img/Fujin.png';
 import hachimanImg from '../img/Hachiman.png';
@@ -139,7 +149,7 @@ export const TemplePanel = () => {
                   {kami?.name || temple.kamiType}
                 </div>
                 <div className="kami-slot-effect">
-                  {kami ? t(KAMI_BASE_EFFECT_KEYS[kami.type]) : ''}
+                  {kami ? t(KAMI_SUMMARY_KEYS[kami.type]) : ''}
                 </div>
               </div>
               {temple.figures.length > 0 && (

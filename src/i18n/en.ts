@@ -16,7 +16,7 @@ export const en = {
   'menu.clan': 'Clan:',
   'menu.lobbyId': 'Lobby ID:',
   'menu.join': 'Join',
-  'menu.clans': 'Clans:',
+  'menu.clans': 'CLANS',
   'menu.initialHonor': 'Initial Honor:',
 
   // Deck Config
@@ -54,6 +54,7 @@ export const en = {
   'actions.accept': 'Accept',
   'actions.proposeAlliance': 'Propose Alliance:',
   'actions.endTeaTurn': 'End My Tea Turn',
+  'actions.teaActivePlayer': '{name} propose an alliance',
   'actions.politics': 'Politics - Mandate {current}/{total}',
   'actions.politicsDesc': 'Draw mandate tiles and pick one for all players to execute.',
   'actions.trainNotice': 'Train mandate - {name} may buy a card from the Season Market or skip.',
@@ -162,6 +163,15 @@ export const en = {
 
   // Kami Effects (Expansion)
   'kami.amaterasu.expansionEffect': 'Figures of highest-honor player in this Province cannot be killed by others.',
+
+  // Kami Summaries (short)
+  'kami.amaterasu.summary': 'Honor #1',
+  'kami.fujin.summary': '+2 Moves',
+  'kami.raijin.summary': 'Summon 1 Bushi anywhere',
+  'kami.ryujin.summary': 'Buy 1 Season Card',
+  'kami.hachiman.summary': '+2 Ronin',
+  'kami.susanoo.summary': 'VP = Fortresses on map',
+  'kami.tsukuyomi.summary': '+2 Coins',
   'kami.fujin.expansionEffect': 'Double Harvest reward here. War winner also gets Harvest reward.',
   'kami.hachiman.expansionEffect': 'Ronin count as Force 2 each in this Province.',
   'kami.raijin.expansionEffect': 'Only Bushi and Kami count Force in this Province.',

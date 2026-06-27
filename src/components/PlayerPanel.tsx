@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { Player } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { BushiIcon, CoinIcon, HonorIcon, VPIcon, RoninIcon, ShintoIcon, FortressIcon, WarTokenIcon, HostageIcon } from './Icons';
+import { BushiIcon, CoinIcon, HonorIcon, VPIcon, RoninIcon, ShintoIcon, FortressIcon, WarTokenIcon, HostageIcon, DaimyoIcon, MonsterIcon } from './Icons';
 import { PlayerCardsModal } from './PlayerCardsModal';
 import { WarTokensModal } from './WarTokensModal';
 import { HostagesModal } from './HostagesModal';
@@ -67,11 +67,18 @@ export const PlayerPanel = () => {
                   <ShintoIcon size={24} color={clan.color} className="reserve-icon" />
                   <span className="reserve-count">{player.shinto}</span>
                 </span>
-                <span className="reserve-item" title="Total fortresses">
+                <span className="reserve-item" title="Fortresses in reserve">
                   <FortressIcon size={24} color={clan.color} className="reserve-icon" />
-                  <span className="reserve-count">{player.fortresses + Object.values(gameState.provinces).reduce((count, prov) => count + prov.figures.filter(f => f.type === 'fortress' && f.owner === player.id).length, 0)}</span>
+                  <span className="reserve-count">{player.fortresses}</span>
                 </span>
-                {player.hasDaimyo && <span className="reserve-item daimyo-indicator">&#9813;</span>}
+                <span className="reserve-item" title="Daimyo in reserve">
+                  <DaimyoIcon size={24} color={clan.color} className="reserve-icon" />
+                  <span className="reserve-count">{player.hasDaimyo ? 1 : 0}</span>
+                </span>
+                <span className="reserve-item" title="Monsters in reserve">
+                  <MonsterIcon size={24} color={clan.color} className="reserve-icon" />
+                  <span className="reserve-count">{player.monsters ?? 0}</span>
+                </span>
               </div>
               <div className="player-extras">
                 {player.warProvinceTokens.length > 0 && (
