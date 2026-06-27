@@ -130,3 +130,5 @@
 .log-season-tabs{display:flex;gap:0.3rem;margin-bottom:0.3rem;flex-wrap:wrap}.log-season-tab{padding:0.15rem 0.5rem;font-size:0.65rem;font-weight:bold;background:var(--bg-dark);border:1px solid var(--border-gold);border-radius:4px;color:var(--text-secondary);cursor:pointer;transition:all 0.2s;letter-spacing:0.03em}.log-season-tab:hover{border-color:var(--accent-gold);background:rgba(200,169,81,0.08)}.log-season-tab.active{background:rgba(200,169,81,0.15);border-color:var(--accent-gold);color:var(--accent-gold)}
 
 .clans-title{font-family:'Shippori Mincho',serif;font-size:2rem;font-weight:800;color:#c8a951;letter-spacing:0.2em;text-transform:uppercase;text-shadow:0 0 10px rgba(200,169,81,0.4)}
+
+.btn-randomize{background:transparent;color:var(--accent-gold);border:1px solid var(--accent-gold);padding:0.4rem 0.8rem;border-radius:6px;font-size:0.85rem;cursor:pointer;transition:all 0.2s;white-space:nowrap}.btn-randomize:hover{background:rgba(200,169,81,0.15);transform:translateY(-1px)}

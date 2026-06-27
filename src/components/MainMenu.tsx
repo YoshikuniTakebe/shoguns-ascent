@@ -97,6 +97,15 @@ export const MainMenu = () => {
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
+            <button
+              className="btn-randomize"
+              onClick={() => {
+                const shuffled = shuffle(CLANS.map(c => c.id));
+                setClans(shuffled);
+              }}
+            >
+              &#127922; {t('menu.randomize')}
+            </button>
           </div>
           <div className="player-setup-list">
             {Array.from({ length: pc }, (_, i) => {
@@ -131,17 +140,7 @@ export const MainMenu = () => {
               );
             })}
           </div>
-          <div className="setup-actions" style={{ justifyContent: 'flex-start', marginTop: '0.5rem', marginBottom: '1rem' }}>
-            <button
-              className="btn-secondary"
-              onClick={() => {
-                const shuffled = shuffle(CLANS.map(c => c.id));
-                setClans(shuffled);
-              }}
-            >
-              &#127922; {t('menu.randomize')}
-            </button>
-          </div>
+
           <div className="deck-config-section">
             <h3>{t('deck.config')}</h3>
             <div className="deck-group-selector">

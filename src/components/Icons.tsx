@@ -213,18 +213,43 @@ export const HostageIcon = ({ size = 24, color = 'currentColor', className }: Ic
   </svg>
 );
 
-import monsterIcoUrl from '../img/monster_ico.png';
-
-/** Monster icon using custom uploaded image */
-export const MonsterIcon = ({ size = 24, className }: IconProps) => (
-  <img
+/** Round furry one-eyed monster with two curved horns - used for Monster units */
+export const MonsterIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
     className={className}
-    src={monsterIcoUrl}
     width={size}
     height={size}
-    alt="Monster"
-    style={{ objectFit: 'contain' }}
-  />
+    viewBox="0 0 32 32"
+    fill="none"
+  >
+    {/* Left curved horn */}
+    <path d="M10 12 C9 9, 7 6, 5 4 C6 5, 8 7, 10 10" fill={color} stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    {/* Right curved horn */}
+    <path d="M22 12 C23 9, 25 6, 27 4 C26 5, 24 7, 22 10" fill={color} stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    {/* Shaggy/fuzzy body silhouette */}
+    <path
+      d="M8 14 C6 14, 5 16, 5 18 C5 20, 6 22, 7 23 C7 24, 7 26, 9 27 L10 28 L13 28 L13 26 L19 26 L19 28 L22 28 L23 27 C25 26, 25 24, 25 23 C26 22, 27 20, 27 18 C27 16, 26 14, 24 14 C23 12, 21 11, 16 11 C11 11, 9 12, 8 14 Z"
+      fill={color}
+    />
+    {/* Fuzzy texture bumps on top */}
+    <path
+      d="M10 13 C10 12, 11 11, 12 11.5 M14 11 C14 10, 15 9.5, 16 10.5 M18 11 C18 10, 19 9.5, 20 10.5 M22 13 C22 12, 21 11, 20 11.5"
+      fill="none"
+      stroke={color}
+      strokeWidth="1"
+      strokeLinecap="round"
+    />
+    {/* Eye - white circle */}
+    <circle cx="16" cy="18" r="4.5" fill="white" />
+    {/* Pupil - dark crescent/circle */}
+    <circle cx="16" cy="18" r="2.5" fill="#1a1a2e" />
+    {/* Eye highlight */}
+    <circle cx="14.5" cy="16.5" r="1" fill="white" />
+    {/* Left leg */}
+    <ellipse cx="12" cy="28" rx="2" ry="1.2" fill={color} />
+    {/* Right leg */}
+    <ellipse cx="20" cy="28" rx="2" ry="1.2" fill={color} />
+  </svg>
 );
 
 /** Ronin warrior in attack pose framed in hexagon border */
