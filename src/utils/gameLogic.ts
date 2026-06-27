@@ -366,7 +366,7 @@ export function breakAllAlliances(state: GameState): GameState {
   return newState;
 }
 
-export function proposeAlliance(state: GameState, fromId: string, toId: string): GameState {
+export function proposeAlliance(state: GameState, fromId: string, toId: string, bribeAmount: number = 0): GameState {
   const newState = { ...state, allianceProposals: [...state.allianceProposals], log: [...state.log] };
   const from = newState.players.find((p) => p.id === fromId);
   const to = newState.players.find((p) => p.id === toId);
@@ -390,9 +390,13 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string):
     return acceptAlliance(state, toId, fromId);
   }
 
-  const proposal: AllianceProposal = { from: fromId, to: toId };
+  const proposal: AllianceProposal = { from: fromId, to: toId, bribeAmount: bribeAmount > 0 ? bribeAmount : undefined };
   newState.allianceProposals.push(proposal);
-  newState.log = [...newState.log, `${from.name} proposes alliance to ${to.name}`];
+  if (bribeAmount > 0) {
+    newState.log = [...newState.log, `${from.name} proposes alliance to ${to.name} offering ${bribeAmount} monedas`];
+  } else {
+    newState.log = [...newState.log, `${from.name} proposes alliance to ${to.name}`];
+  }
   return newState;
 }
 
@@ -409,6 +413,22 @@ export function acceptAlliance(state: GameState, fromId: string, toId: string): 
 
   // Each player can have exactly 1 ally (pair system)
   if (from.allies.length > 0 || to.allies.length > 0) return state;
+
+  // Find the proposal to get the bribe amount
+  const proposal = newState.allianceProposals.find(
+    (ap) => ap.from === fromId && ap.to === toId
+  );
+  const bribeAmount = proposal?.bribeAmount || 0;
+
+  // Transfer bribe coins from proposer to accepter
+  if (bribeAmount > 0) {
+    const actualBribe = Math.min(bribeAmount, from.coins);
+    if (actualBribe > 0) {
+      from.coins -= actualBribe;
+      to.coins += actualBribe;
+      newState.log = [...newState.log, `${to.name} receives ${actualBribe} monedas as alliance bribe from ${from.name}`];
+    }
+  }
 
   from.allies = [toId];
   to.allies = [fromId];
