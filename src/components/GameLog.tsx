@@ -147,6 +147,16 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
     monstruo: MonsterIcon,
   };
 
+  // Match monster(MonsterName) pattern first (from marshal move logs)
+  const monsterNamePattern = /monster\(([^)]+)\)/gi;
+  segments = applyPattern(segments, monsterNamePattern, (m, key) => {
+    const nameMatch = /monster\(([^)]+)\)/i.exec(m);
+    const monsterName = nameMatch ? nameMatch[1] : m;
+    return (
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{MonsterIcon({ size: 14, color: troopIconColor })}{monsterName}</span>
+    );
+  });
+
   const troopPattern = /\b(bushi|shinto|daimyo|fortress|fortaleza|monster|monstruo)\b/gi;
   segments = applyPattern(segments, troopPattern, (m, key) => {
     const IconComponent = troopTypeIconMap[m.toLowerCase()];
