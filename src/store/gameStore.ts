@@ -426,7 +426,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       moveFrom: null,
       selectedFigures: [],
       ...detectWarTransition(ns),
-      ...(ns.marshalMandateActive && gameState.mode === 'hotseat' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}),
+      ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' && !ns.kamiResolutionActive ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}),
     });
   },
   doBuildFortress: (provinceId: string) => {

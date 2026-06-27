@@ -4,7 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCES_DATA } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
-import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon } from './Icons';
+import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon } from './Icons';
 
 const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
   // SVG-based icons for bushi, shinto, fortress; Unicode for others
@@ -33,6 +33,13 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
     return (
       <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
         <DaimyoIcon size={14} color={color} />
+      </span>
+    );
+  }
+  if (figure.type === 'monster') {
+    return (
+      <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
+        <MonsterIcon size={14} color={color} />
       </span>
     );
   }

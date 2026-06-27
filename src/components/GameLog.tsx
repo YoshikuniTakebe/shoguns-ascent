@@ -94,25 +94,44 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
     );
   });
 
-  // 3. Replace province names
+  // 3. Replace kami names with their colors
+  const KAMI_LOG_COLORS: Record<string, string> = {
+    amaterasu: '#FFD700',
+    fujin: '#4ECDC4',
+    raijin: '#9B59B6',
+    ryujin: '#3498DB',
+    hachiman: '#E74C3C',
+    susanoo: '#E67E22',
+    tsukuyomi: '#7F8C8D',
+  };
+  const kamiNames = ['Amaterasu', 'Fujin', 'Raijin', 'Ryujin', 'Hachiman', 'Susanoo', 'Tsukuyomi'];
+  const kamiPattern = new RegExp(`(?<!\\w)(${kamiNames.join('|')})(?!\\w)`, 'gi');
+  segments = applyPattern(segments, kamiPattern, (m, key) => {
+    const color = KAMI_LOG_COLORS[m.toLowerCase()] || '#fff';
+    return (
+      <span key={key} style={{ color, fontWeight: 'bold' }}>{m}</span>
+    );
+  });
+
+  // 4. Replace province names
   const provincePattern = new RegExp(`\\b(${PROVINCE_NAMES.join('|')})\\b`, 'gi');
   segments = applyPattern(segments, provincePattern, (m, key) => (
     <span key={key} style={{ fontWeight: 'bold', fontStyle: 'italic' }}>{m}</span>
   ));
 
-  // 4. Replace VP/PV keywords with icon
+  // 5. Replace VP/PV keywords with icon
   const vpPattern = /\b(VP|PV)\b/gi;
   segments = applyPattern(segments, vpPattern, (m, key) => (
     <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<VPIcon size={14} /></span>
   ));
 
-  // 5. Replace ronin keyword with icon
+  // 6. Replace ronin keyword with icon
   const roninPattern = /\b(ronin|ronins)\b/gi;
   segments = applyPattern(segments, roninPattern, (m, key) => (
     <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<RoninIcon size={14} /></span>
   ));
 
-  // 6. Replace moneda/monedas/coin/coins keyword with icon
+  // 7. Replace moneda/monedas/coin/coins keyword with icon
   const coinPattern = /\b(moneda|monedas|coin|coins)\b/gi;
   segments = applyPattern(segments, coinPattern, (m, key) => (
     <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<CoinIcon size={14} /></span>
