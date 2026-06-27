@@ -122,10 +122,10 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
     );
   });
 
-  // 5. Replace VP/PV keywords with icon
-  const vpPattern = /\b(VP|PV)\b/gi;
+  // 5. Replace VP/PV keywords (and preceding number if present) with bold red + icon
+  const vpPattern = /(\d+\s*)?\b(VP|PV)\b/gi;
   segments = applyPattern(segments, vpPattern, (m, key) => (
-    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<VPIcon size={14} /></span>
+    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#E63946', fontWeight: 'bold' }}>{m}<VPIcon size={14} /></span>
   ));
 
   // 6. Replace ronin keyword with icon
@@ -134,10 +134,10 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
     <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<RoninIcon size={14} /></span>
   ));
 
-  // 7. Replace moneda/monedas/coin/coins keyword with icon
-  const coinPattern = /\b(moneda|monedas|coin|coins)\b/gi;
+  // 7. Replace moneda/monedas/coin/coins keyword (and preceding number if present) with bold gold + icon
+  const coinPattern = /(\d+\s*)?\b(moneda|monedas|coin|coins)\b/gi;
   segments = applyPattern(segments, coinPattern, (m, key) => (
-    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<CoinIcon size={14} /></span>
+    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}>{m}<CoinIcon size={14} /></span>
   ));
 
   // Convert segments to ReactNode array using positional index for keys
