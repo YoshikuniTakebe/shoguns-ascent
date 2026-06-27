@@ -606,28 +606,31 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
   }
 
   // For bushi (and monster) placements, enforce one-per-fortress-province rule.
-  // Shinto placements do NOT consume a fortress slot (they go to temples).
+  // Shinto placements do NOT consume a fortress slot (they go to temples or provinces freely).
+  // Rule: each fortress province can be used once for a "base" bushi/monster placement.
+  // If the player is issuer/ally, they get +1 bonus that can go to ANY fortress province (even one already used).
   if (figureType === 'bushi' || figureType === 'monster') {
-    // Calculate how many base placements (= number of fortresses) and bonus placements (= 1 if issuer/ally).
-    let totalFortresses = 0;
-    for (const prov of Object.values(state.provinces)) {
-      totalFortresses += prov.figures.filter(f => f.owner === playerId && f.type === 'fortress').length;
-    }
-    const isBonus = state.recruitMandateIssuerId ? isIssuerOrAlly(state, playerId, state.recruitMandateIssuerId) : false;
-    const bonusPlacements = isBonus ? 1 : 0;
-    const basePlacements = totalFortresses;
-    const usedBaseProvinces = state.recruitUsedFortressProvinces;
+    const usedProvinces = state.recruitUsedFortressProvinces;
+    const timesProvinceUsed = usedProvinces.filter(p => p === provinceId).length;
 
-    // If all base placements have been used, this must be a bonus placement (can go anywhere with a fortress).
-    // If base placements are still available, enforce the restriction: province must not already be used.
-    if (usedBaseProvinces.length < basePlacements) {
-      // This is a base placement - province must not be already used
-      if (usedBaseProvinces.includes(provinceId)) return state;
-    } else if (usedBaseProvinces.length >= basePlacements && bonusPlacements > 0) {
-      // This is a bonus placement - can go to any fortress province (no restriction)
+    if (timesProvinceUsed === 0) {
+      // First bushi/monster in this province - always allowed (base placement)
     } else {
-      // No placements available
-      return state;
+      // Province already used for a base placement - only allow if bonus is available.
+      // Bonus is available when: player is issuer/ally AND only one bonus placement is allowed.
+      const isBonus = state.recruitMandateIssuerId ? isIssuerOrAlly(state, playerId, state.recruitMandateIssuerId) : false;
+
+      if (!isBonus) {
+        // Not issuer/ally - cannot reuse a province
+        return state;
+      }
+
+      // Count how many provinces have been used more than once (bonus uses)
+      const bonusUsesConsumed = usedProvinces.length - new Set(usedProvinces).size;
+      if (bonusUsesConsumed >= 1) {
+        // Bonus already consumed on another duplicate - block
+        return state;
+      }
     }
   }
 
