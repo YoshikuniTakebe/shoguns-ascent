@@ -139,7 +139,7 @@ export const MainMenu = () => {
                 setClans(shuffled);
               }}
             >
-              &#127922; Randomize
+              &#127922; {t('menu.randomize')}
             </button>
           </div>
           <div className="deck-config-section">

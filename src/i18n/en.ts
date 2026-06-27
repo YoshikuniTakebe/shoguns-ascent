@@ -17,6 +17,7 @@ export const en = {
   'menu.lobbyId': 'Lobby ID:',
   'menu.join': 'Join',
   'menu.clans': 'CLANS',
+  'menu.randomize': 'Randomize',
   'menu.initialHonor': 'Initial Honor:',
 
   // Deck Config
@@ -55,6 +56,7 @@ export const en = {
   'actions.proposeAlliance': 'Propose Alliance:',
   'actions.endTeaTurn': 'End My Tea Turn',
   'actions.teaActivePlayer': '{name} propose an alliance',
+  'actions.teaActivePlayerSuffix': 'propose an alliance',
   'actions.politics': 'Politics - Mandate {current}/{total}',
   'actions.politicsDesc': 'Draw mandate tiles and pick one for all players to execute.',
   'actions.trainNotice': 'Train mandate - {name} may buy a card from the Season Market or skip.',
