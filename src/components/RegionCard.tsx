@@ -71,9 +71,16 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   const isLibelula = activePlayer?.clanId === 'libelula';
 
   // Move target logic: for Libelula during marshal, all provinces except moveFrom are valid
+  // For Fujin movement, use the fujin player's clan for Libelula check
+  const movePlayerClan = isFujinMove
+    ? gameState.players.find(p => p.id === fujinPlayerId)?.clanId
+    : activePlayer?.clanId;
+  const isMovePlayerLibelula = movePlayerClan === 'libelula';
   let isMoveTarget = false;
   if (moveMode && moveFrom && moveFrom !== regionId && selectedFigures.length > 0) {
     if (isMarshalMove && isLibelula) {
+      isMoveTarget = true;
+    } else if (isFujinMove && isMovePlayerLibelula) {
       isMoveTarget = true;
     } else {
       const moveFromData = PROVINCES_DATA.find(p => p.id === moveFrom);

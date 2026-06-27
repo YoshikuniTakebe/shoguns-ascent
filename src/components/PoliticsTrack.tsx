@@ -177,13 +177,14 @@ export const PoliticsTrack = () => {
   useEffect(() => {
     if (gameState?.trainMandateActive) {
       setShowSeasonCards(true);
-    } else if (gameState?.ryujinBuyActive) {
+    } else if (gameState?.ryujinBuyActive && gameState?.kamiResolutionStep === 'interactive') {
+      // Only open for Ryujin when in interactive step (not while showing popup)
       setShowSeasonCards(true);
     } else {
       // Auto-close when train mandate completes
       setShowSeasonCards(false);
     }
-  }, [gameState?.trainMandateActive, gameState?.ryujinBuyActive]);
+  }, [gameState?.trainMandateActive, gameState?.ryujinBuyActive, gameState?.kamiResolutionStep]);
 
   // Close the modal when monster placement is active
   useEffect(() => {

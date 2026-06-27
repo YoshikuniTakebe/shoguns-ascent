@@ -655,6 +655,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
       log: [...gameState.log, `${monsterPlacementCard.name} placed in ${province.name}`],
     };
 
+    // If placing during Ryujin kami resolution, advance kami resolution instead of train
+    if (ns.kamiResolutionActive) {
+      ns = advanceKamiResolution(ns);
+      const clearState = {
+        gameState: ns,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null as SeasonCard | null,
+        monsterPlacementPlayerId: null as string | null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      };
+      if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
+        set({ ...clearState, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+      } else {
+        set(clearState);
+      }
+      return;
+    }
+
     // Advance train resolution
     ns = {
       ...ns,
@@ -752,8 +771,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
     let ns: GameState = {
       ...gameState,
       temples: updatedTemples,
-      trainResolutionIndex: gameState.trainResolutionIndex + 1,
       log: [...gameState.log, `Komainu placed as shinto at ${temple.kamiType} temple`],
+    };
+
+    // If placing during Ryujin kami resolution, advance kami resolution instead of train
+    if (ns.kamiResolutionActive) {
+      ns = advanceKamiResolution(ns);
+      const clearState = {
+        gameState: ns,
+        komainuPrayMode: false,
+        komainuPrayPlayerId: null as string | null,
+        monsterPlacementPlayerId: null as string | null,
+      };
+      if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
+        set({ ...clearState, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+      } else {
+        set(clearState);
+      }
+      return;
+    }
+
+    ns = {
+      ...ns,
+      trainResolutionIndex: gameState.trainResolutionIndex + 1,
     };
     ns = advanceTrainResolution(ns);
 
@@ -833,6 +873,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
     if (!currentTemple) return;
 
+    // If no winner (empty temple), auto-advance without showing anything interactive
+    if (!currentTemple.winnerId) {
+      let ns = advanceKamiResolution(gameState);
+      if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
+        set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+      } else {
+        set({ gameState: ns });
+      }
+      return;
+    }
+
     // Apply the reward for the current temple
     let ns = resolveCurrentKamiReward(gameState);
 
@@ -851,7 +902,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
-    // Auto reward applied (or no winner) - advance to next temple
+    // Auto reward applied - advance to next temple
     ns = advanceKamiResolution(ns);
 
     // If resolution just finished and we are in hotseat, show turn popup for next player
@@ -972,6 +1023,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Buy the card at full cost (no issuer discount)
     const ns = ryujinBuyCard(gameState, currentTemple.winnerId, cardId);
 
+    // Check if the bought card is a monster - if so, enter monster placement flow
+    const boughtCard = ns.players.find(p => p.id === currentTemple.winnerId)?.seasonCards.find(c => c.id === cardId);
+    if (boughtCard && boughtCard.cardType === 'monster') {
+      // Komainu special case: show choice between map and pray
+      if (boughtCard.id === 'sp-komainu') {
+        set({
+          gameState: { ...ns, ryujinBuyActive: false },
+          monsterPlacementCard: boughtCard,
+          monsterPlacementPlayerId: currentTemple.winnerId,
+          komainuChoiceVisible: true,
+          monsterPlacementPopupVisible: false,
+          monsterPlacementMode: false,
+        });
+      } else {
+        // Show popup asking where to place the monster
+        set({
+          gameState: { ...ns, ryujinBuyActive: false },
+          monsterPlacementCard: boughtCard,
+          monsterPlacementPlayerId: currentTemple.winnerId,
+          monsterPlacementPopupVisible: true,
+          monsterPlacementMode: false,
+          komainuChoiceVisible: false,
+        });
+      }
+      return;
+    }
+
+    // Non-monster card: advance normally
     let updated: GameState = {
       ...ns,
       ryujinBuyActive: false,
