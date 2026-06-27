@@ -211,16 +211,22 @@ export const TemplePanel = () => {
             {figuresByClan.length > 0 && (
               <div className="kami-modal-figures">
                 <h4 className="kami-modal-figures-title">{t('kamiModal.shintoFigures')}</h4>
-                {figuresByClan.map(({ clanId, clanName, color, count }) => (
-                  <div key={clanId} className="kami-modal-figure-row">
-                    <span
-                      className="kami-modal-clan-dot"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="kami-modal-clan-name">{clanName}</span>
-                    <span className="kami-modal-figure-count">{count}</span>
-                  </div>
-                ))}
+                {figuresByClan.map(({ clanId, clanName, color, count }) => {
+                  const force = clanId === 'luna' ? count * 2 : count * 1;
+                  return (
+                    <div key={clanId} className="kami-modal-figure-row">
+                      <span
+                        className="kami-modal-clan-dot"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="kami-modal-clan-name">{clanName}</span>
+                      <span className="kami-modal-figure-count">{count}</span>
+                      <span className="kami-modal-figure-force" style={{ color: '#DAA520', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
+                        (Fuerza: {force})
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

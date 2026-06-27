@@ -2,7 +2,7 @@
   "id": "FEAT-007",
   "type": "feat",
   "description": "Temple/Kami modal prayer force display and Game Log colored region names: (1) In the Kami/temple detail modal (TemplePanel.tsx), show the total prayer force for each clan present, applying modifiers like Luna's double force (2 per figure). (2) In GameLog.tsx, color province/region names with their harvest hex badge color instead of just italic bold.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "TEMPLE FORCE: In src/components/TemplePanel.tsx, in the kami modal section where figuresByClan is displayed, calculate the prayer force for each clan. Luna clan has force 2 per figure, all other clans have force 1 per figure. Display this as 'Force: X' next to the figure count for each clan entry in the modal.",
     "GAME LOG COLORS: In src/components/GameLog.tsx, in the provincePattern replacement (step 4 of renderLogEntry), instead of just bold+italic styling, color each province name with its harvest badge hex color. Import or define the HARVEST_BADGE_META color mapping. Use the color from that mapping as the span's color style. Province names: Hokkaido=#5BC0EB, Oshu=#9B8EC4, Edo=#2D8B4E, Kanto=#E63946, Kansai=#F57C20, Nagato=#8B5CF6, Shikoku=#8B6914, Kyushu=#F5D020."
