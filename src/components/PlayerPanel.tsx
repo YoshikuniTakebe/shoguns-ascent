@@ -23,7 +23,7 @@ export const PlayerPanel = () => {
       <h3>Players</h3>
       <div className="player-list">
         {[...gameState.players]
-          .sort((a, b) => gameState.honorTrack.indexOf(a.id) - gameState.honorTrack.indexOf(b.id))
+          .sort((a, b) => gameState.turnOrder.indexOf(a.id) - gameState.turnOrder.indexOf(b.id))
           .map(player => {
           const clan = CLANS.find(c => c.id === player.clanId)!;
           return (
