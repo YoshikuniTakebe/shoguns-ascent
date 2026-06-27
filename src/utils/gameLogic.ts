@@ -436,17 +436,27 @@ export function drawMandateTiles(state: GameState): GameState {
 export function chooseMandateTile(state: GameState, mandate: MandateType, playerId: string): GameState {
   let newState: GameState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [...state.drawnMandates] };
 
-  // Loto clan power: can choose ANY mandate type regardless of drawn tiles
   const player = state.players.find((p) => p.id === playerId);
   const isLoto = player?.clanId === 'loto';
 
   const chosenIdx = newState.drawnMandates.indexOf(mandate);
-  if (!isLoto && chosenIdx === -1) return state;
+  if (chosenIdx === -1) return state;
 
-  // Remove chosen mandate from drawn tiles (if present)
-  if (chosenIdx !== -1) {
+  // Loto clan two-step flow: first click discards the tile, then player picks actual mandate
+  if (isLoto && !state.lotoChoicePhase) {
+    // Step 1: Discard the clicked tile from the deck (secretly removed)
     newState.drawnMandates.splice(chosenIdx, 1);
+    // Return remaining 3 tiles back to the deck
+    newState.mandatesDeck = [...newState.drawnMandates, ...newState.mandatesDeck];
+    newState.drawnMandates = [];
+    newState.mandateChoicePhase = false;
+    newState.lotoChoicePhase = true;
+    newState.lotoDiscardedMandate = mandate;
+    return newState;
   }
+
+  // Remove chosen mandate from drawn tiles
+  newState.drawnMandates.splice(chosenIdx, 1);
   // Return remaining mandates to deck (face down)
   newState.mandatesDeck = [...newState.drawnMandates, ...newState.mandatesDeck];
   newState.drawnMandates = [];
@@ -456,6 +466,17 @@ export function chooseMandateTile(state: GameState, mandate: MandateType, player
   newState.lastMandateIssuerId = playerId;
 
   // Execute the mandate
+  newState = executeMandate(newState, mandate, playerId);
+  return newState;
+}
+
+export function lotoChooseActualMandate(state: GameState, mandate: MandateType, playerId: string): GameState {
+  let newState: GameState = {
+    ...state,
+    lotoChoicePhase: false,
+    lotoDiscardedMandate: null,
+    lastMandateIssuerId: playerId,
+  };
   newState = executeMandate(newState, mandate, playerId);
   return newState;
 }

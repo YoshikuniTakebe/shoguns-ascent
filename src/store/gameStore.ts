@@ -8,6 +8,7 @@ import {
   acceptAlliance,
   drawMandateTiles,
   chooseMandateTile,
+  lotoChooseActualMandate,
   resolveKamiTurn,
   initiateWarPhase,
   submitWarTacticBids,
@@ -84,6 +85,7 @@ interface GameStore {
   // Politics
   doDrawMandateTiles: () => void;
   doChooseMandateTile: (mandate: MandateType) => void;
+  doLotoChooseActualMandate: (mandate: MandateType) => void;
 
   // Buy Season Card (Train mandate)
   doBuySeasonCard: (cardId: string) => void;
@@ -283,6 +285,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = chooseMandateTile(gameState, mandate, apid);
+    // If Loto entered the two-step choice phase, just update state without advancing
+    if (ns.lotoChoicePhase) {
+      set({ gameState: ns });
+      return;
+    }
     // If train or marshal or recruit or betray or harvest mandate is active, wait for resolution before advancing
     if (ns.trainMandateActive || ns.marshalMandateActive || ns.recruitMandateActive || ns.betrayMandateActive || ns.harvestMandateActive) {
       // Auto-enable recruitMode when recruit mandate first activates, betrayMode when betray activates
@@ -290,6 +297,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else {
       const advanced = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
+      set({ gameState: advanced, ...detectWarTransition(advanced) });
+    }
+  },
+  doLotoChooseActualMandate: (mandate) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState || !localPlayerId) return;
+    const cp = getCurrentPlayer(gameState);
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (!apid || gameState.currentPhase !== 'politics') return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'LOTO_CHOOSE_ACTUAL_MANDATE', playerId: apid, payload: { mandate } });
+      return;
+    }
+    const ns = lotoChooseActualMandate(gameState, mandate, apid);
+    // If train or marshal or recruit or betray or harvest mandate is active, wait for resolution before advancing
+    if (ns.trainMandateActive || ns.marshalMandateActive || ns.recruitMandateActive || ns.betrayMandateActive || ns.harvestMandateActive) {
+      set({ gameState: ns, recruitMode: ns.recruitMandateActive, betrayMode: ns.betrayMandateActive });
+    } else {
+      const advanced = advancePlayer(ns);
       set({ gameState: advanced, ...detectWarTransition(advanced) });
     }
   },

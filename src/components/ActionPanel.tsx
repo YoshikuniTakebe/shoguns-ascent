@@ -12,6 +12,7 @@ export const ActionPanel = () => {
     gameState, localPlayerId, moveMode, toggleMoveMode,
     doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance,
     doSetupSeason, doDrawMandateTiles, doChooseMandateTile,
+    doLotoChooseActualMandate,
     doSkipTrainPurchase,
     doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
     doSkipRecruitTurn, toggleRecruitMode, recruitMode, recruitFigureType, setRecruitFigureType,
@@ -275,7 +276,7 @@ export const ActionPanel = () => {
             </div>
           )}
 
-          {!gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && (
+          {!gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && !gameState.lotoChoicePhase && (
             <button className="btn-primary" onClick={doDrawMandateTiles}>
               {t('actions.drawMandateTiles')}
             </button>
@@ -290,14 +291,27 @@ export const ActionPanel = () => {
 
           {gameState.drawnMandates.length > 0 && (
             <div className="mandate-options">
-              {(cp?.clanId === 'loto'
-                ? (['recruit', 'marshal', 'train', 'harvest', 'betray'] as MandateType[])
-                : gameState.drawnMandates
-              ).map((m: MandateType, i: number) => (
+              {gameState.drawnMandates.map((m: MandateType, i: number) => (
                 <button
                   key={`${m}-${i}`}
                   className={`btn-mandate mandate-${m}`}
                   onClick={() => doChooseMandateTile(m)}
+                >
+                  <span className="mandate-name">{m.toUpperCase()}</span>
+                  <span className="mandate-desc">{t(mandateDescKeys[m])}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {gameState.lotoChoicePhase === true && (
+            <div className="mandate-options loto-choice">
+              <p className="loto-choice-label">Sustituir por:</p>
+              {(['recruit', 'marshal', 'train', 'harvest', 'betray'] as MandateType[]).map((m: MandateType) => (
+                <button
+                  key={`loto-${m}`}
+                  className={`btn-mandate mandate-${m}`}
+                  onClick={() => doLotoChooseActualMandate(m)}
                 >
                   <span className="mandate-name">{m.toUpperCase()}</span>
                   <span className="mandate-desc">{t(mandateDescKeys[m])}</span>

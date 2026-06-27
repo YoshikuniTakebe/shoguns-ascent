@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Rework the Loto clan mandate selection flow to be a proper two-step process: first draw 4 tiles normally, select one to discard (secretly removed from deck), then show 'Sustituir por:' with 5 mandate type buttons to choose which mandate to actually execute.",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/types/game.ts, add two new optional fields to the GameState interface: `lotoChoicePhase?: boolean` (indicates Loto is in step 2 - choosing the actual mandate to execute) and `lotoDiscardedMandate?: MandateType | null` (stores which tile Loto clicked from drawn tiles to discard from the deck).",
+    "2. In src/utils/gameLogic.ts, modify the `chooseMandateTile` function: When the player is Loto AND `lotoChoicePhase` is NOT yet true on the state, instead of executing the mandate immediately, set `lotoChoicePhase = true`, store the clicked mandate in `lotoDiscardedMandate`, remove it from `drawnMandates`, return the remaining 3 drawn tiles back to the deck, clear `drawnMandates` to [], set `mandateChoicePhase = false`, and return the new state (do NOT call executeMandate yet).",
+    "3. In src/utils/gameLogic.ts, create a new exported function `lotoChooseActualMandate(state: GameState, mandate: MandateType, playerId: string): GameState` that: clears `lotoChoicePhase` to false, clears `lotoDiscardedMandate` to null, sets `lastMandateIssuerId = playerId`, and then calls `executeMandate(newState, mandate, playerId)` to run the chosen mandate.",
+    "4. In src/store/gameStore.ts, add a new store action `doLotoChooseActualMandate: (mandate: MandateType) => void` to the GameStore interface. Import the new `lotoChooseActualMandate` function from gameLogic. Implement the action: get current player, call `lotoChooseActualMandate(gameState, mandate, apid)`, then handle the result the same way `doChooseMandateTile` handles it (check if a mandate resolution is active, otherwise call advancePlayer, detect war transition).",
+    "5. In src/components/ActionPanel.tsx, modify the politics phase section: (a) Remove the special case that shows all 5 mandates when `cp?.clanId === 'loto'` - Loto now draws normally like everyone else and sees their 4 drawn tiles. (b) Add a new section that renders when `gameState.lotoChoicePhase === true`: show the text 'Sustituir por:' and 5 buttons for all mandate types (recruit, marshal, train, harvest, betray). When clicked, call `doLotoChooseActualMandate(mandate)`. Import the new action from the store.",
+    "6. Also in ActionPanel.tsx, make sure the 'draw mandate tiles' button still appears normally for Loto (it already does since drawnMandates.length === 0 triggers it). When Loto clicks a drawn tile, it should call doChooseMandateTile as normal - the logic change in step 2 ensures it enters the two-step flow instead of executing immediately."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compiles without errors (npx tsc --noEmit passes)",
+    "When Loto draws mandates, they see the same 4 drawn tiles as any other clan",
+    "When Loto clicks a drawn tile, the tile is recorded as discarded, drawnMandates is cleared, and a 'Sustituir por:' UI appears with 5 mandate buttons",
+    "When Loto clicks an actual mandate from the 'Sustituir por:' options, that mandate is executed and the game advances",
+    "The discarded tile is removed from the deck (not returned), the other 3 are returned to deck",
+    "On the politics track, the mandate shows as hidden/face down (existing behavior preserved via hidden: true on mandatesThisTurn)"
+  ],
+  "verification": [
+    "Run `npx tsc --noEmit` in the project root and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
