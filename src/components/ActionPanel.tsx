@@ -4,7 +4,7 @@ import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
-import { BushiIcon, ShintoIcon } from './Icons';
+import { BushiIcon, ShintoIcon, CoinIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 
 export const ActionPanel = () => {
@@ -81,8 +81,9 @@ export const ActionPanel = () => {
                     <ClanShield clanId={fp?.clanId || ''} size={20} />
                     <span>{t('actions.wantsAlliance', { name: fp?.name || '' })}</span>
                     {pr.bribeAmount && pr.bribeAmount > 0 && (
-                      <span style={{ marginLeft: '0.3rem', fontWeight: 'bold', color: '#DAA520' }}>
-                        (+{pr.bribeAmount} {t('actions.bribeCoinsLabel')})
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#DAA520' }}>
+                        <CoinIcon size={16} color="#DAA520" />
+                        <span>{pr.bribeAmount}</span>
                       </span>
                     )}
                     <button className="btn-small btn-accept" onClick={() => doAcceptAlliance(pr.from)}>
