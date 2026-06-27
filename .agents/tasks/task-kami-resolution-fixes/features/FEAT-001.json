@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix Raijin overlay position, Amaterasu honor update, Sol tiebreak bonus in Kami phase, and add honor track animation",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Move Raijin 'Coloca un Bushi' overlay from fixed position at top to inside map-container (below TemplePanel)",
     "2. Fix Amaterasu reward to update player.honor values after reordering honorTrack",
@@ -20,5 +20,5 @@
     "Run `npx tsc --noEmit` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All four fixes applied and verified with npx tsc --noEmit. Sol tiebreak bonus removed from both resolveKamiTurn and resolveCurrentKamiReward. Amaterasu now correctly reassigns honor values for all players. Raijin/Fujin overlays moved to flow position between TemplePanel and map-container (using new kami-action-overlay CSS class). Honor track animation triggers when the first-place player changes."
 }
