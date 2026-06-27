@@ -434,11 +434,18 @@ export function drawMandateTiles(state: GameState): GameState {
 
 export function chooseMandateTile(state: GameState, mandate: MandateType, playerId: string): GameState {
   let newState: GameState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [...state.drawnMandates] };
-  const chosenIdx = newState.drawnMandates.indexOf(mandate);
-  if (chosenIdx === -1) return state;
 
-  // Remove chosen mandate from drawn tiles
-  newState.drawnMandates.splice(chosenIdx, 1);
+  // Loto clan power: can choose ANY mandate type regardless of drawn tiles
+  const player = state.players.find((p) => p.id === playerId);
+  const isLoto = player?.clanId === 'loto';
+
+  const chosenIdx = newState.drawnMandates.indexOf(mandate);
+  if (!isLoto && chosenIdx === -1) return state;
+
+  // Remove chosen mandate from drawn tiles (if present)
+  if (chosenIdx !== -1) {
+    newState.drawnMandates.splice(chosenIdx, 1);
+  }
   // Return remaining mandates to deck (face down)
   newState.mandatesDeck = [...newState.drawnMandates, ...newState.mandatesDeck];
   newState.drawnMandates = [];
@@ -561,6 +568,14 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
   if (!isDragonfly) {
     const hasFortress = province.figures.some(f => f.owner === playerId && f.type === 'fortress');
     if (!hasFortress) return state;
+  }
+
+  // Luna clan power: max 2 figures per province (excluding fortresses)
+  if (player.clanId === 'luna' && (figureType === 'bushi' || figureType === 'shinto' || figureType === 'monster')) {
+    const lunaFiguresInProvince = province.figures.filter(
+      (f) => f.owner === playerId && f.type !== 'fortress'
+    ).length;
+    if (lunaFiguresInProvince >= 2) return state;
   }
 
   // For bushi (and monster) placements, enforce one-per-fortress-province rule.
@@ -752,7 +767,13 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
   const isDiscounted = state.trainMandateIssuerId
     ? isIssuerOrAlly(state, playerId, state.trainMandateIssuerId)
     : false;
-  const effectiveCost = Math.max(0, card.cost - (isDiscounted ? 1 : 0));
+
+  // Bonsai clan power: max cost is 1 coin (applied BEFORE issuer discount)
+  let baseCost = card.cost;
+  if (player.clanId === 'bonsai' && baseCost >= 2) {
+    baseCost = 1;
+  }
+  const effectiveCost = Math.max(0, baseCost - (isDiscounted ? 1 : 0));
 
   // Check if player can afford the card (with discount applied)
   if (player.coins < effectiveCost) return state;
@@ -822,6 +843,12 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
         const bIdx = newState.honorTrack.indexOf(b.id);
         return aIdx - bIdx; // Lower index = higher honor = wins
       })[0]?.id ?? null;
+
+      // Sol clan power: bonus on honor tiebreak win
+      if (strongestId) {
+        const losers = tiedPlayers.filter((p) => p.id !== strongestId).map((p) => p.id);
+        applySolTiebreakBonus(newState, strongestId, losers);
+      }
     }
 
     // Only grant the reward if the strongest player is one of the harvesters (issuer or ally)
@@ -1182,6 +1209,15 @@ export function resolveKamiTurn(state: GameState): GameState {
       }
     });
 
+    // Sol clan power: bonus on temple honor tiebreak
+    if (winnerId && Object.keys(forces).length > 1) {
+      const tiedInTemple = Object.entries(forces).filter(([, f]) => f === maxForce);
+      if (tiedInTemple.length > 1) {
+        const losers = tiedInTemple.filter(([pid]) => pid !== winnerId).map(([pid]) => pid);
+        applySolTiebreakBonus(newState, winnerId, losers);
+      }
+    }
+
     if (winnerId) {
       const winner = newState.players.find((p) => p.id === winnerId);
       const kamiData = KAMI_DATA.find((k) => k.type === temple.kamiType);
@@ -1279,6 +1315,34 @@ export function initiateWarPhase(state: GameState): GameState {
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], seasonCards: [...p.seasonCards] })),
     log: [...state.log, 'War Phase begins - resolving battles'],
   };
+
+  // Koi clan power: swap all ronin for coins at the start of war
+  const koiPlayer = newState.players.find((p) => p.clanId === 'koi');
+  if (koiPlayer && koiPlayer.ronin > 0) {
+    const swapped = koiPlayer.ronin;
+    koiPlayer.coins += swapped;
+    koiPlayer.ronin = 0;
+    newState.log = [...newState.log, `${koiPlayer.name} (Koi) cambia ${swapped} Ronin por ${swapped} Monedas`];
+  }
+
+  // Zorro clan power: place 1 bushi in each province where they have zero figures
+  const zorroPlayer = newState.players.find((p) => p.clanId === 'zorro');
+  if (zorroPlayer && zorroPlayer.bushi > 0) {
+    let placed = 0;
+    for (const provId of Object.keys(newState.provinces)) {
+      if (zorroPlayer.bushi <= 0) break;
+      const prov = newState.provinces[provId];
+      const hasOwnFigure = prov.figures.some((f) => f.owner === zorroPlayer.id);
+      if (!hasOwnFigure) {
+        newState.provinces[provId] = { ...prov, figures: [...prov.figures, createFigure('bushi', zorroPlayer.id)] };
+        zorroPlayer.bushi -= 1;
+        placed++;
+      }
+    }
+    if (placed > 0) {
+      newState.log = [...newState.log, `${zorroPlayer.name} (Zorro) coloca ${placed} Bushi gratis en provincias vacias`];
+    }
+  }
 
   // Apply war upgrade card effects at start of war phase
   applyWarUpgrades(newState);
@@ -1429,13 +1493,16 @@ export function resolveNextBattle(state: GameState): GameState {
     // Find highest bidder for this tactic
     let highestBid = 0;
     let highestBidder: string | null = null;
+    let tacticTied = false;
 
     battle.participants.forEach((pid) => {
       const playerBids = battle.warTacticBids[pid];
       if (playerBids && playerBids[tactic.id] > highestBid) {
         highestBid = playerBids[tactic.id];
         highestBidder = pid;
+        tacticTied = false;
       } else if (playerBids && playerBids[tactic.id] === highestBid && highestBid > 0) {
+        tacticTied = true;
         // Tie-breaking by honor (lower index = better honor = wins)
         const currentHonor = newState.honorTrack.indexOf(highestBidder!);
         const challengerHonor = newState.honorTrack.indexOf(pid);
@@ -1444,6 +1511,16 @@ export function resolveNextBattle(state: GameState): GameState {
         }
       }
     });
+
+    // Sol clan power: bonus on war tactic bid tie resolved by honor
+    if (tacticTied && highestBidder) {
+      const tiedLosers = battle.participants.filter((pid) => {
+        if (pid === highestBidder) return false;
+        const playerBids = battle.warTacticBids[pid];
+        return playerBids && playerBids[tactic.id] === highestBid;
+      });
+      applySolTiebreakBonus(newState, highestBidder, tiedLosers);
+    }
 
     if (!highestBidder || highestBid === 0) continue;
 
@@ -1541,6 +1618,10 @@ export function resolveNextBattle(state: GameState): GameState {
     // Add ronin force only if this player won the hire-ronin tactic
     if (pid === hireRoninWinner) {
       force += player.ronin;
+      // Koi clan power: coins also count as ronin for hire-ronin
+      if (player.clanId === 'koi') {
+        force += player.coins;
+      }
     }
     if (force > maxForce) {
       maxForce = force;
@@ -1553,6 +1634,23 @@ export function resolveNextBattle(state: GameState): GameState {
       }
     }
   });
+
+  // Sol clan power: check if war force was tied and resolved by honor
+  if (winnerId && maxForce > 0) {
+    const tiedInWar = battle.participants.filter((pid) => {
+      const player = newState.players.find((p) => p.id === pid)!;
+      let force = calculateForce(finalProvince, pid, newState);
+      if (pid === hireRoninWinner) {
+        force += player.ronin;
+        if (player.clanId === 'koi') force += player.coins;
+      }
+      return force === maxForce;
+    });
+    if (tiedInWar.length > 1) {
+      const losers = tiedInWar.filter((pid) => pid !== winnerId);
+      applySolTiebreakBonus(newState, winnerId, losers);
+    }
+  }
 
   if (winnerId) {
     battle.winner = winnerId;
@@ -1857,6 +1955,14 @@ export function moveForces(
       if (fromProvinceId === toProvinceId) return state;
     }
 
+    // Luna clan power: max 2 figures per province (excluding fortresses)
+    if (player.clanId === 'luna' && figure.type !== 'fortress') {
+      const lunaFiguresInDest = toProvince.figures.filter(
+        (f) => f.owner === playerId && f.type !== 'fortress'
+      ).length;
+      if (lunaFiguresInDest >= 2) return state;
+    }
+
     // Move the figure
     const movedFigures = [figure];
     const remainingFigures = fromProvince.figures.filter(f => f.id !== figureId);
@@ -1920,16 +2026,40 @@ export function getPlayerSeasonCardEffects(state: GameState, playerId: string): 
   return player.seasonCards;
 }
 
+/**
+ * Sol clan power: when Sol wins a tiebreak by honor, Sol gains 1 coin + 1 VP,
+ * and the tied loser(s) lose 1 coin + 1 VP (if they have them).
+ */
+function applySolTiebreakBonus(state: GameState, winnerId: string, losers: string[]): void {
+  const winner = state.players.find((p) => p.id === winnerId);
+  if (!winner || winner.clanId !== 'sol') return;
+
+  winner.coins += 1;
+  winner.victoryPoints += 1;
+  for (const loserId of losers) {
+    const loser = state.players.find((p) => p.id === loserId);
+    if (loser) {
+      if (loser.coins > 0) loser.coins -= 1;
+      if (loser.victoryPoints > 0) loser.victoryPoints -= 1;
+    }
+  }
+  state.log = [...state.log, `${winner.name} (Sol) gana +1 Moneda +1 PV por empate de Honor`];
+}
+
 export function calculateForce(province: Province & { figures: Figure[] }, playerId: string, state: GameState): number {
   const playerFigures = province.figures.filter((f) => f.owner === playerId);
 
   const playerCards = getPlayerSeasonCardEffects(state, playerId);
   const cardIds = new Set(playerCards.map((c) => c.id));
 
+  const player = state.players.find((p) => p.id === playerId);
+  const isLuna = player?.clanId === 'luna';
+  const isTortuga = player?.clanId === 'tortuga';
+
   let totalForce = 0;
 
   for (const fig of playerFigures) {
-    let figForce = 1; // Base force for any figure
+    let figForce = isLuna ? 2 : 1; // Luna base force is 2, others 1
 
     if (fig.type === 'daimyo') {
       if (cardIds.has('sp-path-of-the-lion')) {
@@ -1945,16 +2075,28 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
       // honorTrack[0] = best honor (index 0 = honor position 1)
       const highestHonorPlayerId = state.honorTrack[0];
       if (highestHonorPlayerId === playerId) {
-        figForce = 3; // Replace base force with 3
+        figForce = isLuna ? Math.max(3, figForce) : 3; // Replace base force with 3 (Luna keeps max)
       }
     }
 
     if (fig.type === 'bushi' && cardIds.has('au-way-of-the-katana') && state.currentPhase === 'war') {
       // All bushi have Force 2 during war phase
-      figForce = 2; // Replace base force with 2
+      figForce = isLuna ? Math.max(2, figForce) : 2; // Replace base force with 2 (Luna already has 2)
+    }
+
+    // Luna: if a monster has force > 2, use monster's force (overrides luna base)
+    if (fig.type === 'monster' && isLuna) {
+      // Monster force comes from the season card; we already start at 2 for Luna
+      // If card upgrades give more, they stack on top
     }
 
     totalForce += figForce;
+  }
+
+  // Tortuga clan power: each fortress in the province counts as 1 force
+  if (isTortuga) {
+    const fortressCount = province.figures.filter((f) => f.owner === playerId && f.type === 'fortress').length;
+    totalForce += fortressCount;
   }
 
   return totalForce;
@@ -2287,7 +2429,10 @@ export function buildFortress(state: GameState, playerId: string, provinceId: st
 
   const player = state.players.find((p) => p.id === playerId);
   if (!player) return state;
-  if (player.coins < 3) return state;
+
+  // Bonsai clan power: fortress costs max 1 coin instead of 3
+  const fortressCost = player.clanId === 'bonsai' ? 1 : 3;
+  if (player.coins < fortressCost) return state;
   if (player.fortresses <= 0) return state;
 
   const province = state.provinces[provinceId];
@@ -2297,7 +2442,7 @@ export function buildFortress(state: GameState, playerId: string, provinceId: st
     ...state,
     players: state.players.map((p) => {
       if (p.id === playerId) {
-        return { ...p, coins: p.coins - 3, fortresses: p.fortresses - 1 };
+        return { ...p, coins: p.coins - fortressCost, fortresses: p.fortresses - 1 };
       }
       return { ...p };
     }),
@@ -2309,7 +2454,7 @@ export function buildFortress(state: GameState, playerId: string, provinceId: st
       },
     },
     marshalFortressBuiltBy: [...state.marshalFortressBuiltBy, playerId],
-    log: [...state.log, `${player.name} builds a fortress in ${province.name} (3 coins)`],
+    log: [...state.log, `${player.name} builds a fortress in ${province.name} (${fortressCost} coins)`],
   };
   return newState;
 }

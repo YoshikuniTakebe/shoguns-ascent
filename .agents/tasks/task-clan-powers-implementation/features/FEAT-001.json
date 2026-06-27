@@ -1,0 +1,38 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Update CLAN_POWERS tooltip texts in MainMenu.tsx with correct short summaries, and implement all clan power logic in gameLogic.ts",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/components/MainMenu.tsx, replace the CLAN_POWERS record (lines 9-18) with correct short summaries for each clan: koi='Monedas como Ronin. Al inicio de Guerra cambia Ronin por Monedas. En Contratar Ronin, sus Monedas suman Fuerza.', sol='Al ganar empate por Honor, gana 1 Moneda + 1 PV. El perdedor pierde 1 Moneda + 1 PV.', loto='Elige cualquier Orden Politica, sin importar las fichas que robe.', tortuga='Fortalezas se mueven como figuras y cuentan como 1 de Fuerza.', libelula='Invoca figuras en cualquier Provincia. Mueve figuras a cualquier Provincia.', zorro='Al inicio de Guerra, coloca 1 Bushi gratis en cada provincia sin unidades propias.', bonsai='El coste maximo de cualquier compra es 1 Moneda.', luna='Todas sus figuras tienen Fuerza 2. Max 2 figuras por provincia y max 2 en Santuarios.'",
+    "2. In src/utils/gameLogic.ts initiateWarPhase function, BEFORE applyWarUpgrades, add Koi clan power: find the Koi player, swap all their ronin for the same number of coins (player.coins += player.ronin; player.ronin = 0). Log the swap.",
+    "3. In src/utils/gameLogic.ts initiateWarPhase function, AFTER Koi swap, add Zorro clan power: find the Zorro player, for each province where the Zorro player has zero figures, place 1 Bushi figure (from reserve: decrement player.bushi by 1 if available). Log placements.",
+    "4. In src/utils/gameLogic.ts resolveNextBattle function, where hire-ronin force is added (around line 'if (pid === hireRoninWinner) { force += player.ronin; }'), add Koi power: if the player's clanId is 'koi' AND they won the hire-ronin tactic, also add player.coins to force (player.coins count as ronin for Hire Ronin).",
+    "5. In src/utils/gameLogic.ts calculateForce function, add Luna power: if the figure's owner has clanId 'luna', set figForce to Math.max(2, figForce) instead of starting at 1. This makes all Luna figures have at least Force 2.",
+    "6. In src/utils/gameLogic.ts calculateForce function, add Tortuga power: after computing totalForce for a player, count fortress figures owned by that player in the province. If the player's clanId is 'tortuga', add 1 force per fortress in that province.",
+    "7. In src/utils/gameLogic.ts buySeasonCard function, add Bonsai power: after computing effectiveCost, if the player's clanId is 'bonsai', cap effectiveCost at Math.min(effectiveCost, 1). This means the Bonsai discount is applied BEFORE the issuer discount. Specifically: if card.cost >= 2, Bonsai pays 1. If issuer discount applies afterward, cost becomes 0.",
+    "8. In src/utils/gameLogic.ts buildFortress function, add Bonsai power: if the player's clanId is 'bonsai', the fortress costs 1 coin instead of 3. Change the cost check and coin deduction conditionally.",
+    "9. In src/utils/gameLogic.ts chooseMandateTile function, add Loto power: if the current player's clanId is 'loto', allow choosing ANY of the 5 mandate types (recruit, marshal, train, harvest, betray) regardless of what was drawn. Skip the 'chosenIdx === -1' validation for Loto. The chosen mandate is still removed from drawnMandates if present, but Loto can choose a mandate that was not drawn.",
+    "10. In src/utils/gameLogic.ts recruitPlaceFigure function, add Luna province limit: if the player's clanId is 'luna', check that there are fewer than 2 of that player's figures already in the target province. If there are already 2, reject the placement (return state).",
+    "11. In src/utils/gameLogic.ts, wherever temple/shrine placement logic exists (search for shinto placement in temples), add Luna temple limit: Luna can have at most 2 figures total across all 4 temples. If already at 2, reject placing more.",
+    "12. In src/utils/gameLogic.ts, for every honor tiebreak where the higher-honor player wins (harvest force tie at line ~815, war force tie, war tactic bid tie), add Sol power: if the winning player's clanId is 'sol', grant them +1 coin and +1 VP, and the losing player(s) get -1 coin and -1 VP (if they have coins/VP to lose). Log these Sol bonuses."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compiles without errors (npx tsc --noEmit passes)",
+    "CLAN_POWERS in MainMenu.tsx has correct concise Spanish descriptions for all 8 clans",
+    "Koi: ronin swapped for coins at war start in initiateWarPhase",
+    "Koi: coins add force when Koi wins hire-ronin tactic",
+    "Zorro: places free bushi in empty provinces at war start",
+    "Bonsai: max cost 1 for season cards and fortresses",
+    "Loto: can choose any mandate type regardless of drawn tiles",
+    "Luna: figures have base force 2, max 2 figures per province, max 2 in temples total",
+    "Tortuga: fortresses count as 1 force (already can move - that was pre-existing)",
+    "Libelula: already implemented (move/recruit anywhere) - verified preserved",
+    "Sol: gains 1 coin + 1 VP on honor tiebreak wins, opponent loses 1 coin + 1 VP"
+  ],
+  "verification": [
+    "npx tsc --noEmit"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
