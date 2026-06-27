@@ -13,7 +13,6 @@ export const ActionPanel = () => {
     doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance,
     doSetupSeason, doDrawMandateTiles, doChooseMandateTile,
     doLotoChooseActualMandate,
-    doSkipTrainPurchase,
     doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
     doSkipRecruitTurn, toggleRecruitMode, recruitMode, recruitFigureType, setRecruitFigureType,
     doSkipBetrayTurn,
@@ -169,9 +168,6 @@ export const ActionPanel = () => {
                 <p className="recruit-player-info">
                   JUGADOR {gameState.trainResolutionIndex + 1} DE {gameState.trainResolutionOrder.length}
                 </p>
-                <button className="btn-secondary" onClick={doSkipTrainPurchase}>
-                  {t('actions.skipCardPurchase')}
-                </button>
               </div>
             );
           })()}

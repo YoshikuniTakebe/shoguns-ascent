@@ -206,6 +206,7 @@ export const en = {
 
   // Season Cards Modal
   'seasonCardsModal.title': 'Season Cards',
+  'seasonCardsModal.titleSeason': '{season} Cards',
   'seasonCardsModal.force': 'Force: {value}',
   'seasonCardsModal.confirmTitle': 'Confirm Purchase',
   'seasonCardsModal.confirmMessage': 'Buy {name} for {cost} coin(s)?',

@@ -5,6 +5,7 @@ import type { TranslationKey } from '../i18n';
 import type { CardType, SeasonCard } from '../types/game';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
+import { CoinIcon } from './Icons';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
   monster: '#cd7f32',
@@ -177,13 +178,20 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
           </button>
         )}
         <h2 className="season-cards-modal-title">
-          {t('seasonCardsModal.title')}
-          {isInteractiveMode && (isRyujinMode ? ryujinPlayer : currentPlayer) && (
-            <span style={{ fontSize: '0.7em', marginLeft: '12px', opacity: 0.8 }}>
-              {(isRyujinMode ? ryujinPlayer?.name : currentPlayer?.name)} - {(isRyujinMode ? ryujinPlayer?.coins : currentPlayer?.coins)} &#x26C1;
-              {isDiscounted && <span style={{ color: '#27ae60', marginLeft: '6px' }}>{t('seasonCardsModal.discount')}</span>}
-            </span>
-          )}
+          {t('seasonCardsModal.titleSeason', { season: t(`season.${gameState.currentSeason}` as TranslationKey) })}
+          {isInteractiveMode && (isRyujinMode ? ryujinPlayer : currentPlayer) && (() => {
+            const player = isRyujinMode ? ryujinPlayer! : currentPlayer!;
+            const playerClan = CLANS.find(c => c.id === player.clanId);
+            return (
+              <span style={{ fontSize: '0.7em', marginLeft: '12px', opacity: 0.8, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <ClanShield clanId={player.clanId} size={28} />
+                <span style={{ color: playerClan?.color || '#ccc', fontWeight: 'bold' }}>{player.name}</span>
+                <CoinIcon size={20} />
+                <span>{player.coins}</span>
+                {isDiscounted && <span style={{ color: '#27ae60', marginLeft: '6px' }}>{t('seasonCardsModal.discount')}</span>}
+              </span>
+            );
+          })()}
         </h2>
         <div className="season-card-grid">
           {currentSeasonCards.map((card) => {
