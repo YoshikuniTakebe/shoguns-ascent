@@ -9,6 +9,6 @@
     "docker_build": "skipped",
     "summary": "npx tsc --noEmit passes cleanly. All 7 fixes implemented. Post-review fixes applied: tea ceremony now uses honorTrack[0] (dynamic) instead of turnOrder[0] (static) for starting player, and betray mandate now includes JUGADOR 1 DE 1 counter for consistency with other mandates."
   },
-  "feature_order": ["FEAT-001"],
+  "feature_order": ["FEAT-001", "FEAT-002"],
   "blocked_reason": null
 }
