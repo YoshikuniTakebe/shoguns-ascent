@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Fix Luna clan temple shinto limit: change from 'max 2 total across all temples' to 'max 2 per temple'. Also add per-temple limit of 1 for non-Luna clans. Add console.warn feedback when placement is blocked.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In doRecruitPlaceTempleShinto (src/store/gameStore.ts ~line 484): Change Luna check to count shintos only in the targeted temple (templeId), not all temples combined. Change limit check from totalTempleShinto to per-temple count.",
     "2. Add a per-temple limit of 1 for non-Luna clans before the Luna check.",
@@ -21,5 +21,5 @@
     "Run `npx tsc --noEmit` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "Fixed both doRecruitPlaceTempleShinto and doKomainuPlaceAtTemple. The bug was that the Luna check counted shintos across ALL temples instead of in the specific target temple. Also added a missing per-temple limit of 1 for non-Luna clans, which was completely absent. Added console.warn messages when placement is blocked for easier debugging."
 }
