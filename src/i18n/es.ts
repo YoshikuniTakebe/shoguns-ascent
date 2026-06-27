@@ -280,6 +280,9 @@ export const es: Record<TranslationKey, string> = {
   'harvest.received': '{name} ha recibido:',
   'harvest.accept': 'Aceptar',
 
+  // Turn Popup
+  'game.turnPopupAccept': 'Aceptar',
+
   // War Tokens Modal
   'warTokens.title': 'Losetas de Provincia de Guerra',
   'warTokens.empty': 'Sin losetas de guerra',
