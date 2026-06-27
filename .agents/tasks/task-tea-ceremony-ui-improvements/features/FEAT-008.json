@@ -2,7 +2,7 @@
   "id": "FEAT-008",
   "type": "fix",
   "description": "Review fixes: Zorro participants bug, dead code removal, and province colors duplication",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Fix Zorro participants bug in doZorroPlaceBushi and doZorroSkipPlacement in gameStore.ts - update activeBattles to include Zorro where they have figures",
     "Remove dead code (unreachable else if luna branch inside isDragonfly block) in doRecruitPlaceFigure in gameStore.ts",
@@ -18,5 +18,5 @@
   ],
   "verification": ["npx vite build"],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All three fixes implemented cleanly. For the Zorro participants bug, used fallback to gameState.zorroPlacementPlayerId since ns already clears it to null when placementDone is true. Build passes without issues."
 }
