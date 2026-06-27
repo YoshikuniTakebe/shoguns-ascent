@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Region Detail Modal force display: Show the total force of each clan present in the province, calculated using the existing calculateForce() function which accounts for all bonuses (Luna 2x, Oni of Skulls honor-based force, card upgrades, etc.). Also add monster name tooltips when hovering monster icons in the region detail.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/components/RegionDetailModal.tsx, import calculateForce from '../utils/gameLogic'",
     "In the component, for each owner group, call calculateForce(province, ownerId, gameState) to get the total force value",
@@ -17,5 +17,5 @@
   ],
   "verification": ["npx vite build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "calculateForce works directly with province from gameState.provinces[regionId] since it already has type Province & { figures: Figure[] }. Monster tooltips were already working via getMonsterInfo/getTooltipText. Added BushiIcon as force indicator with margin-left:auto to push it to the right of the group header."
 }
