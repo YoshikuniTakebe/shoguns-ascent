@@ -137,7 +137,6 @@
 
 .politics-track-slot.hidden-mandate{background:linear-gradient(145deg,rgba(30,20,50,0.9),rgba(15,10,30,0.95));border:2px solid #4a3a6a;box-shadow:0 0 8px rgba(100,60,180,0.3)}.hidden-illustration{opacity:0.9}
 
-.crossed-katanas-decoration{display:flex;justify-content:center;margin-bottom:1.5rem;opacity:0.8}
-.menu-options{flex-direction:column;align-items:center}
+
 .btn-icon{display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem}
 .btn-icon svg{color:var(--accent-gold)}
