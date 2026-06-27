@@ -55,16 +55,12 @@ export const ActionPanel = () => {
       {gameState.currentPhase === 'tea' && (
         <div className="tea-phase">
           <h4>{t('actions.teaCeremony')}</h4>
-          <p className="phase-description">
-            {t('actions.teaDesc')}{' '}
-            {t('actions.playerOf', { current: Math.min(gameState.teaTurnIndex + 1, gameState.players.length), total: gameState.players.length })}
-          </p>
 
           {isMyTurn && cp && (() => {
             const cpClan = CLANS.find(c => c.id === cp.clanId);
             return (
               <p className="phase-description" style={{ marginTop: 0 }}>
-                <span style={{ color: cpClan?.color, fontWeight: 'bold' }}>{cp.name}</span>{' '}
+                <span style={{ color: cpClan?.color, fontWeight: 'bold', fontSize: '1.3em' }}>{cp.name}</span>{' '}
                 {t('actions.teaActivePlayerSuffix')}
               </p>
             );
@@ -185,14 +181,13 @@ export const ActionPanel = () => {
           {gameState.recruitMandateActive && (
             <div className="recruit-active" style={{ borderColor: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan ? clan.color : undefined; })() }}>
               <p className="recruit-notice">
-                {t('actions.recruitNotice', {
-                  name: cp?.name || '',
-                  bonus: gameState.recruitMandateIssuerId && cp &&
-                    (cp.id === gameState.recruitMandateIssuerId || gameState.players.find(p => p.id === gameState.recruitMandateIssuerId)?.allies.includes(cp.id))
-                    ? t('actions.recruitBonus')
-                    : t('actions.recruitNoBonus'),
-                })}{' '}
-                {t('actions.recruitPlayer', { current: gameState.recruitResolutionIndex + 1, total: gameState.recruitResolutionOrder.length })}
+                Mandato Reclutar - <span style={{ color: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })(), fontWeight: 'bold' }}>{cp?.name || ''}</span> puede invocar figuras en sus fortalezas.{' '}
+                {gameState.recruitMandateIssuerId && cp &&
+                  (cp.id === gameState.recruitMandateIssuerId || gameState.players.find(p => p.id === gameState.recruitMandateIssuerId)?.allies.includes(cp.id)) &&
+                  t('actions.recruitBonus')}
+              </p>
+              <p className="recruit-player-info">
+                JUGADOR {gameState.recruitResolutionIndex + 1} DE {gameState.recruitResolutionOrder.length}
               </p>
               <p>{t('actions.recruitPlacementsLeft', { count: gameState.recruitPlacementsRemaining })}</p>
               {cp && cp.clanId === 'libelula' && (
