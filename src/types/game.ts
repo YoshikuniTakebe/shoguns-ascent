@@ -191,6 +191,8 @@ export interface GameState {
   harvestResolutionIndex: number;
   harvestPlayerRewards: { playerId: string; provinceId: string; rewards: { vp?: number; coins?: number; ronin?: number; honor?: number } }[];
   harvestPopupVisible: boolean;
+  lotoChoicePhase?: boolean;
+  lotoDiscardedMandate?: MandateType | null;
   lastMandateIssuerId: string | null;
   gameOver: boolean;
   winner?: string;
