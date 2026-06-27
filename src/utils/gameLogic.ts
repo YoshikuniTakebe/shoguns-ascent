@@ -1522,7 +1522,7 @@ export function initiateWarPhase(state: GameState): GameState {
     currentPhase: 'war' as const,
     activeBattles: [],
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], seasonCards: [...p.seasonCards] })),
-    log: [...state.log, 'War Phase begins - resolving battles'],
+    log: [...state.log, '=== War Phase begins ==='],
   };
 
   // Koi clan power: swap all ronin for coins at the start of war
@@ -1637,6 +1637,18 @@ export function initiateWarPhase(state: GameState): GameState {
       resolved: false,
     };
     newState.activeBattles.push(battle);
+  }
+
+  // Log summary of battles to resolve
+  const activeBattles = newState.activeBattles;
+  if (activeBattles.length > 0) {
+    const contestedCount = activeBattles.filter(b => !b.uncontested).length;
+    const uncontestedCount = activeBattles.length - contestedCount;
+    let summary = `${activeBattles.length} battles to resolve`;
+    if (contestedCount > 0 && uncontestedCount > 0) {
+      summary += ` (${contestedCount} contested, ${uncontestedCount} uncontested)`;
+    }
+    newState.log = [...newState.log, summary];
   }
 
   return newState;

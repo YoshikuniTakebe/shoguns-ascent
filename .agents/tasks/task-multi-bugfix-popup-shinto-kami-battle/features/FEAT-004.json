@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Add War Phase log clarity and battle result summary popup after all bids are submitted in a contested battle.",
+  "status": "in_progress",
+  "steps": [
+    "In src/utils/gameLogic.ts initiateWarPhase (line 1522): The log already says 'War Phase begins - resolving battles'. Make it more prominent by adding separator markers: change to '=== War Phase begins ===' or similar. Add a log entry listing how many battles and which provinces are contested.",
+    "In src/store/gameStore.ts doSubmitWarTacticBids (around line 1125): Currently after all bids are submitted and battle is resolved, it immediately moves to the next battle popup. Add a new battleStepPhase value 'result' between resolution and next battle. Change the flow so: after allBidsSubmitted and resolveNextBattle, set battleStepPhase to 'result' instead of 'popup'.",
+    "In src/types/game.ts or src/store/gameStore.ts: Update the battleStepPhase type to include 'result': change from 'popup' | 'bidding' | null to 'popup' | 'bidding' | 'result' | null. Update the type definition wherever it's declared.",
+    "In src/store/gameStore.ts: Add a new action doAcceptBattleResult (or reuse doAcceptBattlePopup) that transitions from 'result' to 'popup' for the next battle. When battleStepPhase is 'result' and user clicks continue, set battleStepPhase to 'popup' and battleCurrentBiddingIndex to 0.",
+    "In src/components/BattlePanel.tsx: Add a new rendering block for battleStepPhase === 'result'. After the battle is resolved (it's now marked resolved=true), find the JUST-resolved battle (the last one that was resolved). Show a popup/overlay with: province name, winner with ClanShield and clan color, VP breakdown (from Imperial Poets if won, Seppuku kills), hostage info (from Take Hostage), war token awarded. Include a 'Continuar' button that calls the continue action.",
+    "Add translations for the battle result popup in src/i18n/es.ts and src/i18n/en.ts: keys like 'battle.resultTitle', 'battle.resultWinner', 'battle.resultVP', 'battle.resultHostage', 'battle.resultWarToken', 'battle.continue'.",
+    "Run npx tsc --noEmit to verify no type errors."
+  ],
+  "acceptance_criteria": [
+    "War phase start is clearly logged with province information",
+    "After all bids are submitted in a contested battle, a result popup appears showing the battle outcome",
+    "The result popup shows: province name, winner (with ClanShield + clan color), VP gains, hostage taken, war token info",
+    "Clicking 'Continuar' advances to the next battle",
+    "npx tsc --noEmit passes"
+  ],
+  "verification": ["npx tsc --noEmit"],
+  "blocked_reason": null,
+  "findings": ""
+}

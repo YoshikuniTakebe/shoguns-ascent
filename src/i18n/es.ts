@@ -118,6 +118,10 @@ export const es: Record<TranslationKey, string> = {
   'battle.discarded': 'Sin figuras - loseta descartada',
   'battle.alliedWin': '{name} gana loseta de guerra de {region} (aliados)',
   'battle.accept': 'Aceptar',
+  'battle.resultTitle': 'Resultado de Batalla',
+  'battle.resultWinner': '\u00A1{name} gana la batalla!',
+  'battle.resultWarToken': 'Obtiene loseta de guerra en {province}',
+  'battle.continue': 'Continuar',
 
   // GameOverScreen
   'gameOver.title': 'FIN DEL JUEGO',

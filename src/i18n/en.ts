@@ -116,6 +116,10 @@ export const en = {
   'battle.discarded': 'No figures - token discarded',
   'battle.alliedWin': '{name} wins war token in {region} (allied)',
   'battle.accept': 'Accept',
+  'battle.resultTitle': 'Battle Result',
+  'battle.resultWinner': '{name} wins the battle!',
+  'battle.resultWarToken': 'Receives war token in {province}',
+  'battle.continue': 'Continue',
 
   // GameOverScreen
   'gameOver.title': 'GAME OVER',

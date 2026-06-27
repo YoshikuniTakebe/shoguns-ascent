@@ -38,7 +38,7 @@ import {
  * Detects if the given state has transitioned to a war phase with unresolved battles.
  * Returns partial store state to set battleStepPhase if war is active, empty object otherwise.
  */
-function detectWarTransition(state: GameState): Partial<{ battleStepPhase: 'popup' | 'bidding' | null; battleCurrentBiddingIndex: number }> {
+function detectWarTransition(state: GameState): Partial<{ battleStepPhase: 'popup' | 'bidding' | 'result' | null; battleCurrentBiddingIndex: number }> {
   if (state.currentPhase === 'war' && state.activeBattles.some(b => !b.resolved)) {
     return { battleStepPhase: 'popup' as const, battleCurrentBiddingIndex: 0 };
   }
@@ -57,7 +57,7 @@ interface GameStore {
   lobbyId: string | null;
   currentMandateResolutionIndex: number;
   warTacticBidsSubmitted: boolean;
-  battleStepPhase: 'popup' | 'bidding' | null;
+  battleStepPhase: 'popup' | 'bidding' | 'result' | null;
   battleCurrentBiddingIndex: number;
   showTrainModal: boolean;
   buildFortressMode: boolean;
@@ -1112,8 +1112,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // In hotseat: after current player bids, check if all done
       if (allBidsSubmitted(ns, provinceId)) {
         ns = resolveNextBattle(ns);
-        // Battle resolved, advance to popup for next battle
-        set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+        // Battle resolved, show result popup before advancing
+        set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0 });
       } else {
         // More participants need to bid - show popup for next participant
         const { battleCurrentBiddingIndex } = get();
@@ -1123,7 +1123,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Online mode: auto-resolve once all participants have submitted
       if (allBidsSubmitted(ns, provinceId)) {
         ns = resolveNextBattle(ns);
-        set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+        set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0 });
       } else {
         set({ gameState: ns, warTacticBidsSubmitted: true });
       }
@@ -1136,11 +1136,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'RESOLVE_BATTLE', playerId: get().localPlayerId });
       return;
     }
-    set({ gameState: resolveNextBattle(gameState), warTacticBidsSubmitted: false, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    set({ gameState: resolveNextBattle(gameState), warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0 });
   },
   doAcceptBattlePopup: () => {
     const { gameState } = get();
     if (!gameState) return;
+
+    // If showing a battle result, dismiss it and move to popup for the next battle
+    if (get().battleStepPhase === 'result') {
+      set({ battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      return;
+    }
 
     const currentBattleIndex = gameState.activeBattles.findIndex(b => !b.resolved);
     if (currentBattleIndex === -1) {
