@@ -152,6 +152,9 @@ interface GameStore {
   doResolveNextBattle: () => void;
   doAcceptBattlePopup: () => void;
 
+  // Coin Distribution
+  doCoinDistributionChoice: (targetPlayerId: string) => void;
+
   // Cleanup & Winter
   doResolveWinter: () => void;
 
@@ -1323,6 +1326,40 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Contested battle: transition from popup to bidding
     set({ battleStepPhase: 'bidding' });
+  },
+
+  // --- Coin Distribution ---
+  doCoinDistributionChoice: (targetPlayerId) => {
+    const { gameState } = get();
+    if (!gameState || !gameState.coinDistributionPending) return;
+
+    const pending = gameState.coinDistributionPending;
+    if (!pending.losers.includes(targetPlayerId)) return;
+
+    const target = gameState.players.find(p => p.id === targetPlayerId);
+    const winner = gameState.players.find(p => p.id === pending.winnerId);
+    if (!target || !winner) return;
+
+    const newPlayers = gameState.players.map(p => {
+      if (p.id === targetPlayerId) {
+        return { ...p, coins: p.coins + 1 };
+      }
+      return p;
+    });
+
+    const newRemainder = pending.remainder - 1;
+    const newLog = [...gameState.log, `${winner.name} da 1 moneda extra a ${target.name}`];
+
+    const newState: GameState = {
+      ...gameState,
+      players: newPlayers,
+      log: newLog,
+      coinDistributionPending: newRemainder > 0
+        ? { ...pending, remainder: newRemainder, distributed: pending.distributed + 1 }
+        : null,
+    };
+
+    set({ gameState: newState });
   },
 
   // --- Cleanup & Winter ---

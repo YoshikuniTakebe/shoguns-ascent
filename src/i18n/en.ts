@@ -121,6 +121,9 @@ export const en = {
   'battle.resultWarToken': 'Receives war token in {province}',
   'battle.continue': 'Continue',
   'battle.force': 'Force',
+  'battle.coinDistributionTitle': 'Coin Distribution',
+  'battle.coinDistributionRemaining': 'coin(s) to distribute',
+  'battle.coinDistributionInstruction': 'Choose which loser gets 1 extra coin',
 
   // GameOverScreen
   'gameOver.title': 'GAME OVER',

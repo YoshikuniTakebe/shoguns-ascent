@@ -123,6 +123,9 @@ export const es: Record<TranslationKey, string> = {
   'battle.resultWarToken': 'Obtiene loseta de guerra en {province}',
   'battle.continue': 'Continuar',
   'battle.force': 'Fuerza',
+  'battle.coinDistributionTitle': 'Reparto de Monedas',
+  'battle.coinDistributionRemaining': 'moneda(s) por repartir',
+  'battle.coinDistributionInstruction': 'Elige a qué perdedor dar 1 moneda extra',
 
   // GameOverScreen
   'gameOver.title': 'FIN DEL JUEGO',

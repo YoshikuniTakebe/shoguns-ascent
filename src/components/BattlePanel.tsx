@@ -147,6 +147,7 @@ export const BattlePanel = () => {
     battleStepPhase,
     battleCurrentBiddingIndex,
     doAcceptBattlePopup,
+    doCoinDistributionChoice,
   } = useGameStore();
   const t = useT();
   const [bids, setBids] = useState<Record<string, number>>({
@@ -157,6 +158,60 @@ export const BattlePanel = () => {
   });
 
   if (!gameState) return null;
+
+  // --- COIN DISTRIBUTION POPUP: show when winner must allocate remainder coins ---
+  if (gameState.coinDistributionPending) {
+    const pending = gameState.coinDistributionPending;
+    const winner = gameState.players.find(p => p.id === pending.winnerId);
+    const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
+    const province = gameState.provinces[pending.battleProvinceId];
+
+    return (
+      <div className="battle-popup-overlay">
+        <div className="battle-popup-card">
+          <h3 className="battle-popup-title">{t('battle.coinDistributionTitle')}</h3>
+          <p style={{ fontSize: '0.95em', marginBottom: '0.5rem' }}>
+            {province?.name || pending.battleProvinceId}
+          </p>
+          {winner && winnerClan && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <ClanShield clanId={winner.clanId} size={28} />
+              <span style={{ color: winnerClan.color, fontWeight: 'bold' }}>
+                {winner.name}
+              </span>
+            </div>
+          )}
+          <p style={{ margin: '0.5rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
+            <CoinIcon size={16} color="#FFD700" />
+            <span style={{ fontWeight: 'bold', color: '#FFD700' }}>{pending.remainder}</span>
+            {' '}{t('battle.coinDistributionRemaining')}
+          </p>
+          <p style={{ margin: '0.25rem 0 0.75rem', fontSize: '0.9em', opacity: 0.8 }}>
+            {t('battle.coinDistributionInstruction')}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {pending.losers.map(loserId => {
+              const loser = gameState.players.find(p => p.id === loserId);
+              const loserClan = loser ? CLANS.find(c => c.id === loser.clanId) : null;
+              return (
+                <button
+                  key={loserId}
+                  className="btn-primary"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                  onClick={() => doCoinDistributionChoice(loserId)}
+                >
+                  <ClanShield clanId={loser?.clanId || ''} size={20} />
+                  <span style={{ color: loserClan?.color, fontWeight: 'bold' }}>{loser?.name}</span>
+                  <CoinIcon size={14} color="#FFD700" />
+                  <span>+1</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const allBattles = gameState.activeBattles;
 
