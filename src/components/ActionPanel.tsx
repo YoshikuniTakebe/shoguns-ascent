@@ -65,7 +65,7 @@ export const ActionPanel = () => {
             return (
               <p className="phase-description" style={{ marginTop: 0 }}>
                 <span style={{ color: cpClan?.color, fontWeight: 'bold' }}>{cp.name}</span>{' '}
-                {t('actions.teaActivePlayer', { name: '' }).replace('{name}', '').trim()}
+                {t('actions.teaActivePlayerSuffix')}
               </p>
             );
           })()}

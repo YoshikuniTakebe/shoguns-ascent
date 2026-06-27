@@ -19,6 +19,7 @@ export const es: Record<TranslationKey, string> = {
   'menu.lobbyId': 'ID de Sala:',
   'menu.join': 'Unirse',
   'menu.clans': 'CLANES',
+  'menu.randomize': 'Aleatorio',
   'menu.initialHonor': 'Honor Inicial:',
 
   // Deck Config
@@ -57,6 +58,7 @@ export const es: Record<TranslationKey, string> = {
   'actions.proposeAlliance': 'Proponer Alianza:',
   'actions.endTeaTurn': 'Terminar Mi Turno de T\u00E9',
   'actions.teaActivePlayer': '{name} propon una alianza',
+  'actions.teaActivePlayerSuffix': 'propon una alianza',
   'actions.politics': 'Pol\u00EDtica - Mandato {current}/{total}',
   'actions.politicsDesc': 'Sacar fichas de mandato y elegir una para que todos los jugadores ejecuten.',
   'actions.trainNotice': 'Mandato Entrenar - {name} puede comprar una carta del Mercado de Estaci\u00F3n o pasar.',
