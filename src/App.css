@@ -184,3 +184,5 @@
 .bidding-coin:hover{transform:scale(1.15);filter:drop-shadow(0 3px 8px rgba(200,169,81,0.6))}
 .bidding-coin:active{cursor:grabbing;transform:scale(0.95)}
 .bidding-confirm-btn{margin-top:0.5rem;padding:0.9rem 3rem;font-size:1.1rem;letter-spacing:0.05em}
+.bidding-drop-highlight{border-color:var(--accent-gold) !important;box-shadow:0 0 20px rgba(200,169,81,0.6),0 0 40px rgba(200,169,81,0.25) !important}
+.bidding-coin-touch-ghost{filter:drop-shadow(0 4px 8px rgba(200,169,81,0.7))}
