@@ -258,6 +258,10 @@ export function setupSeason(state: GameState, season: Season): GameState {
   // Archive current season's log before transitioning
   const archivedHistory = { ...state.logHistory, [state.currentSeason]: [...state.log] };
 
+  // Determine first player in turn order (lowest honor = first seat)
+  const firstPlayerId = state.turnOrder[0];
+  const firstPlayerIdx = state.players.findIndex(p => p.id === firstPlayerId);
+
   let newState: GameState = {
     ...state,
     players: state.players.map((p) => ({ ...p, seasonCards: [...p.seasonCards], warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages], allies: [...p.allies] })),
@@ -265,7 +269,7 @@ export function setupSeason(state: GameState, season: Season): GameState {
     warProvinceSlots: [] as WarProvinceSlot[],
     currentSeason: season,
     currentPhase: 'tea' as const,
-    currentPlayerIndex: 0,
+    currentPlayerIndex: firstPlayerIdx >= 0 ? firstPlayerIdx : 0,
     teaTurnIndex: 0,
     logHistory: archivedHistory,
     log: [`Season Setup: ${season.charAt(0).toUpperCase() + season.slice(1)}`],
@@ -2363,8 +2367,13 @@ export function advanceTeaPlayer(state: GameState): GameState {
     return advancePhase(newState);
   }
 
-  // Move to next player
-  newState.currentPlayerIndex = (newState.currentPlayerIndex + 1) % newState.players.length;
+  // Move to next player following turnOrder
+  const currentPlayer = newState.players[newState.currentPlayerIndex];
+  const currentTurnOrderIdx = newState.turnOrder.indexOf(currentPlayer?.id ?? '');
+  const nextTurnOrderIdx = (currentTurnOrderIdx + 1) % newState.turnOrder.length;
+  const nextPlayerId = newState.turnOrder[nextTurnOrderIdx];
+  const nextPlayerIdx = newState.players.findIndex(p => p.id === nextPlayerId);
+  newState.currentPlayerIndex = nextPlayerIdx >= 0 ? nextPlayerIdx : (newState.currentPlayerIndex + 1) % newState.players.length;
   return newState;
 }
 

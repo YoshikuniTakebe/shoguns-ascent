@@ -39,12 +39,13 @@ export const BattlePanel = () => {
           <h4>{t('battle.results')}</h4>
           {allBattles.map((b, i) => {
             const w = b.winner ? gameState.players.find(p => p.id === b.winner) : null;
+            const wClan = w ? CLANS.find(c => c.id === w.clanId) : null;
             const prov = gameState.provinces[b.provinceId];
             return (
               <div key={i} className="battle-result">
                 <span className="battle-region">{prov?.name || b.provinceId}</span>
                 <span className="battle-winner">
-                  {w ? `${t('battle.winner')} ${w.name}` : t('battle.discarded')}
+                  {w ? <>{t('battle.winner')} <span style={{ color: wClan?.color, fontWeight: 'bold' }}>{w.name}</span></> : t('battle.discarded')}
                 </span>
               </div>
             );

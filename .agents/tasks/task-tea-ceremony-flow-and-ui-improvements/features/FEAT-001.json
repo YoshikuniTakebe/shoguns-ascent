@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix tea ceremony turn order to follow seating (honor) order instead of array index, fix politics track name truncation, fix marshalNoBonus i18n issue, standardize all mandate formats in ActionPanel, ensure player names use clan colors everywhere, fix marshal button width, and enhance GameLog with styled player names, mandate names, region names, and icons.",
+  "status": "in_progress",
+  "steps": [
+    "1. FIX TEA CEREMONY TURN ORDER in src/utils/gameLogic.ts: In setupSeason() (around line 268), change currentPlayerIndex from 0 to the index of turnOrder[0] in the players array: `const firstPlayerId = state.turnOrder[0]; const firstPlayerIdx = newState.players.findIndex(p => p.id === firstPlayerId); currentPlayerIndex: firstPlayerIdx >= 0 ? firstPlayerIdx : 0`. Also fix advanceTeaPlayer() (around line 2366) where it does `(currentPlayerIndex + 1) % players.length` - it should advance to the NEXT player in turnOrder, not just the next array index. Find the current player's position in turnOrder and advance to the next turnOrder entry.",
+    "2. FIX POLITICS TRACK NAME TRUNCATION in src/App.css: Find the .slot-player-name rule which has max-width:80px;overflow:hidden;text-overflow:ellipsis. Change to overflow:visible and remove max-width, or increase max-width to fit full names (e.g., max-width:90px or remove it). The slot is 95px wide so the name should fit.",
+    "3. FIX marshalNoBonus i18n: In src/components/ActionPanel.tsx, the marshal section uses t('actions.marshalNoBonus') which resolves to empty string but shows the key. Refactor the marshal mandate section to follow the SAME format as the recruit section (which uses inline JSX). Remove the {bonus} interpolation pattern and use inline conditional rendering instead.",
+    "4. STANDARDIZE ALL MANDATE FORMATS in ActionPanel.tsx: All five mandates (train, marshal, recruit, harvest, betray) should follow this consistent format: 'Mandato [Type] - [PlayerName in clan color bold] puede [action text].' If there's a bonus, show it. Then on a SEPARATE line show 'JUGADOR X DE Y' in uppercase, color #a8d8ea, smaller font. The recruit section already has this format. Apply it to: marshal (lines 172-196), train (lines 161-169), betray (lines 230-256). Harvest uses HarvestPopup so check if it needs changes too.",
+    "5. PLAYER NAME COLOR EVERYWHERE: Audit all components where player names appear and wrap them in spans with the clan color. Key places: ActionPanel.tsx (tea ceremony, politics waiting message), BattlePanel.tsx (battle results, bidding), GameBoard.tsx (turn indicator), PoliticsTrack.tsx (already colored). Use pattern: const clan = CLANS.find(c => c.id === player.clanId); then style={{ color: clan?.color, fontWeight: 'bold' }}.",
+    "6. FIX MARSHAL BUTTON WIDTH: In ActionPanel.tsx marshal section, the 'Mover Fuerzas' button (moveForces) should have width: 100% to match 'Terminar Turno' and 'Construir Fortaleza' buttons. Add style={{ width: '100%' }} or a CSS class.",
+    "7. ENHANCE GAMELOG in src/components/GameLog.tsx: Replace plain text rendering with a rich text parser. Create a helper function that takes a log string and returns JSX. The function should: (a) detect player names from gameState.players and wrap in <span style={{color: clanColor, fontWeight: 'bold'}}>. (b) detect mandate type names (RECRUIT, MARSHAL, TRAIN, HARVEST, BETRAY or their Spanish equivalents Reclutar, Movilizar, Entrenar, Cosechar, Traicionar) and wrap in <span style={{color: mandateColor, fontWeight: 'bold', textTransform: 'uppercase'}}>. (c) detect province/region names (Hokkaido, Oshu, Edo, Kanto, Kansai, Nagato, Shikoku, Kyushu) and wrap in <span style={{fontWeight: 'bold', fontStyle: 'italic'}}>. (d) detect VP/PV keywords and add VPIcon, ronin and add RoninIcon, moneda/coins and add CoinIcon. Import needed icons from './Icons'."
+  ],
+  "acceptance_criteria": [
+    "npx tsc --noEmit passes with no errors",
+    "setupSeason sets currentPlayerIndex to the first player in turnOrder (honor order, lowest first)",
+    "advanceTeaPlayer advances through players in turnOrder sequence, not array index order",
+    "PoliticsTrack player names are not cut off (overflow visible or increased width)",
+    "Marshal mandate section shows player name in clan color, no 'actions.marshalNoBonus' text visible, and JUGADOR X DE Y on separate line",
+    "All mandate sections (train, marshal, recruit, betray) follow consistent format with player name in clan color and JUGADOR X DE Y on separate line",
+    "Player names throughout the app are displayed in their clan color (bold)",
+    "Marshal 'Mover Fuerzas' button is same width as other buttons (100%)",
+    "GameLog renders player names in clan color+bold, mandates in mandate color+bold+uppercase, regions in bold+italic, and VP/ronin/coins with their icons"
+  ],
+  "verification": [
+    "Run `npx tsc --noEmit` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
