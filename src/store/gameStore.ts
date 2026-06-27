@@ -164,6 +164,10 @@ interface GameStore {
   turnPopupPlayer: string | null;
   dismissTurnPopup: () => void;
 
+  // Rule violation feedback
+  ruleViolationMessage: string | null;
+  setRuleViolationMessage: (msg: string | null) => void;
+
   // Online
   connectWebSocket: (url: string) => void;
   sendAction: (action: unknown) => void;
@@ -197,6 +201,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   komainuPrayMode: false,
   komainuPrayPlayerId: null,
   turnPopupPlayer: null,
+  ruleViolationMessage: null,
+  setRuleViolationMessage: (msg) => set({ ruleViolationMessage: msg }),
   language: (localStorage.getItem('shoguns-ascent-language') as 'en' | 'es') || 'es',
   setLanguage: (lang) => {
     localStorage.setItem('shoguns-ascent-language', lang);
@@ -458,6 +464,38 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = recruitPlaceFigure(gameState, apid, provinceId, recruitFigureType);
+    // If the state is unchanged (same reference), validation failed - show rule violation
+    if (ns === gameState) {
+      // Determine the reason for failure
+      const player = gameState.players.find(p => p.id === apid);
+      const province = gameState.provinces[provinceId];
+      let msg = 'No puedes realizar esta accion';
+      if (player && province) {
+        const isDragonfly = player.clanId === 'libelula';
+        if (!isDragonfly) {
+          const hasFortress = province.figures.some(f => f.owner === apid && f.type === 'fortress');
+          if (!hasFortress) {
+            msg = 'No tienes fortaleza en esta provincia';
+          } else if (player.clanId === 'luna') {
+            const lunaFiguresInProvince = province.figures.filter(f => f.owner === apid && f.type !== 'fortress').length;
+            if (lunaFiguresInProvince >= 2) {
+              msg = 'Luna: maximo 2 figuras por provincia';
+            } else {
+              msg = 'Ya has reclutado en esta fortaleza este turno';
+            }
+          } else {
+            msg = 'Ya has reclutado en esta fortaleza este turno';
+          }
+        } else if (player.clanId === 'luna') {
+          const lunaFiguresInProvince = province.figures.filter(f => f.owner === apid && f.type !== 'fortress').length;
+          if (lunaFiguresInProvince >= 2) {
+            msg = 'Luna: maximo 2 figuras por provincia';
+          }
+        }
+      }
+      set({ ruleViolationMessage: msg });
+      return;
+    }
     // Auto-advance when placements reach 0
     if (ns.recruitPlacementsRemaining <= 0) {
       let advanced = skipRecruitTurn(ns);
@@ -469,7 +507,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         gameState: advanced,
         recruitMode: advanced.recruitMandateActive,
         ...detectWarTransition(advanced),
-        ...(advanced.recruitMandateActive && gameState.mode === 'hotseat' ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}),
+        ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' && !advanced.kamiResolutionActive ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}),
       });
     } else {
       set({ gameState: ns });
@@ -539,7 +577,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         gameState: advanced,
         recruitMode: advanced.recruitMandateActive,
         ...detectWarTransition(advanced),
-        ...(advanced.recruitMandateActive && gameState.mode === 'hotseat' ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}),
+        ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' && !advanced.kamiResolutionActive ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}),
       });
     } else {
       set({ gameState: ns });
@@ -565,7 +603,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({
         gameState: ns,
         recruitMode: ns.recruitMandateActive,
-        ...(ns.recruitMandateActive && gameState.mode === 'hotseat' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}),
+        ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' && !ns.kamiResolutionActive ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}),
       });
     }
   },

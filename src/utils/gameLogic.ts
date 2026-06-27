@@ -1771,7 +1771,9 @@ export function resolveNextBattle(state: GameState): GameState {
           ...currentProvFigures,
           figures: currentProvFigures.figures.filter((f) => !killedIds.includes(f.id)),
         };
-        gainHonor(newState, highestBidder);
+        for (let i = 0; i < killCount; i++) {
+          gainHonor(newState, highestBidder);
+        }
         newState.log = [...newState.log, `${bidder.name} commits Seppuku: kills ${killCount} figures for VP and Honor`];
         break;
       }

@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-005",
+  "type": "feat",
+  "description": "Turn popup and Battle popup styling improvements: (1) Turn popup border in clan color. (2) Battle 'must bet' popup with clan-colored border, clan seal, and region name colored with the region's harvest hex color. (3) Battle bidding sidebar with clan name/seal, coin icon in Total display, and more elegant slider styling. (4) Battle result log with colored player names and clan seals.",
+  "status": "pending",
+  "steps": [
+    "TURN POPUP: In src/components/GameBoard.tsx, in the turnPopupPlayer rendering block, add a border color style on .monster-placement-popup-content using the clan's color. Currently it uses the generic accent-gold border.",
+    "BATTLE 'MUST BET' POPUP: In src/components/BattlePanel.tsx, in the hotseat popup phase rendering (effectiveBattleStepPhase === 'popup'), add ClanShield, make the border of .battle-popup-card use playerClan.color, and color the region name (province.name) with its HARVEST_BADGE_META color. Import HARVEST_BADGE_META from GameBoard or define a local mapping of province->color.",
+    "BATTLE BIDDING SIDEBAR: In BattlePanel.tsx hotseat bidding phase, add ClanShield and player name colored with clan color before the tactic bids. Style the Total display to be more prominent with CoinIcon after the word 'Total'. Style the range inputs with custom CSS for a more elegant appearance (thicker track, colored thumb matching clan).",
+    "BATTLE RESULT LOG: In the BattleResultPopup component, when rendering battleLogs entries, parse player names and color them with their clan color (similar to how GameLog.tsx does it). Add ClanShield before each player name mention.",
+    "CSS IMPROVEMENTS: In src/App.css, add styles for custom range sliders (.tactic-bid-row input[type=range]) with styled track and thumb, and for the battle popup border customization. Add .tactic-bid-row styling for a more elegant layout with labels, slider, and value display."
+  ],
+  "acceptance_criteria": [
+    "Turn popup has a border in the active player's clan color",
+    "Battle 'must bet' popup shows clan seal, clan-colored border, and region name in the harvest hex color",
+    "Battle bidding sidebar shows clan seal and name in color, Total with coin icon, and sliders are more elegant",
+    "Battle result log shows player names in their clan colors with clan seals",
+    "npx vite build succeeds"
+  ],
+  "verification": ["npx vite build"],
+  "blocked_reason": null,
+  "findings": ""
+}
