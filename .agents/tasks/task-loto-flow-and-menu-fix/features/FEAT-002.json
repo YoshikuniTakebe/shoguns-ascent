@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix the main menu layout: remove crossed-katanas decoration and restore game mode buttons to horizontal (row) layout instead of column.",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/components/MainMenu.tsx, delete the entire `<div className=\"crossed-katanas-decoration\">...</div>` block (the SVG with crossed katanas between the header and buttons).",
+    "2. In src/App.css, remove the CSS rule `.crossed-katanas-decoration{display:flex;justify-content:center;margin-bottom:1.5rem;opacity:0.8}` on line 140.",
+    "3. In src/App.css, remove the overriding CSS rule `.menu-options{flex-direction:column;align-items:center}` on line 141. The first definition on line 1 already has `display:flex;gap:2rem;margin-bottom:3rem` which gives the correct horizontal (row) layout by default."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compiles without errors (npx tsc --noEmit passes)",
+    "The crossed-katanas SVG decoration is completely removed from MainMenu.tsx",
+    "The .menu-options container uses flex-direction: row (the default for flexbox) so mode buttons appear side by side",
+    "The .crossed-katanas-decoration CSS class is removed from App.css",
+    "The overriding .menu-options rule with flex-direction:column is removed from App.css"
+  ],
+  "verification": [
+    "Run `npx tsc --noEmit` in the project root and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
