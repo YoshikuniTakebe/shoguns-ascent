@@ -1,15 +1,27 @@
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
 
 export const HonorTrack = () => {
   const { gameState } = useGameStore();
-  if (!gameState) return null;
-
-  const players = gameState.players;
+  const [promotedPlayerId, setPromotedPlayerId] = useState<string | null>(null);
+  const prevFirstRef = useRef<string | null>(null);
 
   // Sort players by honor ascending: honor 1 = best/highest position
-  const sortedPlayers = [...players].sort((a, b) => a.honor - b.honor);
+  const sortedPlayers = gameState ? [...gameState.players].sort((a, b) => a.honor - b.honor) : [];
+  const currentFirst = sortedPlayers.length > 0 ? sortedPlayers[0].id : null;
+
+  useEffect(() => {
+    if (prevFirstRef.current !== null && currentFirst !== null && prevFirstRef.current !== currentFirst) {
+      setPromotedPlayerId(currentFirst);
+      const timer = setTimeout(() => setPromotedPlayerId(null), 1500);
+      return () => clearTimeout(timer);
+    }
+    prevFirstRef.current = currentFirst;
+  }, [currentFirst]);
+
+  if (!gameState) return null;
 
   return (
     <div className="honor-track">
@@ -20,8 +32,9 @@ export const HonorTrack = () => {
         {sortedPlayers.map((player) => {
           const clan = CLANS.find(c => c.id === player.clanId);
           if (!clan) return null;
+          const isPromoted = player.id === promotedPlayerId;
           return (
-            <div key={player.id} className="honor-track-entry">
+            <div key={player.id} className={`honor-track-entry${isPromoted ? ' honor-promoted' : ''}`}>
               <div className="honor-hexagon" style={{ '--clan-color': clan.color } as React.CSSProperties}>
                 <svg viewBox="0 0 100 100" className="hexagon-bg">
                   <polygon

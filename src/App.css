@@ -64,9 +64,9 @@
 .monster-placement-btn.secondary:hover{box-shadow:0 0 12px rgba(74,85,104,0.5)}
 .monster-placement-popup-buttons{display:flex;gap:0.75rem;justify-content:center}
 .komainu-pray-overlay{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:10px;padding:0.8rem 1.5rem;z-index:900;box-shadow:0 0 20px rgba(200,169,81,0.4);animation:pulse-monster 1.5s infinite}
-.komainu-pray-overlay span{color:var(--accent-gold);font-size:1rem;font-weight:bold}
-.komainu-target{animation:pulse-monster 1s infinite;cursor:pointer !important}
-
+.komainu-pray-overlay span{color:var(--accent-gold);font-size:1rem;font-weight:bold}.komainu-target{animation:pulse-monster 1s infinite;cursor:pointer !important}
+.kami-action-overlay{display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:10px;padding:0.8rem 1.5rem;margin:0.5rem auto;max-width:400px;box-shadow:0 0 20px rgba(200,169,81,0.4);animation:pulse-monster 1.5s infinite;z-index:50}
+.kami-action-overlay span{color:var(--accent-gold);font-size:1rem;font-weight:bold}
 .tea-phase,.politics-phase,.marshal-active,.recruit-active,.betray-active,.train-active{background:rgba(255,255,255,0.03);border:1px solid rgba(200,169,81,0.15);border-radius:8px;padding:0.8rem 0.9rem;margin-bottom:0.8rem}
 .tea-phase{border-color:rgba(200,169,81,0.25);background:rgba(200,169,81,0.04)}
 .politics-phase{border-color:rgba(200,169,81,0.2);background:rgba(200,169,81,0.03)}
@@ -140,3 +140,8 @@
 
 .btn-icon{display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem}
 .btn-icon svg{color:var(--accent-gold)}
+
+.honor-promoted{animation:honor-glow 1.5s ease-out}
+.honor-promoted .honor-hexagon{animation:honor-scale 1.5s ease-out}
+@keyframes honor-glow{0%{background:rgba(255,215,0,0.4);box-shadow:0 0 20px rgba(255,215,0,0.6)}50%{background:rgba(255,215,0,0.2);box-shadow:0 0 12px rgba(255,215,0,0.3)}100%{background:rgba(0,0,0,0.2);box-shadow:none}}
+@keyframes honor-scale{0%{transform:scale(1.3)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
