@@ -21,6 +21,7 @@ export const ActionPanel = () => {
   const t = useT();
 
   const [selectedAllianceTarget, setSelectedAllianceTarget] = useState<string | null>(null);
+  const [bribeAmount, setBribeAmount] = useState<number>(0);
 
   if (!gameState) return null;
   const cp = gameState.players[gameState.currentPlayerIndex];
@@ -79,6 +80,11 @@ export const ActionPanel = () => {
                   <div key={pr.from} className="alliance-proposal">
                     <ClanShield clanId={fp?.clanId || ''} size={20} />
                     <span>{t('actions.wantsAlliance', { name: fp?.name || '' })}</span>
+                    {pr.bribeAmount && pr.bribeAmount > 0 && (
+                      <span style={{ marginLeft: '0.3rem', fontWeight: 'bold', color: '#DAA520' }}>
+                        (+{pr.bribeAmount} {t('actions.bribeCoinsLabel')})
+                      </span>
+                    )}
                     <button className="btn-small btn-accept" onClick={() => doAcceptAlliance(pr.from)}>
                       {t('actions.accept')}
                     </button>
@@ -123,13 +129,37 @@ export const ActionPanel = () => {
 
           {isMyTurn && (
             <div className="tea-turn-actions">
+              {selectedAllianceTarget && cp && cp.coins > 0 && (
+                <div className="bribe-slider" style={{ marginBottom: '0.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85em' }}>
+                    <span>{t('actions.bribeLabel')}:</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={cp.coins}
+                      value={bribeAmount}
+                      onChange={(e) => setBribeAmount(Number(e.target.value))}
+                      style={{ flex: 1 }}
+                    />
+                    <span style={{ fontWeight: 'bold', color: '#DAA520', minWidth: '2.5em', textAlign: 'center' }}>
+                      {bribeAmount}
+                    </span>
+                  </label>
+                  {bribeAmount > 0 && (
+                    <p style={{ fontSize: '0.75em', margin: '0.2rem 0 0', color: '#888' }}>
+                      {t('actions.offeringCoins', { amount: bribeAmount })}
+                    </p>
+                  )}
+                </div>
+              )}
               <button
                 className="btn-primary advance-btn"
                 disabled={!selectedAllianceTarget}
                 onClick={() => {
                   if (selectedAllianceTarget) {
-                    doProposeAlliance(selectedAllianceTarget);
+                    doProposeAlliance(selectedAllianceTarget, bribeAmount > 0 ? bribeAmount : undefined);
                     setSelectedAllianceTarget(null);
+                    setBribeAmount(0);
                     doAdvancePlayer();
                   }
                 }}
@@ -141,6 +171,7 @@ export const ActionPanel = () => {
                 style={{ marginTop: '0.5rem', width: '100%' }}
                 onClick={() => {
                   setSelectedAllianceTarget(null);
+                  setBribeAmount(0);
                   doAdvancePlayer();
                 }}
               >

@@ -82,7 +82,7 @@ interface GameStore {
 
   // Tea Ceremony
   doBreakAlliances: () => void;
-  doProposeAlliance: (to: string) => void;
+  doProposeAlliance: (to: string, bribeAmount?: number) => void;
   doAcceptAlliance: (from: string) => void;
 
   // Politics
@@ -252,17 +252,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     set({ gameState: breakAllAlliances(gameState) });
   },
-  doProposeAlliance: (to) => {
+  doProposeAlliance: (to, bribeAmount) => {
     const { gameState, localPlayerId, ws } = get();
     if (!gameState || !localPlayerId) return;
     const cp = getCurrentPlayer(gameState);
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'FORM_ALLIANCE', playerId: apid, payload: { toPlayerId: to } });
+      get().sendAction({ type: 'FORM_ALLIANCE', playerId: apid, payload: { toPlayerId: to, bribeAmount: bribeAmount || 0 } });
       return;
     }
-    let ns = proposeAlliance(gameState, apid, to);
+    let ns = proposeAlliance(gameState, apid, to, bribeAmount || 0);
     // If the proposal resulted in an auto-accept (reverse proposal existed),
     // the current player now has an ally. Advance their tea turn.
     const updatedPlayer = ns.players.find(p => p.id === apid);
