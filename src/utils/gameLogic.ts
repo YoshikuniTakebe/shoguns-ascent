@@ -677,11 +677,9 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
  */
 export function skipRecruitTurn(state: GameState): GameState {
   if (!state.recruitMandateActive) return state;
-  const currentPlayer = state.players[state.currentPlayerIndex];
   const newState: GameState = {
     ...state,
     recruitResolutionIndex: state.recruitResolutionIndex + 1,
-    log: [...state.log, `${currentPlayer?.name ?? 'Player'} ends their recruit turn`],
   };
   return advanceRecruitResolution(newState);
 }
@@ -701,6 +699,7 @@ function advanceRecruitResolution(state: GameState): GameState {
       recruitMandateIssuerId: null,
       recruitPlacementsRemaining: 0,
       recruitUsedFortressProvinces: [],
+      log: [...state.log, 'Recruit mandate resolved'],
     };
   }
   // Set currentPlayerIndex to the next player in resolution order and calculate their placements
