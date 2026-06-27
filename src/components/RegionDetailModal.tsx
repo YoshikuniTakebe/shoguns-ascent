@@ -4,6 +4,7 @@ import { CLANS } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon } from './Icons';
+import { calculateForce } from '../utils/gameLogic';
 
 interface RegionDetailModalProps {
   regionId: string;
@@ -133,6 +134,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
               const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
               const ownerColor = clan?.color || '#666';
               const clanName = clan?.name || '?';
+              const force = calculateForce(province, ownerId, gameState);
 
               return (
                 <div key={ownerId} className="region-detail-group">
@@ -140,6 +142,9 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                     <span className="region-detail-clan-dot" style={{ backgroundColor: ownerColor }} />
                     <span className="region-detail-clan-name" style={{ color: ownerColor }}>
                       {player?.name || clanName}
+                    </span>
+                    <span className="region-detail-force" style={{ color: ownerColor }}>
+                      <BushiIcon size={14} color={ownerColor} /> {force}
                     </span>
                   </div>
                   <div className="region-detail-figures">
