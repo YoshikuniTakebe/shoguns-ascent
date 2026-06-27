@@ -2282,7 +2282,10 @@ export function moveForces(
     // Track figure as moved
     newState.marshalMovedFigures = [...state.marshalMovedFigures, figureId];
 
-    newState.log = [...newState.log, `${player.name} mueve ${figure.type} de ${fromProvince.name} a ${toProvince.name}`];
+    const figureDisplayName = figure.type === 'monster'
+      ? `monster(${player.seasonCards.find(c => c.cardType === 'monster')?.name || 'monster'})`
+      : figure.type;
+    newState.log = [...newState.log, `${player.name} mueve ${figureDisplayName} de ${fromProvince.name} a ${toProvince.name}`];
 
     return newState;
   }
