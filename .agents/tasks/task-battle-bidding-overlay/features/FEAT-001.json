@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Create a full-screen drag-and-drop battle bidding overlay component that replaces the current slider-based bidding UI. Displays 4 vertical tactic tiles (Seppuku, Take Hostage, Hire Ronin, Imperial Poets) arranged horizontally, a coin pool with draggable coin images (one per coin the player has), and a confirm button. Coins can be dragged from the pool onto tactic tiles and back.",
-  "status": "completed",
+  "status": "in_progress",
   "steps": [
     "Create a new component file src/components/BattleBiddingOverlay.tsx that implements the full-screen bidding overlay",
     "The component receives props: playerName, playerClanColor, maxCoins (number of coins), onConfirm callback that passes {seppuku: N, 'take-hostage': N, 'hire-ronin': N, 'imperial-poets': N}, and battle info (province name, battle number)",
