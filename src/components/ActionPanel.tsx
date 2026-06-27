@@ -262,7 +262,7 @@ export const ActionPanel = () => {
               <p className="recruit-player-info">
                 JUGADOR {gameState.recruitResolutionIndex + 1} DE {gameState.recruitResolutionOrder.length}
               </p>
-              <p>{t('actions.recruitPlacementsLeft', { count: gameState.recruitPlacementsRemaining })}</p>
+              <p style={{ fontWeight: 'bold', color: '#00CED1', fontSize: '1.1em' }}>{t('actions.recruitPlacementsLeft', { count: gameState.recruitPlacementsRemaining })}</p>
               {cp && cp.clanId === 'libelula' && (
                 <p className="move-instruction">{t('actions.recruitDragonflyHint')}</p>
               )}

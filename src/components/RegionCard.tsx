@@ -257,8 +257,9 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   // Marshal/Fujin glow: when moveMode is true but source not yet selected, glow regions with active player's troops
   const isMarshalGlowCandidate = (isMarshalMove || isFujinMove) && moveMode && !moveFrom;
   const marshalGlowPlayerId = isFujinMove ? fujinPlayerId : apid;
+  const glowPlayerClanId = marshalGlowPlayerId ? gameState.players.find(p => p.id === marshalGlowPlayerId)?.clanId : undefined;
   const hasTroopsForGlow = isMarshalGlowCandidate && marshalGlowPlayerId
-    ? province.figures.some(f => f.owner === marshalGlowPlayerId)
+    ? province.figures.some(f => f.owner === marshalGlowPlayerId && (f.type !== 'fortress' || glowPlayerClanId === 'tortuga') && !gameState.marshalMovedFigures.includes(f.id))
     : false;
   const marshalGlowColor = hasTroopsForGlow
     ? (() => {

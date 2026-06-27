@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
-import { VPIcon, CoinIcon, RoninIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon } from './Icons';
+import { VPIcon, CoinIcon, RoninIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, ShintoIcon, DaimyoIcon, FortressIcon, MonsterIcon } from './Icons';
 
 const MANDATE_COLORS: Record<string, string> = {
   train: '#8B4513',
@@ -128,10 +128,37 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
     <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#E63946', fontWeight: 'bold' }}>{m}<VPIcon size={14} /></span>
   ));
 
-  // 6. Replace ronin keyword with icon
-  const roninPattern = /\b(ronin|ronins)\b/gi;
+  // 5.5. Replace troop type keywords with corresponding icons in clan color
+  let troopIconColor = '#DAA520'; // fallback gold
+  for (const p of players) {
+    if (entry.includes(p.name)) {
+      const clan = CLANS.find(c => c.id === p.clanId);
+      if (clan) { troopIconColor = clan.color; break; }
+    }
+  }
+
+  const troopTypeIconMap: Record<string, (props: { size?: number; color?: string }) => ReactNode> = {
+    bushi: BushiIcon,
+    shinto: ShintoIcon,
+    daimyo: DaimyoIcon,
+    fortress: FortressIcon,
+    fortaleza: FortressIcon,
+    monster: MonsterIcon,
+    monstruo: MonsterIcon,
+  };
+
+  const troopPattern = /\b(bushi|shinto|daimyo|fortress|fortaleza|monster|monstruo)\b/gi;
+  segments = applyPattern(segments, troopPattern, (m, key) => {
+    const IconComponent = troopTypeIconMap[m.toLowerCase()];
+    return (
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}{IconComponent && IconComponent({ size: 14, color: troopIconColor })}</span>
+    );
+  });
+
+  // 6. Replace ronin keyword (and preceding number if present) with bold red + icon
+  const roninPattern = /(\d+\s*)?\b(ronin|ronins)\b/gi;
   segments = applyPattern(segments, roninPattern, (m, key) => (
-    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<RoninIcon size={14} /></span>
+    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#E63946', fontWeight: 'bold' }}>{m}<RoninIcon size={14} color="#E63946" /></span>
   ));
 
   // 7. Replace moneda/monedas/coin/coins keyword (and preceding number if present) with bold gold + icon
