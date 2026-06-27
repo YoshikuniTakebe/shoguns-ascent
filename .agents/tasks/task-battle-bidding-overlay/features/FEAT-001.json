@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Create a full-screen drag-and-drop battle bidding overlay component that replaces the current slider-based bidding UI. Displays 4 vertical tactic tiles (Seppuku, Take Hostage, Hire Ronin, Imperial Poets) arranged horizontally, a coin pool with draggable coin images (one per coin the player has), and a confirm button. Coins can be dragged from the pool onto tactic tiles and back.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create a new component file src/components/BattleBiddingOverlay.tsx that implements the full-screen bidding overlay",
     "The component receives props: playerName, playerClanColor, maxCoins (number of coins), onConfirm callback that passes {seppuku: N, 'take-hostage': N, 'hire-ronin': N, 'imperial-poets': N}, and battle info (province name, battle number)",
@@ -32,5 +32,5 @@
     "npx vite build"
   ],
   "blocked_reason": null,
-  "findings": "Successfully replaced slider-based bidding with drag-and-drop overlay. The coin.png image was not previously used via import in the codebase - it imports cleanly as a module in Vite. Removed unused useState, WAR_TACTICS import from BattlePanel since they were only needed for the old slider UI. Both tsc --noEmit and vite build pass cleanly."
+  "findings": "Successfully replaced slider-based bidding with drag-and-drop overlay. The coin.png image was not previously used via import in the codebase - it imports cleanly as a module in Vite. Removed unused useState, WAR_TACTICS import from BattlePanel since they were only needed for the old slider UI. Both tsc --noEmit and vite build pass cleanly. Review fixes applied: (1) Added touch event handlers for mobile support using onTouchStart/onTouchMove/onTouchEnd with ghost element and elementFromPoint for drop detection, (2) Added drop-target highlight with dragenter/dragleave state and bidding-drop-highlight CSS class with gold glow, (3) Added useEffect to reinitialize coinPositions when maxCoins changes. Issues #2 (portal nesting) and #4 (combatant context) intentionally not addressed per orchestrator instructions."
 }
