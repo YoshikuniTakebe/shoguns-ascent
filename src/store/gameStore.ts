@@ -672,7 +672,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Place a monster figure in the province
     const figureId = Math.random().toString(36).substring(2, 10);
-    const newFigure = { type: 'monster' as const, owner: monsterPlacementPlayerId, id: figureId };
+    const newFigure = { type: 'monster' as const, owner: monsterPlacementPlayerId, id: figureId, monsterCardId: monsterPlacementCard.id };
     const updatedProvinces = {
       ...gameState.provinces,
       [provinceId]: {

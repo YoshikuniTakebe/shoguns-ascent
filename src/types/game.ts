@@ -28,6 +28,7 @@ export interface Figure {
   type: FigureType;
   owner: string;
   id: string;
+  monsterCardId?: string;
 }
 
 export interface Province {

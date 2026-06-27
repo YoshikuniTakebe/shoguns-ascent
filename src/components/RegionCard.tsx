@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, PROVINCES_DATA } from '../types/game';
+import { CLANS, PROVINCES_DATA, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon } from './Icons';
@@ -37,8 +37,11 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
     );
   }
   if (figure.type === 'monster') {
+    const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
+    const monsterCard = figure.monsterCardId ? allCards.find(c => c.id === figure.monsterCardId) : null;
+    const monsterName = monsterCard?.name || 'Monster';
     return (
-      <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
+      <span className="figure-icon" title={monsterName}>
         <MonsterIcon size={14} color={color} />
       </span>
     );
