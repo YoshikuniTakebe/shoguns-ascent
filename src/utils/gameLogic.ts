@@ -381,6 +381,9 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string, 
   );
   if (duplicateProposal) return state;
 
+  // Cap bribe amount to proposer's actual coins
+  const effectiveBribe = Math.min(bribeAmount, from.coins);
+
   // If the target already proposed to us, auto-accept that proposal instead
   const reverseProposal = newState.allianceProposals.find(
     (ap) => ap.from === toId && ap.to === fromId
@@ -389,11 +392,11 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string, 
     // Treat this as accepting the existing proposal from toId to fromId
     let resultState = acceptAlliance(state, toId, fromId);
     // Also transfer the counter-proposer's bribe (fromId -> toId)
-    if (bribeAmount > 0) {
+    if (effectiveBribe > 0) {
       const counterProposer = resultState.players.find((p) => p.id === fromId);
       const counterTarget = resultState.players.find((p) => p.id === toId);
       if (counterProposer && counterTarget) {
-        const actualBribe = Math.min(bribeAmount, counterProposer.coins);
+        const actualBribe = Math.min(effectiveBribe, counterProposer.coins);
         if (actualBribe > 0) {
           const updatedPlayers = resultState.players.map((p) => {
             if (p.id === fromId) return { ...p, coins: p.coins - actualBribe };
@@ -403,7 +406,7 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string, 
           resultState = {
             ...resultState,
             players: updatedPlayers,
-            log: [...resultState.log, `${counterTarget.name} receives ${actualBribe} monedas as alliance bribe from ${counterProposer.name}`],
+            log: [...resultState.log, `${counterTarget.name} recibe ${actualBribe} monedas de soborno de ${counterProposer.name}`],
           };
         }
       }
@@ -411,12 +414,12 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string, 
     return resultState;
   }
 
-  const proposal: AllianceProposal = { from: fromId, to: toId, bribeAmount: bribeAmount > 0 ? bribeAmount : undefined };
+  const proposal: AllianceProposal = { from: fromId, to: toId, bribeAmount: effectiveBribe > 0 ? effectiveBribe : undefined };
   newState.allianceProposals.push(proposal);
-  if (bribeAmount > 0) {
-    newState.log = [...newState.log, `${from.name} proposes alliance to ${to.name} offering ${bribeAmount} monedas`];
+  if (effectiveBribe > 0) {
+    newState.log = [...newState.log, `${from.name} propone alianza a ${to.name} ofreciendo ${effectiveBribe} monedas`];
   } else {
-    newState.log = [...newState.log, `${from.name} proposes alliance to ${to.name}`];
+    newState.log = [...newState.log, `${from.name} propone alianza a ${to.name}`];
   }
   return newState;
 }
@@ -447,7 +450,7 @@ export function acceptAlliance(state: GameState, fromId: string, toId: string): 
     if (actualBribe > 0) {
       from.coins -= actualBribe;
       to.coins += actualBribe;
-      newState.log = [...newState.log, `${to.name} receives ${actualBribe} monedas as alliance bribe from ${from.name}`];
+      newState.log = [...newState.log, `${to.name} recibe ${actualBribe} monedas de soborno de ${from.name}`];
     }
   }
 
@@ -2037,6 +2040,7 @@ export function cleanupSeason(state: GameState): GameState {
     mandatesThisTurn: [],
     activeBattles: [],
     allianceProposals: [],
+    coinDistributionPending: null,
     politicsMandateCount: 0,
     trainMandateActive: false,
     trainResolutionOrder: [],
