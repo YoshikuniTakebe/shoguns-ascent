@@ -86,7 +86,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, turnPopupPlayer, dismissTurnPopup } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage } = useGameStore();
   const t = useT();
 
   const [translateX, setTranslateX] = useState(0);
@@ -110,6 +110,15 @@ export const GameBoard = () => {
     setTranslateY(clamped.y);
     setInitialized(true);
   }, [initialized]);
+
+  // Auto-dismiss rule violation message after 3 seconds
+  useEffect(() => {
+    if (!ruleViolationMessage) return;
+    const timer = setTimeout(() => {
+      setRuleViolationMessage(null);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [ruleViolationMessage, setRuleViolationMessage]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     // Only start drag on primary button (left click / touch)
@@ -436,6 +445,13 @@ export const GameBoard = () => {
       {/* Region Detail Modal */}
       {selectedRegion && !moveMode && !recruitMode && !betrayMode && !monsterPlacementMode && !buildFortressMode && (
         <RegionDetailModal regionId={selectedRegion} onClose={() => selectRegion(null)} />
+      )}
+
+      {/* Rule Violation Toast */}
+      {ruleViolationMessage && (
+        <div className="rule-violation-toast">
+          {ruleViolationMessage}
+        </div>
       )}
 
       {/* Turn Popup (hotseat mandate transitions) */}

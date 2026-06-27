@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-006",
+  "type": "feat",
+  "description": "Zorro clan manual bushi placement: Change Fox (Zorro) clan power from automatic to manual. Currently in initiateWarPhase (gameLogic.ts ~line 1541), bushi are placed automatically in ALL empty provinces. Instead, the Zorro player should manually choose which battle provinces (without presence) to place their free bushi in, since bushi are limited and some provinces are more strategic than others.",
+  "status": "pending",
+  "steps": [
+    "In src/utils/gameLogic.ts in initiateWarPhase(), remove the automatic Zorro bushi placement loop (lines 1541-1556 approximately). Instead, add state fields to track Zorro placement mode.",
+    "In src/types/game.ts, add to GameState: zorroPlacementActive: boolean, zorroPlacementProvinces: string[] (provinces eligible for placement - battle provinces where Zorro has no figures), zorroPlacementsRemaining: number",
+    "In gameLogic.ts initiateWarPhase(), after creating battles, if Zorro player exists and has bushi, set zorroPlacementActive = true and calculate eligible provinces (provinces with battle tokens where Zorro has no figures). Set zorroPlacementsRemaining to min(zorroPlayer.bushi, eligibleProvinces.length).",
+    "In src/store/gameStore.ts, add actions: doZorroPlaceBushi(provinceId: string) and doZorroSkipPlacement(). doZorroPlaceBushi places one bushi, decrements remaining, and if remaining hits 0, deactivates. doZorroSkipPlacement sets zorroPlacementActive to false.",
+    "In src/components/GameBoard.tsx or ActionPanel.tsx, when zorroPlacementActive is true, show a UI overlay/message indicating the Zorro player should choose provinces. Highlight eligible provinces (similar to recruit-target pattern). Add a 'Done' button to skip remaining placements.",
+    "In src/components/RegionCard.tsx, add handling for zorroPlacementActive similar to monsterPlacementMode - highlight eligible provinces and handle clicks to place bushi.",
+    "Initialize the new fields in createInitialGameState to false/[]/0."
+  ],
+  "acceptance_criteria": [
+    "Zorro clan bushi are NOT placed automatically at war start",
+    "When war phase begins and Zorro player has bushi, a placement UI appears letting them choose provinces",
+    "Only battle provinces where Zorro has no presence are eligible for placement",
+    "Zorro can place up to their available bushi count (limited by eligible provinces)",
+    "Zorro can finish placement early with a Done/Skip button",
+    "npx vite build succeeds"
+  ],
+  "verification": ["npx vite build"],
+  "blocked_reason": null,
+  "findings": ""
+}

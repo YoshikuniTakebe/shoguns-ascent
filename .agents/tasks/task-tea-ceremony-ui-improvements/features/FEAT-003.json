@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Fix missing turn popup after recruit mandate completes, fix seppuku honor not advancing correctly (should advance one position per figure killed, not just one position total), and add user feedback messages when game rules prevent an action (e.g., fortress already used for recruitment).",
+  "status": "in_progress",
+  "steps": [
+    "BUG FIX - Turn popup after recruit: In src/store/gameStore.ts, in the doSkipRecruitTurn and doRecruitPlaceFigure actions, when recruitMandateActive becomes false after advancePlayer(), add turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null to the set() call (only for hotseat mode). Currently, the code does NOT set turnPopupPlayer when the recruit mandate fully completes. Look at how doSkipMarshalTurn does it as a pattern.",
+    "BUG FIX - Seppuku honor: In src/utils/gameLogic.ts around line 1774, the seppuku case calls gainHonor(newState, highestBidder) only ONCE regardless of killCount. The rule says the player should gain one honor position per figure sacrificed. Replace the single gainHonor call with a loop that calls gainHonor killCount times: for (let i = 0; i < killCount; i++) { gainHonor(newState, highestBidder); }",
+    "FEATURE - Rule violation feedback: In src/store/gameStore.ts, add a new state field 'ruleViolationMessage: string | null' and a setter 'setRuleViolationMessage'. In doRecruitPlaceFigure, when recruitPlaceFigure returns the same state (indicating failure), detect this by comparing references and set a descriptive ruleViolationMessage. Common cases: 'No puedes reclutar aqui: ya usaste esta fortaleza este turno' for fortress reuse, 'Luna: maximo 2 figuras por provincia' for Luna limit.",
+    "FEATURE - Rule violation feedback UI: In src/components/GameBoard.tsx, render a toast/popup showing ruleViolationMessage when it is non-null, with auto-dismiss after 3 seconds using setTimeout. Style it as a small notification at the top-center of the screen."
+  ],
+  "acceptance_criteria": [
+    "After recruit mandate completes in hotseat mode, the 'turn of' popup appears for the next player",
+    "Seppuku in battle advances the honor track by one position PER figure killed (not just once)",
+    "When a rule prevents an action (like fortress reuse in recruit), a visible message appears explaining why",
+    "The rule violation message auto-dismisses after a few seconds",
+    "npx vite build succeeds"
+  ],
+  "verification": ["npx vite build"],
+  "blocked_reason": null,
+  "findings": ""
+}
