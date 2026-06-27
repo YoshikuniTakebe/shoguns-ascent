@@ -239,10 +239,24 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   // Check for war province token
   const warSlot = gameState.warProvinceSlots.find(s => s.provinceId === regionId);
 
+  // Marshal/Fujin glow: when moveMode is true but source not yet selected, glow regions with active player's troops
+  const isMarshalGlowCandidate = (isMarshalMove || isFujinMove) && moveMode && !moveFrom;
+  const marshalGlowPlayerId = isFujinMove ? fujinPlayerId : apid;
+  const hasTroopsForGlow = isMarshalGlowCandidate && marshalGlowPlayerId
+    ? province.figures.some(f => f.owner === marshalGlowPlayerId)
+    : false;
+  const marshalGlowColor = hasTroopsForGlow
+    ? (() => {
+        const glowPlayer = gameState.players.find(p => p.id === marshalGlowPlayerId);
+        const glowClan = glowPlayer ? CLANS.find(c => c.id === glowPlayer.clanId) : null;
+        return glowClan?.color || '#DAA520';
+      })()
+    : undefined;
+
   return (
     <div
-      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''}`}
-      style={style}
+      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''}`}
+      style={{ ...style, ...(hasTroopsForGlow ? { '--marshal-glow-color': marshalGlowColor } as React.CSSProperties : {}) }}
       onClick={handleClick}
     >
       <div className="region-name">{province.name}</div>
