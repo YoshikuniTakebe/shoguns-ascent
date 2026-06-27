@@ -435,6 +435,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const player = gameState.players.find(p => p.id === apid);
     if (!player || player.shinto <= 0) return;
 
+    // Luna clan power: max 2 figures total across all temples
+    if (player.clanId === 'luna') {
+      const totalTempleShinto = gameState.temples.reduce(
+        (count, t) => count + t.figures.filter(f => f.playerId === apid).length, 0
+      );
+      if (totalTempleShinto >= 2) return;
+    }
+
     const templeIndex = gameState.temples.findIndex(t => t.id === templeId);
     if (templeIndex === -1) return;
 
@@ -637,6 +645,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   doKomainuPlaceAtTemple: (templeId: string) => {
     const { gameState, komainuPrayPlayerId } = get();
     if (!gameState || !komainuPrayPlayerId) return;
+
+    // Luna clan power: max 2 figures total across all temples
+    const komainuPlayer = gameState.players.find(p => p.id === komainuPrayPlayerId);
+    if (komainuPlayer?.clanId === 'luna') {
+      const totalTempleShinto = gameState.temples.reduce(
+        (count, t) => count + t.figures.filter(f => f.playerId === komainuPrayPlayerId).length, 0
+      );
+      if (totalTempleShinto >= 2) return;
+    }
 
     const templeIndex = gameState.temples.findIndex(t => t.id === templeId);
     if (templeIndex === -1) return;

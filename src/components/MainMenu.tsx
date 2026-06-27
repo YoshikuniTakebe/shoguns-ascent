@@ -7,14 +7,14 @@ import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 
 const CLAN_POWERS: Record<string, string> = {
-  koi: 'Gana 1 VP cuando fuerza un Seppuku',
-  sol: 'Acceso exclusivo a Dioses de la Suerte (Dynasty Invasion)',
-  loto: 'Puede reclutar figuras Bushi como Shinto en templos',
-  tortuga: 'Sus Fortalezas pueden moverse durante Movilizar',
-  libelula: 'Puede colocar figuras en cualquier provincia',
-  zorro: 'Roba 1 moneda de cada oponente al reclutar',
-  bonsai: 'Gana 1 VP por cada figura propia en una batalla ganada',
-  luna: 'Acceso exclusivo a Dioses de la Suerte (Dynasty Invasion)',
+  koi: 'Monedas como Ronin. Al inicio de Guerra cambia Ronin por Monedas. En Contratar Ronin, sus Monedas suman Fuerza.',
+  sol: 'Al ganar empate por Honor, gana 1 Moneda + 1 PV. El perdedor pierde 1 Moneda + 1 PV.',
+  loto: 'Elige cualquier Orden Politica, sin importar las fichas que robe.',
+  tortuga: 'Fortalezas se mueven como figuras y cuentan como 1 de Fuerza.',
+  libelula: 'Invoca figuras en cualquier Provincia. Mueve figuras a cualquier Provincia.',
+  zorro: 'Al inicio de Guerra, coloca 1 Bushi gratis en cada provincia sin unidades propias.',
+  bonsai: 'El coste maximo de cualquier compra es 1 Moneda.',
+  luna: 'Todas sus figuras tienen Fuerza 2. Max 2 figuras por provincia y max 2 en Santuarios.',
 };
 
 export const MainMenu = () => {
