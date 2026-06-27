@@ -23,5 +23,5 @@
     "Run `npx tsc --noEmit` in the project root and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": "Implementation straightforward. The existing Loto code allowed ANY mandate regardless of drawn tiles - replaced with proper two-step flow. The hidden:true flag on mandatesThisTurn (already checking issuingPlayer?.clanId === 'loto' in executeMandate) continues to work correctly since executeMandate is still called via lotoChooseActualMandate."
+  "findings": "Implementation straightforward. The existing Loto code allowed ANY mandate regardless of drawn tiles - replaced with proper two-step flow. The hidden:true flag on mandatesThisTurn (already checking issuingPlayer?.clanId === 'loto' in executeMandate) continues to work correctly since executeMandate is still called via lotoChooseActualMandate. Post-review fix: added lotoChoicePhase and lotoDiscardedMandate resets in cleanupSeason and advancePhase to prevent stale state on season/phase transitions."
 }
