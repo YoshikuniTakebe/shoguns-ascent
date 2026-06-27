@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, WAR_TACTICS } from '../types/game';
+import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 
 export const BattlePanel = () => {
@@ -114,6 +115,74 @@ export const BattlePanel = () => {
     );
   }
 
+  // In hotseat mode with result phase: show battle result summary
+  if (isHotseat && effectiveBattleStepPhase === 'result') {
+    // Find the most recently resolved battle (the one just resolved)
+    const resolvedBattles = allBattles.filter(b => b.resolved && !b.uncontested);
+    const justResolved = resolvedBattles[resolvedBattles.length - 1];
+
+    if (justResolved) {
+      const resProvince = gameState.provinces[justResolved.provinceId];
+      const winner = justResolved.winner ? gameState.players.find(p => p.id === justResolved.winner) : null;
+      const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
+
+      // Extract relevant log entries for this battle
+      const battleLogs: string[] = [];
+      const log = gameState.log;
+      // Walk backward from end of log to find entries related to this battle
+      for (let i = log.length - 1; i >= 0; i--) {
+        const entry = log[i];
+        // Stop when we hit a previous battle winner announcement or war phase start
+        if (entry.includes('=== War Phase begins ===')) break;
+        if (entry.includes('wins the battle in') && !entry.includes(resProvince?.name || '___')) break;
+        // Collect battle-relevant entries
+        if (
+          entry.includes('commits Seppuku') ||
+          entry.includes('takes a hostage') ||
+          entry.includes('hires ronin') ||
+          entry.includes('gains') && entry.includes('VP from Imperial Poets') ||
+          entry.includes('wins the battle in')
+        ) {
+          battleLogs.unshift(entry);
+        }
+      }
+
+      return (
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card">
+            <h3 className="battle-popup-title">{t('battle.resultTitle')}</h3>
+            <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
+              {resProvince?.name || justResolved.provinceId}
+            </p>
+            {winner && winnerClan && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <ClanShield clanId={winner.clanId} size={28} />
+                <span style={{ color: winnerClan.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+                  {t('battle.resultWinner', { name: winner.name })}
+                </span>
+              </div>
+            )}
+            {winner && (
+              <p style={{ color: winnerClan?.color, margin: '0.25rem 0' }}>
+                {t('battle.resultWarToken', { province: resProvince?.name || justResolved.provinceId })}
+              </p>
+            )}
+            {battleLogs.length > 0 && (
+              <div style={{ textAlign: 'left', margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', fontSize: '0.9em' }}>
+                {battleLogs.map((entry, i) => (
+                  <p key={i} style={{ margin: '0.2rem 0' }}>{entry}</p>
+                ))}
+              </div>
+            )}
+            <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
+              {t('battle.continue')}
+            </button>
+          </div>
+        </div>
+      );
+    }
+  }
+
   // In hotseat mode with bidding phase: show bidding UI for current participant
   if (isHotseat && effectiveBattleStepPhase === 'bidding') {
     const currentParticipant = battle.participants[battleCurrentBiddingIndex];
@@ -182,6 +251,69 @@ export const BattlePanel = () => {
         </div>
       </div>
     );
+  }
+
+  // --- ONLINE MODE or fallback: show result popup for online mode ---
+  if (!isHotseat && effectiveBattleStepPhase === 'result') {
+    const resolvedBattles = allBattles.filter(b => b.resolved && !b.uncontested);
+    const justResolved = resolvedBattles[resolvedBattles.length - 1];
+
+    if (justResolved) {
+      const resProvince = gameState.provinces[justResolved.provinceId];
+      const winner = justResolved.winner ? gameState.players.find(p => p.id === justResolved.winner) : null;
+      const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
+
+      const battleLogs: string[] = [];
+      const log = gameState.log;
+      for (let i = log.length - 1; i >= 0; i--) {
+        const entry = log[i];
+        if (entry.includes('=== War Phase begins ===')) break;
+        if (entry.includes('wins the battle in') && !entry.includes(resProvince?.name || '___')) break;
+        if (
+          entry.includes('commits Seppuku') ||
+          entry.includes('takes a hostage') ||
+          entry.includes('hires ronin') ||
+          entry.includes('gains') && entry.includes('VP from Imperial Poets') ||
+          entry.includes('wins the battle in')
+        ) {
+          battleLogs.unshift(entry);
+        }
+      }
+
+      return (
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card">
+            <h3 className="battle-popup-title">{t('battle.resultTitle')}</h3>
+            <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
+              {resProvince?.name || justResolved.provinceId}
+            </p>
+            {winner && winnerClan && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <ClanShield clanId={winner.clanId} size={28} />
+                <span style={{ color: winnerClan.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+                  {t('battle.resultWinner', { name: winner.name })}
+                </span>
+              </div>
+            )}
+            {winner && (
+              <p style={{ color: winnerClan?.color, margin: '0.25rem 0' }}>
+                {t('battle.resultWarToken', { province: resProvince?.name || justResolved.provinceId })}
+              </p>
+            )}
+            {battleLogs.length > 0 && (
+              <div style={{ textAlign: 'left', margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', fontSize: '0.9em' }}>
+                {battleLogs.map((entry, i) => (
+                  <p key={i} style={{ margin: '0.2rem 0' }}>{entry}</p>
+                ))}
+              </div>
+            )}
+            <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
+              {t('battle.continue')}
+            </button>
+          </div>
+        </div>
+      );
+    }
   }
 
   // --- ONLINE MODE or fallback: show bidding UI for local player simultaneously ---
