@@ -101,6 +101,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
 
   // Monster placement target logic
   let isMonsterTarget = false;
+  let isMonsterDimmed = false;
   if (monsterPlacementMode && monsterPlacementPlayerId) {
     const placingPlayer = gameState.players.find(p => p.id === monsterPlacementPlayerId);
     if (placingPlayer) {
@@ -109,7 +110,22 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
         isMonsterTarget = true;
       } else {
         // Can only place where the player has a fortress
-        isMonsterTarget = province.figures.some(f => f.type === 'fortress' && f.owner === monsterPlacementPlayerId);
+        const hasFortress = province.figures.some(f => f.type === 'fortress' && f.owner === monsterPlacementPlayerId);
+        if (hasFortress) {
+          // Luna clan power: max 2 figures per province (excluding fortresses)
+          if (placingPlayer.clanId === 'luna') {
+            const lunaFigures = province.figures.filter(f => f.owner === monsterPlacementPlayerId && f.type !== 'fortress').length;
+            if (lunaFigures >= 2) {
+              isMonsterDimmed = true;
+            } else {
+              isMonsterTarget = true;
+            }
+          } else {
+            isMonsterTarget = true;
+          }
+        } else {
+          isMonsterDimmed = true;
+        }
       }
     }
   }
@@ -274,7 +290,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
 
   return (
     <div
-      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${isZorroTarget ? 'recruit-target' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''}`}
+      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${isMonsterDimmed ? 'recruit-dimmed' : ''} ${isZorroTarget ? 'recruit-target' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''}`}
       style={{ ...style, ...(hasTroopsForGlow ? { '--marshal-glow-color': marshalGlowColor } as React.CSSProperties : {}) }}
       onClick={handleClick}
     >
