@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Rework the Loto clan mandate selection flow to be a proper two-step process: first draw 4 tiles normally, select one to discard (secretly removed from deck), then show 'Sustituir por:' with 5 mandate type buttons to choose which mandate to actually execute.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/types/game.ts, add two new optional fields to the GameState interface: `lotoChoicePhase?: boolean` (indicates Loto is in step 2 - choosing the actual mandate to execute) and `lotoDiscardedMandate?: MandateType | null` (stores which tile Loto clicked from drawn tiles to discard from the deck).",
     "2. In src/utils/gameLogic.ts, modify the `chooseMandateTile` function: When the player is Loto AND `lotoChoicePhase` is NOT yet true on the state, instead of executing the mandate immediately, set `lotoChoicePhase = true`, store the clicked mandate in `lotoDiscardedMandate`, remove it from `drawnMandates`, return the remaining 3 drawn tiles back to the deck, clear `drawnMandates` to [], set `mandateChoicePhase = false`, and return the new state (do NOT call executeMandate yet).",
@@ -23,5 +23,5 @@
     "Run `npx tsc --noEmit` in the project root and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation straightforward. The existing Loto code allowed ANY mandate regardless of drawn tiles - replaced with proper two-step flow. The hidden:true flag on mandatesThisTurn (already checking issuingPlayer?.clanId === 'loto' in executeMandate) continues to work correctly since executeMandate is still called via lotoChooseActualMandate."
 }
