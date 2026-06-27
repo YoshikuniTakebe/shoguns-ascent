@@ -22,19 +22,21 @@ const PROVINCE_NAMES = ['Hokkaido', 'Oshu', 'Edo', 'Kanto', 'Kansai', 'Nagato', 
 
 function renderLogEntry(entry: string, players: { name: string; clanId: string }[]): ReactNode {
   // Build a list of replacements to apply
-  type Segment = { type: 'text'; value: string } | { type: 'node'; value: ReactNode; key: string };
+  type Segment = { type: 'text'; value: string } | { type: 'node'; value: ReactNode };
 
   // Start with the full string as one text segment
   let segments: Segment[] = [{ type: 'text', value: entry }];
+
+  // Global counter for unique keys across all applyPattern calls within this entry
+  let globalNodeCounter = 0;
 
   // Helper to split text segments by a pattern and replace matches with nodes
   function applyPattern(
     segs: Segment[],
     pattern: RegExp,
-    replacer: (match: string, idx: number) => ReactNode
+    replacer: (match: string, uniqueKey: string) => ReactNode
   ): Segment[] {
     const result: Segment[] = [];
-    let nodeCounter = 0;
     for (const seg of segs) {
       if (seg.type !== 'text') {
         result.push(seg);
@@ -45,11 +47,17 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
       const regex = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
       let match: RegExpExecArray | null;
       while ((match = regex.exec(text)) !== null) {
+        // Prevent infinite loops on zero-length matches
+        if (match[0].length === 0) {
+          regex.lastIndex++;
+          continue;
+        }
         if (match.index > lastIndex) {
           result.push({ type: 'text', value: text.slice(lastIndex, match.index) });
         }
-        nodeCounter++;
-        result.push({ type: 'node', value: replacer(match[0], nodeCounter), key: `n${nodeCounter}` });
+        globalNodeCounter++;
+        const key = `seg-${globalNodeCounter}`;
+        result.push({ type: 'node', value: replacer(match[0], key) });
         lastIndex = regex.lastIndex;
       }
       if (lastIndex < text.length) {
@@ -60,53 +68,59 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
   }
 
   // 1. Replace player names (longest first to avoid partial matches)
+  // Use lookbehind/lookahead to ensure we match the full name as an isolated token,
+  // not as a substring within other text. This prevents false matches when player
+  // names share prefixes or contain numbers that could match partial patterns.
   const sortedPlayers = [...players].sort((a, b) => b.name.length - a.name.length);
   for (const player of sortedPlayers) {
     if (!player.name) continue;
     const clan = CLANS.find(c => c.id === player.clanId);
     const escapedName = player.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const namePattern = new RegExp(`\\b${escapedName}\\b`, 'g');
-    segments = applyPattern(segments, namePattern, (m, idx) => (
-      <span key={`player-${player.name}-${idx}`} style={{ color: clan?.color || '#fff', fontWeight: 'bold' }}>{m}</span>
+    // Use negative lookbehind/lookahead for word characters (\w) to prevent matching
+    // player names as substrings. This is stricter than \b for multi-word names with
+    // digits (e.g., "Player 1" won't accidentally match within "Player 10" or similar).
+    const namePattern = new RegExp(`(?<![\\w])${escapedName}(?![\\w])`, 'g');
+    segments = applyPattern(segments, namePattern, (m, key) => (
+      <span key={key} style={{ color: clan?.color || '#fff', fontWeight: 'bold' }}>{m}</span>
     ));
   }
 
   // 2. Replace mandate names
   const mandatePattern = /\b(Train|Recruit|Marshal|Harvest|Betray|Entrenar|Reclutar|Movilizar|Cosechar|Traicionar)\b/gi;
-  segments = applyPattern(segments, mandatePattern, (m, idx) => {
+  segments = applyPattern(segments, mandatePattern, (m, key) => {
     const color = MANDATE_COLORS[m.toLowerCase()] || '#fff';
     return (
-      <span key={`mandate-${idx}`} style={{ color, fontWeight: 'bold', textTransform: 'uppercase' }}>{m}</span>
+      <span key={key} style={{ color, fontWeight: 'bold', textTransform: 'uppercase' }}>{m}</span>
     );
   });
 
   // 3. Replace province names
   const provincePattern = new RegExp(`\\b(${PROVINCE_NAMES.join('|')})\\b`, 'gi');
-  segments = applyPattern(segments, provincePattern, (m, idx) => (
-    <span key={`prov-${idx}`} style={{ fontWeight: 'bold', fontStyle: 'italic' }}>{m}</span>
+  segments = applyPattern(segments, provincePattern, (m, key) => (
+    <span key={key} style={{ fontWeight: 'bold', fontStyle: 'italic' }}>{m}</span>
   ));
 
   // 4. Replace VP/PV keywords with icon
   const vpPattern = /\b(VP|PV)\b/gi;
-  segments = applyPattern(segments, vpPattern, (m, idx) => (
-    <span key={`vp-${idx}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<VPIcon size={14} /></span>
+  segments = applyPattern(segments, vpPattern, (m, key) => (
+    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<VPIcon size={14} /></span>
   ));
 
   // 5. Replace ronin keyword with icon
   const roninPattern = /\b(ronin|ronins)\b/gi;
-  segments = applyPattern(segments, roninPattern, (m, idx) => (
-    <span key={`ronin-${idx}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<RoninIcon size={14} /></span>
+  segments = applyPattern(segments, roninPattern, (m, key) => (
+    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<RoninIcon size={14} /></span>
   ));
 
   // 6. Replace moneda/monedas/coin/coins keyword with icon
   const coinPattern = /\b(moneda|monedas|coin|coins)\b/gi;
-  segments = applyPattern(segments, coinPattern, (m, idx) => (
-    <span key={`coin-${idx}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<CoinIcon size={14} /></span>
+  segments = applyPattern(segments, coinPattern, (m, key) => (
+    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{m}<CoinIcon size={14} /></span>
   ));
 
-  // Convert segments to ReactNode array
+  // Convert segments to ReactNode array using positional index for keys
   return segments.map((seg, i) =>
-    seg.type === 'text' ? <span key={`t${i}`}>{seg.value}</span> : <span key={seg.key}>{seg.value}</span>
+    seg.type === 'text' ? <span key={`t${i}`}>{seg.value}</span> : <span key={`n${i}`}>{seg.value}</span>
   );
 }
 
@@ -166,9 +180,13 @@ export const GameLog = () => {
         </div>
       )}
       <div className="log-entries" ref={ref}>
-        {(activeTab === currentSeason ? displayLog.slice(-20) : displayLog).map((e, i) => (
-          <div key={i} className="log-entry">{renderLogEntry(e, players)}</div>
-        ))}
+        {(() => {
+          const entries = activeTab === currentSeason ? displayLog.slice(-20) : displayLog;
+          const startIndex = activeTab === currentSeason ? Math.max(0, displayLog.length - 20) : 0;
+          return entries.map((e, i) => (
+            <div key={`${startIndex + i}-${e.slice(0, 30)}`} className="log-entry">{renderLogEntry(e, players)}</div>
+          ));
+        })()}
       </div>
     </div>
   );
