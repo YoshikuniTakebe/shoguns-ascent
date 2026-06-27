@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Implement alliance bribery in Tea Ceremony - allow offering coins with alliance proposals",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/types/game.ts, extend the AllianceProposal interface to include an optional `bribeAmount?: number` field.",
     "In src/utils/gameLogic.ts, modify `proposeAlliance(state, fromId, toId)` to accept a 4th parameter `bribeAmount: number = 0`. When creating the proposal object, include the bribeAmount. In the log, if bribeAmount > 0, mention it: 'PLAYER proposes alliance to TARGET offering X monedas'. When the alliance is auto-accepted (reverse proposal exists), also handle the bribe transfer.",
@@ -25,5 +25,5 @@
     "Run `cd /projects/sandbox/shoguns-ascent && npx vite build` and confirm successful build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation complete. Added bribeAmount to AllianceProposal interface, proposeAlliance accepts optional 4th param, acceptAlliance transfers coins using Math.min(bribeAmount, from.coins) to handle edge cases. Store passes bribeAmount through to proposeAlliance. ActionPanel shows a range slider (0 to cp.coins) when a target is selected and shows bribe amounts on pending proposals in gold. i18n keys added for both en and es. Both tsc --noEmit and vite build pass cleanly."
 }
