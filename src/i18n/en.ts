@@ -120,6 +120,7 @@ export const en = {
   'battle.resultWinner': '{name} wins the battle!',
   'battle.resultWarToken': 'Receives war token in {province}',
   'battle.continue': 'Continue',
+  'battle.force': 'Force',
 
   // GameOverScreen
   'gameOver.title': 'GAME OVER',

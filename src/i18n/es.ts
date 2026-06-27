@@ -122,6 +122,7 @@ export const es: Record<TranslationKey, string> = {
   'battle.resultWinner': '\u00A1{name} gana la batalla!',
   'battle.resultWarToken': 'Obtiene loseta de guerra en {province}',
   'battle.continue': 'Continuar',
+  'battle.force': 'Fuerza',
 
   // GameOverScreen
   'gameOver.title': 'FIN DEL JUEGO',
