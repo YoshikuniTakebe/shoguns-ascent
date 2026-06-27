@@ -77,7 +77,7 @@ export const HarvestPopup = () => {
           )}
           {rewards.honor && rewards.honor > 0 && (
             <div className="harvest-popup-reward-item">
-              <HonorIcon size={40} color="#9b59b6" />
+              <HonorIcon size={40} color="#E63946" />
               <span className="harvest-popup-reward-count">x{rewards.honor}</span>
             </div>
           )}
