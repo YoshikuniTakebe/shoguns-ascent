@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Battle sidebar: show total force instead of figure count, fix hostages modal display, and add season icons to header badge and log tabs",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/components/BattlePanel.tsx, in the combatants sections (both hotseat bidding UI and online mode), replace `{figures.length} {t('battle.figures')}` with the total force calculated by importing and calling `calculateForce(province, pid, gameState)` from src/utils/gameLogic.ts. Display as 'Fuerza: X' or use the i18n key.",
     "In src/components/Icons.tsx, create 4 new season icon SVG components: SpringIcon (cherry blossom), SummerIcon (sun), AutumnIcon (maple leaf), WinterIcon (snowflake). Each takes size and color props following the IconProps interface pattern.",
@@ -24,5 +24,5 @@
     "Run `cd /projects/sandbox/shoguns-ascent && npx vite build` and confirm successful build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes compiled cleanly. calculateForce requires Province & { figures: Figure[] } which matches gameState.provinces[id] type. Season icons use existing IconProps pattern. GameLog ReactNode type already imported so no new import needed. HostagesModal simplified to always show BushiIcon (swords) since hostages are captured warriors."
 }
