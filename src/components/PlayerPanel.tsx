@@ -30,13 +30,15 @@ export const PlayerPanel = () => {
             <div
               key={player.id}
               className={`player-card ${player.id === cp?.id ? 'active' : ''} ${player.id === localPlayerId ? 'local' : ''}`}
-              style={{ borderLeftColor: clan.color }}
+              style={{
+                borderLeftColor: clan.color,
+                ...(player.id === cp?.id ? { boxShadow: `0 0 12px 3px ${clan.color}, inset 0 0 8px ${clan.color}40` } : {})
+              }}
             >
               <div className="player-header">
                 <span className="player-name" style={{ color: clan.color }}>
                   <ClanShield clanId={player.clanId} size={48} />
                   {player.name}
-                  {player.id === cp?.id && ' \u2B05'}
                 </span>
                 <span className="clan-badge" style={{ '--clan-color': clan.color } as React.CSSProperties}>{clan.name}</span>
               </div>
