@@ -34,5 +34,5 @@
     "npx tsc --noEmit"
   ],
   "blocked_reason": null,
-  "findings": "All clan powers implemented and verified. TypeScript compiles cleanly. Luna province limit also added to moveForces (marshal movement). Temple shinto placement is handled in gameStore.ts (not gameLogic.ts) so Luna temple limit was added there. Sol power added to 4 tiebreak locations: harvest, war force, war tactic bids, and kami turn temples."
+  "findings": "All clan powers implemented and verified. TypeScript compiles cleanly. Luna province limit also added to moveForces (marshal movement). Temple shinto placement is handled in gameStore.ts (not gameLogic.ts) so Luna temple limit was added there. Sol power added to 4 tiebreak locations: harvest, war force, war tactic bids, and kami turn temples. UI fix: ActionPanel.tsx now shows all 5 mandate types when Loto is the current player, matching the game logic that already allows Loto to choose any mandate."
 }

@@ -254,7 +254,10 @@ export const ActionPanel = () => {
 
           {gameState.drawnMandates.length > 0 && (
             <div className="mandate-options">
-              {gameState.drawnMandates.map((m: MandateType, i: number) => (
+              {(cp?.clanId === 'loto'
+                ? (['recruit', 'marshal', 'train', 'harvest', 'betray'] as MandateType[])
+                : gameState.drawnMandates
+              ).map((m: MandateType, i: number) => (
                 <button
                   key={`${m}-${i}`}
                   className={`btn-mandate mandate-${m}`}
