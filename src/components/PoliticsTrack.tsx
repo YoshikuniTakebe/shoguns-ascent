@@ -394,6 +394,15 @@ export const PoliticsTrack = () => {
       {/* Kami turn */}
       {renderKamiIcon('kami-3')}
 
+      {/* Vertical red separator between Kami and War */}
+      <div style={{ margin: '0 0.5rem', display: 'flex', alignItems: 'center' }}>
+        <svg width="8" height="32" viewBox="0 0 8 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="4" y1="0" x2="4" y2="12" stroke="var(--accent-red)" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M4 12 L7 16 L4 20 L1 16 Z" fill="var(--accent-red)" opacity="0.85" />
+          <line x1="4" y1="20" x2="4" y2="32" stroke="var(--accent-red)" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </div>
+
       {/* War phase icon */}
       <div className="politics-track-phase-icon war" title="War Phase">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
