@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS } from '../types/game';
+import { CLANS, PROVINCE_COLORS } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { VPIcon, CoinIcon, RoninIcon } from './Icons';
@@ -114,16 +114,6 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
   });
 
   // 4. Replace province names with colored styling
-  const PROVINCE_COLORS: Record<string, string> = {
-    hokkaido: '#5BC0EB',
-    oshu: '#9B8EC4',
-    edo: '#2D8B4E',
-    kanto: '#E63946',
-    kansai: '#F57C20',
-    nagato: '#8B5CF6',
-    shikoku: '#8B6914',
-    kyushu: '#F5D020',
-  };
   const provincePattern = new RegExp(`\\b(${PROVINCE_NAMES.join('|')})\\b`, 'gi');
   segments = applyPattern(segments, provincePattern, (m, key) => {
     const color = PROVINCE_COLORS[m.toLowerCase()] || '#fff';

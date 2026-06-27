@@ -488,11 +488,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
           } else {
             msg = 'Ya has reclutado en esta fortaleza este turno';
           }
-        } else if (player.clanId === 'luna') {
-          const lunaFiguresInProvince = province.figures.filter(f => f.owner === apid && f.type !== 'fortress').length;
-          if (lunaFiguresInProvince >= 2) {
-            msg = 'Luna: maximo 2 figuras por provincia';
-          }
         }
       }
       set({ ruleViolationMessage: msg });
@@ -1181,7 +1176,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
     };
 
     if (placementDone) {
-      set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      // Update battle participants to include Zorro in provinces where they now have figures
+      const zorroId = ns.zorroPlacementPlayerId ?? gameState.zorroPlacementPlayerId;
+      let updatedNs = ns;
+      if (zorroId) {
+        updatedNs = {
+          ...ns,
+          activeBattles: ns.activeBattles.map(b => {
+            const prov = ns.provinces[b.provinceId];
+            const hasFigures = prov?.figures.some(f => f.owner === zorroId);
+            if (hasFigures && !b.participants.includes(zorroId)) {
+              const participants = [...b.participants, zorroId].sort((a, bb) => {
+                const aIdx = ns.turnOrder.indexOf(a);
+                const bIdx = ns.turnOrder.indexOf(bb);
+                return aIdx - bIdx;
+              });
+              return { ...b, participants, uncontested: false, winner: undefined };
+            }
+            return b;
+          }),
+        };
+      }
+      set({ gameState: updatedNs, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
     } else {
       set({ gameState: ns });
     }
@@ -1192,12 +1208,33 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!gameState) return;
     if (!gameState.zorroPlacementActive) return;
 
-    const ns: GameState = {
+    const zorroId = gameState.zorroPlacementPlayerId;
+    let ns: GameState = {
       ...gameState,
       zorroPlacementActive: false,
       zorroPlacementPlayerId: null,
       zorroPlacementsRemaining: 0,
     };
+
+    // Update battle participants to include Zorro in provinces where they now have figures
+    if (zorroId) {
+      ns = {
+        ...ns,
+        activeBattles: ns.activeBattles.map(b => {
+          const prov = ns.provinces[b.provinceId];
+          const hasFigures = prov?.figures.some(f => f.owner === zorroId);
+          if (hasFigures && !b.participants.includes(zorroId)) {
+            const participants = [...b.participants, zorroId].sort((a, bb) => {
+              const aIdx = ns.turnOrder.indexOf(a);
+              const bIdx = ns.turnOrder.indexOf(bb);
+              return aIdx - bIdx;
+            });
+            return { ...b, participants, uncontested: false, winner: undefined };
+          }
+          return b;
+        }),
+      };
+    }
 
     set({ gameState: ns, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
   },

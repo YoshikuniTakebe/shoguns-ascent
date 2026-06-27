@@ -1,15 +1,10 @@
 import { useState, type ReactNode } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, WAR_TACTICS } from '../types/game';
+import { CLANS, WAR_TACTICS, PROVINCE_COLORS } from '../types/game';
 import type { Battle, GameState } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { CoinIcon } from './Icons';
 import { useT } from '../i18n';
-
-const REGION_COLORS: Record<string, string> = {
-  hokkaido: '#5BC0EB', oshu: '#9B8EC4', kanto: '#E63946', edo: '#2D8B4E',
-  kansai: '#F57C20', nagato: '#8B5CF6', shikoku: '#8B6914', kyushu: '#F5D020'
-};
 
 /**
  * Extract log entries for a resolved battle using its logStartIndex
@@ -240,7 +235,7 @@ export const BattlePanel = () => {
       <div className="battle-popup-overlay">
         <div className="battle-popup-card" style={{ borderColor: playerClan?.color }}>
           <h3 className="battle-popup-title">
-            {t('battle.battleNumber', { number: battleNumber })}: <span style={{ color: REGION_COLORS[battle.provinceId] || '#fff' }}>{province?.name || battle.provinceId}</span>
+            {t('battle.battleNumber', { number: battleNumber })}: <span style={{ color: PROVINCE_COLORS[battle.provinceId] || '#fff' }}>{province?.name || battle.provinceId}</span>
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <ClanShield clanId={player?.clanId || ''} size={36} />
