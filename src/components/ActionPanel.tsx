@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
@@ -17,6 +18,8 @@ export const ActionPanel = () => {
     doResolveWinter,
   } = useGameStore();
   const t = useT();
+
+  const [selectedAllianceTarget, setSelectedAllianceTarget] = useState<string | null>(null);
 
   if (!gameState) return null;
   const cp = gameState.players[gameState.currentPlayerIndex];
@@ -90,12 +93,13 @@ export const ActionPanel = () => {
                 .filter(p => !cp?.allies.includes(p.id) && p.allies.length === 0)
                 .map(p => {
                   const clan = CLANS.find(c => c.id === p.clanId)!;
+                  const isSelected = selectedAllianceTarget === p.id;
                   return (
                     <button
                       key={p.id}
-                      className="btn-alliance"
+                      className={`btn-alliance${isSelected ? ' selected' : ''}`}
                       style={{ borderColor: clan.color }}
-                      onClick={() => doProposeAlliance(p.id)}
+                      onClick={() => setSelectedAllianceTarget(isSelected ? null : p.id)}
                     >
                       {p.name} ({clan.name})
                     </button>
@@ -105,9 +109,31 @@ export const ActionPanel = () => {
           )}
 
           {isMyTurn && (
-            <button className="btn-primary advance-btn" onClick={doAdvancePlayer}>
-              {t('actions.endTeaTurn')}
-            </button>
+            <div className="tea-turn-actions">
+              <button
+                className="btn-primary advance-btn"
+                disabled={!selectedAllianceTarget}
+                onClick={() => {
+                  if (selectedAllianceTarget) {
+                    doProposeAlliance(selectedAllianceTarget);
+                    setSelectedAllianceTarget(null);
+                    doAdvancePlayer();
+                  }
+                }}
+              >
+                {t('actions.endTeaTurn')}
+              </button>
+              <button
+                className="btn-secondary advance-btn"
+                style={{ marginTop: '0.5rem', width: '100%' }}
+                onClick={() => {
+                  setSelectedAllianceTarget(null);
+                  doAdvancePlayer();
+                }}
+              >
+                {t('actions.passTurn')}
+              </button>
+            </div>
           )}
         </div>
       )}
