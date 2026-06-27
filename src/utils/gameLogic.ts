@@ -387,7 +387,28 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string, 
   );
   if (reverseProposal) {
     // Treat this as accepting the existing proposal from toId to fromId
-    return acceptAlliance(state, toId, fromId);
+    let resultState = acceptAlliance(state, toId, fromId);
+    // Also transfer the counter-proposer's bribe (fromId -> toId)
+    if (bribeAmount > 0) {
+      const counterProposer = resultState.players.find((p) => p.id === fromId);
+      const counterTarget = resultState.players.find((p) => p.id === toId);
+      if (counterProposer && counterTarget) {
+        const actualBribe = Math.min(bribeAmount, counterProposer.coins);
+        if (actualBribe > 0) {
+          const updatedPlayers = resultState.players.map((p) => {
+            if (p.id === fromId) return { ...p, coins: p.coins - actualBribe };
+            if (p.id === toId) return { ...p, coins: p.coins + actualBribe };
+            return p;
+          });
+          resultState = {
+            ...resultState,
+            players: updatedPlayers,
+            log: [...resultState.log, `${counterTarget.name} receives ${actualBribe} monedas as alliance bribe from ${counterProposer.name}`],
+          };
+        }
+      }
+    }
+    return resultState;
   }
 
   const proposal: AllianceProposal = { from: fromId, to: toId, bribeAmount: bribeAmount > 0 ? bribeAmount : undefined };
@@ -1942,6 +1963,9 @@ export function resolveNextBattle(state: GameState): GameState {
       const totalBid = Object.values(winnerBids).reduce((sum, v) => sum + v, 0);
       const losers = battle.participants.filter((pid) => pid !== winnerId);
       if (losers.length > 0 && totalBid > 0) {
+        // Deduct coins from winner first
+        winner.coins -= totalBid;
+        newState.log = [...newState.log, `${winner.name} gastó ${totalBid} monedas en la batalla`];
         const share = Math.floor(totalBid / losers.length);
         const remainder = totalBid % losers.length;
         if (share > 0) {
@@ -1960,7 +1984,6 @@ export function resolveNextBattle(state: GameState): GameState {
             distributed: share * losers.length,
           };
         }
-        newState.log = [...newState.log, `${winner.name} gastó ${totalBid} monedas en la batalla`];
       }
     }
 

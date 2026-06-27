@@ -1330,8 +1330,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- Coin Distribution ---
   doCoinDistributionChoice: (targetPlayerId) => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState || !gameState.coinDistributionPending) return;
+
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'COIN_DISTRIBUTION_CHOICE', playerId: get().localPlayerId, payload: { targetPlayerId } });
+      return;
+    }
 
     const pending = gameState.coinDistributionPending;
     if (!pending.losers.includes(targetPlayerId)) return;
