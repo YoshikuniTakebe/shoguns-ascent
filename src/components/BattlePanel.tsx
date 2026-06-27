@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, WAR_TACTICS } from '../types/game';
 import type { Battle, GameState } from '../types/game';
 import { ClanShield } from './ClanShields';
+import { CoinIcon } from './Icons';
 import { useT } from '../i18n';
+
+const REGION_COLORS: Record<string, string> = {
+  hokkaido: '#5BC0EB', oshu: '#9B8EC4', kanto: '#E63946', edo: '#2D8B4E',
+  kansai: '#F57C20', nagato: '#8B5CF6', shikoku: '#8B6914', kyushu: '#F5D020'
+};
 
 /**
  * Extract log entries for a resolved battle using its logStartIndex
@@ -25,6 +31,61 @@ function extractBattleLogs(log: string[], battle: Battle): string[] {
     }
   }
   return battleLogs;
+}
+
+/**
+ * Render a battle log entry with colored player names and clan seals.
+ */
+function renderBattleLogEntry(entry: string, players: { id: string; name: string; clanId: string }[]): ReactNode {
+  type Segment = { type: 'text'; value: string } | { type: 'node'; value: ReactNode };
+  let segments: Segment[] = [{ type: 'text', value: entry }];
+
+  const sortedPlayers = [...players].sort((a, b) => b.name.length - a.name.length);
+  let nodeCounter = 0;
+
+  for (const player of sortedPlayers) {
+    if (!player.name) continue;
+    const clan = CLANS.find(c => c.id === player.clanId);
+    const escapedName = player.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const namePattern = new RegExp(`(?<![\\w])${escapedName}(?![\\w])`, 'g');
+
+    const newSegments: Segment[] = [];
+    for (const seg of segments) {
+      if (seg.type !== 'text') {
+        newSegments.push(seg);
+        continue;
+      }
+      const text = seg.value;
+      let lastIndex = 0;
+      const regex = new RegExp(namePattern.source, 'g');
+      let match: RegExpExecArray | null;
+      while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          newSegments.push({ type: 'text', value: text.slice(lastIndex, match.index) });
+        }
+        nodeCounter++;
+        const key = `bl-${nodeCounter}`;
+        newSegments.push({
+          type: 'node',
+          value: (
+            <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              <ClanShield clanId={player.clanId} size={14} />
+              <span style={{ color: clan?.color || '#fff', fontWeight: 'bold' }}>{match[0]}</span>
+            </span>
+          )
+        });
+        lastIndex = regex.lastIndex;
+      }
+      if (lastIndex < text.length) {
+        newSegments.push({ type: 'text', value: text.slice(lastIndex) });
+      }
+    }
+    segments = newSegments;
+  }
+
+  return segments.map((seg, i) =>
+    seg.type === 'text' ? <span key={`t${i}`}>{seg.value}</span> : <span key={`n${i}`}>{seg.value}</span>
+  );
 }
 
 /**
@@ -69,7 +130,7 @@ function BattleResultPopup({
         {battleLogs.length > 0 && (
           <div style={{ textAlign: 'left', margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', fontSize: '0.9em' }}>
             {battleLogs.map((entry, i) => (
-              <p key={i} style={{ margin: '0.2rem 0' }}>{entry}</p>
+              <p key={i} style={{ margin: '0.2rem 0' }}>{renderBattleLogEntry(entry, gameState.players)}</p>
             ))}
           </div>
         )}
@@ -177,13 +238,16 @@ export const BattlePanel = () => {
 
     return (
       <div className="battle-popup-overlay">
-        <div className="battle-popup-card">
+        <div className="battle-popup-card" style={{ borderColor: playerClan?.color }}>
           <h3 className="battle-popup-title">
-            {t('battle.battleNumber', { number: battleNumber })}: {province?.name || battle.provinceId}
+            {t('battle.battleNumber', { number: battleNumber })}: <span style={{ color: REGION_COLORS[battle.provinceId] || '#fff' }}>{province?.name || battle.provinceId}</span>
           </h3>
-          <p className="battle-popup-message" style={{ color: playerClan?.color }}>
-            {t('battle.playerMustBet', { name: player?.name || '' })}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <ClanShield clanId={player?.clanId || ''} size={36} />
+            <p className="battle-popup-message" style={{ color: playerClan?.color, margin: 0 }}>
+              {t('battle.playerMustBet', { name: player?.name || '' })}
+            </p>
+          </div>
           <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
             {t('battle.accept')}
           </button>
@@ -229,9 +293,12 @@ export const BattlePanel = () => {
         <h3>{t('battle.battleNumber', { number: battleNumber })}: {t('battle.battleIn', { name: province?.name || battle.provinceId })}</h3>
 
         <div className="battle-info">
-          <h4 style={{ color: playerClan?.color }}>{player?.name} - {t('battle.warTactics')}</h4>
-          <p className="bid-info">
-            {t('battle.bidInfo', { current: totalBid, max: maxCoins })}
+          <div className="battle-bidding-header" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <ClanShield clanId={player?.clanId || ''} size={28} />
+            <h4 style={{ color: playerClan?.color, margin: 0 }}>{player?.name} - {t('battle.warTactics')}</h4>
+          </div>
+          <p className="bid-info" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            Total: <CoinIcon size={16} color="#FFD700" /> <span style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#FFD700' }}>{totalBid}</span> / {maxCoins}
           </p>
           <div className="tactic-bids">
             {WAR_TACTICS.map(tactic => (
