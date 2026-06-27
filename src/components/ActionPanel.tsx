@@ -5,6 +5,7 @@ import type { MandateType } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { BushiIcon, ShintoIcon } from './Icons';
+import { ClanShield } from './ClanShields';
 
 export const ActionPanel = () => {
   const {
@@ -94,14 +95,25 @@ export const ActionPanel = () => {
                 .map(p => {
                   const clan = CLANS.find(c => c.id === p.clanId)!;
                   const isSelected = selectedAllianceTarget === p.id;
+                  const proposalsToThisPlayer = gameState.allianceProposals.filter(ap => ap.to === p.id);
                   return (
                     <button
                       key={p.id}
                       className={`btn-alliance${isSelected ? ' selected' : ''}`}
-                      style={{ borderColor: clan.color }}
+                      style={{ borderColor: clan.color, display: 'flex', alignItems: 'center' }}
                       onClick={() => setSelectedAllianceTarget(isSelected ? null : p.id)}
                     >
-                      {p.name} ({clan.name})
+                      <span>{p.name} ({clan.name})</span>
+                      {proposalsToThisPlayer.length > 0 && (
+                        <span style={{ marginLeft: 'auto', display: 'flex', gap: '2px', alignItems: 'center' }}>
+                          {proposalsToThisPlayer.map(ap => {
+                            const proposer = gameState.players.find(pl => pl.id === ap.from);
+                            return proposer ? (
+                              <ClanShield key={ap.from} clanId={proposer.clanId} size={20} />
+                            ) : null;
+                          })}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
