@@ -1233,28 +1233,58 @@ export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerI
       break;
     }
     case 'fujin': {
-      // UI-driven: player needs to perform up to 2 movements via UI
-      newState.log = [...newState.log, `${player.name} may perform up to 2 Movements (Fujin) - use Move Forces`];
+      // Interactive: handled by step-by-step flow (resolveCurrentKamiReward sets interactive mode)
       break;
     }
     case 'raijin': {
-      // UI-driven: player needs to choose province to summon bushi
-      // For now, decrement reserve if possible (placement needs UI)
-      if (player.bushi > 0) {
-        newState.log = [...newState.log, `${player.name} may Summon 1 Bushi to any Province (Raijin) - use the map to place`];
-      } else {
-        newState.log = [...newState.log, `${player.name} has no Bushi in reserve (Raijin - no effect)`];
-      }
+      // Interactive: handled by step-by-step flow (resolveCurrentKamiReward sets interactive mode)
       break;
     }
     case 'ryujin': {
-      // UI-driven: player needs to choose a season card to buy
-      newState.log = [...newState.log, `${player.name} may acquire a Season Card paying full cost (Ryujin)`];
+      // Interactive: handled by step-by-step flow (resolveCurrentKamiReward sets interactive mode)
       break;
     }
   }
 
   return newState;
+}
+
+/**
+ * Compute the winner of a temple based on shinto force and honor track tiebreaking.
+ * Returns the winnerId (or null if no figures) and a forces array.
+ */
+function computeTempleWinner(
+  templeFigures: { playerId: string }[],
+  honorTrack: string[]
+): { winnerId: string | null; forces: { playerId: string; count: number }[] } {
+  const forcesMap: { [playerId: string]: number } = {};
+  templeFigures.forEach((fig) => {
+    forcesMap[fig.playerId] = (forcesMap[fig.playerId] || 0) + 1;
+  });
+
+  const forces = Object.entries(forcesMap).map(([playerId, count]) => ({ playerId, count }));
+
+  if (forces.length === 0) {
+    return { winnerId: null, forces: [] };
+  }
+
+  let maxForce = 0;
+  let winnerId: string | null = null;
+
+  Object.entries(forcesMap).forEach(([pid, force]) => {
+    if (force > maxForce) {
+      maxForce = force;
+      winnerId = pid;
+    } else if (force === maxForce && winnerId) {
+      const currentWinnerHonor = honorTrack.indexOf(winnerId);
+      const challengerHonor = honorTrack.indexOf(pid);
+      if (challengerHonor < currentWinnerHonor) {
+        winnerId = pid;
+      }
+    }
+  });
+
+  return { winnerId, forces };
 }
 
 export function resolveKamiTurn(state: GameState): GameState {
@@ -1270,37 +1300,16 @@ export function resolveKamiTurn(state: GameState): GameState {
   const sortedTemples = [...newState.temples].sort((a, b) => a.position - b.position);
 
   for (const temple of sortedTemples) {
-    // Count Shinto force per player at this temple
-    const forces: { [playerId: string]: number } = {};
-    temple.figures.forEach((fig) => {
-      forces[fig.playerId] = (forces[fig.playerId] || 0) + 1;
-    });
+    const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack);
 
-    if (Object.keys(forces).length === 0) continue;
-
-    // Find player with most Shinto force
-    let maxForce = 0;
-    let winnerId: string | null = null;
-
-    Object.entries(forces).forEach(([pid, force]) => {
-      if (force > maxForce) {
-        maxForce = force;
-        winnerId = pid;
-      } else if (force === maxForce) {
-        // Ties broken by honor (lower index = higher honor = wins)
-        const currentWinnerHonor = newState.honorTrack.indexOf(winnerId!);
-        const challengerHonor = newState.honorTrack.indexOf(pid);
-        if (challengerHonor < currentWinnerHonor) {
-          winnerId = pid;
-        }
-      }
-    });
+    if (forces.length === 0) continue;
 
     // Sol clan power: bonus on temple honor tiebreak
-    if (winnerId && Object.keys(forces).length > 1) {
-      const tiedInTemple = Object.entries(forces).filter(([, f]) => f === maxForce);
+    if (winnerId && forces.length > 1) {
+      const maxForce = Math.max(...forces.map(f => f.count));
+      const tiedInTemple = forces.filter(f => f.count === maxForce);
       if (tiedInTemple.length > 1) {
-        const losers = tiedInTemple.filter(([pid]) => pid !== winnerId).map(([pid]) => pid);
+        const losers = tiedInTemple.filter(f => f.playerId !== winnerId).map(f => f.playerId);
         applySolTiebreakBonus(newState, winnerId, losers);
       }
     }
@@ -2448,30 +2457,10 @@ export function advancePlayer(state: GameState): GameState {
     const kamiResolutionTemples: KamiResolutionTemple[] = [];
 
     for (const temple of sortedTemples) {
-      const forces: { playerId: string; count: number }[] = [];
-      const forcesMap: { [playerId: string]: number } = {};
-      temple.figures.forEach((fig) => {
-        forcesMap[fig.playerId] = (forcesMap[fig.playerId] || 0) + 1;
-      });
-      Object.entries(forcesMap).forEach(([playerId, count]) => {
-        forces.push({ playerId, count });
-      });
+      const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack);
 
-      let winnerId: string | null = null;
-      let maxForce = 0;
-
-      Object.entries(forcesMap).forEach(([pid, force]) => {
-        if (force > maxForce) {
-          maxForce = force;
-          winnerId = pid;
-        } else if (force === maxForce && winnerId) {
-          const currentWinnerHonor = newState.honorTrack.indexOf(winnerId);
-          const challengerHonor = newState.honorTrack.indexOf(pid);
-          if (challengerHonor < currentWinnerHonor) {
-            winnerId = pid;
-          }
-        }
-      });
+      // Skip empty temples (no figures = no winner, no need to show popup)
+      if (!winnerId && forces.length === 0) continue;
 
       // Determine reward text
       let reward = '';
@@ -2488,6 +2477,17 @@ export function advancePlayer(state: GameState): GameState {
         reward,
         forces,
       });
+    }
+
+    // If no temples have any figures, skip kami resolution entirely
+    if (kamiResolutionTemples.length === 0) {
+      newState.log = [...newState.log, 'Kami Turn - no temples with figures, skipping'];
+      // Continue with normal flow: check if politics done or advance to next player
+      if (newState.politicsMandateCount >= newState.maxMandates) {
+        return advancePhase(newState);
+      }
+      newState.currentPlayerIndex = advanceToNextInSeating(referenceIdx);
+      return newState;
     }
 
     newState.kamiResolutionActive = true;
