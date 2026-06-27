@@ -129,6 +129,8 @@ export const es: Record<TranslationKey, string> = {
   'battle.coinDistributionTitle': 'Reparto de Monedas',
   'battle.coinDistributionRemaining': 'moneda(s) por repartir',
   'battle.coinDistributionInstruction': 'Elige a qué perdedor dar 1 moneda extra',
+  'battle.coinPool': 'Monedas asignadas',
+  'battle.confirmBidsOverlay': 'Confirmar Apuestas ({total} monedas)',
 
   // GameOverScreen
   'gameOver.title': 'FIN DEL JUEGO',
