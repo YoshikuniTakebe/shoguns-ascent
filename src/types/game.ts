@@ -216,6 +216,13 @@ export interface GameState {
   lastMandateIssuerId: string | null;
   gameOver: boolean;
   winner?: string;
+  coinDistributionPending?: {
+    battleProvinceId: string;
+    winnerId: string;
+    losers: string[];
+    remainder: number;
+    distributed: number;
+  } | null;
   log: string[];
   logHistory: { [season: string]: string[] };
   hostId?: string;

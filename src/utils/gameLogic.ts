@@ -1923,10 +1923,24 @@ export function resolveNextBattle(state: GameState): GameState {
       const losers = battle.participants.filter((pid) => pid !== winnerId);
       if (losers.length > 0 && totalBid > 0) {
         const share = Math.floor(totalBid / losers.length);
-        losers.forEach((pid) => {
-          const loser = newState.players.find((p) => p.id === pid)!;
-          loser.coins += share;
-        });
+        const remainder = totalBid % losers.length;
+        if (share > 0) {
+          losers.forEach((pid) => {
+            const loser = newState.players.find((p) => p.id === pid)!;
+            loser.coins += share;
+            newState.log = [...newState.log, `${loser.name} recibe ${share} monedas del ganador`];
+          });
+        }
+        if (remainder > 0) {
+          newState.coinDistributionPending = {
+            battleProvinceId: battle.provinceId,
+            winnerId,
+            losers,
+            remainder,
+            distributed: share * losers.length,
+          };
+        }
+        newState.log = [...newState.log, `${winner.name} gastó ${totalBid} monedas en la batalla`];
       }
     }
 
@@ -1938,6 +1952,9 @@ export function resolveNextBattle(state: GameState): GameState {
         const totalBid = Object.values(playerBids).reduce((sum, v) => sum + v, 0);
         const loser = newState.players.find((p) => p.id === pid)!;
         loser.coins = Math.max(0, loser.coins - totalBid);
+        if (totalBid > 0) {
+          newState.log = [...newState.log, `${loser.name} descarta ${totalBid} monedas`];
+        }
       }
     });
 
