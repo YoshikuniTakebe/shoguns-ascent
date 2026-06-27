@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix marshal glow logic to only highlight regions with movable figures, fix PlayerPanel sort order to use static turnOrder, style recruit placements text, style ronin in game log, add troop type icons in game log with clan colors, and equalize MainMenu button sizes",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Fix marshal glow in src/components/RegionCard.tsx (lines 257-262): Change `province.figures.some(f => f.owner === marshalGlowPlayerId)` to only match figures that are (a) NOT type 'fortress' UNLESS the player's clan is 'tortuga', AND (b) NOT already in gameState.marshalMovedFigures. The active player's clan ID can be obtained from `activePlayer?.clanId` (already available in scope). The check should be: `province.figures.some(f => f.owner === marshalGlowPlayerId && (f.type !== 'fortress' || glowPlayerClanId === 'tortuga') && !gameState.marshalMovedFigures.includes(f.id))`",
     "2. Fix PlayerPanel sort order in src/components/PlayerPanel.tsx (line 26): Change `.sort((a, b) => gameState.honorTrack.indexOf(a.id) - gameState.honorTrack.indexOf(b.id))` to `.sort((a, b) => gameState.turnOrder.indexOf(a.id) - gameState.turnOrder.indexOf(b.id))` - this uses the static turnOrder which never changes during the game.",
@@ -23,5 +23,5 @@
     "Run `npm run build` in /projects/sandbox/shoguns-ascent and confirm no NEW TypeScript errors appear (pre-existing BattlePanel.tsx errors are acceptable)"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes with only pre-existing BattlePanel.tsx TS errors (2 TranslationKey type mismatches). All 6 fixes implemented successfully. The troopTypeIconMap uses functional component calls directly to render icons inline."
 }
