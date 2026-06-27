@@ -295,7 +295,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 {t('seasonCardsModal.chooseCard')}
               </h2>
               <p style={{ margin: '0 0 20px', color: currentClan?.color || '#ccc', fontSize: '1.2em', fontWeight: 'bold' }}>
-                {currentPlayer.name} ({currentClan?.name || ''})
+                {currentPlayer.name}
               </p>
               <p style={{ margin: '0 0 20px', color: '#aaa', fontSize: '0.9em' }}>
                 {t('seasonCardsModal.playerCoins', { coins: String(currentPlayer.coins) })}

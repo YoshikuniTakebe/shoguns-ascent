@@ -228,7 +228,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const ns = setupSeason(gameState, gameState.currentSeason);
-    set({ gameState: ns });
+    set({ gameState: ns, ...(gameState.mode === 'hotseat' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
   },
 
   // --- Tea Ceremony ---
@@ -258,7 +258,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (ns.currentPhase === 'tea' && updatedPlayer && updatedPlayer.allies.length > 0 && cp && cp.allies.length === 0) {
       ns = advancePlayer(ns);
     }
-    set({ gameState: ns });
+    set({ gameState: ns, ...(gameState.mode === 'hotseat' && ns.currentPhase === 'tea' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
   },
   doAcceptAlliance: (from) => {
     const { gameState, localPlayerId, ws } = get();
@@ -275,7 +275,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (ns.currentPhase === 'tea' && apid === cp?.id) {
       ns = advancePlayer(ns);
     }
-    set({ gameState: ns });
+    set({ gameState: ns, ...(gameState.mode === 'hotseat' && ns.currentPhase === 'tea' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
   },
 
   // --- Politics ---
@@ -308,7 +308,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // If train or marshal or recruit or betray or harvest mandate is active, wait for resolution before advancing
     if (ns.trainMandateActive || ns.marshalMandateActive || ns.recruitMandateActive || ns.betrayMandateActive || ns.harvestMandateActive) {
       // Auto-enable recruitMode when recruit mandate first activates, betrayMode when betray activates
-      set({ gameState: ns, recruitMode: ns.recruitMandateActive, betrayMode: ns.betrayMandateActive });
+      set({ gameState: ns, recruitMode: ns.recruitMandateActive, betrayMode: ns.betrayMandateActive, ...(gameState.mode === 'hotseat' && !ns.trainMandateActive ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
     } else {
       const advanced = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
@@ -328,7 +328,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const ns = lotoChooseActualMandate(gameState, mandate, apid);
     // If train or marshal or recruit or betray or harvest mandate is active, wait for resolution before advancing
     if (ns.trainMandateActive || ns.marshalMandateActive || ns.recruitMandateActive || ns.betrayMandateActive || ns.harvestMandateActive) {
-      set({ gameState: ns, recruitMode: ns.recruitMandateActive, betrayMode: ns.betrayMandateActive });
+      set({ gameState: ns, recruitMode: ns.recruitMandateActive, betrayMode: ns.betrayMandateActive, ...(gameState.mode === 'hotseat' && !ns.trainMandateActive ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
     } else {
       const advanced = advancePlayer(ns);
       set({ gameState: advanced, ...detectWarTransition(advanced), ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' && !advanced.kamiResolutionActive ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}) });
@@ -1221,7 +1221,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!gameState) return;
     const ns = advancePlayer(gameState);
     // Detect war phase transition and set up battle step phase for hotseat
-    set({ gameState: ns, ...detectWarTransition(ns), ...(gameState.mode === 'hotseat' && gameState.currentPhase === 'tea' && ns.currentPhase === 'politics' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
+    set({ gameState: ns, ...detectWarTransition(ns), ...(gameState.mode === 'hotseat' && (ns.currentPhase === 'tea' || (gameState.currentPhase === 'tea' && ns.currentPhase === 'politics')) ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
   },
 
   // --- Turn Popup (hotseat mandate transitions) ---
