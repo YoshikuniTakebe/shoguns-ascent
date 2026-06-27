@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-006",
+  "type": "fix",
+  "description": "Address v2 review findings: fix mixed-language logs to Spanish, clear coinDistributionPending in cleanupSeason, cap bribe at proposal time",
+  "status": "completed",
+  "steps": [
+    "In src/utils/gameLogic.ts proposeAlliance, change English bribe log messages to Spanish",
+    "In src/utils/gameLogic.ts acceptAlliance, change English bribe log message to Spanish",
+    "In src/utils/gameLogic.ts proposeAlliance, cap bribeAmount to from.coins at proposal time",
+    "In src/utils/gameLogic.ts cleanupSeason, add coinDistributionPending: null to the returned state"
+  ],
+  "acceptance_criteria": [
+    "All alliance bribe log messages use Spanish consistently",
+    "coinDistributionPending is cleared to null in cleanupSeason",
+    "Bribe amount is capped to proposer's coins at proposal time",
+    "TypeScript compiles without errors"
+  ],
+  "verification": [
+    "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit` and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": "All 3 v2 review issues fixed: (1) Alliance bribe logs changed from English to Spanish ('propone alianza a', 'recibe X monedas de soborno de') matching the existing battle distribution Spanish logs. (2) coinDistributionPending: null added to cleanupSeason state object. (3) bribeAmount capped to from.coins at proposal time using Math.min, stored as effectiveBribe. TypeScript compiles cleanly."
+}
