@@ -183,10 +183,10 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
             const player = isRyujinMode ? ryujinPlayer! : currentPlayer!;
             const playerClan = CLANS.find(c => c.id === player.clanId);
             return (
-              <span style={{ fontSize: '0.7em', marginLeft: '12px', opacity: 0.8, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <ClanShield clanId={player.clanId} size={28} />
+              <span style={{ fontSize: '1em', marginLeft: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <ClanShield clanId={player.clanId} size={32} />
                 <span style={{ color: playerClan?.color || '#ccc', fontWeight: 'bold' }}>{player.name}</span>
-                <CoinIcon size={20} />
+                <CoinIcon size={24} />
                 <span>{player.coins}</span>
                 {isDiscounted && <span style={{ color: '#27ae60', marginLeft: '6px' }}>{t('seasonCardsModal.discount')}</span>}
               </span>

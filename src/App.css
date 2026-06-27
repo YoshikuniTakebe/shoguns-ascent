@@ -32,7 +32,7 @@
 .season-cards-modal{position:relative;background:linear-gradient(145deg,var(--bg-medium),var(--bg-dark));border:1px solid var(--border-gold);border-radius:14px;padding:1.5rem;max-width:900px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,0.6)}
 .season-cards-modal-close{position:absolute;top:0.6rem;right:0.9rem;background:none;border:none;color:var(--text-secondary);font-size:1.8rem;cursor:pointer;line-height:1;padding:0.25rem;border-radius:4px;transition:color 0.2s;z-index:1}
 .season-cards-modal-close:hover{color:var(--text-primary)}
-.season-cards-modal-title{text-align:center;color:var(--accent-gold);font-size:1.3rem;font-weight:bold;letter-spacing:0.08em;margin-bottom:1.25rem;text-shadow:0 0 10px rgba(200,169,81,0.3)}
+.season-cards-modal-title{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;text-align:center;color:var(--accent-gold);font-size:1.3rem;font-weight:bold;letter-spacing:0.08em;margin-bottom:1.25rem;text-shadow:0 0 10px rgba(200,169,81,0.3)}
 
 .season-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem}
 .season-card{background:linear-gradient(145deg,rgba(0,0,0,0.4),rgba(15,52,96,0.3));border:1px solid rgba(200,169,81,0.2);border-left:4px solid;border-radius:10px;padding:0.9rem;display:flex;flex-direction:column;gap:0.5rem;transition:transform 0.2s,box-shadow 0.2s;aspect-ratio:3/4}
