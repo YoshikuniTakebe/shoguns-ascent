@@ -158,63 +158,69 @@ export const ActionPanel = () => {
           <p className="phase-description">{t('actions.politicsDesc')}</p>
 
           {/* Train mandate active - show skip option */}
-          {gameState.trainMandateActive && (
-            <div className="train-active">
-              <p className="train-notice">
-                {t('actions.trainNotice', { name: cp?.name || '' })}{' '}
-                {t('actions.trainPlayer', { current: gameState.trainResolutionIndex + 1, total: gameState.trainResolutionOrder.length })}
-              </p>
-              <button className="btn-secondary" onClick={doSkipTrainPurchase}>
-                {t('actions.skipCardPurchase')}
-              </button>
-            </div>
-          )}
+          {gameState.trainMandateActive && (() => {
+            const cpClan = cp ? CLANS.find(c => c.id === cp.clanId) : null;
+            return (
+              <div className="train-active">
+                <p className="train-notice">
+                  Mandato Entrenar - <span style={{ color: cpClan?.color || '#8B4513', fontWeight: 'bold' }}>{cp?.name || ''}</span> puede comprar una carta del Mercado de Estación o pasar.
+                </p>
+                <p className="recruit-player-info">
+                  JUGADOR {gameState.trainResolutionIndex + 1} DE {gameState.trainResolutionOrder.length}
+                </p>
+                <button className="btn-secondary" onClick={doSkipTrainPurchase}>
+                  {t('actions.skipCardPurchase')}
+                </button>
+              </div>
+            );
+          })()}
 
           {/* Marshal mandate active - show move/build/end turn options */}
-          {gameState.marshalMandateActive && (
-            <div className="marshal-active">
-              <p className="marshal-notice">
-                {t('actions.marshalNotice', {
-                  name: cp?.name || '',
-                  bonus: gameState.marshalMandateIssuerId && cp &&
-                    (cp.id === gameState.marshalMandateIssuerId || gameState.players.find(p => p.id === gameState.marshalMandateIssuerId)?.allies.includes(cp.id))
-                    ? t('actions.marshalBonus')
-                    : t('actions.marshalNoBonus'),
-                })}{' '}
-                {t('actions.marshalPlayer', { current: gameState.marshalResolutionIndex + 1, total: gameState.marshalResolutionOrder.length })}
-              </p>
-              <p className="move-instruction">{t('actions.marshalMoveInstruction')}</p>
-              {gameState.marshalMovedFigures.length > 0 && (
-                <p className="marshal-moved-count">{t('actions.marshalMovedCount', { count: gameState.marshalMovedFigures.length })}</p>
-              )}
-              <div className="march-controls">
-                <button className={`btn-secondary ${moveMode ? 'active' : ''}`} onClick={toggleMoveMode}>
-                  {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
-                </button>
-                {moveMode && (
-                  <ol className="marshal-steps-list">
-                    {t('actions.marshalMoveSteps').split(/\d+\.\s/).filter(Boolean).map((step, idx) => (
-                      <li key={idx}>{step.trim()}</li>
-                    ))}
-                  </ol>
+          {gameState.marshalMandateActive && (() => {
+            const cpClan = cp ? CLANS.find(c => c.id === cp.clanId) : null;
+            const hasBonus = gameState.marshalMandateIssuerId && cp &&
+              (cp.id === gameState.marshalMandateIssuerId || gameState.players.find(p => p.id === gameState.marshalMandateIssuerId)?.allies.includes(cp.id));
+            return (
+              <div className="marshal-active">
+                <p className="marshal-notice">
+                  Mandato Movilizar - <span style={{ color: cpClan?.color || '#4CAF50', fontWeight: 'bold' }}>{cp?.name || ''}</span> puede mover figuras.{' '}
+                  {hasBonus && t('actions.marshalBonus')}
+                </p>
+                <p className="recruit-player-info">
+                  JUGADOR {gameState.marshalResolutionIndex + 1} DE {gameState.marshalResolutionOrder.length}
+                </p>
+                <p className="move-instruction">{t('actions.marshalMoveInstruction')}</p>
+                {gameState.marshalMovedFigures.length > 0 && (
+                  <p className="marshal-moved-count">{t('actions.marshalMovedCount', { count: gameState.marshalMovedFigures.length })}</p>
                 )}
-              </div>
-              {gameState.marshalMandateIssuerId && cp &&
-                (cp.id === gameState.marshalMandateIssuerId || gameState.players.find(p => p.id === gameState.marshalMandateIssuerId)?.allies.includes(cp.id)) &&
-                !gameState.marshalFortressBuiltBy.includes(cp.id) &&
-                cp.fortresses > 0 && cp.coins >= 3 && (
-                <div style={{ marginTop: '6px' }}>
-                  <button className={`btn-secondary ${buildFortressMode ? 'active' : ''}`} onClick={toggleBuildFortressMode}>
-                    {t('actions.buildFortress')}
+                <div className="march-controls">
+                  <button className={`btn-secondary ${moveMode ? 'active' : ''}`} style={{ width: '100%' }} onClick={toggleMoveMode}>
+                    {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
                   </button>
-                  {buildFortressMode && <p className="move-instruction">{t('actions.marshalSelectProvince')}</p>}
+                  {moveMode && (
+                    <ol className="marshal-steps-list">
+                      {t('actions.marshalMoveSteps').split(/\d+\.\s/).filter(Boolean).map((step, idx) => (
+                        <li key={idx}>{step.trim()}</li>
+                      ))}
+                    </ol>
+                  )}
                 </div>
-              )}
-              <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipMarshalTurn}>
-                {t('actions.endMarshalTurn')}
-              </button>
-            </div>
-          )}
+                {hasBonus &&
+                  !gameState.marshalFortressBuiltBy.includes(cp!.id) &&
+                  cp!.fortresses > 0 && cp!.coins >= 3 && (
+                  <div style={{ marginTop: '6px' }}>
+                    <button className={`btn-secondary ${buildFortressMode ? 'active' : ''}`} onClick={toggleBuildFortressMode}>
+                      {t('actions.buildFortress')}
+                    </button>
+                    {buildFortressMode && <p className="move-instruction">{t('actions.marshalSelectProvince')}</p>}
+                  </div>
+                )}
+                <button className="btn-primary" style={{ marginTop: '8px', width: '100%' }} onClick={doSkipMarshalTurn}>
+                  {t('actions.endMarshalTurn')}
+                </button>
+              </div>
+            );
+          })()}
 
           {/* Recruit mandate active - show figure type selector and place/end turn options */}
           {gameState.recruitMandateActive && (
@@ -260,21 +266,21 @@ export const ActionPanel = () => {
           )}
 
           {/* Betray mandate active - issuer selects enemy figures to replace */}
-          {gameState.betrayMandateActive && (
-            <div className="betray-active">
-              <div className="betray-header">
-                <span className="betray-player-name" style={{ color: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#DC143C'; })() }}>
-                  {cp?.name || ''}
-                </span>
-                <span className="betray-mandate-label">{t('actions.betrayMandateLabel')}</span>
+          {gameState.betrayMandateActive && (() => {
+            const cpClan = cp ? CLANS.find(c => c.id === cp.clanId) : null;
+            return (
+              <div className="betray-active">
+                <p className="betray-notice">
+                  Mandato Traicionar - <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold' }}>{cp?.name || ''}</span> puede reemplazar figuras enemigas.
+                </p>
+                <p className="betray-selections">{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
+                <p className="betray-instruction">{t('actions.betrayClickInstruction')}</p>
+                <button className="btn-primary" style={{ marginTop: '8px', width: '100%' }} onClick={doSkipBetrayTurn}>
+                  {t('actions.betrayEndTurn')}
+                </button>
               </div>
-              <p className="betray-selections">{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
-              <p className="betray-instruction">{t('actions.betrayClickInstruction')}</p>
-              <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipBetrayTurn}>
-                {t('actions.betrayEndTurn')}
-              </button>
-            </div>
-          )}
+            );
+          })()}
 
           {!gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && !gameState.lotoChoicePhase && (
             <button className="btn-primary" onClick={doDrawMandateTiles}>
@@ -325,12 +331,17 @@ export const ActionPanel = () => {
       )}
 
       {/* Politics - not my turn */}
-      {gameState.currentPhase === 'politics' && !isMyTurn && (
-        <div className="politics-phase">
-          <h4>{t('actions.politicsPhase')}</h4>
-          <p className="phase-description">{t('actions.waitingFor', { name: cp?.name || '' })}</p>
-        </div>
-      )}
+      {gameState.currentPhase === 'politics' && !isMyTurn && (() => {
+        const cpClan = cp ? CLANS.find(c => c.id === cp.clanId) : null;
+        return (
+          <div className="politics-phase">
+            <h4>{t('actions.politicsPhase')}</h4>
+            <p className="phase-description">
+              {t('actions.waitingFor', { name: '' })} <span style={{ color: cpClan?.color, fontWeight: 'bold' }}>{cp?.name || ''}</span>
+            </p>
+          </div>
+        );
+      })()}
 
       {/* War Phase */}
       {gameState.currentPhase === 'war' && (
