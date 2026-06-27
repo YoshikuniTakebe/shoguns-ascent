@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix tea ceremony turn order to follow seating (honor) order instead of array index, fix politics track name truncation, fix marshalNoBonus i18n issue, standardize all mandate formats in ActionPanel, ensure player names use clan colors everywhere, fix marshal button width, and enhance GameLog with styled player names, mandate names, region names, and icons.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. FIX TEA CEREMONY TURN ORDER in src/utils/gameLogic.ts: In setupSeason() (around line 268), change currentPlayerIndex from 0 to the index of turnOrder[0] in the players array: `const firstPlayerId = state.turnOrder[0]; const firstPlayerIdx = newState.players.findIndex(p => p.id === firstPlayerId); currentPlayerIndex: firstPlayerIdx >= 0 ? firstPlayerIdx : 0`. Also fix advanceTeaPlayer() (around line 2366) where it does `(currentPlayerIndex + 1) % players.length` - it should advance to the NEXT player in turnOrder, not just the next array index. Find the current player's position in turnOrder and advance to the next turnOrder entry.",
     "2. FIX POLITICS TRACK NAME TRUNCATION in src/App.css: Find the .slot-player-name rule which has max-width:80px;overflow:hidden;text-overflow:ellipsis. Change to overflow:visible and remove max-width, or increase max-width to fit full names (e.g., max-width:90px or remove it). The slot is 95px wide so the name should fit.",
@@ -27,5 +27,5 @@
     "Run `npx tsc --noEmit` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes compile cleanly with npx tsc --noEmit. The betray mandate does not have a resolution order (only the issuer acts), so no JUGADOR X DE Y line was added there. The GameBoard turn indicator already used clan colors. The BattlePanel combatant names were already colored; only the war-complete results section needed fixing."
 }
