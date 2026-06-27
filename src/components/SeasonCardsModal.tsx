@@ -4,6 +4,7 @@ import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import type { CardType, SeasonCard } from '../types/game';
 import { CLANS } from '../types/game';
+import { ClanShield } from './ClanShields';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
   monster: '#cd7f32',
@@ -92,7 +93,11 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
     : false;
 
   const getEffectiveCost = (card: SeasonCard): number => {
-    return Math.max(0, card.cost - (isDiscounted ? 1 : 0));
+    let baseCost = card.cost;
+    if (currentPlayer?.clanId === 'bonsai' && baseCost >= 2) {
+      baseCost = 1;
+    }
+    return Math.max(0, baseCost - (isDiscounted ? 1 : 0));
   };
 
   const canAfford = (card: SeasonCard): boolean => {
@@ -179,7 +184,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                   <span className="season-card-name">{card.name}</span>
                   <span className="season-card-cost">
                     <span className="season-card-coin">&#x26C1;</span>
-                    {isTrainMode && isDiscounted && card.cost > 0 ? (
+                    {isTrainMode && effectiveCost < card.cost ? (
                       <>
                         <span style={{ textDecoration: 'line-through', opacity: 0.5, marginRight: '4px' }}>{card.cost}</span>
                         <span style={{ color: '#27ae60', fontWeight: 'bold' }}>{effectiveCost}</span>
@@ -262,6 +267,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 maxWidth: '400px',
               }}
             >
+              <ClanShield clanId={currentPlayer.clanId} size={48} />
               <h2 style={{ margin: '0 0 8px', color: '#f5f5f5', fontSize: '1.4em' }}>
                 {t('seasonCardsModal.chooseCard')}
               </h2>

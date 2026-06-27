@@ -417,7 +417,7 @@ export const GameBoard = () => {
       )}
 
       {/* Turn Popup (hotseat mandate transitions) */}
-      {turnPopupPlayer && gameState.mode === 'hotseat' && (() => {
+      {turnPopupPlayer && gameState.mode === 'hotseat' && !gameState.trainMandateActive && (() => {
         const popupPlayer = gameState.players.find(p => p.id === turnPopupPlayer);
         if (!popupPlayer) return null;
         const clanColor = CLANS.find(c => c.id === popupPlayer.clanId)?.color;

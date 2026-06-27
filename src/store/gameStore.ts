@@ -302,7 +302,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else {
       const advanced = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      set({ gameState: advanced, ...detectWarTransition(advanced) });
+      set({ gameState: advanced, ...detectWarTransition(advanced), ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}) });
     }
   },
   doLotoChooseActualMandate: (mandate) => {
@@ -321,7 +321,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ gameState: ns, recruitMode: ns.recruitMandateActive, betrayMode: ns.betrayMandateActive });
     } else {
       const advanced = advancePlayer(ns);
-      set({ gameState: advanced, ...detectWarTransition(advanced) });
+      set({ gameState: advanced, ...detectWarTransition(advanced), ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}) });
     }
   },
 
@@ -377,8 +377,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Detect war phase transition and set up battle step phase for hotseat
       set({ gameState: ns, showTrainModal: false, ...detectWarTransition(ns) });
     } else {
-      const newCurrentPlayerId = ns.players[ns.currentPlayerIndex]?.id || null;
-      set({ gameState: ns, ...(gameState.mode === 'hotseat' ? { turnPopupPlayer: newCurrentPlayerId } : {}) });
+      set({ gameState: ns });
     }
   },
 
@@ -393,8 +392,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Detect war phase transition and set up battle step phase for hotseat
       set({ gameState: ns, showTrainModal: false, ...detectWarTransition(ns) });
     } else {
-      const newCurrentPlayerId = ns.players[ns.currentPlayerIndex]?.id || null;
-      set({ gameState: ns, ...(gameState.mode === 'hotseat' ? { turnPopupPlayer: newCurrentPlayerId } : {}) });
+      set({ gameState: ns });
     }
   },
 
@@ -951,14 +949,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     const ns = advancePhase(gameState);
     // Detect war phase transition and set up battle step phase for hotseat
-    set({ gameState: ns, ...detectWarTransition(ns) });
+    set({ gameState: ns, ...detectWarTransition(ns), ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
   },
   doAdvancePlayer: () => {
     const { gameState } = get();
     if (!gameState) return;
     const ns = advancePlayer(gameState);
     // Detect war phase transition and set up battle step phase for hotseat
-    set({ gameState: ns, ...detectWarTransition(ns) });
+    set({ gameState: ns, ...detectWarTransition(ns), ...(gameState.mode === 'hotseat' && gameState.currentPhase === 'tea' && ns.currentPhase === 'politics' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
   },
 
   // --- Turn Popup (hotseat mandate transitions) ---
