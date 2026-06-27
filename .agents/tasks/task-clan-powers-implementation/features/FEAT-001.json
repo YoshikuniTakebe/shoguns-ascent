@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Update CLAN_POWERS tooltip texts in MainMenu.tsx with correct short summaries, and implement all clan power logic in gameLogic.ts",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/MainMenu.tsx, replace the CLAN_POWERS record (lines 9-18) with correct short summaries for each clan: koi='Monedas como Ronin. Al inicio de Guerra cambia Ronin por Monedas. En Contratar Ronin, sus Monedas suman Fuerza.', sol='Al ganar empate por Honor, gana 1 Moneda + 1 PV. El perdedor pierde 1 Moneda + 1 PV.', loto='Elige cualquier Orden Politica, sin importar las fichas que robe.', tortuga='Fortalezas se mueven como figuras y cuentan como 1 de Fuerza.', libelula='Invoca figuras en cualquier Provincia. Mueve figuras a cualquier Provincia.', zorro='Al inicio de Guerra, coloca 1 Bushi gratis en cada provincia sin unidades propias.', bonsai='El coste maximo de cualquier compra es 1 Moneda.', luna='Todas sus figuras tienen Fuerza 2. Max 2 figuras por provincia y max 2 en Santuarios.'",
     "2. In src/utils/gameLogic.ts initiateWarPhase function, BEFORE applyWarUpgrades, add Koi clan power: find the Koi player, swap all their ronin for the same number of coins (player.coins += player.ronin; player.ronin = 0). Log the swap.",
@@ -34,5 +34,5 @@
     "npx tsc --noEmit"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All clan powers implemented and verified. TypeScript compiles cleanly. Luna province limit also added to moveForces (marshal movement). Temple shinto placement is handled in gameStore.ts (not gameLogic.ts) so Luna temple limit was added there. Sol power added to 4 tiebreak locations: harvest, war force, war tactic bids, and kami turn temples."
 }
