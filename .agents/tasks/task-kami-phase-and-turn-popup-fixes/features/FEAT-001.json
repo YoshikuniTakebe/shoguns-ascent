@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix turn popup logic: show it after mandate completion and tea->politics transition, add ClanShield to 'Elige carta' popup, fix Bonsai cost display bug, and suppress turn popup during train mandate flow",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/store/gameStore.ts, in `doChooseMandateTile` (around line 300-302), when the else branch fires (mandate not active so advancePlayer is called), add `turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null` to the set() call, BUT ONLY if gameState.mode === 'hotseat' AND the advanced state still has currentPhase === 'politics' (not war/cleanup).",
+    "2. In src/store/gameStore.ts, in `doLotoChooseActualMandate` (around line 320-322), apply the same pattern as step 1 for the else branch where advancePlayer is called.",
+    "3. In src/store/gameStore.ts, in `doAdvancePhase` (line 945-954), after setting the new state, if the new state's currentPhase === 'politics' and gameState.mode === 'hotseat', set turnPopupPlayer to the first player who takes a mandate turn: `ns.players[ns.currentPlayerIndex]?.id || null`.",
+    "4. In src/store/gameStore.ts, in `doAdvancePlayer` (line 956-961), if it transitions from tea to politics (check: old gameState.currentPhase === 'tea' and ns.currentPhase === 'politics'), set turnPopupPlayer similarly for hotseat mode.",
+    "5. In src/store/gameStore.ts, suppress turnPopupPlayer during train mandate: In `doBuySeasonCard` (around line 380) and `doSkipTrainPurchase` (around line 395-397), when trainMandateActive is still true and turnPopupPlayer is set, do NOT set turnPopupPlayer. Specifically, in the `else` branches that set `turnPopupPlayer: newCurrentPlayerId`, change to NOT set turnPopupPlayer (remove the turnPopupPlayer set or set it to null) since SeasonCardsModal already has its own player indicator.",
+    "6. In src/components/GameBoard.tsx (line 420), add a condition to NOT show the turn popup when `gameState.trainMandateActive` is true. Modify the condition from `{turnPopupPlayer && gameState.mode === 'hotseat' && ...}` to `{turnPopupPlayer && gameState.mode === 'hotseat' && !gameState.trainMandateActive && ...}`.",
+    "7. In src/components/SeasonCardsModal.tsx, import ClanShield from './ClanShields' and add `<ClanShield clanId={currentPlayer.clanId} size={48} />` in the showPlayerIndicator overlay (around line 268-270), before the 'Elige carta' heading.",
+    "8. In src/components/SeasonCardsModal.tsx, fix getEffectiveCost (around line 96) to include Bonsai clan power: before applying the issuer discount, check if currentPlayer.clanId === 'bonsai' && card.cost >= 2, if so set baseCost to 1, then apply discount. Also update canAfford to use the same corrected getEffectiveCost.",
+    "9. Update the price display in SeasonCardsModal.tsx to show the Bonsai-reduced price correctly (the strikethrough should show original cost, the green text should show effective cost with both bonsai reduction and issuer discount applied). The condition for showing discount should be `(isDiscounted || isBonsaiDiscount) && effectiveCost < card.cost`."
+  ],
+  "acceptance_criteria": [
+    "npx tsc --noEmit passes with no errors",
+    "Turn popup appears after a mandate completes (non-train) showing the next player's clan shield and name",
+    "Turn popup appears when tea ceremony ends and politics starts",
+    "Turn popup does NOT appear during train mandate flow",
+    "The 'Elige carta' popup in SeasonCardsModal shows the ClanShield of the current player",
+    "Bonsai clan with train issuer discount shows all cards >= 2 cost as 0 (1 bonsai - 1 discount = 0)",
+    "GameBoard turn popup is suppressed when trainMandateActive is true"
+  ],
+  "verification": ["npx tsc --noEmit"],
+  "blocked_reason": null,
+  "findings": ""
+}
