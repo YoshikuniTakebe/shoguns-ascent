@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
-import { VPIcon, CoinIcon, RoninIcon } from './Icons';
+import { VPIcon, CoinIcon, RoninIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon } from './Icons';
 
 const MANDATE_COLORS: Record<string, string> = {
   train: '#8B4513',
@@ -176,6 +176,20 @@ export const GameLog = () => {
     winter: 'season.winter',
   };
 
+  const seasonTabColors: Record<string, string> = {
+    spring: '#FFB7C5',
+    summer: '#FF6B35',
+    autumn: '#D4A574',
+    winter: '#A8C8E8',
+  };
+
+  const seasonIcons: Record<string, ReactNode> = {
+    spring: <SpringIcon size={14} color="#1a1a2e" />,
+    summer: <SummerIcon size={14} color="#1a1a2e" />,
+    autumn: <AutumnIcon size={14} color="#1a1a2e" />,
+    winter: <WinterIcon size={14} color="#1a1a2e" />,
+  };
+
   // Determine which log to display
   const activeTab = selectedSeason ?? currentSeason;
   const displayLog =
@@ -190,15 +204,27 @@ export const GameLog = () => {
       <h4>Game Log</h4>
       {availableSeasons.length > 1 && (
         <div className="log-season-tabs">
-          {availableSeasons.map((season) => (
-            <button
-              key={season}
-              className={`log-season-tab ${activeTab === season ? 'active' : ''}`}
-              onClick={() => setSelectedSeason(season === currentSeason ? null : season)}
-            >
-              {t(seasonTranslationKeys[season])}
-            </button>
-          ))}
+          {availableSeasons.map((season) => {
+            const isActive = activeTab === season;
+            const baseColor = seasonTabColors[season] || '#ccc';
+            return (
+              <button
+                key={season}
+                className={`log-season-tab ${isActive ? 'active' : ''}`}
+                style={{
+                  backgroundColor: isActive ? baseColor : `${baseColor}55`,
+                  borderColor: baseColor,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+                onClick={() => setSelectedSeason(season === currentSeason ? null : season)}
+              >
+                {seasonIcons[season]}
+                {t(seasonTranslationKeys[season])}
+              </button>
+            );
+          })}
         </div>
       )}
       <div className="log-entries" ref={ref}>

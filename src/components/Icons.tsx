@@ -256,6 +256,101 @@ export const MonsterIcon = ({ size = 24, color = 'currentColor', className }: Ic
   </svg>
 );
 
+/** Cherry blossom / sakura flower - used for Spring season */
+export const SpringIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* Five petals of a sakura flower */}
+    <path d="M12 2 C13 4, 14 6, 12 8 C10 6, 11 4, 12 2" fill={color} />
+    <path d="M17.5 5.5 C16 7, 14.5 8, 12.5 7.5 C13.5 5.5, 15.5 5, 17.5 5.5" fill={color} />
+    <path d="M19.5 11.5 C17 11.5, 15 11, 14 9.5 C16 9, 18 9.5, 19.5 11.5" fill={color} />
+    <path d="M6.5 5.5 C8 7, 9.5 8, 11.5 7.5 C10.5 5.5, 8.5 5, 6.5 5.5" fill={color} />
+    <path d="M4.5 11.5 C7 11.5, 9 11, 10 9.5 C8 9, 6 9.5, 4.5 11.5" fill={color} />
+    {/* Center */}
+    <circle cx="12" cy="9" r="1.5" fill={color} opacity="0.6" />
+  </svg>
+);
+
+/** Bright sun with rays - used for Summer season */
+export const SummerIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    stroke="none"
+  >
+    {/* Central sun circle */}
+    <circle cx="12" cy="12" r="5" />
+    {/* Rays */}
+    <rect x="11" y="1" width="2" height="4" rx="1" />
+    <rect x="11" y="19" width="2" height="4" rx="1" />
+    <rect x="1" y="11" width="4" height="2" rx="1" />
+    <rect x="19" y="11" width="4" height="2" rx="1" />
+    <rect x="4.2" y="4.2" width="2" height="4" rx="1" transform="rotate(-45 5.2 6.2)" />
+    <rect x="17.8" y="4.2" width="2" height="4" rx="1" transform="rotate(45 18.8 6.2)" />
+    <rect x="4.2" y="15.8" width="2" height="4" rx="1" transform="rotate(45 5.2 17.8)" />
+    <rect x="17.8" y="15.8" width="2" height="4" rx="1" transform="rotate(-45 18.8 17.8)" />
+  </svg>
+);
+
+/** Maple leaf - used for Autumn season */
+export const AutumnIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    stroke="none"
+  >
+    {/* Simplified maple leaf shape */}
+    <path d="M12 2 L13.5 6 L17 4 L15 8 L20 9 L16 11 L19 14 L14 13 L14 17 L12 14 L10 17 L10 13 L5 14 L8 11 L4 9 L9 8 L7 4 L10.5 6 Z" />
+    {/* Stem */}
+    <rect x="11.5" y="17" width="1" height="5" rx="0.5" />
+  </svg>
+);
+
+/** Snowflake - used for Winter season */
+export const WinterIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* Main axes */}
+    <line x1="12" y1="2" x2="12" y2="22" />
+    <line x1="2" y1="12" x2="22" y2="12" />
+    <line x1="4.9" y1="4.9" x2="19.1" y2="19.1" />
+    <line x1="19.1" y1="4.9" x2="4.9" y2="19.1" />
+    {/* Branch tips */}
+    <line x1="12" y1="2" x2="10" y2="4" />
+    <line x1="12" y1="2" x2="14" y2="4" />
+    <line x1="12" y1="22" x2="10" y2="20" />
+    <line x1="12" y1="22" x2="14" y2="20" />
+    <line x1="2" y1="12" x2="4" y2="10" />
+    <line x1="2" y1="12" x2="4" y2="14" />
+    <line x1="22" y1="12" x2="20" y2="10" />
+    <line x1="22" y1="12" x2="20" y2="14" />
+  </svg>
+);
+
 /** Ronin warrior in attack pose framed in hexagon border */
 export const RoninIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg

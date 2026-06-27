@@ -15,7 +15,7 @@ import { PoliticsTrack } from './PoliticsTrack';
 import { RegionDetailModal } from './RegionDetailModal';
 import { HarvestPopup } from './HarvestPopup';
 import { KamiResolutionPopup } from './KamiResolutionPopup';
-import { VPIcon, CoinIcon, RoninIcon, HonorIcon } from './Icons';
+import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 
@@ -196,6 +196,10 @@ export const GameBoard = () => {
       <div className="game-header">
         <div className="header-left">
           <div className="season-indicator" style={{ backgroundColor: seasonColors[gameState.currentSeason] }}>
+            {gameState.currentSeason === 'spring' && <SpringIcon size={16} color="#1a1a2e" />}
+            {gameState.currentSeason === 'summer' && <SummerIcon size={16} color="#1a1a2e" />}
+            {gameState.currentSeason === 'autumn' && <AutumnIcon size={16} color="#1a1a2e" />}
+            {gameState.currentSeason === 'winter' && <WinterIcon size={16} color="#1a1a2e" />}
             <span className="season-name">{t(`season.${gameState.currentSeason}` as any)}</span>
             <span className="phase-name">{phaseLabels[gameState.currentPhase] || gameState.currentPhase.toUpperCase()}</span>
           </div>

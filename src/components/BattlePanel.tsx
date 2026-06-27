@@ -5,6 +5,7 @@ import type { Battle, GameState } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { CoinIcon } from './Icons';
 import { useT } from '../i18n';
+import { calculateForce } from '../utils/gameLogic';
 
 /**
  * Extract log entries for a resolved battle using its logStartIndex
@@ -326,11 +327,11 @@ export const BattlePanel = () => {
           {battle.participants.map(pid => {
             const p = gameState.players.find(x => x.id === pid);
             const clan = p ? CLANS.find(c => c.id === p.clanId) : null;
-            const figures = province?.figures.filter(f => f.owner === pid) || [];
+            const force = province ? calculateForce(province, pid, gameState) : 0;
             return (
               <div key={pid} className="battle-combatant" style={{ borderColor: clan?.color }}>
                 <span className="combatant-name" style={{ color: clan?.color }}>{p?.name}</span>
-                <span className="combatant-forces">{figures.length} {t('battle.figures')}</span>
+                <span className="combatant-forces">{t('battle.force')}: {force}</span>
                 <span className="combatant-bid-status">
                   {battle.warTacticBids[pid] !== undefined ? t('battle.bidsPlaced') : t('battle.waiting')}
                 </span>
@@ -381,11 +382,11 @@ export const BattlePanel = () => {
         {battle.participants.map(pid => {
           const p = gameState.players.find(x => x.id === pid);
           const clan = p ? CLANS.find(c => c.id === p.clanId) : null;
-          const figures = province?.figures.filter(f => f.owner === pid) || [];
+          const force = province ? calculateForce(province, pid, gameState) : 0;
           return (
             <div key={pid} className="battle-combatant" style={{ borderColor: clan?.color }}>
               <span className="combatant-name" style={{ color: clan?.color }}>{p?.name}</span>
-              <span className="combatant-forces">{figures.length} {t('battle.figures')}</span>
+              <span className="combatant-forces">{t('battle.force')}: {force}</span>
               <span className="combatant-bid-status">
                 {battle.warTacticBids[pid] !== undefined ? t('battle.bidsPlaced') : t('battle.waiting')}
               </span>
