@@ -78,6 +78,7 @@ export const ActionPanel = () => {
                 const fp = gameState.players.find(p => p.id === pr.from);
                 return (
                   <div key={pr.from} className="alliance-proposal">
+                    <ClanShield clanId={fp?.clanId || ''} size={20} />
                     <span>{t('actions.wantsAlliance', { name: fp?.name || '' })}</span>
                     <button className="btn-small btn-accept" onClick={() => doAcceptAlliance(pr.from)}>
                       {t('actions.accept')}

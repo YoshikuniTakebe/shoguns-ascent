@@ -1293,7 +1293,7 @@ export function resolveKamiTurn(state: GameState): GameState {
     players: state.players.map((p) => ({ ...p })),
     temples: state.temples.map((t) => ({ ...t, figures: [...t.figures] })),
     honorTrack: [...state.honorTrack],
-    log: [...state.log, 'Kami Turn - resolving temple majorities'],
+    log: [...state.log, '--- Kami Turn ---'],
   };
 
   // For each temple (left to right by position)
@@ -1301,8 +1301,12 @@ export function resolveKamiTurn(state: GameState): GameState {
 
   for (const temple of sortedTemples) {
     const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack);
+    const kamiInfo = KAMI_DATA.find((k) => k.type === temple.kamiType);
 
-    if (forces.length === 0) continue;
+    if (forces.length === 0) {
+      newState.log = [...newState.log, `Temple ${temple.position} (${kamiInfo?.name || temple.kamiType}) - no figures, skipped`];
+      continue;
+    }
 
     // Sol clan power: bonus on temple honor tiebreak
     if (winnerId && forces.length > 1) {
@@ -1316,9 +1320,8 @@ export function resolveKamiTurn(state: GameState): GameState {
 
     if (winnerId) {
       const winner = newState.players.find((p) => p.id === winnerId);
-      const kamiData = KAMI_DATA.find((k) => k.type === temple.kamiType);
-      if (winner && kamiData) {
-        newState.log = [...newState.log, `${winner.name} gains ${kamiData.name} ability at temple ${temple.position}`];
+      if (winner && kamiInfo) {
+        newState.log = [...newState.log, `Temple ${temple.position}: ${winner.name} wins ${kamiInfo.name} (force: ${forces.find(f => f.playerId === winnerId)?.count || 0})`];
         // Apply the kami ability
         newState = resolveKamiAbility(newState, temple.kamiType, winnerId);
       }
@@ -2458,14 +2461,17 @@ export function advancePlayer(state: GameState): GameState {
 
     for (const temple of sortedTemples) {
       const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack);
+      const kamiData = KAMI_DATA.find(k => k.type === temple.kamiType);
 
       // Skip empty temples (no figures = no winner, no need to show popup)
-      if (!winnerId && forces.length === 0) continue;
+      if (!winnerId && forces.length === 0) {
+        newState.log = [...newState.log, `Temple ${temple.position} (${kamiData?.name || temple.kamiType}) - no figures, skipped`];
+        continue;
+      }
 
       // Determine reward text
       let reward = '';
       if (winnerId) {
-        const kamiData = KAMI_DATA.find(k => k.type === temple.kamiType);
         reward = kamiData?.effect || '';
       }
 
@@ -2495,7 +2501,7 @@ export function advancePlayer(state: GameState): GameState {
     newState.kamiResolutionIndex = 0;
     newState.kamiResolutionStep = 'showing';
     newState.kamiResolutionNextPlayerIndex = advanceToNextInSeating(referenceIdx);
-    newState.log = [...newState.log, 'Kami Turn - resolving temple majorities'];
+    newState.log = [...newState.log, '--- Kami Turn ---'];
     return newState;
   }
 
