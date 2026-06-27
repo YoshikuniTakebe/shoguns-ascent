@@ -60,23 +60,23 @@ export const PlayerPanel = () => {
               </div>
               <div className="player-reserves">
                 <span className="reserve-item" title="Bushi in reserve">
-                  <BushiIcon size={24} color={clan.color} className="reserve-icon" />
+                  <BushiIcon size={18} color={clan.color} className="reserve-icon" />
                   <span className="reserve-count">{player.bushi}</span>
                 </span>
                 <span className="reserve-item" title="Shinto in reserve">
-                  <ShintoIcon size={24} color={clan.color} className="reserve-icon" />
+                  <ShintoIcon size={18} color={clan.color} className="reserve-icon" />
                   <span className="reserve-count">{player.shinto}</span>
                 </span>
                 <span className="reserve-item" title="Fortresses in reserve">
-                  <FortressIcon size={24} color={clan.color} className="reserve-icon" />
+                  <FortressIcon size={18} color={clan.color} className="reserve-icon" />
                   <span className="reserve-count">{player.fortresses}</span>
                 </span>
                 <span className="reserve-item" title="Daimyo in reserve">
-                  <DaimyoIcon size={24} color={clan.color} className="reserve-icon" />
+                  <DaimyoIcon size={18} color={clan.color} className="reserve-icon" />
                   <span className="reserve-count">{player.hasDaimyo ? 1 : 0}</span>
                 </span>
                 <span className="reserve-item" title="Monsters in reserve">
-                  <MonsterIcon size={24} color={clan.color} className="reserve-icon" />
+                  <MonsterIcon size={18} color={clan.color} className="reserve-icon" />
                   <span className="reserve-count">{player.monsters ?? 0}</span>
                 </span>
               </div>
