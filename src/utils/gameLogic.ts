@@ -258,8 +258,8 @@ export function setupSeason(state: GameState, season: Season): GameState {
   // Archive current season's log before transitioning
   const archivedHistory = { ...state.logHistory, [state.currentSeason]: [...state.log] };
 
-  // Determine first player in turn order (lowest honor = first seat)
-  const firstPlayerId = state.turnOrder[0];
+  // Determine first player from honor track (highest honor = first in tea ceremony)
+  const firstPlayerId = state.honorTrack[0];
   const firstPlayerIdx = state.players.findIndex(p => p.id === firstPlayerId);
 
   let newState: GameState = {

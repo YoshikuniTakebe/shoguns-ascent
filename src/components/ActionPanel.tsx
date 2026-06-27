@@ -273,6 +273,9 @@ export const ActionPanel = () => {
                 <p className="betray-notice">
                   Mandato Traicionar - <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold' }}>{cp?.name || ''}</span> puede reemplazar figuras enemigas.
                 </p>
+                <p className="recruit-player-info">
+                  JUGADOR 1 DE 1
+                </p>
                 <p className="betray-selections">{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
                 <p className="betray-instruction">{t('actions.betrayClickInstruction')}</p>
                 <button className="btn-primary" style={{ marginTop: '8px', width: '100%' }} onClick={doSkipBetrayTurn}>
