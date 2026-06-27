@@ -138,6 +138,14 @@ export interface DeckConfig {
   extraMonsters: 0 | 1 | 2;
 }
 
+export interface KamiResolutionTemple {
+  templeIndex: number;
+  kamiType: KamiType;
+  winnerId: string | null;
+  reward: string;
+  forces: { playerId: string; count: number }[];
+}
+
 export interface GameState {
   id: string;
   mode: 'online' | 'hotseat';
@@ -191,6 +199,14 @@ export interface GameState {
   harvestResolutionIndex: number;
   harvestPlayerRewards: { playerId: string; provinceId: string; rewards: { vp?: number; coins?: number; ronin?: number; honor?: number } }[];
   harvestPopupVisible: boolean;
+  kamiResolutionActive: boolean;
+  kamiResolutionTemples: KamiResolutionTemple[];
+  kamiResolutionIndex: number;
+  kamiResolutionStep: 'showing' | 'interactive' | null;
+  kamiResolutionNextPlayerIndex: number;
+  fujinMovesRemaining: number;
+  raijinPlacementActive: boolean;
+  ryujinBuyActive: boolean;
   lotoChoicePhase?: boolean;
   lotoDiscardedMandate?: MandateType | null;
   lastMandateIssuerId: string | null;

@@ -14,6 +14,7 @@ import { AllianceDisplay } from './AllianceDisplay';
 import { PoliticsTrack } from './PoliticsTrack';
 import { RegionDetailModal } from './RegionDetailModal';
 import { HarvestPopup } from './HarvestPopup';
+import { KamiResolutionPopup } from './KamiResolutionPopup';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
@@ -417,7 +418,7 @@ export const GameBoard = () => {
       )}
 
       {/* Turn Popup (hotseat mandate transitions) */}
-      {turnPopupPlayer && gameState.mode === 'hotseat' && !gameState.trainMandateActive && (() => {
+      {turnPopupPlayer && gameState.mode === 'hotseat' && !gameState.trainMandateActive && !gameState.kamiResolutionActive && (() => {
         const popupPlayer = gameState.players.find(p => p.id === turnPopupPlayer);
         if (!popupPlayer) return null;
         const clanColor = CLANS.find(c => c.id === popupPlayer.clanId)?.color;
@@ -438,6 +439,29 @@ export const GameBoard = () => {
 
       {/* Harvest Popup */}
       <HarvestPopup />
+
+      {/* Kami Resolution Popup */}
+      <KamiResolutionPopup />
+
+      {/* Fujin Interactive Overlay */}
+      {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.fujinMovesRemaining > 0 && (() => {
+        const { doFujinDone } = useGameStore.getState();
+        return (
+          <div className="komainu-pray-overlay" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <span>{t('kami.resolution.fujinMoves', { count: String(gameState.fujinMovesRemaining) })}</span>
+            <button className="btn-primary" onClick={doFujinDone} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
+              {t('kami.resolution.fujinDone')}
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* Raijin Interactive Overlay */}
+      {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.raijinPlacementActive && (
+        <div className="komainu-pray-overlay">
+          <span>{t('kami.resolution.raijinPlace')}</span>
+        </div>
+      )}
     </div>
   );
 };

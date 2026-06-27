@@ -278,6 +278,19 @@ export const en = {
   'harvest.received': '{name} has received:',
   'harvest.accept': 'Accept',
 
+  // Kami Resolution
+  'kami.resolution.title': 'Kami Resolution',
+  'kami.resolution.winner': '{name} wins!',
+  'kami.resolution.noWinner': 'No winner',
+  'kami.resolution.reward': 'Reward: {reward}',
+  'kami.resolution.continue': 'Continue',
+  'kami.resolution.force': 'Shinto Force',
+  'kami.resolution.fujinMoves': 'Movements remaining: {count}',
+  'kami.resolution.fujinDone': 'End movements',
+  'kami.resolution.raijinPlace': 'Place Bushi in a province',
+  'kami.resolution.ryujinBuy': 'Buy a Season Card',
+  'kami.resolution.templeOf': 'Temple {number}',
+
   // Turn Popup
   'game.turnPopupAccept': 'Accept',
 

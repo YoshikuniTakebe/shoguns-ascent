@@ -2,6 +2,7 @@ import type {
   GameState, Player, Province, Season, MandateType,
   Battle, Figure, Temple, WarProvinceSlot, SeasonCard,
   AllianceProposal, Hostage, DeckConfig, DeckName, KamiType,
+  KamiResolutionTemple,
 } from '../types/game';
 import {
   CLANS, PROVINCES_DATA, HOME_PROVINCES, WAR_TACTICS,
@@ -230,6 +231,14 @@ export function createInitialGameState(
     harvestResolutionIndex: 0,
     harvestPlayerRewards: [],
     harvestPopupVisible: false,
+    kamiResolutionActive: false,
+    kamiResolutionTemples: [],
+    kamiResolutionIndex: 0,
+    kamiResolutionStep: null,
+    kamiResolutionNextPlayerIndex: 0,
+    fujinMovesRemaining: 0,
+    raijinPlacementActive: false,
+    ryujinBuyActive: false,
     lastMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
@@ -827,6 +836,54 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
   return newState;
 }
 
+/**
+ * Buy a season card for the Ryujin kami reward. Full cost, no issuer discount.
+ * Bonsai clan power still applies.
+ */
+export function ryujinBuyCard(state: GameState, playerId: string, cardId: string): GameState {
+  const card = state.seasonCardsDeck.find((c) => c.id === cardId);
+  if (!card) return state;
+
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return state;
+
+  // Enforce purchase restrictions for monsters
+  if (card.cardType === 'monster') {
+    const cardGroups = card.group.split('/').map(g => g.trim());
+    const isDynastyInvasion = cardGroups.includes('Dynasty Invasion');
+    const isSolOrLuna = player.clanId === 'sol' || player.clanId === 'luna';
+    if (isSolOrLuna && !isDynastyInvasion) return state;
+    if (!isSolOrLuna && isDynastyInvasion) return state;
+  }
+
+  // Bonsai clan power: max cost is 1 coin
+  let baseCost = card.cost;
+  if (player.clanId === 'bonsai' && baseCost >= 2) {
+    baseCost = 1;
+  }
+  const effectiveCost = baseCost;
+
+  if (player.coins < effectiveCost) return state;
+
+  const newState: GameState = {
+    ...state,
+    players: state.players.map((p) => {
+      if (p.id === playerId) {
+        return {
+          ...p,
+          coins: p.coins - effectiveCost,
+          seasonCards: [...p.seasonCards, card],
+        };
+      }
+      return { ...p };
+    }),
+    seasonCardsDeck: state.seasonCardsDeck.filter((c) => c.id !== cardId),
+    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coin(s) (Ryujin)`],
+  };
+
+  return newState;
+}
+
 function executeHarvest(state: GameState, issuerId: string): GameState {
   const newState: GameState = { ...state, players: state.players.map((p) => ({ ...p })), log: [...state.log] };
 
@@ -1260,6 +1317,116 @@ export function resolveKamiTurn(state: GameState): GameState {
   }
 
   return newState;
+}
+
+/**
+ * Apply the kami ability for the current kamiResolutionIndex temple's winner.
+ * For auto rewards (amaterasu, hachiman, susanoo, tsukuyomi), apply the effect.
+ * For interactive rewards (fujin, raijin, ryujin), set interactive flags.
+ */
+export function resolveCurrentKamiReward(state: GameState): GameState {
+  if (!state.kamiResolutionActive) return state;
+  const currentTemple = state.kamiResolutionTemples[state.kamiResolutionIndex];
+  if (!currentTemple) return state;
+
+  // No winner - nothing to apply
+  if (!currentTemple.winnerId) {
+    return state;
+  }
+
+  const { kamiType, winnerId } = currentTemple;
+
+  // For interactive kami types, set the interactive flags
+  if (kamiType === 'fujin') {
+    return {
+      ...state,
+      kamiResolutionStep: 'interactive',
+      fujinMovesRemaining: 2,
+      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} may perform up to 2 Movements (Fujin)`],
+    };
+  }
+  if (kamiType === 'raijin') {
+    const player = state.players.find(p => p.id === winnerId);
+    if (player && player.bushi > 0) {
+      return {
+        ...state,
+        kamiResolutionStep: 'interactive',
+        raijinPlacementActive: true,
+        log: [...state.log, `${player.name} may Summon 1 Bushi to any Province (Raijin)`],
+      };
+    }
+    // No bushi in reserve - treat as auto (skip)
+    return {
+      ...state,
+      log: [...state.log, `${player?.name || ''} has no Bushi in reserve (Raijin - no effect)`],
+    };
+  }
+  if (kamiType === 'ryujin') {
+    return {
+      ...state,
+      kamiResolutionStep: 'interactive',
+      ryujinBuyActive: true,
+      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} may acquire a Season Card (Ryujin)`],
+    };
+  }
+
+  // Auto rewards - apply via resolveKamiAbility
+  let newState = resolveKamiAbility(state, kamiType, winnerId);
+
+  // Sol clan tiebreak bonus (same logic as resolveKamiTurn)
+  const temple = newState.temples[currentTemple.templeIndex];
+  if (temple && currentTemple.forces.length > 1) {
+    const maxForce = Math.max(...currentTemple.forces.map(f => f.count));
+    const tiedInTemple = currentTemple.forces.filter(f => f.count === maxForce);
+    if (tiedInTemple.length > 1) {
+      const losers = tiedInTemple.filter(f => f.playerId !== winnerId).map(f => f.playerId);
+      applySolTiebreakBonus(newState, winnerId, losers);
+    }
+  }
+
+  return newState;
+}
+
+/**
+ * Advance to the next temple in kami resolution, or finish the resolution.
+ */
+export function advanceKamiResolution(state: GameState): GameState {
+  if (!state.kamiResolutionActive) return state;
+
+  const nextIndex = state.kamiResolutionIndex + 1;
+
+  // All temples resolved
+  if (nextIndex >= state.kamiResolutionTemples.length) {
+    let newState: GameState = {
+      ...state,
+      kamiResolutionActive: false,
+      kamiResolutionTemples: [],
+      kamiResolutionIndex: 0,
+      kamiResolutionStep: null,
+      fujinMovesRemaining: 0,
+      raijinPlacementActive: false,
+      ryujinBuyActive: false,
+    };
+
+    // Check if politics phase is done
+    if (newState.politicsMandateCount >= newState.maxMandates) {
+      return advancePhase(newState);
+    }
+
+    // Continue with next player's mandate turn
+    newState.currentPlayerIndex = state.kamiResolutionNextPlayerIndex;
+    return newState;
+  }
+
+  // Move to the next temple
+  return {
+    ...state,
+    kamiResolutionIndex: nextIndex,
+    kamiResolutionStep: 'showing',
+    fujinMovesRemaining: 0,
+    raijinPlacementActive: false,
+    ryujinBuyActive: false,
+  };
 }
 
 // ============================================================
@@ -2276,12 +2443,60 @@ export function advancePlayer(state: GameState): GameState {
 
   // Check if we need a kami turn
   if (isKamiTurn(newState.politicsMandateCount)) {
-    const kamiState = resolveKamiTurn(newState);
-    // After kami turn, check if politics phase is done
-    if (newState.politicsMandateCount >= newState.maxMandates) {
-      return advancePhase(kamiState);
+    // Instead of resolving all temples at once, compute temple results and enter step-by-step resolution
+    const sortedTemples = [...newState.temples].sort((a, b) => a.position - b.position);
+    const kamiResolutionTemples: KamiResolutionTemple[] = [];
+
+    for (const temple of sortedTemples) {
+      const forces: { playerId: string; count: number }[] = [];
+      const forcesMap: { [playerId: string]: number } = {};
+      temple.figures.forEach((fig) => {
+        forcesMap[fig.playerId] = (forcesMap[fig.playerId] || 0) + 1;
+      });
+      Object.entries(forcesMap).forEach(([playerId, count]) => {
+        forces.push({ playerId, count });
+      });
+
+      let winnerId: string | null = null;
+      let maxForce = 0;
+
+      Object.entries(forcesMap).forEach(([pid, force]) => {
+        if (force > maxForce) {
+          maxForce = force;
+          winnerId = pid;
+        } else if (force === maxForce && winnerId) {
+          const currentWinnerHonor = newState.honorTrack.indexOf(winnerId);
+          const challengerHonor = newState.honorTrack.indexOf(pid);
+          if (challengerHonor < currentWinnerHonor) {
+            winnerId = pid;
+          }
+        }
+      });
+
+      // Determine reward text
+      let reward = '';
+      if (winnerId) {
+        const kamiData = KAMI_DATA.find(k => k.type === temple.kamiType);
+        reward = kamiData?.effect || '';
+      }
+
+      const templeIndex = newState.temples.findIndex(t => t.id === temple.id);
+      kamiResolutionTemples.push({
+        templeIndex,
+        kamiType: temple.kamiType,
+        winnerId,
+        reward,
+        forces,
+      });
     }
-    return { ...kamiState, currentPlayerIndex: advanceToNextInSeating(referenceIdx) };
+
+    newState.kamiResolutionActive = true;
+    newState.kamiResolutionTemples = kamiResolutionTemples;
+    newState.kamiResolutionIndex = 0;
+    newState.kamiResolutionStep = 'showing';
+    newState.kamiResolutionNextPlayerIndex = advanceToNextInSeating(referenceIdx);
+    newState.log = [...newState.log, 'Kami Turn - resolving temple majorities'];
+    return newState;
   }
 
   // Check if politics phase is done

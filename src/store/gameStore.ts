@@ -10,6 +10,9 @@ import {
   chooseMandateTile,
   lotoChooseActualMandate,
   resolveKamiTurn,
+  resolveCurrentKamiReward,
+  advanceKamiResolution,
+  ryujinBuyCard,
   initiateWarPhase,
   submitWarTacticBids,
   allBidsSubmitted,
@@ -133,6 +136,13 @@ interface GameStore {
 
   // Kami
   doResolveKami: () => void;
+  doAcknowledgeKamiReward: () => void;
+  doCompleteKamiInteractive: () => void;
+  doFujinMove: (fromProvince: string, toProvince: string, figureIds: string[]) => void;
+  doFujinDone: () => void;
+  doRaijinPlace: (provinceId: string) => void;
+  doRyujinBuyCard: (cardId: string) => void;
+  doRyujinSkip: () => void;
 
   // War
   doInitiateWar: () => void;
@@ -302,7 +312,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else {
       const advanced = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      set({ gameState: advanced, ...detectWarTransition(advanced), ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}) });
+      set({ gameState: advanced, ...detectWarTransition(advanced), ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' && !advanced.kamiResolutionActive ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}) });
     }
   },
   doLotoChooseActualMandate: (mandate) => {
@@ -321,7 +331,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ gameState: ns, recruitMode: ns.recruitMandateActive, betrayMode: ns.betrayMandateActive });
     } else {
       const advanced = advancePlayer(ns);
-      set({ gameState: advanced, ...detectWarTransition(advanced), ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}) });
+      set({ gameState: advanced, ...detectWarTransition(advanced), ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' && !advanced.kamiResolutionActive ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}) });
     }
   },
 
@@ -816,6 +826,185 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameState: resolveKamiTurn(gameState) });
   },
 
+  doAcknowledgeKamiReward: () => {
+    const { gameState } = get();
+    if (!gameState || !gameState.kamiResolutionActive) return;
+
+    const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
+    if (!currentTemple) return;
+
+    // Apply the reward for the current temple
+    let ns = resolveCurrentKamiReward(gameState);
+
+    // If the reward is interactive (step changed to 'interactive'), wait for player input
+    if (ns.kamiResolutionStep === 'interactive') {
+      // For fujin, enable moveMode
+      if (currentTemple.kamiType === 'fujin') {
+        set({ gameState: ns, moveMode: true, moveFrom: null, selectedFigures: [] });
+      } else if (currentTemple.kamiType === 'raijin') {
+        set({ gameState: ns });
+      } else if (currentTemple.kamiType === 'ryujin') {
+        set({ gameState: ns });
+      } else {
+        set({ gameState: ns });
+      }
+      return;
+    }
+
+    // Auto reward applied (or no winner) - advance to next temple
+    ns = advanceKamiResolution(ns);
+
+    // If resolution just finished and we are in hotseat, show turn popup for next player
+    if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
+      set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+    } else {
+      set({ gameState: ns });
+    }
+  },
+
+  doCompleteKamiInteractive: () => {
+    const { gameState } = get();
+    if (!gameState || !gameState.kamiResolutionActive) return;
+
+    let ns = advanceKamiResolution(gameState);
+
+    // If resolution just finished and we are in hotseat, show turn popup for next player
+    if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
+      set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [], turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+    } else {
+      set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [] });
+    }
+  },
+
+  doFujinMove: (fromProvinceId: string, toProvinceId: string, figureIds: string[]) => {
+    const { gameState } = get();
+    if (!gameState || !gameState.kamiResolutionActive || gameState.fujinMovesRemaining <= 0) return;
+
+    const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
+    if (!currentTemple || !currentTemple.winnerId) return;
+
+    const ns = moveForces(gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds);
+    const remaining = ns.fujinMovesRemaining - 1;
+    const updated: GameState = { ...ns, fujinMovesRemaining: remaining };
+
+    if (remaining <= 0) {
+      // Auto-complete
+      const advanced = advanceKamiResolution(updated);
+      if (!advanced.kamiResolutionActive && advanced.currentPhase === 'politics' && gameState.mode === 'hotseat') {
+        set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null });
+      } else {
+        set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [] });
+      }
+    } else {
+      set({ gameState: updated, moveFrom: null, selectedFigures: [] });
+    }
+  },
+
+  doFujinDone: () => {
+    const { gameState } = get();
+    if (!gameState || !gameState.kamiResolutionActive) return;
+
+    const ns: GameState = { ...gameState, fujinMovesRemaining: 0 };
+    const advanced = advanceKamiResolution(ns);
+
+    if (!advanced.kamiResolutionActive && advanced.currentPhase === 'politics' && gameState.mode === 'hotseat') {
+      set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null });
+    } else {
+      set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [] });
+    }
+  },
+
+  doRaijinPlace: (provinceId: string) => {
+    const { gameState } = get();
+    if (!gameState || !gameState.kamiResolutionActive || !gameState.raijinPlacementActive) return;
+
+    const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
+    if (!currentTemple || !currentTemple.winnerId) return;
+
+    const player = gameState.players.find(p => p.id === currentTemple.winnerId);
+    if (!player || player.bushi <= 0) return;
+
+    const province = gameState.provinces[provinceId];
+    if (!province) return;
+
+    const figureId = Math.random().toString(36).substring(2, 10);
+    const newFigure = { type: 'bushi' as const, owner: currentTemple.winnerId, id: figureId };
+
+    const updatedProvinces = {
+      ...gameState.provinces,
+      [provinceId]: {
+        ...province,
+        figures: [...province.figures, newFigure],
+      },
+    };
+
+    const updatedPlayers = gameState.players.map(p => {
+      if (p.id === currentTemple.winnerId) {
+        return { ...p, bushi: Math.max(0, p.bushi - 1) };
+      }
+      return p;
+    });
+
+    let ns: GameState = {
+      ...gameState,
+      provinces: updatedProvinces,
+      players: updatedPlayers,
+      raijinPlacementActive: false,
+      log: [...gameState.log, `${player.name} summons a Bushi to ${province.name} (Raijin)`],
+    };
+
+    ns = advanceKamiResolution(ns);
+
+    if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
+      set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+    } else {
+      set({ gameState: ns });
+    }
+  },
+
+  doRyujinBuyCard: (cardId: string) => {
+    const { gameState } = get();
+    if (!gameState || !gameState.kamiResolutionActive || !gameState.ryujinBuyActive) return;
+
+    const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
+    if (!currentTemple || !currentTemple.winnerId) return;
+
+    // Buy the card at full cost (no issuer discount)
+    const ns = ryujinBuyCard(gameState, currentTemple.winnerId, cardId);
+
+    let updated: GameState = {
+      ...ns,
+      ryujinBuyActive: false,
+    };
+
+    updated = advanceKamiResolution(updated);
+
+    if (!updated.kamiResolutionActive && updated.currentPhase === 'politics' && gameState.mode === 'hotseat') {
+      set({ gameState: updated, turnPopupPlayer: updated.players[updated.currentPlayerIndex]?.id || null });
+    } else {
+      set({ gameState: updated });
+    }
+  },
+
+  doRyujinSkip: () => {
+    const { gameState } = get();
+    if (!gameState || !gameState.kamiResolutionActive || !gameState.ryujinBuyActive) return;
+
+    let ns: GameState = {
+      ...gameState,
+      ryujinBuyActive: false,
+      log: [...gameState.log, 'Ryujin reward skipped'],
+    };
+
+    ns = advanceKamiResolution(ns);
+
+    if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
+      set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+    } else {
+      set({ gameState: ns });
+    }
+  },
+
   // --- War ---
   doInitiateWar: () => {
     const { gameState, ws } = get();
@@ -926,6 +1115,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const cp = getCurrentPlayer(gameState);
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
+
+    // If in Fujin interactive mode, delegate to doFujinMove
+    if (gameState.kamiResolutionActive && gameState.fujinMovesRemaining > 0) {
+      get().doFujinMove(fromProvinceId, toProvinceId, figureIds);
+      return;
+    }
+
     if (ws && gameState.mode === 'online') {
       get().sendAction({ type: 'MOVE_FIGURE', playerId: apid, payload: { fromProvinceId, toProvinceId, figureIds } });
       return;

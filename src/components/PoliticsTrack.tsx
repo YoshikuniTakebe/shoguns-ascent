@@ -177,11 +177,13 @@ export const PoliticsTrack = () => {
   useEffect(() => {
     if (gameState?.trainMandateActive) {
       setShowSeasonCards(true);
+    } else if (gameState?.ryujinBuyActive) {
+      setShowSeasonCards(true);
     } else {
       // Auto-close when train mandate completes
       setShowSeasonCards(false);
     }
-  }, [gameState?.trainMandateActive]);
+  }, [gameState?.trainMandateActive, gameState?.ryujinBuyActive]);
 
   // Close the modal when monster placement is active
   useEffect(() => {

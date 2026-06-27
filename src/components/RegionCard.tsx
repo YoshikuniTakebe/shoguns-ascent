@@ -49,7 +49,7 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
 };
 
 export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSProperties }) => {
-  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure, monsterPlacementMode, monsterPlacementPlayerId, doPlaceMonster } = useGameStore();
+  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure, monsterPlacementMode, monsterPlacementPlayerId, doPlaceMonster, doRaijinPlace } = useGameStore();
   const t = useT();
   if (!gameState) return null;
 
@@ -63,6 +63,11 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
   const activePlayer = apid ? gameState.players.find(p => p.id === apid) : null;
   const isMarshalMove = moveMode && gameState.marshalMandateActive;
+  const isFujinMove = moveMode && gameState.kamiResolutionActive && gameState.fujinMovesRemaining > 0;
+  const fujinPlayerId = isFujinMove
+    ? gameState.kamiResolutionTemples[gameState.kamiResolutionIndex]?.winnerId
+    : null;
+  const movePlayerId = isFujinMove ? fujinPlayerId : apid;
   const isLibelula = activePlayer?.clanId === 'libelula';
 
   // Move target logic: for Libelula during marshal, all provinces except moveFrom are valid
@@ -95,7 +100,9 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   // Recruit province highlighting logic
   let isRecruitTarget = false;
   let isRecruitDimmed = false;
-  if (recruitMode && !monsterPlacementMode) {
+  if (gameState.kamiResolutionActive && gameState.raijinPlacementActive) {
+    isRecruitTarget = true;
+  } else if (recruitMode && !monsterPlacementMode) {
     if (apid) {
       const isDragonfly = activePlayer?.clanId === 'libelula';
       if (isDragonfly) {
@@ -113,6 +120,11 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   }
 
   const handleClick = () => {
+    // Raijin placement: click province to summon bushi
+    if (gameState.kamiResolutionActive && gameState.raijinPlacementActive) {
+      doRaijinPlace(regionId);
+      return;
+    }
     if (monsterPlacementMode) {
       if (isMonsterTarget) {
         doPlaceMonster(regionId);
@@ -145,8 +157,9 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
       } else {
         setMoveFrom(regionId);
         // Non-marshal: pre-select all figures owned by current player in this province
-        if (apid) {
-          const myFigures = province.figures.filter(f => f.owner === apid);
+        const ownerId = movePlayerId || apid;
+        if (ownerId) {
+          const myFigures = province.figures.filter(f => f.owner === ownerId);
           setSelectedFigures(myFigures.map(f => f.id));
         }
       }

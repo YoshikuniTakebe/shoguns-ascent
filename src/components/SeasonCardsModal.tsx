@@ -41,7 +41,7 @@ interface SeasonCardsModalProps {
 }
 
 export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
-  const { gameState, doBuySeasonCard, doSkipTrainPurchase } = useGameStore();
+  const { gameState, doBuySeasonCard, doSkipTrainPurchase, doRyujinBuyCard, doRyujinSkip } = useGameStore();
   const t = useT();
   const [confirmCard, setConfirmCard] = useState<SeasonCard | null>(null);
   const [playerConfirmed, setPlayerConfirmed] = useState(false);
@@ -61,8 +61,18 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
 
   // Determine if we are in Train mode (interactive)
   const isTrainMode = gameState.trainMandateActive && gameState.currentPhase === 'politics';
+  const isRyujinMode = gameState.ryujinBuyActive && gameState.kamiResolutionActive;
+  const isInteractiveMode = isTrainMode || isRyujinMode;
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const currentClan = currentPlayer ? CLANS.find(c => c.id === currentPlayer.clanId) : null;
+
+  // In Ryujin mode, the "current player" is the kami winner
+  const ryujinPlayer = isRyujinMode
+    ? (() => {
+        const temple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
+        return temple?.winnerId ? gameState.players.find(p => p.id === temple.winnerId) : null;
+      })()
+    : null;
 
   const currentSeasonCards = gameState.seasonCardsDeck.filter(
     (card) => card.season === gameState.currentSeason
@@ -82,8 +92,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
     return key ? t(key) : group;
   };
 
-  // Check if current player gets the -1 discount (issuer or ally)
-  const isDiscounted = isTrainMode && gameState.trainMandateIssuerId
+  // Check if current player gets the -1 discount (issuer or ally) - NOT in Ryujin mode
+  const isDiscounted = isTrainMode && !isRyujinMode && gameState.trainMandateIssuerId
     ? (() => {
         if (!currentPlayer) return false;
         if (currentPlayer.id === gameState.trainMandateIssuerId) return true;
@@ -93,26 +103,29 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
     : false;
 
   const getEffectiveCost = (card: SeasonCard): number => {
+    const buyer = isRyujinMode ? ryujinPlayer : currentPlayer;
     let baseCost = card.cost;
-    if (currentPlayer?.clanId === 'bonsai' && baseCost >= 2) {
+    if (buyer?.clanId === 'bonsai' && baseCost >= 2) {
       baseCost = 1;
     }
     return Math.max(0, baseCost - (isDiscounted ? 1 : 0));
   };
 
   const canAfford = (card: SeasonCard): boolean => {
-    if (!currentPlayer) return false;
-    return currentPlayer.coins >= getEffectiveCost(card);
+    const buyer = isRyujinMode ? ryujinPlayer : currentPlayer;
+    if (!buyer) return false;
+    return buyer.coins >= getEffectiveCost(card);
   };
 
   const canBuyCard = (card: SeasonCard): boolean => {
-    if (!currentPlayer) return false;
+    const buyer = isRyujinMode ? ryujinPlayer : currentPlayer;
+    if (!buyer) return false;
     if (!canAfford(card)) return false;
     // Monster purchase restrictions
     if (card.cardType === 'monster') {
       const cardGroups = card.group.split('/').map(g => g.trim());
       const isDynastyInvasion = cardGroups.includes('Dynasty Invasion');
-      const isSolOrLuna = currentPlayer.clanId === 'sol' || currentPlayer.clanId === 'luna';
+      const isSolOrLuna = buyer.clanId === 'sol' || buyer.clanId === 'luna';
       if (isSolOrLuna && !isDynastyInvasion) return false;
       if (!isSolOrLuna && isDynastyInvasion) return false;
     }
@@ -125,7 +138,11 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
 
   const handleConfirmBuy = () => {
     if (confirmCard) {
-      doBuySeasonCard(confirmCard.id);
+      if (isRyujinMode) {
+        doRyujinBuyCard(confirmCard.id);
+      } else {
+        doBuySeasonCard(confirmCard.id);
+      }
       setConfirmCard(null);
       setPlayerConfirmed(false);
     }
@@ -136,7 +153,11 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   };
 
   const handleSkipPurchase = () => {
-    doSkipTrainPurchase();
+    if (isRyujinMode) {
+      doRyujinSkip();
+    } else {
+      doSkipTrainPurchase();
+    }
     setPlayerConfirmed(false);
   };
 
@@ -144,37 +165,39 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
     setPlayerConfirmed(true);
   };
 
-  // Show player turn indicator if in train mode and player hasn't confirmed yet
-  const showPlayerIndicator = isTrainMode && !playerConfirmed;
+  // Show player turn indicator if in train mode and player hasn't confirmed yet (NOT for Ryujin)
+  const showPlayerIndicator = isTrainMode && !isRyujinMode && !playerConfirmed;
 
   return (
-    <div className="season-cards-modal-backdrop" onClick={onClose}>
+    <div className="season-cards-modal-backdrop" onClick={isRyujinMode ? undefined : onClose}>
       <div className="season-cards-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="season-cards-modal-close" onClick={onClose}>
-          &times;
-        </button>
+        {!isRyujinMode && (
+          <button className="season-cards-modal-close" onClick={onClose}>
+            &times;
+          </button>
+        )}
         <h2 className="season-cards-modal-title">
           {t('seasonCardsModal.title')}
-          {isTrainMode && currentPlayer && (
+          {isInteractiveMode && (isRyujinMode ? ryujinPlayer : currentPlayer) && (
             <span style={{ fontSize: '0.7em', marginLeft: '12px', opacity: 0.8 }}>
-              {currentPlayer.name} - {currentPlayer.coins} &#x26C1;
+              {(isRyujinMode ? ryujinPlayer?.name : currentPlayer?.name)} - {(isRyujinMode ? ryujinPlayer?.coins : currentPlayer?.coins)} &#x26C1;
               {isDiscounted && <span style={{ color: '#27ae60', marginLeft: '6px' }}>{t('seasonCardsModal.discount')}</span>}
             </span>
           )}
         </h2>
         <div className="season-card-grid">
           {currentSeasonCards.map((card) => {
-            const affordable = isTrainMode ? canBuyCard(card) : true;
-            const interactable = isTrainMode && playerConfirmed && affordable;
+            const affordable = isInteractiveMode ? canBuyCard(card) : true;
+            const interactable = isInteractiveMode && (isRyujinMode || playerConfirmed) && affordable;
             const effectiveCost = getEffectiveCost(card);
             return (
               <div
                 key={card.id}
-                className={`season-card${isTrainMode && !affordable ? ' season-card-disabled' : ''}`}
+                className={`season-card${isInteractiveMode && !affordable ? ' season-card-disabled' : ''}`}
                 style={{
                   borderLeftColor: CARD_TYPE_COLORS[card.cardType],
-                  opacity: isTrainMode && !affordable ? 0.4 : 1,
-                  pointerEvents: isTrainMode && (!playerConfirmed || !affordable) ? 'none' : 'auto',
+                  opacity: isInteractiveMode && !affordable ? 0.4 : 1,
+                  pointerEvents: isInteractiveMode && ((!isRyujinMode && !playerConfirmed) || !affordable) ? 'none' : 'auto',
                 }}
               >
                 <div className="season-card-image-placeholder">
@@ -184,7 +207,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                   <span className="season-card-name">{card.name}</span>
                   <span className="season-card-cost">
                     <span className="season-card-coin">&#x26C1;</span>
-                    {isTrainMode && effectiveCost < card.cost ? (
+                    {isInteractiveMode && effectiveCost < card.cost ? (
                       <>
                         <span style={{ textDecoration: 'line-through', opacity: 0.5, marginRight: '4px' }}>{card.cost}</span>
                         <span style={{ color: '#27ae60', fontWeight: 'bold' }}>{effectiveCost}</span>
@@ -212,7 +235,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                     {t('seasonCardsModal.force', { value: String(card.force) })}
                   </div>
                 )}
-                {isTrainMode && interactable && (
+                {isInteractiveMode && interactable && (
                   <button
                     className="btn-primary season-card-buy-btn"
                     style={{ marginTop: '6px', width: '100%', padding: '4px 8px', fontSize: '0.85em' }}
@@ -226,8 +249,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
           })}
         </div>
 
-        {/* Skip purchase button - visible in train mode when player has confirmed */}
-        {isTrainMode && playerConfirmed && (
+        {/* Skip purchase button - visible in train mode when player has confirmed, or in ryujin mode */}
+        {((isTrainMode && playerConfirmed) || isRyujinMode) && (
           <div style={{ textAlign: 'center', marginTop: '16px', paddingBottom: '12px' }}>
             <button
               className="btn-secondary"
