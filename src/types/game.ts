@@ -79,6 +79,7 @@ export interface Player {
   shinto: number;
   hasDaimyo: boolean;
   fortresses: number;
+  monsters: number;
   seasonCards: SeasonCard[];
   warProvinceTokens: WarProvinceToken[];
   allies: string[];

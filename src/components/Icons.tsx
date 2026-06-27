@@ -213,6 +213,23 @@ export const HostageIcon = ({ size = 24, color = 'currentColor', className }: Ic
   </svg>
 );
 
+/** Skull icon for monsters */
+export const MonsterIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    stroke="none"
+  >
+    <path d="M12 2C7.5 2 4 5.5 4 9.5C4 12.5 5.5 15 8 16.5V18H10V16.8C10.6 17 11.3 17 12 17C12.7 17 13.4 17 14 16.8V18H16V16.5C18.5 15 20 12.5 20 9.5C20 5.5 16.5 2 12 2Z" />
+    <circle cx="9" cy="9" r="2" fill="rgba(0,0,0,0.6)" />
+    <circle cx="15" cy="9" r="2" fill="rgba(0,0,0,0.6)" />
+    <path d="M9 14L10.5 12.5L12 14L13.5 12.5L15 14" fill="none" stroke="rgba(0,0,0,0.6)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 /** Ronin warrior in attack pose framed in hexagon border */
 export const RoninIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg

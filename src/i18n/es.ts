@@ -18,7 +18,7 @@ export const es: Record<TranslationKey, string> = {
   'menu.clan': 'Clan:',
   'menu.lobbyId': 'ID de Sala:',
   'menu.join': 'Unirse',
-  'menu.clans': 'Clanes:',
+  'menu.clans': 'CLANES',
   'menu.initialHonor': 'Honor Inicial:',
 
   // Deck Config
@@ -56,6 +56,7 @@ export const es: Record<TranslationKey, string> = {
   'actions.accept': 'Aceptar',
   'actions.proposeAlliance': 'Proponer Alianza:',
   'actions.endTeaTurn': 'Terminar Mi Turno de T\u00E9',
+  'actions.teaActivePlayer': '{name} propon una alianza',
   'actions.politics': 'Pol\u00EDtica - Mandato {current}/{total}',
   'actions.politicsDesc': 'Sacar fichas de mandato y elegir una para que todos los jugadores ejecuten.',
   'actions.trainNotice': 'Mandato Entrenar - {name} puede comprar una carta del Mercado de Estaci\u00F3n o pasar.',
@@ -182,6 +183,15 @@ export const es: Record<TranslationKey, string> = {
 
   // Kami Effects (Expansion)
   'kami.amaterasu.expansionEffect': 'Las figuras del jugador con el Honor más alto en esta Provincia no pueden ser asesinadas por los otros jugadores.',
+
+  // Kami Summaries (short)
+  'kami.amaterasu.summary': 'Honor #1',
+  'kami.fujin.summary': '+2 Movimientos',
+  'kami.raijin.summary': 'Invocar 1 Bushi en cualquier lugar',
+  'kami.ryujin.summary': 'Comprar 1 Carta de Estacion',
+  'kami.hachiman.summary': '+2 Ronin',
+  'kami.susanoo.summary': 'PV = Fortalezas en mapa',
+  'kami.tsukuyomi.summary': '+2 Monedas',
   'kami.fujin.expansionEffect': 'Dobla la Recompensa de Cosecha en esta Provincia. Al ganar el símbolo de Guerra de esta Provincia, también obtienes su Recompensa de Cosecha.',
   'kami.hachiman.expansionEffect': 'En esta Provincia, los símbolos de Ronin cuentan como Fuerza 2 cada uno.',
   'kami.raijin.expansionEffect': 'Solo las figuras de Bushi y Kami cuentan su Fuerza en esta Provincia.',

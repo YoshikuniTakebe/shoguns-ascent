@@ -9,7 +9,7 @@ export const ActionPanel = () => {
   const {
     gameState, localPlayerId, moveMode, toggleMoveMode,
     doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance,
-    doSetupSeason, doBreakAlliances, doDrawMandateTiles, doChooseMandateTile,
+    doSetupSeason, doDrawMandateTiles, doChooseMandateTile,
     doSkipTrainPurchase,
     doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
     doSkipRecruitTurn, toggleRecruitMode, recruitMode, recruitFigureType, setRecruitFigureType,
@@ -60,11 +60,15 @@ export const ActionPanel = () => {
             {t('actions.playerOf', { current: Math.min(gameState.teaTurnIndex + 1, gameState.players.length), total: gameState.players.length })}
           </p>
 
-          {isMyTurn && (
-            <button className="btn-secondary break-btn" onClick={doBreakAlliances}>
-              {t('actions.breakAlliances')}
-            </button>
-          )}
+          {isMyTurn && cp && (() => {
+            const cpClan = CLANS.find(c => c.id === cp.clanId);
+            return (
+              <p className="phase-description" style={{ marginTop: 0 }}>
+                <span style={{ color: cpClan?.color, fontWeight: 'bold' }}>{cp.name}</span>{' '}
+                {t('actions.teaActivePlayer', { name: '' }).replace('{name}', '').trim()}
+              </p>
+            );
+          })()}
 
           {pending.length > 0 && (
             <div className="pending-alliances">
@@ -85,7 +89,6 @@ export const ActionPanel = () => {
 
           {isMyTurn && (!cp || cp.allies.length === 0) && (
             <div className="alliance-options">
-              <h5>{t('actions.proposeAlliance')}</h5>
               {gameState.players
                 .filter(p => p.id !== (gameState.mode === 'hotseat' ? cp?.id : localPlayerId))
                 .filter(p => !cp?.allies.includes(p.id) && p.allies.length === 0)
