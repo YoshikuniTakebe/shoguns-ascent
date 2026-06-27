@@ -213,7 +213,7 @@ export const HostageIcon = ({ size = 24, color = 'currentColor', className }: Ic
   </svg>
 );
 
-import monsterIcoUrl from '../img/monster_ico.ico';
+import monsterIcoUrl from '../img/monster_ico.png';
 
 /** Monster icon using custom uploaded image */
 export const MonsterIcon = ({ size = 24, className }: IconProps) => (
