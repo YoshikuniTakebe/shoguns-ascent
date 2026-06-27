@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Region Detail Modal force display: Show the total force of each clan present in the province, calculated using the existing calculateForce() function which accounts for all bonuses (Luna 2x, Oni of Skulls honor-based force, card upgrades, etc.). Also add monster name tooltips when hovering monster icons in the region detail.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "In src/components/RegionDetailModal.tsx, import calculateForce from '../utils/gameLogic'",
     "In the component, for each owner group, call calculateForce(province, ownerId, gameState) to get the total force value",
