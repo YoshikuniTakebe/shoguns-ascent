@@ -1,11 +1,12 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, WAR_TACTICS, PROVINCE_COLORS } from '../types/game';
+import { CLANS, PROVINCE_COLORS } from '../types/game';
 import type { Battle, GameState } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { CoinIcon } from './Icons';
 import { useT } from '../i18n';
 import { calculateForce } from '../utils/gameLogic';
+import { BattleBiddingOverlay } from './BattleBiddingOverlay';
 
 /**
  * Extract log entries for a resolved battle using its logStartIndex
@@ -150,12 +151,6 @@ export const BattlePanel = () => {
     doCoinDistributionChoice,
   } = useGameStore();
   const t = useT();
-  const [bids, setBids] = useState<Record<string, number>>({
-    seppuku: 0,
-    'take-hostage': 0,
-    'hire-ronin': 0,
-    'imperial-poets': 0,
-  });
 
   if (!gameState) return null;
 
@@ -331,70 +326,21 @@ export const BattlePanel = () => {
     const player = gameState.players.find(p => p.id === currentParticipant);
     const playerClan = player ? CLANS.find(c => c.id === player.clanId) : null;
     const maxCoins = player?.coins || 0;
-    const totalBid = Object.values(bids).reduce((sum, v) => sum + v, 0);
 
-    const handleSubmitBids = () => {
+    const handleOverlayConfirm = (bidValues: Record<string, number>) => {
       if (!currentParticipant) return;
-      doSubmitWarTacticBids(battle.provinceId, bids);
-      setBids({ seppuku: 0, 'take-hostage': 0, 'hire-ronin': 0, 'imperial-poets': 0 });
+      doSubmitWarTacticBids(battle.provinceId, bidValues);
     };
 
     return (
-      <div className="battle-panel">
-        <h3>{t('battle.battleNumber', { number: battleNumber })}: {t('battle.battleIn', { name: province?.name || battle.provinceId })}</h3>
-
-        <div className="battle-info">
-          <div className="battle-bidding-header" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <ClanShield clanId={player?.clanId || ''} size={28} />
-            <h4 style={{ color: playerClan?.color, margin: 0 }}>{player?.name} - {t('battle.warTactics')}</h4>
-          </div>
-          <p className="bid-info" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            Total: <CoinIcon size={16} color="#FFD700" /> <span style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#FFD700' }}>{totalBid}</span> / {maxCoins}
-          </p>
-          <div className="tactic-bids">
-            {WAR_TACTICS.map(tactic => (
-              <div key={tactic.id} className="tactic-bid-row">
-                <span className="tactic-name">{tactic.name}</span>
-                <input
-                  type="range"
-                  min="0"
-                  max={maxCoins}
-                  value={bids[tactic.id] || 0}
-                  onChange={e => {
-                    const newVal = +e.target.value;
-                    const otherTotal = totalBid - (bids[tactic.id] || 0);
-                    const clampedVal = Math.min(newVal, maxCoins - otherTotal);
-                    setBids({ ...bids, [tactic.id]: Math.max(0, clampedVal) });
-                  }}
-                />
-                <span className="tactic-bid-value">{bids[tactic.id] || 0}</span>
-              </div>
-            ))}
-          </div>
-          <button className="btn-primary" onClick={handleSubmitBids}>
-            {t('battle.confirmBids', { total: totalBid })}
-          </button>
-        </div>
-
-        {/* Combatants info */}
-        <div className="battle-info">
-          <h4>{t('battle.combatants')}</h4>
-          {battle.participants.map(pid => {
-            const p = gameState.players.find(x => x.id === pid);
-            const clan = p ? CLANS.find(c => c.id === p.clanId) : null;
-            const force = province ? calculateForce(province, pid, gameState) : 0;
-            return (
-              <div key={pid} className="battle-combatant" style={{ borderColor: clan?.color }}>
-                <span className="combatant-name" style={{ color: clan?.color }}>{p?.name}</span>
-                <span className="combatant-forces">{t('battle.force')}: {force}</span>
-                <span className="combatant-bid-status">
-                  {battle.warTacticBids[pid] !== undefined ? t('battle.bidsPlaced') : t('battle.waiting')}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <BattleBiddingOverlay
+        playerName={player?.name || ''}
+        playerClanColor={playerClan?.color || '#fff'}
+        maxCoins={maxCoins}
+        provinceName={province?.name || battle.provinceId}
+        battleNumber={battleNumber}
+        onConfirm={handleOverlayConfirm}
+      />
     );
   }
 
@@ -420,13 +366,6 @@ export const BattlePanel = () => {
   const isPart = apid ? battle.participants.includes(apid) : false;
   const hasBid = apid ? battle.warTacticBids[apid] !== undefined : false;
   const maxCoins = apid ? (gameState.players.find(p => p.id === apid)?.coins || 0) : 0;
-  const totalBid = Object.values(bids).reduce((sum, v) => sum + v, 0);
-
-  const handleSubmitBids = () => {
-    if (!apid) return;
-    doSubmitWarTacticBids(battle.provinceId, bids);
-    setBids({ seppuku: 0, 'take-hostage': 0, 'hire-ronin': 0, 'imperial-poets': 0 });
-  };
 
   return (
     <div className="battle-panel">
@@ -451,35 +390,17 @@ export const BattlePanel = () => {
       </div>
 
       {isPart && !hasBid && (
-        <div className="bid-section">
-          <h4>{t('battle.warTactics')}</h4>
-          <p className="bid-info">
-            {t('battle.bidInfo', { current: totalBid, max: maxCoins })}
-          </p>
-          <div className="tactic-bids">
-            {WAR_TACTICS.map(tactic => (
-              <div key={tactic.id} className="tactic-bid-row">
-                <span className="tactic-name">{tactic.name}</span>
-                <input
-                  type="range"
-                  min="0"
-                  max={maxCoins}
-                  value={bids[tactic.id] || 0}
-                  onChange={e => {
-                    const newVal = +e.target.value;
-                    const otherTotal = totalBid - (bids[tactic.id] || 0);
-                    const clampedVal = Math.min(newVal, maxCoins - otherTotal);
-                    setBids({ ...bids, [tactic.id]: Math.max(0, clampedVal) });
-                  }}
-                />
-                <span className="tactic-bid-value">{bids[tactic.id] || 0}</span>
-              </div>
-            ))}
-          </div>
-          <button className="btn-primary" onClick={handleSubmitBids}>
-            {t('battle.confirmBids', { total: totalBid })}
-          </button>
-        </div>
+        <BattleBiddingOverlay
+          playerName={gameState.players.find(p => p.id === apid)?.name || ''}
+          playerClanColor={CLANS.find(c => c.id === gameState.players.find(p => p.id === apid)?.clanId)?.color || '#fff'}
+          maxCoins={maxCoins}
+          provinceName={province?.name || battle.provinceId}
+          battleNumber={battleNumber}
+          onConfirm={(bidValues) => {
+            if (!apid) return;
+            doSubmitWarTacticBids(battle.provinceId, bidValues);
+          }}
+        />
       )}
 
       {isPart && hasBid && (

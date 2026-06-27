@@ -127,6 +127,8 @@ export const en = {
   'battle.coinDistributionTitle': 'Coin Distribution',
   'battle.coinDistributionRemaining': 'coin(s) to distribute',
   'battle.coinDistributionInstruction': 'Choose which loser gets 1 extra coin',
+  'battle.coinPool': 'Coins assigned',
+  'battle.confirmBidsOverlay': 'Confirm Bids ({total} coins)',
 
   // GameOverScreen
   'gameOver.title': 'GAME OVER',
