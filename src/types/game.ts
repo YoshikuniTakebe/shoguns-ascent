@@ -414,3 +414,16 @@ export const SEASON_CARDS_DATA: SeasonCard[] = [
   ...AUTUMN_CARDS,
 ];
 
+// --- Province Colors ---
+
+export const PROVINCE_COLORS: Record<string, string> = {
+  hokkaido: '#5BC0EB',
+  oshu: '#9B8EC4',
+  edo: '#2D8B4E',
+  kanto: '#E63946',
+  kansai: '#F57C20',
+  nagato: '#8B5CF6',
+  shikoku: '#8B6914',
+  kyushu: '#F5D020',
+};
+
