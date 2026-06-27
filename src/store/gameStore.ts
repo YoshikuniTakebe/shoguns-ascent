@@ -495,16 +495,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const temple = gameState.temples[templeIndex];
     const shintoInThisTemple = temple.figures.filter(f => f.playerId === apid).length;
 
-    // Luna clan power: max 2 shinto per temple (instead of the normal 1)
+    // Luna clan power: max 2 shinto per temple. Non-Luna clans have no per-temple limit.
     if (player.clanId === 'luna') {
       if (shintoInThisTemple >= 2) {
         console.warn(`[Recruit] Luna player ${player.name} already has 2 shinto in ${temple.kamiType} temple`);
-        return;
-      }
-    } else {
-      // Non-Luna clans: max 1 shinto per temple
-      if (shintoInThisTemple >= 1) {
-        console.warn(`[Recruit] Player ${player.name} already has a shinto in ${temple.kamiType} temple`);
         return;
       }
     }
@@ -746,14 +740,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const temple = gameState.temples[templeIndex];
     const shintoInThisTemple = temple.figures.filter(f => f.playerId === komainuPrayPlayerId).length;
 
+    // Luna clan power: max 2 shinto per temple. Non-Luna clans have no per-temple limit.
     if (komainuPlayer?.clanId === 'luna') {
       if (shintoInThisTemple >= 2) {
         console.warn(`[Komainu] Luna player ${komainuPlayer.name} already has 2 shinto in ${temple.kamiType} temple`);
-        return;
-      }
-    } else {
-      if (shintoInThisTemple >= 1) {
-        console.warn(`[Komainu] Player ${komainuPlayer?.name} already has a shinto in ${temple.kamiType} temple`);
         return;
       }
     }
