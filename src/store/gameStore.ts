@@ -660,6 +660,57 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- Monster Placement Actions ---
   confirmMonsterPlacement: () => {
+    const { gameState, monsterPlacementPlayerId } = get();
+    if (!gameState || !monsterPlacementPlayerId) return;
+
+    // Luna clan power: max 2 figures per province. Check if Luna has ANY valid province to place.
+    const placingPlayer = gameState.players.find(p => p.id === monsterPlacementPlayerId);
+    if (placingPlayer && placingPlayer.clanId === 'luna') {
+      const hasValidProvince = Object.values(gameState.provinces).some(province => {
+        // Must have a fortress (Luna is not dragonfly)
+        const hasFortress = province.figures.some(f => f.owner === monsterPlacementPlayerId && f.type === 'fortress');
+        if (!hasFortress) return false;
+        // Must have fewer than 2 non-fortress figures
+        const lunaFigures = province.figures.filter(f => f.owner === monsterPlacementPlayerId && f.type !== 'fortress').length;
+        return lunaFigures < 2;
+      });
+
+      if (!hasValidProvince) {
+        // No valid province: monster stays in reserve, skip placement and advance train
+        let ns: GameState = {
+          ...gameState,
+          log: [...gameState.log, `Luna: no valid province for monster placement - monster stays in reserve`],
+          trainResolutionIndex: gameState.trainResolutionIndex + 1,
+        };
+        ns = advanceTrainResolution(ns);
+
+        if (!ns.trainMandateActive) {
+          ns = advancePlayer(ns);
+          set({
+            gameState: ns,
+            showTrainModal: false,
+            monsterPlacementMode: false,
+            monsterPlacementCard: null,
+            monsterPlacementPlayerId: null,
+            monsterPlacementPopupVisible: false,
+            komainuChoiceVisible: false,
+            ...detectWarTransition(ns),
+          });
+        } else {
+          set({
+            gameState: ns,
+            showTrainModal: true,
+            monsterPlacementMode: false,
+            monsterPlacementCard: null,
+            monsterPlacementPlayerId: null,
+            monsterPlacementPopupVisible: false,
+            komainuChoiceVisible: false,
+          });
+        }
+        return;
+      }
+    }
+
     set({ monsterPlacementPopupVisible: false, monsterPlacementMode: true });
   },
 
@@ -669,6 +720,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const province = gameState.provinces[provinceId];
     if (!province) return;
+
+    // Luna clan power: max 2 figures per province (excluding fortresses)
+    const placingPlayer = gameState.players.find(p => p.id === monsterPlacementPlayerId);
+    if (placingPlayer && placingPlayer.clanId === 'luna') {
+      const lunaFiguresInProvince = province.figures.filter(
+        f => f.owner === monsterPlacementPlayerId && f.type !== 'fortress'
+      ).length;
+      if (lunaFiguresInProvince >= 2) {
+        set({ ruleViolationMessage: 'Luna: maximo 2 figuras por provincia' });
+        return;
+      }
+    }
 
     // Place a monster figure in the province
     const figureId = Math.random().toString(36).substring(2, 10);
