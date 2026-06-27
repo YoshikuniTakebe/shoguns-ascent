@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix tea ceremony order, add clan shield to turn header, and implement turn transition popup for hotseat mode",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "TASK 1 - Tea Ceremony Order Fix: In src/utils/gameLogic.ts at line ~262, change `const firstPlayerId = state.honorTrack[0]` to `const firstPlayerId = state.turnOrder[0]`. The honorTrack is dynamic (modified at lines 938, 1148, 2153 during gameplay) while turnOrder is static (set once at game creation, line 164). The advanceTeaPlayer function (line ~2373) already uses turnOrder for advancement, so setupSeason must match. Also update the comment on line ~261 to say 'from turn order' instead of 'from honor track'.",
     "TASK 2 - Clan Shield in Turn Header: In src/components/GameBoard.tsx, import ClanShield from './ClanShields'. In the turn-indicator div (around line ~204), add <ClanShield clanId={cp?.clanId || ''} size={28} /> to the LEFT of the current-player-name span. The turn-indicator div currently contains the span.current-player-name and optional hotseat/waiting labels.",
@@ -19,5 +19,5 @@
     "Run `npx tsc --noEmit` and confirm it passes with no type errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All three changes implemented successfully. TypeScript compilation passes. The tea ceremony now uses turnOrder[0] (static) instead of honorTrack[0] (dynamic). ClanShield added to turn header. Turn popup added for all mandate transitions in hotseat mode (train, marshal, recruit, betray)."
 }
