@@ -280,6 +280,19 @@ export const es: Record<TranslationKey, string> = {
   'harvest.received': '{name} ha recibido:',
   'harvest.accept': 'Aceptar',
 
+  // Kami Resolution
+  'kami.resolution.title': 'Resolucion Kami',
+  'kami.resolution.winner': '{name} gana!',
+  'kami.resolution.noWinner': 'No hay ganador',
+  'kami.resolution.reward': 'Recompensa: {reward}',
+  'kami.resolution.continue': 'Continuar',
+  'kami.resolution.force': 'Fuerza Sintoista',
+  'kami.resolution.fujinMoves': 'Movimientos restantes: {count}',
+  'kami.resolution.fujinDone': 'Finalizar movimientos',
+  'kami.resolution.raijinPlace': 'Coloca un Bushi en una provincia',
+  'kami.resolution.ryujinBuy': 'Compra una carta de Estacion',
+  'kami.resolution.templeOf': 'Templo {number}',
+
   // Turn Popup
   'game.turnPopupAccept': 'Aceptar',
 
