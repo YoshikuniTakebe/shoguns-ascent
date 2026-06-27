@@ -239,6 +239,9 @@ export function createInitialGameState(
     fujinMovesRemaining: 0,
     raijinPlacementActive: false,
     ryujinBuyActive: false,
+    zorroPlacementActive: false,
+    zorroPlacementPlayerId: null,
+    zorroPlacementsRemaining: 0,
     lastMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
@@ -1538,22 +1541,23 @@ export function initiateWarPhase(state: GameState): GameState {
     newState.log = [...newState.log, `${koiPlayer.name} (Koi) cambia ${swapped} Ronin por ${swapped} Monedas`];
   }
 
-  // Zorro clan power: place 1 bushi in each province where they have zero figures
+  // Zorro clan power: set up manual placement in battle provinces where Zorro has no figures
   const zorroPlayer = newState.players.find((p) => p.clanId === 'zorro');
   if (zorroPlayer && zorroPlayer.bushi > 0) {
-    let placed = 0;
-    for (const provId of Object.keys(newState.provinces)) {
-      if (zorroPlayer.bushi <= 0) break;
+    // Determine battle provinces from warProvinceSlots
+    const battleProvinceIds = newState.warProvinceSlots.map(s => s.provinceId);
+    // Eligible provinces: battle provinces where Zorro has no figures
+    const eligibleProvinces = battleProvinceIds.filter(provId => {
       const prov = newState.provinces[provId];
-      const hasOwnFigure = prov.figures.some((f) => f.owner === zorroPlayer.id);
-      if (!hasOwnFigure) {
-        newState.provinces[provId] = { ...prov, figures: [...prov.figures, createFigure('bushi', zorroPlayer.id)] };
-        zorroPlayer.bushi -= 1;
-        placed++;
-      }
-    }
-    if (placed > 0) {
-      newState.log = [...newState.log, `${zorroPlayer.name} (Zorro) coloca ${placed} Bushi gratis en provincias vacias`];
+      if (!prov) return false;
+      return !prov.figures.some((f) => f.owner === zorroPlayer.id);
+    });
+    if (eligibleProvinces.length > 0) {
+      const remaining = Math.min(zorroPlayer.bushi, eligibleProvinces.length);
+      newState.zorroPlacementActive = true;
+      newState.zorroPlacementPlayerId = zorroPlayer.id;
+      newState.zorroPlacementsRemaining = remaining;
+      newState.log = [...newState.log, `${zorroPlayer.name} (Zorro) puede colocar hasta ${remaining} Bushi en provincias de batalla vacias`];
     }
   }
 

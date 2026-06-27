@@ -2,7 +2,7 @@
   "id": "FEAT-006",
   "type": "feat",
   "description": "Zorro clan manual bushi placement: Change Fox (Zorro) clan power from automatic to manual. Currently in initiateWarPhase (gameLogic.ts ~line 1541), bushi are placed automatically in ALL empty provinces. Instead, the Zorro player should manually choose which battle provinces (without presence) to place their free bushi in, since bushi are limited and some provinces are more strategic than others.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "In src/utils/gameLogic.ts in initiateWarPhase(), remove the automatic Zorro bushi placement loop (lines 1541-1556 approximately). Instead, add state fields to track Zorro placement mode.",
     "In src/types/game.ts, add to GameState: zorroPlacementActive: boolean, zorroPlacementProvinces: string[] (provinces eligible for placement - battle provinces where Zorro has no figures), zorroPlacementsRemaining: number",

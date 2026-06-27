@@ -86,7 +86,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement } = useGameStore();
   const t = useT();
 
   const [translateX, setTranslateX] = useState(0);
@@ -248,6 +248,14 @@ export const GameBoard = () => {
           {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.raijinPlacementActive && (
             <div className="kami-action-overlay">
               <span>{t('kami.resolution.raijinPlace')}</span>
+            </div>
+          )}
+
+          {/* Zorro Placement Overlay */}
+          {gameState.zorroPlacementActive && (
+            <div className="kami-action-overlay">
+              <span>Zorro: Coloca Bushi en provincias de batalla ({gameState.zorroPlacementsRemaining} restantes)</span>
+              <button className="popup-btn" onClick={doZorroSkipPlacement} style={{ marginLeft: '12px' }}>Terminar</button>
             </div>
           )}
 

@@ -208,6 +208,9 @@ export interface GameState {
   fujinMovesRemaining: number;
   raijinPlacementActive: boolean;
   ryujinBuyActive: boolean;
+  zorroPlacementActive: boolean;
+  zorroPlacementPlayerId: string | null;
+  zorroPlacementsRemaining: number;
   lotoChoicePhase?: boolean;
   lotoDiscardedMandate?: MandateType | null;
   lastMandateIssuerId: string | null;
