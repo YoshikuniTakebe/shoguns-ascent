@@ -215,7 +215,9 @@ export const PoliticsTrack = () => {
     betray: 0,
   };
   for (const m of mandates) {
-    mandateCounts[m.type]++;
+    if (!m.hidden) {
+      mandateCounts[m.type]++;
+    }
   }
 
   // Exhausted mandates (played 2 times already)

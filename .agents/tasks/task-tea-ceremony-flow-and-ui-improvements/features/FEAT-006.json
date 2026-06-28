@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-006",
+  "type": "fix",
+  "description": "Shorten mandate end-turn button text to single word, improve BushiIcon with curved katana blades and thicker stroke, and fix exhausted mandate indicator to exclude hidden (Loto) mandates.",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/i18n/es.ts, change 'actions.endMarshalTurn', 'actions.endRecruitTurn', and 'actions.betrayEndTurn' to 'Terminar'.",
+    "2. In src/i18n/en.ts, change corresponding keys to 'Finish'.",
+    "3. In src/components/Icons.tsx BushiIcon, replace straight line blades with curved paths and increase strokeWidth to 2.5.",
+    "4. In src/components/PoliticsTrack.tsx, filter out hidden mandates when counting for exhausted indicator."
+  ],
+  "acceptance_criteria": [
+    "All three end-turn buttons show 'Terminar' in Spanish and 'Finish' in English",
+    "BushiIcon shows curved katana blades with thicker strokes",
+    "Exhausted mandate indicator only counts face-up (non-hidden) mandates"
+  ],
+  "verification": [
+    "Run npx tsc --noEmit to verify no type errors",
+    "Run npx vite build to verify build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}
