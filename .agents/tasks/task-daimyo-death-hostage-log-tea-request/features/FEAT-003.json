@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Add a 'request' (petition) slider to the tea ceremony alliance proposal UI. In addition to offering a bribe (pay coins TO the target), players can now request coins FROM the target as a condition of the alliance. The two sliders are mutually exclusive: increasing one resets the other to 0. Only a bribe OR a request can be sent, not both.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/types/game.ts, add `requestAmount?: number` to the AllianceProposal interface.",
     "In src/utils/gameLogic.ts proposeAlliance function, add a `requestAmount` parameter (default 0). Include it in the proposal object when > 0. Update log messages to indicate when a request is made.",
@@ -25,5 +25,5 @@
     "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit 2>&1 | grep -v 'BattleBiddingOverlay\\|BattlePanel' | head -20` to check for new TS errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation complete. All acceptance criteria met. TypeScript compiles cleanly (no new errors beyond the pre-existing BattleBiddingOverlay/BattlePanel ones). The request slider max is set to the target player's coins. Mutual exclusivity works by resetting the other slider to 0 when one is increased above 0."
 }
