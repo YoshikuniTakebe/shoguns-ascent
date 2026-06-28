@@ -1,22 +1,24 @@
 {
   "id": "FEAT-002",
   "type": "fix",
-  "description": "Fix recruit mandate: placing bushi after shinto in same fortress province was incorrectly blocked due to overly complex one-per-fortress logic.",
-  "status": "completed",
+  "description": "Fix turn popup logic bugs: (1) After harvest mandate ends, the turn popup incorrectly shows the harvest issuer (libelula) again instead of the next player (bonsai). (2) After Train mandate ends with Komainu temple placement, the turn popup does not appear. (3) After the final Kami resolution before war phase, the turn popup should NOT appear since the war phase starts instead. Fix all three cases in gameStore.ts.",
+  "status": "in_progress",
   "steps": [
-    "1. Simplify the bushi/monster block in recruitPlaceFigure (src/utils/gameLogic.ts) to use direct province-usage counting instead of comparing usedBaseProvinces.length against basePlacements.",
-    "2. New logic: if province hasn't been used for bushi/monster yet, always allow (base slot). If already used, only allow if player is issuer/ally and bonus hasn't been consumed elsewhere.",
-    "3. Verify with npx tsc --noEmit."
+    "1. In src/store/gameStore.ts, find doAcknowledgeHarvest (around line 550). When harvest fully resolves (!ns.harvestMandateActive), it calls advancePlayer(ns). The turnPopupPlayer is NOT being set here. Add turnPopupPlayer for the next player ONLY if we stay in politics phase and not entering kami or war. The issue is that advancePlayer increments politicsMandateCount and may trigger a kami turn or war phase transition. Check ns.currentPhase and ns.kamiResolutionActive before setting turnPopupPlayer.",
+    "2. In src/store/gameStore.ts, find doKomainuPlaceAtTemple (around line 480). When train resolves and advancePlayer is called, check if the resulting state stays in politics phase (not kami, not war). If so, set turnPopupPlayer. Currently the code does NOT set turnPopupPlayer when train ends this way.",
+    "3. In src/store/gameStore.ts, review ALL places where turnPopupPlayer is set after advancePlayer/advanceKamiResolution. Ensure that turnPopupPlayer is NOT set when: (a) kamiResolutionActive is true (b) currentPhase transitions away from politics (to war/cleanup). The pattern should be: set turnPopupPlayer only when ns.currentPhase === 'politics' && !ns.kamiResolutionActive && the game mode is hotseat.",
+    "4. Specifically in doAcknowledgeKamiReward and doCompleteKamiInteractive, when advanceKamiResolution finishes (kamiResolutionActive becomes false), check if politicsMandateCount >= maxMandates. If so, the advancePhase call within advanceKamiResolution will transition to war. Do NOT set turnPopupPlayer in that case. The check should be: only set turnPopupPlayer if !ns.kamiResolutionActive && ns.currentPhase === 'politics'."
   ],
   "acceptance_criteria": [
-    "npx tsc --noEmit passes with no errors",
-    "Player with 1 fortress and issuer/ally bonus can place shinto then bushi in same province",
-    "One-per-fortress rule still prevents placing 2 bushi in same province when player is NOT issuer/ally",
-    "Bonus placement (issuer/ally) allows one repeat province usage for bushi/monster"
+    "After harvest mandate (issued by libelula) resolves, the turn popup shows the NEXT player in turn order (bonsai), not the libelula again",
+    "After Train mandate resolves via Komainu temple placement, the turn popup correctly appears for the next player",
+    "After the final Kami turn (mandate count reaches 7), the turn popup does NOT appear; instead the war phase begins directly",
+    "All existing turn popup behavior for normal mandate transitions remains correct"
   ],
   "verification": [
-    "Run `npx tsc --noEmit` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
+    "Run npx tsc --noEmit to verify no type errors",
+    "Run npx vite build to verify build succeeds"
   ],
   "blocked_reason": null,
-  "findings": "The old logic compared usedBaseProvinces.length to basePlacements (fortress count) to categorize each placement as base vs bonus. When shinto was placed first (decrementing recruitPlacementsRemaining but NOT adding to usedBaseProvinces), the subsequent bushi placement's categorization logic could reach the else branch ('no placements available') in edge cases where the fortress count and bonus calculation interacted poorly. The new logic directly checks how many times a specific province has been used for bushi/monster and only restricts repeated usage."
+  "findings": ""
 }
