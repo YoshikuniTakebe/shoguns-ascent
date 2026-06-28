@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Remove all (s) suffixes from log messages and i18n strings, fix Imperial Poets logic to count dead figures instead of surviving figures, fix Seppuku honor (verify gainHonor is working correctly), fix Sol clan power log to include loser names and verify deductions are applied, and fix the war phase popup to show total coins/ronin per clan.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/utils/gameLogic.ts line 348: change `hostage(s), gains ${player.hostages.length} coin(s)` to `hostages, gains ${player.hostages.length} coins` (remove the (s))",
     "2. In src/utils/gameLogic.ts line 879: change `for ${effectiveCost} coin(s)` to `for ${effectiveCost} coins`",
@@ -31,5 +31,5 @@
     "npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing TS errors in BattleBiddingOverlay.tsx and BattlePanel.tsx (TranslationKey type mismatch) - not caused by these changes. Seppuku honor fix: added honorTrack: [...state.honorTrack] to newState creation in resolveBattle to ensure proper immutable copy. Imperial Poets: deferred VP calculation to after battle resolution so it counts ALL deaths (seppuku + hostage + battle casualties). Vite build succeeds."
 }
