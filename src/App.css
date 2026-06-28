@@ -200,5 +200,5 @@
 
 /* Battle Resolution Separator */
 .bidding-battle-resolution-separator{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0.5rem 0.3rem}
-.bidding-separator-line{width:1px;flex:1;background:linear-gradient(180deg,transparent,var(--accent-gold),transparent)}
-.bidding-separator-text{writing-mode:vertical-rl;transform:rotate(180deg);font-size:0.8rem;font-weight:bold;color:var(--accent-gold);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;text-shadow:0 0 8px rgba(200,169,81,0.4);padding:0.3rem 0}
+.bidding-separator-line{width:1px;flex:1;background:linear-gradient(180deg,transparent,var(--accent-red),transparent)}
+.bidding-separator-text{writing-mode:vertical-rl;transform:rotate(180deg);font-size:0.8rem;font-weight:bold;color:var(--accent-red);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;text-shadow:0 0 8px rgba(233,69,96,0.4);padding:0.3rem 0}

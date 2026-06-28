@@ -398,6 +398,8 @@ export const BattlePanel = () => {
         playerClanColor={playerClan?.color || '#fff'}
         playerClanId={player?.clanId || ''}
         maxCoins={maxCoins}
+        playerRonin={player ? (player.clanId === 'koi' ? player.coins : player.ronin) : 0}
+        playerVP={player?.victoryPoints || 0}
         provinceName={province?.name || battle.provinceId}
         provinceColor={PROVINCE_COLORS[battle.provinceId]}
         battleNumber={battleNumber}
@@ -458,6 +460,8 @@ export const BattlePanel = () => {
           playerClanColor={CLANS.find(c => c.id === gameState.players.find(p => p.id === apid)?.clanId)?.color || '#fff'}
           playerClanId={gameState.players.find(p => p.id === apid)?.clanId || ''}
           maxCoins={maxCoins}
+          playerRonin={(() => { const p = gameState.players.find(x => x.id === apid); return p ? (p.clanId === 'koi' ? p.coins : p.ronin) : 0; })()}
+          playerVP={gameState.players.find(p => p.id === apid)?.victoryPoints || 0}
           provinceName={province?.name || battle.provinceId}
           provinceColor={PROVINCE_COLORS[battle.provinceId]}
           battleNumber={battleNumber}

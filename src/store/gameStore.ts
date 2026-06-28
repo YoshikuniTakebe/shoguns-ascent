@@ -49,10 +49,10 @@ function detectWarTransition(state: GameState): Partial<{ battleStepPhase: 'popu
 /**
  * Detects if the given state has transitioned to war and returns war upgrade summary from logs.
  */
-function computeWarUpgradeSummary(state: GameState): { playerName: string; clanId: string; bonuses: string[] }[] {
+function computeWarUpgradeSummary(state: GameState): { playerName: string; clanId: string; bonuses: { cardName: string; resource: string; amount: number }[] }[] {
   const warStartIdx = state.log.findIndex(l => l.includes('=== War Phase begins ==='));
   if (warStartIdx === -1) return [];
-  const playerMap: Map<string, { clanId: string; bonuses: string[] }> = new Map();
+  const playerMap: Map<string, { clanId: string; bonuses: { cardName: string; resource: string; amount: number }[] }> = new Map();
 
   for (let i = warStartIdx + 1; i < state.log.length; i++) {
     const entry = state.log[i];
@@ -63,13 +63,17 @@ function computeWarUpgradeSummary(state: GameState): { playerName: string; clanI
           playerMap.set(player.id, { clanId: player.clanId, bonuses: [] });
         }
         const parenMatch = entry.match(/\(([^)]+)\)/);
-        const bonus = parenMatch ? parenMatch[1] : entry;
-        playerMap.get(player.id)!.bonuses.push(bonus);
+        const cardName = parenMatch ? parenMatch[1] : entry;
+        // Extract resource and amount: "gains N coins/ronin/VP"
+        const gainsMatch = entry.match(/gains\s+(\d+)\s+(\w+)/);
+        const resource = gainsMatch ? gainsMatch[2] : 'coins';
+        const amount = gainsMatch ? parseInt(gainsMatch[1], 10) : 0;
+        playerMap.get(player.id)!.bonuses.push({ cardName, resource, amount });
       }
     }
   }
 
-  const summary: { playerName: string; clanId: string; bonuses: string[] }[] = [];
+  const summary: { playerName: string; clanId: string; bonuses: { cardName: string; resource: string; amount: number }[] }[] = [];
   for (const [playerId, data] of playerMap) {
     const player = state.players.find(p => p.id === playerId);
     if (player && data.bonuses.length > 0) {
@@ -238,7 +242,7 @@ interface GameStore {
 
   // War Phase Popup
   warPhasePopupVisible: boolean;
-  warPhaseUpgradeSummary: { playerName: string; clanId: string; bonuses: string[] }[];
+  warPhaseUpgradeSummary: { playerName: string; clanId: string; bonuses: { cardName: string; resource: string; amount: number }[] }[];
   dismissWarPhasePopup: () => void;
 
   // Undo mandate state
