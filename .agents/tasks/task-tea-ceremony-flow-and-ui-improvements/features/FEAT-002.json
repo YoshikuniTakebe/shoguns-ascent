@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix turn popup logic bugs: (1) After harvest mandate ends, the turn popup incorrectly shows the harvest issuer (libelula) again instead of the next player (bonsai). (2) After Train mandate ends with Komainu temple placement, the turn popup does not appear. (3) After the final Kami resolution before war phase, the turn popup should NOT appear since the war phase starts instead. Fix all three cases in gameStore.ts.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/store/gameStore.ts, find doAcknowledgeHarvest (around line 550). When harvest fully resolves (!ns.harvestMandateActive), it calls advancePlayer(ns). The turnPopupPlayer is NOT being set here. Add turnPopupPlayer for the next player ONLY if we stay in politics phase and not entering kami or war. The issue is that advancePlayer increments politicsMandateCount and may trigger a kami turn or war phase transition. Check ns.currentPhase and ns.kamiResolutionActive before setting turnPopupPlayer.",
     "2. In src/store/gameStore.ts, find doKomainuPlaceAtTemple (around line 480). When train resolves and advancePlayer is called, check if the resulting state stays in politics phase (not kami, not war). If so, set turnPopupPlayer. Currently the code does NOT set turnPopupPlayer when train ends this way.",
@@ -20,5 +20,5 @@
     "Run npx vite build to verify build succeeds"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Fixed all three bugs plus additional similar patterns in doPlaceMonster, confirmMonsterPlacement, doRaijinPlace, doRyujinBuyCard, and doRyujinSkip for consistency. The fix pattern is: after advancePlayer or advanceKamiResolution, compute warTransition = detectWarTransition(ns), then only set turnPopupPlayer when mode is hotseat, currentPhase is politics, kamiResolutionActive is false, and warTransition is empty. The kami resolution functions already had the currentPhase === politics check which inherently prevents popup during war, but adding detectWarTransition to the else branches ensures proper battle step phase setup when war starts."
 }
