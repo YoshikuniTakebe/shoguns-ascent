@@ -2,7 +2,7 @@
   "id": "FEAT-006",
   "type": "fix",
   "description": "Shorten mandate end-turn button text to single word, improve BushiIcon with curved katana blades and thicker stroke, and fix exhausted mandate indicator to exclude hidden (Loto) mandates.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/i18n/es.ts, change 'actions.endMarshalTurn', 'actions.endRecruitTurn', and 'actions.betrayEndTurn' to 'Terminar'.",
     "2. In src/i18n/en.ts, change corresponding keys to 'Finish'.",
@@ -19,5 +19,5 @@
     "Run npx vite build to verify build succeeds"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All three changes implemented and verified. tsc --noEmit and vite build both pass cleanly. Button text shortened to single word in both languages. BushiIcon uses quadratic bezier curves (Q) for katana blade curvature with strokeWidth 2.5. PoliticsTrack mandateCounts loop now skips mandates with hidden===true so Loto secret mandates do not trigger the exhausted indicator."
 }
