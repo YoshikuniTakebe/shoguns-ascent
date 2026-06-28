@@ -278,11 +278,12 @@ export const GameBoard = () => {
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
                     {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
                     <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
-                    {' Bushi colocado'}
-                    <button className="popup-btn" onClick={doRaijinUndo} style={{ marginLeft: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <BushiIcon size={18} color={clanColor} />
+                    <span style={{ color: '#c8a951', fontWeight: 'bold' }}>{' Bushi colocado'}</span>
+                    <button className="btn-secondary" onClick={doRaijinUndo} style={{ marginLeft: '8px', width: '36px', height: '36px', borderRadius: '50%', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                       <UndoIcon size={18} color="currentColor" />
                     </button>
-                    <button className="popup-btn" onClick={doRaijinConfirm} style={{ marginLeft: '4px' }}>
+                    <button className="btn-primary" onClick={doRaijinConfirm} style={{ marginLeft: '4px', fontSize: '0.85rem', padding: '4px 12px' }}>
                       Terminar
                     </button>
                   </span>
@@ -295,7 +296,7 @@ export const GameBoard = () => {
           {gameState.zorroPlacementActive && (
             <div className="kami-action-overlay">
               <span>Zorro: Coloca Bushi en provincias de batalla ({gameState.zorroPlacementsRemaining} restantes)</span>
-              <button className="popup-btn" onClick={doZorroSkipPlacement} style={{ marginLeft: '12px' }}>Terminar</button>
+              <button className="btn-primary" onClick={doZorroSkipPlacement} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>Terminar</button>
             </div>
           )}
 
