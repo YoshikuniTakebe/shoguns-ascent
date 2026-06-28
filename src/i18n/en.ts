@@ -355,6 +355,10 @@ export const en = {
   // Jinmenju
   'actions.jinmenjuSummon': 'Summon with Jinmenju',
   'actions.jinmenjuCost': 'Lose 1 Honor position',
+
+  // Alliance Request
+  'actions.requestLabel': 'Request',
+  'actions.requestingCoins': 'Requesting {amount} coins for alliance',
 } as const;
 
 export type TranslationKey = keyof typeof en;

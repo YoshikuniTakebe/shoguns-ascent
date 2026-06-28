@@ -24,6 +24,7 @@ export const ActionPanel = () => {
 
   const [selectedAllianceTarget, setSelectedAllianceTarget] = useState<string | null>(null);
   const [bribeAmount, setBribeAmount] = useState<number>(0);
+  const [requestAmount, setRequestAmount] = useState<number>(0);
 
   if (!gameState) return null;
   const cp = gameState.players[gameState.currentPlayerIndex];
@@ -88,6 +89,12 @@ export const ActionPanel = () => {
                         <span>{pr.bribeAmount}</span>
                       </span>
                     )}
+                    {pr.requestAmount && pr.requestAmount > 0 && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#e74c3c' }}>
+                        <CoinIcon size={16} color="#e74c3c" />
+                        <span>-{pr.requestAmount}</span>
+                      </span>
+                    )}
                     <button className="btn-small btn-accept" onClick={() => doAcceptAlliance(pr.from)}>
                       {t('actions.accept')}
                     </button>
@@ -141,7 +148,7 @@ export const ActionPanel = () => {
                       min={0}
                       max={cp.coins}
                       value={bribeAmount}
-                      onChange={(e) => setBribeAmount(Number(e.target.value))}
+                      onChange={(e) => { setBribeAmount(Number(e.target.value)); if (Number(e.target.value) > 0) setRequestAmount(0); }}
                       style={{ flex: 1 }}
                     />
                     <span style={{ fontWeight: 'bold', color: '#DAA520', minWidth: '2.5em', textAlign: 'center' }}>
@@ -155,14 +162,41 @@ export const ActionPanel = () => {
                   )}
                 </div>
               )}
+              {selectedAllianceTarget && (() => {
+                const targetPlayer = gameState.players.find(p => p.id === selectedAllianceTarget);
+                return targetPlayer && targetPlayer.coins > 0 ? (
+                  <div className="request-slider" style={{ marginBottom: '0.5rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85em' }}>
+                      <span>{t('actions.requestLabel')}:</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={targetPlayer.coins}
+                        value={requestAmount}
+                        onChange={(e) => { setRequestAmount(Number(e.target.value)); if (Number(e.target.value) > 0) setBribeAmount(0); }}
+                        style={{ flex: 1 }}
+                      />
+                      <span style={{ fontWeight: 'bold', color: '#e74c3c', minWidth: '2.5em', textAlign: 'center' }}>
+                        {requestAmount}
+                      </span>
+                    </label>
+                    {requestAmount > 0 && (
+                      <p style={{ fontSize: '0.75em', margin: '0.2rem 0 0', color: '#888' }}>
+                        {t('actions.requestingCoins', { amount: requestAmount })}
+                      </p>
+                    )}
+                  </div>
+                ) : null;
+              })()}
               <button
                 className="btn-primary advance-btn"
                 disabled={!selectedAllianceTarget}
                 onClick={() => {
                   if (selectedAllianceTarget) {
-                    doProposeAlliance(selectedAllianceTarget, bribeAmount > 0 ? bribeAmount : undefined);
+                    doProposeAlliance(selectedAllianceTarget, bribeAmount > 0 ? bribeAmount : undefined, requestAmount > 0 ? requestAmount : undefined);
                     setSelectedAllianceTarget(null);
                     setBribeAmount(0);
+                    setRequestAmount(0);
                     doAdvancePlayer();
                   }
                 }}
@@ -175,6 +209,7 @@ export const ActionPanel = () => {
                 onClick={() => {
                   setSelectedAllianceTarget(null);
                   setBribeAmount(0);
+                  setRequestAmount(0);
                   doAdvancePlayer();
                 }}
               >

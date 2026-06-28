@@ -123,6 +123,7 @@ export interface AllianceProposal {
   to: string;
   accepted?: boolean;
   bribeAmount?: number;
+  requestAmount?: number;
 }
 
 export interface WarProvinceSlot {
