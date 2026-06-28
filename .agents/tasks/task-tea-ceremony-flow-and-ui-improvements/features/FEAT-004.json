@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "fix",
   "description": "Fix battle resolution: (1) Add ally protection to figure killing - allied figures of winner should NOT die. (2) Improve battle result popup to show specific units killed per clan. (3) Add tooltips to war tactic tiles in BattleBiddingOverlay. (4) Add 'Battle Resolution' separator between Hire Ronin and Imperial Poets. (5) Add combatants panel with force totals to bidding overlay. (6) Translate battle result text. (7) Verify battle resolution rules are correct per the rulebook.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/utils/gameLogic.ts resolveNextBattle function (around line 1958), fix the figure killing logic. Currently: figures: finalProvince.figures.filter(f => f.owner === winnerId || f.type === 'daimyo' || f.type === 'fortress'). This kills ALL figures of losing players regardless of alliance. Fix: also keep figures whose owner is allied with the winner. Check winner.allies.includes(f.owner) in the filter. Also update the loop that returns figures to reserve to skip allied players.",
     "2. Also in resolveNextBattle: handle the edge case from the rules where 'if at the end of a Battle no player has Force in the Province, the player with most Honor wins.' After calculating winnerId based on force, if maxForce === 0 (all figures were killed via seppuku/hostage), set winnerId to the honorTrack[0] player among the battle participants.",
@@ -26,5 +26,5 @@
     "Run npx vite build to verify build succeeds"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All acceptance criteria met. Build and type-check pass. Ally protection works by checking winner.allies.includes(pid) in both the return-to-reserve loop and the figure filter. Zero-force edge case handled by sorting participants by honor track position. Tooltip uses CSS hover approach. Separator placed at idx===3 (Imperial Poets is the 4th WAR_TACTICS element). Combatants panel passed as optional prop to maintain backwards compatibility."
 }
