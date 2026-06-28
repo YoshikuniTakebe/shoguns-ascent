@@ -101,8 +101,6 @@ function detectKamiPopupPending(ns: GameState): Record<string, unknown> {
   return {};
 }
 
-type GameStore = ReturnType<typeof useGameStore> extends infer T ? T : never;
-
 interface GameStore {
   gameState: GameState | null;
   localPlayerId: string | null;
