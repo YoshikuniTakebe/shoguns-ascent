@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "refactor",
   "description": "Rename 'templo/temple' to 'santuario/shrine' across all i18n strings, game log entries, and UI references.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/i18n/en.ts: Change 'actions.recruitSelectProvinceOrTemple' value from 'Select a province or temple to place a shinto.' to 'Select a province or shrine to place a shinto.'. Change 'monster.komainuChoice' from 'Komainu: Place on map or send to worship at a temple?' to 'Komainu: Place on map or send to worship at a shrine?'. Change 'monster.selectTemple' from 'Select a temple for the Shinto' to 'Select a shrine for the Shinto'. Change 'kami.resolution.templeOf' from 'Temple {number}' to 'Shrine {number}'. Change 'kami.phaseStart.description' from 'Temples will now be resolved from left to right...' to 'Shrines will now be resolved from left to right. The player with the most Shinto force in each shrine wins the Kami reward.'",
     "In src/i18n/es.ts: Change 'actions.recruitSelectProvinceOrTemple' value from 'Selecciona una provincia o un templo para colocar un shinto.' to 'Selecciona una provincia o un santuario para colocar un shinto.'. Change 'monster.komainuChoice' from 'Komainu: Colocar en mapa o enviar a rezar a un templo?' to 'Komainu: Colocar en mapa o enviar a rezar a un santuario?'. Change 'monster.selectTemple' from 'Selecciona un templo para el Shinto' to 'Selecciona un santuario para el Shinto'. Change 'kami.resolution.templeOf' from 'Templo {number}' to 'Santuario {number}'. Change 'kami.phaseStart.description' replacing 'Los templos se resolveran de izquierda a derecha' with 'Los santuarios se resolveran de izquierda a derecha' and 'en cada templo' with 'en cada santuario'.",
@@ -19,5 +19,5 @@
     "cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All visible text strings changed successfully. Internal variable/function/type names containing 'temple' were intentionally left unchanged as they are not user-facing. Build and type-check pass cleanly."
 }
