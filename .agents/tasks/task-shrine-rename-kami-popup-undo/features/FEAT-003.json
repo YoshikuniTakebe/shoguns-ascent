@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Add undo system for mandate turns (marshal, recruit, betray). Store a snapshot of gameState when each player's mandate turn begins, add an undo button (circular arrow icon) to the ActionPanel, and restore the snapshot on click. The confirm/end-turn button finalizes (clears snapshot).",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/components/Icons.tsx: Add a new UndoIcon component - a circular arrow (counterclockwise) SVG icon following the same IconProps pattern as other icons.",
     "In src/store/gameStore.ts interface GameStore: Add 'undoMandateState: GameState | null' field. Add 'doUndoMandate: () => void' action. Add 'saveMandateSnapshot: () => void' helper (or inline).",
@@ -28,5 +28,5 @@
     "cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Successfully implemented the undo system for mandate turns. Added UndoIcon SVG component, undoMandateState field and doUndoMandate action in the store, snapshot saving/clearing logic in doChooseMandateTile, doLotoChooseActualMandate, doSkipMarshalTurn, doSkipRecruitTurn, doSkipBetrayTurn, doBetraySelectFigure, doRecruitPlaceFigure, and doRecruitPlaceTempleShinto. Added undo buttons in ActionPanel for marshal, recruit, and betray sections. Build and type-check pass cleanly."
 }
