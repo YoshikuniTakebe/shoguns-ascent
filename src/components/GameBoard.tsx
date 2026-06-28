@@ -238,10 +238,15 @@ export const GameBoard = () => {
 
           {/* Fujin Interactive Overlay - between kami track and map */}
           {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.fujinMovesRemaining > 0 && (() => {
-            const { doFujinDone } = useGameStore.getState();
+            const { doFujinDone, doFujinUndo, fujinPreMoveState } = useGameStore.getState();
             return (
               <div className="kami-action-overlay" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <span>{t('kami.resolution.fujinMoves', { count: String(gameState.fujinMovesRemaining) })}</span>
+                {fujinPreMoveState && (
+                  <button className="btn-primary" onClick={doFujinUndo} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
+                    {t('kami.resolution.fujinUndo')}
+                  </button>
+                )}
                 <button className="btn-primary" onClick={() => { setMoveFrom(null); setSelectedFigures([]); }} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
                   {t('kami.resolution.fujinCancel')}
                 </button>
@@ -260,10 +265,11 @@ export const GameBoard = () => {
             const clanColor = winnerClan?.color || '#fff';
             return (
               <div className="kami-action-overlay">
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
+                  {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
                   <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
                   {' coloca un '}
-                  <BushiIcon size={16} color={clanColor} />
+                  <BushiIcon size={22} color={clanColor} />
                   {' Bushi en cualquier provincia'}
                 </span>
               </div>

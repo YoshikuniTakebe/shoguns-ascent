@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-007",
+  "type": "fix",
+  "description": "Remove recruit auto-advance, enhance Raijin overlay, add Fujin undo button, fix season cards modal z-index, and improve kami-action-overlay width.",
+  "status": "in_progress",
+  "steps": [
+    "1. Remove recruit auto-advance in gameStore.ts - player must press Terminar manually",
+    "2. Enhance Raijin overlay in GameBoard.tsx with ClanShield, font-size reduction, bigger BushiIcon",
+    "3. Change Fujin translation to put count first: '{count} Movimientos'",
+    "4. Add Fujin undo button with fujinPreMoveState in store",
+    "5. Fix season-cards-modal-backdrop z-index from 1000 to 1200",
+    "6. Increase kami-action-overlay max-width and add white-space:nowrap"
+  ],
+  "acceptance_criteria": [
+    "Recruit mandate does not auto-advance when placements reach 0 - player must press Terminar",
+    "Raijin overlay shows ClanShield before player name, smaller font, larger BushiIcon",
+    "Fujin overlay shows '{count} Movimientos' format",
+    "Fujin overlay has an undo button that reverts the last move",
+    "Season cards modal renders above the honor track",
+    "Kami action overlay fits content in one line"
+  ],
+  "verification": [
+    "Run npx tsc --noEmit to verify no type errors",
+    "Run npx vite build to verify build succeeds"
+  ],
+  "blocked_reason": null
+}

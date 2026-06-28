@@ -28,7 +28,7 @@
 .season-cards-btn-kanji{font-size:1.1rem;line-height:1;font-weight:bold;text-shadow:0 0 8px rgba(200,169,81,0.6)}
 .season-cards-btn-text{font-size:0.55rem;font-weight:bold;letter-spacing:0.08em;text-transform:uppercase}
 
-.season-cards-modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out}
+.season-cards-modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:1200;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out}
 .season-cards-modal{position:relative;background:linear-gradient(145deg,var(--bg-medium),var(--bg-dark));border:1px solid var(--border-gold);border-radius:14px;padding:1.5rem;max-width:900px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,0.6)}
 .season-cards-modal-close{position:absolute;top:0.6rem;right:0.9rem;background:none;border:none;color:var(--text-secondary);font-size:1.8rem;cursor:pointer;line-height:1;padding:0.25rem;border-radius:4px;transition:color 0.2s;z-index:1}
 .season-cards-modal-close:hover{color:var(--text-primary)}
@@ -65,7 +65,7 @@
 .monster-placement-popup-buttons{display:flex;gap:0.75rem;justify-content:center}
 .komainu-pray-overlay{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:10px;padding:0.8rem 1.5rem;z-index:900;box-shadow:0 0 20px rgba(200,169,81,0.4);animation:pulse-monster 1.5s infinite}
 .komainu-pray-overlay span{color:var(--accent-gold);font-size:1rem;font-weight:bold}.komainu-target{animation:pulse-monster 1s infinite;cursor:pointer !important}
-.kami-action-overlay{display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:10px;padding:0.8rem 1.5rem;margin:0.5rem auto;max-width:400px;box-shadow:0 0 20px rgba(200,169,81,0.4);animation:pulse-monster 1.5s infinite;z-index:50}
+.kami-action-overlay{display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:10px;padding:0.8rem 1.5rem;margin:0.5rem auto;max-width:700px;white-space:nowrap;box-shadow:0 0 20px rgba(200,169,81,0.4);animation:pulse-monster 1.5s infinite;z-index:50}
 .kami-action-overlay span{color:var(--accent-gold);font-size:1rem;font-weight:bold}
 .tea-phase,.politics-phase,.marshal-active,.recruit-active,.betray-active,.train-active{background:rgba(255,255,255,0.03);border:1px solid rgba(200,169,81,0.15);border-radius:8px;padding:0.8rem 0.9rem;margin-bottom:0.8rem}
 .tea-phase{border-color:rgba(200,169,81,0.25);background:rgba(200,169,81,0.04)}
