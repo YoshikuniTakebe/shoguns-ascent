@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-005",
+  "type": "feat",
+  "description": "Enhance GameOverScreen with clan seal, glorious winner container, centered table headers, clan styling, war tokens and cards buttons with modals, and improved scoring breakdown table with season icons and clan shields.",
+  "status": "in_progress",
+  "steps": [
+    "1. Add large centered clan seal above winner announcement using ClanShield component",
+    "2. Decorate the winner announcement container to look glorious and impactful",
+    "3. Center table header text in standings table",
+    "4. Add clan seal before clan name in table, style clan name in bold italic with clan color",
+    "5. Add war tokens button with WarTokensModal and cards button with PlayerCardsModal in table",
+    "6. Fix scoring breakdown title to 'Fichas de Provincia en Guerra' and restructure as table with season icons and clan shields",
+    "7. Add CSS styles for all new elements",
+    "8. Update i18n keys"
+  ],
+  "acceptance_criteria": [
+    "Large clan seal displayed centered above winner announcement",
+    "Winner announcement container has glorious/impactful decoration",
+    "Table headers are centered",
+    "Clan column shows clan seal followed by clan name in bold italic with clan color",
+    "War tokens column has clickable button that opens WarTokensModal",
+    "Cards column has clickable button that opens PlayerCardsModal",
+    "Scoring breakdown title is 'Fichas de Provincia en Guerra'",
+    "Scoring breakdown uses table layout with season icons instead of text",
+    "Player names in scoring breakdown are preceded by clan shields"
+  ],
+  "verification": [
+    "Run npx tsc --noEmit to verify no type errors",
+    "Run npx vite build to verify build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}
