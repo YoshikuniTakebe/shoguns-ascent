@@ -15,7 +15,7 @@ import { PoliticsTrack } from './PoliticsTrack';
 import { RegionDetailModal } from './RegionDetailModal';
 import { HarvestPopup } from './HarvestPopup';
 import { KamiResolutionPopup } from './KamiResolutionPopup';
-import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon } from './Icons';
+import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, UndoIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
@@ -87,7 +87,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, setMoveFrom, setSelectedFigures } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo } = useGameStore();
   const t = useT();
 
   const [translateX, setTranslateX] = useState(0);
@@ -258,20 +258,35 @@ export const GameBoard = () => {
           })()}
 
           {/* Raijin Interactive Overlay - between kami track and map */}
-          {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.raijinPlacementActive && (() => {
+          {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && (gameState.raijinPlacementActive || gameState.raijinPlacementDone) && (() => {
             const currentTemple = gameState.kamiResolutionTemples?.[gameState.kamiResolutionIndex ?? 0];
             const winnerPlayer = currentTemple?.winnerId ? gameState.players.find(p => p.id === currentTemple.winnerId) : null;
             const winnerClan = winnerPlayer ? CLANS.find(c => c.id === winnerPlayer.clanId) : null;
             const clanColor = winnerClan?.color || '#fff';
             return (
               <div className="kami-action-overlay">
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
-                  {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
-                  <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
-                  {' coloca un '}
-                  <BushiIcon size={22} color={clanColor} />
-                  {' Bushi en cualquier provincia'}
-                </span>
+                {gameState.raijinPlacementActive && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
+                    {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
+                    <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
+                    {' coloca un '}
+                    <BushiIcon size={22} color={clanColor} />
+                    {' Bushi en cualquier provincia'}
+                  </span>
+                )}
+                {gameState.raijinPlacementDone && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
+                    {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
+                    <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
+                    {' Bushi colocado'}
+                    <button className="popup-btn" onClick={doRaijinUndo} style={{ marginLeft: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <UndoIcon size={18} color="currentColor" />
+                    </button>
+                    <button className="popup-btn" onClick={doRaijinConfirm} style={{ marginLeft: '4px' }}>
+                      Terminar
+                    </button>
+                  </span>
+                )}
               </div>
             );
           })()}

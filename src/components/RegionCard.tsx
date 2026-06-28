@@ -211,14 +211,14 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
         doMoveForces(moveFrom, regionId, selectedFigures);
       }
     } else if (moveMode && !moveFrom) {
-      // During marshal: set moveFrom but do NOT auto-select all figures
+      // During marshal or fujin: set moveFrom but do NOT auto-select all figures
       // Player must click individual figures
-      if (isMarshalMove) {
+      if (isMarshalMove || isFujinMove) {
         setMoveFrom(regionId);
         setSelectedFigures([]);
       } else {
         setMoveFrom(regionId);
-        // Non-marshal: pre-select all figures owned by current player in this province
+        // Non-marshal, non-fujin: pre-select all figures owned by current player in this province
         const ownerId = movePlayerId || apid;
         if (ownerId) {
           const myFigures = province.figures.filter(f => f.owner === ownerId);
@@ -237,20 +237,24 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
       return;
     }
 
-    // Marshal move mode: clicking a figure in the source province selects it
-    if (isMarshalMove && moveFrom === regionId) {
+    // Marshal or Fujin move mode: clicking a figure in the source province selects it
+    if ((isMarshalMove || isFujinMove) && moveFrom === regionId) {
       e.stopPropagation();
       const figure = province.figures.find(f => f.id === figureId);
       if (!figure) return;
 
-      // Cannot select figures that are not owned by current player
-      if (figure.owner !== apid) return;
+      // Cannot select figures that are not owned by the moving player
+      const ownerId = isFujinMove ? fujinPlayerId : apid;
+      if (figure.owner !== ownerId) return;
 
-      // Cannot select already-moved figures
-      if (gameState.marshalMovedFigures.includes(figureId)) return;
+      // Cannot select already-moved figures (marshal only)
+      if (isMarshalMove && gameState.marshalMovedFigures.includes(figureId)) return;
 
-      // Cannot select fortress unless Tortuga
-      if (figure.type === 'fortress' && activePlayer?.clanId !== 'tortuga') return;
+      // Cannot select fortress unless player is Tortuga
+      const movingPlayerClan = isFujinMove
+        ? gameState.players.find(p => p.id === fujinPlayerId)?.clanId
+        : activePlayer?.clanId;
+      if (figure.type === 'fortress' && movingPlayerClan !== 'tortuga') return;
 
       // Toggle selection: if already selected, deselect; otherwise select only this one
       if (selectedFigures.includes(figureId)) {
@@ -263,13 +267,20 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
 
   // Check if a figure is dimmed (already moved during marshal)
   const isFigureDimmed = (fig: Figure): boolean => {
+    if (isFujinMove) return false; // Fujin doesn't track moved figures
     if (!isMarshalMove) return false;
     if (gameState.marshalMovedFigures.includes(fig.id)) return true;
     return false;
   };
 
-  // Check if a figure is unselectable during marshal move
+  // Check if a figure is unselectable during marshal or fujin move
   const isFigureUnselectable = (fig: Figure): boolean => {
+    if (isFujinMove) {
+      if (fig.owner !== fujinPlayerId) return true;
+      const fujinPlayerClan = gameState.players.find(p => p.id === fujinPlayerId)?.clanId;
+      if (fig.type === 'fortress' && fujinPlayerClan !== 'tortuga') return true;
+      return false;
+    }
     if (!isMarshalMove) return false;
     if (fig.owner !== apid) return true;
     if (gameState.marshalMovedFigures.includes(fig.id)) return true;

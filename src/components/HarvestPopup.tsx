@@ -6,7 +6,7 @@ import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 
 export const HarvestPopup = () => {
-  const { gameState, doAcknowledgeHarvest } = useGameStore();
+  const { gameState, doAcknowledgeHarvest, turnPopupPlayer } = useGameStore();
   const t = useT();
 
   // Track whether the initial "all players received" popup has been dismissed
@@ -20,6 +20,9 @@ export const HarvestPopup = () => {
   }, [gameState?.harvestMandateActive]);
 
   if (!gameState || !gameState.harvestPopupVisible || !gameState.harvestMandateActive) return null;
+
+  // Don't show harvest popup while turn popup is still displayed - let turn popup show first
+  if (turnPopupPlayer) return null;
 
   // Show the initial confirmation popup before province rewards
   if (gameState.harvestResolutionIndex === 0 && !initialConfirmed) {
