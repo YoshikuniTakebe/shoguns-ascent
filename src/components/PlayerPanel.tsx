@@ -10,7 +10,7 @@ import { HostagesModal } from './HostagesModal';
 import { useT } from '../i18n';
 
 export const PlayerPanel = () => {
-  const { gameState, localPlayerId } = useGameStore();
+  const { gameState, localPlayerId, warPhasePopupVisible } = useGameStore();
   const t = useT();
   const [viewingCardsPlayer, setViewingCardsPlayer] = useState<Player | null>(null);
   const [viewingWarTokensPlayer, setViewingWarTokensPlayer] = useState<Player | null>(null);
@@ -48,7 +48,7 @@ export const PlayerPanel = () => {
                 </div>
                 <div className="stat">
                   <span className="stat-icon"><CoinIcon size={16} color={clan.color} /></span>
-                  <span className="stat-value">{player.coins} coins</span>
+                  <span className="stat-value">{gameState.currentPhase === 'war' && !warPhasePopupVisible ? '?' : player.coins} coins</span>
                 </div>
                 <div className="stat">
                   <span className="stat-icon"><HonorIcon size={16} color={clan.color} /></span>
@@ -56,7 +56,7 @@ export const PlayerPanel = () => {
                 </div>
                 <div className="stat">
                   <span className="stat-icon"><RoninIcon size={16} color={clan.color} /></span>
-                  <span className="stat-value">{player.ronin} ronin</span>
+                  <span className="stat-value">{gameState.currentPhase === 'war' && !warPhasePopupVisible && player.clanId === 'koi' ? 0 : player.ronin} ronin</span>
                 </div>
               </div>
               <div className="player-reserves">

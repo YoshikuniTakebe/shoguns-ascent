@@ -54,7 +54,7 @@ const KAMI_IMAGES: Record<KamiType, string> = {
 };
 
 export const TemplePanel = () => {
-  const { gameState, komainuPrayMode, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto } = useGameStore();
+  const { gameState, komainuPrayMode, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto, jinmenjuSummonActive, doJinmenjuPlaceTemple } = useGameStore();
   const [selectedKami, setSelectedKami] = useState<KamiType | null>(null);
   const t = useT();
 
@@ -128,6 +128,8 @@ export const TemplePanel = () => {
               onClick={() => {
                 if (komainuPrayMode) {
                   doKomainuPlaceAtTemple(temple.id);
+                } else if (jinmenjuSummonActive && isRecruitShintoTarget) {
+                  doJinmenjuPlaceTemple(temple.id);
                 } else if (isRecruitShintoTarget) {
                   doRecruitPlaceTempleShinto(temple.id);
                 } else {

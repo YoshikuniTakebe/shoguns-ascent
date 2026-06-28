@@ -14,6 +14,7 @@ export interface BattleCombatant {
 interface BattleBiddingOverlayProps {
   playerName: string;
   playerClanColor: string;
+  playerClanId?: string;
   maxCoins: number;
   provinceName: string;
   provinceColor?: string;
@@ -42,6 +43,7 @@ const ALL_DROP_TARGETS = [...WAR_TACTICS.map(t => t.id), 'pool'];
 export const BattleBiddingOverlay = ({
   playerName,
   playerClanColor,
+  playerClanId,
   maxCoins,
   provinceName,
   provinceColor,
@@ -223,8 +225,10 @@ export const BattleBiddingOverlay = ({
           <h2 className="bidding-overlay-title">
             {t('battle.battleNumber', { number: battleNumber })}: <span style={{ color: provinceColor }}>{provinceName}</span>
           </h2>
-          <p className="bidding-overlay-player" style={{ color: playerClanColor }}>
-            {playerName} - {t('battle.warTactics')}
+          <p className="bidding-overlay-player">
+            {playerClanId && <ClanShield clanId={playerClanId} size={22} />}
+            <span style={{ color: playerClanColor }}>{playerName}</span>
+            <span style={{ color: '#ffffff' }}> - {t('battle.warTactics')}</span>
           </p>
         </div>
 
@@ -252,7 +256,7 @@ export const BattleBiddingOverlay = ({
             const tooltipKey = `battle.tacticDesc.${tactic.id}` as const;
             return (
               <div key={tactic.id} style={{ display: 'contents' }}>
-                {/* Separator between Hire Ronin (order 3) and Imperial Poets (order 4) */}
+                {/* Vertical separator between Hire Ronin (order 3) and Imperial Poets (order 4) */}
                 {idx === 3 && (
                   <div className="bidding-battle-resolution-separator">
                     <div className="bidding-separator-line" />

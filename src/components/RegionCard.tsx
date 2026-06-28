@@ -59,7 +59,7 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
 };
 
 export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSProperties }) => {
-  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure, monsterPlacementMode, monsterPlacementPlayerId, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi } = useGameStore();
+  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure, monsterPlacementMode, monsterPlacementPlayerId, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, jinmenjuSummonActive, doJinmenjuPlace } = useGameStore();
   const t = useT();
   if (!gameState) return null;
 
@@ -145,6 +145,16 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   let isRecruitDimmed = false;
   if (gameState.kamiResolutionActive && gameState.raijinPlacementActive) {
     isRecruitTarget = true;
+  } else if (jinmenjuSummonActive && recruitMode && !monsterPlacementMode) {
+    // When Jinmenju summon is active, only highlight the province where Jinmenju is
+    if (apid) {
+      const hasJinmenju = province.figures.some(f => f.owner === apid && f.monsterCardId === 'sp-jinmenju');
+      if (hasJinmenju) {
+        isRecruitTarget = true;
+      } else {
+        isRecruitDimmed = true;
+      }
+    }
   } else if (recruitMode && !monsterPlacementMode) {
     if (apid) {
       const isDragonfly = activePlayer?.clanId === 'libelula';
@@ -185,6 +195,10 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
     }
     if (recruitMode) {
       if (isRecruitDimmed) return;
+      if (jinmenjuSummonActive) {
+        doJinmenjuPlace(regionId);
+        return;
+      }
       doRecruitPlaceFigure(regionId);
       return;
     }

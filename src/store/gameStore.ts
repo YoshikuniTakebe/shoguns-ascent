@@ -32,6 +32,7 @@ import {
   betraySelectFigure,
   skipBetrayTurn,
   advanceHarvestResolution,
+  loseHonor,
 } from '../utils/gameLogic';
 
 /**
@@ -243,6 +244,13 @@ interface GameStore {
   ruleViolationMessage: string | null;
   setRuleViolationMessage: (msg: string | null) => void;
 
+  // Jinmenju
+  jinmenjuSummonActive: boolean;
+  doJinmenjuActivate: () => void;
+  doJinmenjuPlace: (provinceId: string) => void;
+  doJinmenjuPlaceTemple: (templeId: string) => void;
+  doJinmenjuCancel: () => void;
+
   // Online
   connectWebSocket: (url: string) => void;
   sendAction: (action: unknown) => void;
@@ -276,8 +284,115 @@ export const useGameStore = create<GameStore>((set, get) => ({
   komainuPrayMode: false,
   komainuPrayPlayerId: null,
   turnPopupPlayer: null,
+  jinmenjuSummonActive: false,
   ruleViolationMessage: null,
   setRuleViolationMessage: (msg) => set({ ruleViolationMessage: msg }),
+  doJinmenjuActivate: () => {
+    set({ jinmenjuSummonActive: true, recruitMode: true });
+  },
+  doJinmenjuPlace: (provinceId: string) => {
+    const { gameState, recruitFigureType } = get();
+    if (!gameState) return;
+    const cp = getCurrentPlayer(gameState);
+    if (!cp) return;
+
+    // Find the province where Jinmenju is placed
+    const jinmenjuProvince = Object.values(gameState.provinces).find(prov =>
+      prov.figures.some(f => f.owner === cp.id && f.monsterCardId === 'sp-jinmenju')
+    );
+    if (!jinmenjuProvince || jinmenjuProvince.id !== provinceId) return;
+
+    const player = gameState.players.find(p => p.id === cp.id);
+    if (!player) return;
+
+    // Check reserve
+    if (recruitFigureType === 'bushi' && player.bushi <= 0) return;
+    if (recruitFigureType === 'shinto' && player.shinto <= 0) return;
+
+    const figureId = Math.random().toString(36).substring(2, 10);
+    const newFigure = { type: recruitFigureType as 'bushi' | 'shinto', owner: cp.id, id: figureId };
+
+    // Place figure
+    const updatedProvinces = { ...gameState.provinces };
+    updatedProvinces[provinceId] = {
+      ...updatedProvinces[provinceId],
+      figures: [...updatedProvinces[provinceId].figures, newFigure],
+    };
+
+    // Decrement reserve
+    const updatedPlayers = gameState.players.map(p => {
+      if (p.id === cp.id) {
+        if (recruitFigureType === 'bushi') return { ...p, bushi: p.bushi - 1 };
+        if (recruitFigureType === 'shinto') return { ...p, shinto: p.shinto - 1 };
+      }
+      return p;
+    });
+
+    let ns: GameState = {
+      ...gameState,
+      provinces: updatedProvinces,
+      players: updatedPlayers,
+      honorTrack: [...gameState.honorTrack],
+      log: [...gameState.log, `${player.name} summons a ${recruitFigureType} at ${jinmenjuProvince.name} using Jinmenju (loses honor)`],
+    };
+
+    // Lose honor
+    loseHonor(ns, cp.id);
+
+    set({ gameState: ns, jinmenjuSummonActive: false });
+  },
+  doJinmenjuPlaceTemple: (templeId: string) => {
+    const { gameState, recruitFigureType } = get();
+    if (!gameState) return;
+    if (recruitFigureType !== 'shinto') return;
+    const cp = getCurrentPlayer(gameState);
+    if (!cp) return;
+
+    const player = gameState.players.find(p => p.id === cp.id);
+    if (!player || player.shinto <= 0) return;
+
+    const templeIndex = gameState.temples.findIndex(t => t.id === templeId);
+    if (templeIndex === -1) return;
+
+    const temple = gameState.temples[templeIndex];
+    const shintoInThisTemple = temple.figures.filter(f => f.playerId === cp.id).length;
+
+    // Luna clan power: max 2 shinto per temple
+    if (player.clanId === 'luna' && shintoInThisTemple >= 2) return;
+
+    const figureId = Math.random().toString(36).substring(2, 10);
+
+    // Add shinto figure to the temple
+    const updatedTemples = [...gameState.temples];
+    updatedTemples[templeIndex] = {
+      ...temple,
+      figures: [...temple.figures, { playerId: cp.id, figureId }],
+    };
+
+    // Decrement player's shinto count
+    const updatedPlayers = gameState.players.map(p => {
+      if (p.id === cp.id) {
+        return { ...p, shinto: Math.max(0, p.shinto - 1) };
+      }
+      return p;
+    });
+
+    let ns: GameState = {
+      ...gameState,
+      temples: updatedTemples,
+      players: updatedPlayers,
+      honorTrack: [...gameState.honorTrack],
+      log: [...gameState.log, `${player.name} places a shinto at ${temple.kamiType} shrine using Jinmenju (loses honor)`],
+    };
+
+    // Lose honor
+    loseHonor(ns, cp.id);
+
+    set({ gameState: ns, jinmenjuSummonActive: false });
+  },
+  doJinmenjuCancel: () => {
+    set({ jinmenjuSummonActive: false });
+  },
   undoMandateState: null,
   doUndoMandate: () => {
     const { undoMandateState } = get();
