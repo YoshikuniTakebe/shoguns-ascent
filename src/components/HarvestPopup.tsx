@@ -59,7 +59,7 @@ export const HarvestPopup = () => {
         <div className="harvest-popup-rewards">
           {rewards.vp && rewards.vp > 0 && (
             <div className="harvest-popup-reward-item">
-              <VPIcon size={40} color="#c8a951" />
+              <VPIcon size={40} color="#E63946" />
               <span className="harvest-popup-reward-count">x{rewards.vp}</span>
             </div>
           )}

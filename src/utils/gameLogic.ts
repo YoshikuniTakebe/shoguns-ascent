@@ -1306,11 +1306,14 @@ export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerI
  */
 function computeTempleWinner(
   templeFigures: { playerId: string }[],
-  honorTrack: string[]
+  honorTrack: string[],
+  players: { id: string; clanId: string }[]
 ): { winnerId: string | null; forces: { playerId: string; count: number }[] } {
   const forcesMap: { [playerId: string]: number } = {};
   templeFigures.forEach((fig) => {
-    forcesMap[fig.playerId] = (forcesMap[fig.playerId] || 0) + 1;
+    const player = players.find(p => p.id === fig.playerId);
+    const force = player?.clanId === 'luna' ? 2 : 1;
+    forcesMap[fig.playerId] = (forcesMap[fig.playerId] || 0) + force;
   });
 
   const forces = Object.entries(forcesMap).map(([playerId, count]) => ({ playerId, count }));
@@ -1351,7 +1354,7 @@ export function resolveKamiTurn(state: GameState): GameState {
   const sortedTemples = [...newState.temples].sort((a, b) => a.position - b.position);
 
   for (const temple of sortedTemples) {
-    const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack);
+    const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack, newState.players);
     const kamiInfo = KAMI_DATA.find((k) => k.type === temple.kamiType);
 
     if (forces.length === 0) {
@@ -2552,7 +2555,7 @@ export function advancePlayer(state: GameState): GameState {
     const kamiResolutionTemples: KamiResolutionTemple[] = [];
 
     for (const temple of sortedTemples) {
-      const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack);
+      const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack, newState.players);
       const kamiData = KAMI_DATA.find(k => k.type === temple.kamiType);
 
       // Skip empty temples (no figures = no winner, no need to show popup)

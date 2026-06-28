@@ -173,9 +173,13 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
 
   // 7. Replace moneda/monedas/coin/coins keyword (and preceding number if present) with bold gold + icon
   const coinPattern = /(\d+\s*)?\b(moneda|monedas|coin|coins)\b/gi;
-  segments = applyPattern(segments, coinPattern, (m, key) => (
-    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}>{m}<CoinIcon size={14} /></span>
-  ));
+  segments = applyPattern(segments, coinPattern, (m, key) => {
+    const numberMatch = m.match(/\d+/);
+    const number = numberMatch ? numberMatch[0] : '';
+    return (
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}><CoinIcon size={14} />{number}</span>
+    );
+  });
 
   // Convert segments to ReactNode array using positional index for keys
   return segments.map((seg, i) =>
