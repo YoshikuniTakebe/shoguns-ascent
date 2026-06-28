@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS } from '../types/game';
+import { CLANS, PROVINCES_DATA, PROVINCE_COLORS } from '../types/game';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon } from './Icons';
+import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 
 export const HarvestPopup = () => {
@@ -49,13 +50,21 @@ export const HarvestPopup = () => {
 
   const clan = CLANS.find(c => c.id === player.clanId);
   const rewards = currentEntry.rewards;
+  const province = PROVINCES_DATA.find(p => p.id === currentEntry.provinceId);
+  const provinceColor = PROVINCE_COLORS[currentEntry.provinceId] || '#fff';
 
   return (
     <div className="harvest-popup-backdrop">
       <div className="harvest-popup" style={{ borderColor: clan?.color || '#c8a951' }}>
-        <h3 className="harvest-popup-title" style={{ color: clan?.color || '#c8a951' }}>
+        <h3 className="harvest-popup-title" style={{ color: clan?.color || '#c8a951', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <ClanShield clanId={player.clanId} size={24} />
           {t('harvest.received', { name: player.name })}
         </h3>
+        {province && (
+          <p style={{ margin: '4px 0 8px', textAlign: 'center', fontWeight: 'bold', fontStyle: 'italic', color: provinceColor }}>
+            {province.name}
+          </p>
+        )}
         <div className="harvest-popup-rewards">
           {rewards.vp && rewards.vp > 0 && (
             <div className="harvest-popup-reward-item">

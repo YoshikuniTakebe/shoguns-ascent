@@ -1,31 +1,28 @@
 {
   "id": "FEAT-001",
   "type": "fix",
-  "description": "Fix tea ceremony turn order to follow seating (honor) order instead of array index, fix politics track name truncation, fix marshalNoBonus i18n issue, standardize all mandate formats in ActionPanel, ensure player names use clan colors everywhere, fix marshal button width, and enhance GameLog with styled player names, mandate names, region names, and icons.",
-  "status": "completed",
+  "description": "UI text improvements for mandate panels, harvest popup, and fortress button. Fixes the Marshal mandate text formatting, adds clan shield to harvest popup, shows province name in harvest popup, improves fortress cost display with gold coin icon, and changes Fujin movement bar text.",
+  "status": "in_progress",
   "steps": [
-    "1. FIX TEA CEREMONY TURN ORDER in src/utils/gameLogic.ts: In setupSeason() (around line 268), change currentPlayerIndex from 0 to the index of turnOrder[0] in the players array: `const firstPlayerId = state.turnOrder[0]; const firstPlayerIdx = newState.players.findIndex(p => p.id === firstPlayerId); currentPlayerIndex: firstPlayerIdx >= 0 ? firstPlayerIdx : 0`. Also fix advanceTeaPlayer() (around line 2366) where it does `(currentPlayerIndex + 1) % players.length` - it should advance to the NEXT player in turnOrder, not just the next array index. Find the current player's position in turnOrder and advance to the next turnOrder entry.",
-    "2. FIX POLITICS TRACK NAME TRUNCATION in src/App.css: Find the .slot-player-name rule which has max-width:80px;overflow:hidden;text-overflow:ellipsis. Change to overflow:visible and remove max-width, or increase max-width to fit full names (e.g., max-width:90px or remove it). The slot is 95px wide so the name should fit.",
-    "3. FIX marshalNoBonus i18n: In src/components/ActionPanel.tsx, the marshal section uses t('actions.marshalNoBonus') which resolves to empty string but shows the key. Refactor the marshal mandate section to follow the SAME format as the recruit section (which uses inline JSX). Remove the {bonus} interpolation pattern and use inline conditional rendering instead.",
-    "4. STANDARDIZE ALL MANDATE FORMATS in ActionPanel.tsx: All five mandates (train, marshal, recruit, harvest, betray) should follow this consistent format: 'Mandato [Type] - [PlayerName in clan color bold] puede [action text].' If there's a bonus, show it. Then on a SEPARATE line show 'JUGADOR X DE Y' in uppercase, color #a8d8ea, smaller font. The recruit section already has this format. Apply it to: marshal (lines 172-196), train (lines 161-169), betray (lines 230-256). Harvest uses HarvestPopup so check if it needs changes too.",
-    "5. PLAYER NAME COLOR EVERYWHERE: Audit all components where player names appear and wrap them in spans with the clan color. Key places: ActionPanel.tsx (tea ceremony, politics waiting message), BattlePanel.tsx (battle results, bidding), GameBoard.tsx (turn indicator), PoliticsTrack.tsx (already colored). Use pattern: const clan = CLANS.find(c => c.id === player.clanId); then style={{ color: clan?.color, fontWeight: 'bold' }}.",
-    "6. FIX MARSHAL BUTTON WIDTH: In ActionPanel.tsx marshal section, the 'Mover Fuerzas' button (moveForces) should have width: 100% to match 'Terminar Turno' and 'Construir Fortaleza' buttons. Add style={{ width: '100%' }} or a CSS class.",
-    "7. ENHANCE GAMELOG in src/components/GameLog.tsx: Replace plain text rendering with a rich text parser. Create a helper function that takes a log string and returns JSX. The function should: (a) detect player names from gameState.players and wrap in <span style={{color: clanColor, fontWeight: 'bold'}}>. (b) detect mandate type names (RECRUIT, MARSHAL, TRAIN, HARVEST, BETRAY or their Spanish equivalents Reclutar, Movilizar, Entrenar, Cosechar, Traicionar) and wrap in <span style={{color: mandateColor, fontWeight: 'bold', textTransform: 'uppercase'}}>. (c) detect province/region names (Hokkaido, Oshu, Edo, Kanto, Kansai, Nagato, Shikoku, Kyushu) and wrap in <span style={{fontWeight: 'bold', fontStyle: 'italic'}}>. (d) detect VP/PV keywords and add VPIcon, ronin and add RoninIcon, moneda/coins and add CoinIcon. Import needed icons from './Icons'."
+    "1. In src/components/ActionPanel.tsx, update the marshal mandate section (around line 215). Replace the inline text 'Mandato Movilizar - Player puede mover figuras.' with a new layout: First line shows just 'Movilizar' (or 'Marshal' in English) in uppercase black text with the mandate color. Second line shows player name preceded by ClanShield, with text in clan color. Third line shows the 'puede mover figuras' / 'may move figures' text in normal color. Same pattern for other mandates (recruit, train, betray) that also show inline 'Mandato X' text.",
+    "2. In src/components/ActionPanel.tsx, update the fortress button text and the marshalBonus text. Remove '(3 monedas)' / '(3 coins)' from both places and replace with a bold gold CoinIcon next to the number 3. The fortress button should show: 'Construir Fortaleza' + large CoinIcon + bold gold '3'. Same for the text reference to building a fortress.",
+    "3. In src/components/HarvestPopup.tsx, add the ClanShield before the player name in the individual reward popup. Import and use ClanShield component with the player's clanId.",
+    "4. In src/components/HarvestPopup.tsx, add the province name (in bold italic, colored with the province color from PROVINCE_COLORS) to the individual reward popup, showing which province the reward comes from. Import PROVINCE_COLORS from types/game.ts.",
+    "5. In the Fujin overlay bar (GameBoard.tsx around the fujinMovesRemaining display), change the text from 'Movimientos restantes: {count}' to 'Movimientos {count}' (remove 'restantes' and the colon). Update both en.ts and es.ts i18n keys.",
+    "6. Add all necessary i18n keys to both src/i18n/en.ts and src/i18n/es.ts for the new text elements. Ensure mandate names like 'Marshal'/'Movilizar', 'Recruit'/'Reclutar', etc. have proper keys."
   ],
   "acceptance_criteria": [
-    "npx tsc --noEmit passes with no errors",
-    "setupSeason sets currentPlayerIndex to the first player in turnOrder (honor order, lowest first)",
-    "advanceTeaPlayer advances through players in turnOrder sequence, not array index order",
-    "PoliticsTrack player names are not cut off (overflow visible or increased width)",
-    "Marshal mandate section shows player name in clan color, no 'actions.marshalNoBonus' text visible, and JUGADOR X DE Y on separate line",
-    "All mandate sections (train, marshal, recruit, betray) follow consistent format with player name in clan color and JUGADOR X DE Y on separate line",
-    "Player names throughout the app are displayed in their clan color (bold)",
-    "Marshal 'Mover Fuerzas' button is same width as other buttons (100%)",
-    "GameLog renders player names in clan color+bold, mandates in mandate color+bold+uppercase, regions in bold+italic, and VP/ronin/coins with their icons"
+    "Marshal mandate panel shows 'Movilizar' (or 'Marshal') on first line in uppercase, player name with clan shield and clan color on second line, and description text on third line",
+    "Fortress button shows CoinIcon in gold with number 3 instead of text '(3 monedas)'",
+    "Harvest popup shows ClanShield before player name",
+    "Harvest popup shows province name in bold italic with province color",
+    "Fujin movement bar shows 'Movimientos 2' instead of 'Movimientos restantes: 2'",
+    "All new text has both English and Spanish translations"
   ],
   "verification": [
-    "Run `npx tsc --noEmit` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
+    "Run npx tsc --noEmit to verify no type errors",
+    "Run npx vite build to verify build succeeds"
   ],
   "blocked_reason": null,
-  "findings": "All changes compile cleanly with npx tsc --noEmit. The betray mandate does not have a resolution order (only the issuer acts), so no JUGADOR X DE Y line was added there. The GameBoard turn indicator already used clan colors. The BattlePanel combatant names were already colored; only the war-complete results section needed fixing."
+  "findings": ""
 }
