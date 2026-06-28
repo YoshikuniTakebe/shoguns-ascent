@@ -139,6 +139,7 @@ export const en = {
   'battle.figureTypeBushi': 'bushi',
   'battle.figureTypeShinto': 'shinto',
   'battle.figureTypeMonster': 'monster',
+  'battle.figureTypeDaimyo': 'daimyo',
 
   // GameOverScreen
   'gameOver.title': 'GAME OVER',

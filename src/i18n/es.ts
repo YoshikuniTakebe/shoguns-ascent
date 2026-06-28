@@ -141,6 +141,7 @@ export const es: Record<TranslationKey, string> = {
   'battle.figureTypeBushi': 'bushi',
   'battle.figureTypeShinto': 'shinto',
   'battle.figureTypeMonster': 'monstruo',
+  'battle.figureTypeDaimyo': 'daimyo',
 
   // GameOverScreen
   'gameOver.title': 'FIN DEL JUEGO',

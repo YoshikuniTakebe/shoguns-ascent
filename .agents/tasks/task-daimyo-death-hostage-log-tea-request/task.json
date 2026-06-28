@@ -1,0 +1,7 @@
+{
+  "task_id": "task-daimyo-death-hostage-log-tea-request",
+  "task_description": "Fix daimyo death in battle/seppuku, fix hostage return log messages to show per-target info, and add a request/petition slider to the tea ceremony alliance proposal UI.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}
