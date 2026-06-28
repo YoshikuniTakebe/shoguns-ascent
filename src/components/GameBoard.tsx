@@ -586,6 +586,29 @@ export const GameBoard = () => {
                 {t('war.phaseStart.noBonuses')}
               </p>
             )}
+            {/* Clan resources summary: coins and ronin per player */}
+            {gameState && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {gameState.players.map((player) => {
+                    const clan = CLANS.find(c => c.id === player.clanId);
+                    const displayRonin = player.clanId === 'koi' ? 0 : player.ronin;
+                    return (
+                      <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px', borderRadius: '4px', background: `${clan?.color || '#666'}15` }}>
+                        <ClanShield clanId={player.clanId} size={18} />
+                        <span style={{ color: clan?.color, fontWeight: 'bold', fontSize: '0.85rem', flex: 1 }}>{player.name}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.85rem' }}>
+                          <CoinIcon size={16} color="#f1c40f" /> {player.coins}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.85rem' }}>
+                          <RoninIcon size={16} color="#e74c3c" /> {displayRonin}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div style={{ textAlign: 'center' }}>
               <button className="btn-primary harvest-popup-btn" onClick={dismissWarPhasePopup} style={{ borderColor: '#DC143C' }}>
                 {t('war.phaseStart.accept')}

@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Remove all (s) suffixes from log messages and i18n strings, fix Imperial Poets logic to count dead figures instead of surviving figures, fix Seppuku honor (verify gainHonor is working correctly), fix Sol clan power log to include loser names and verify deductions are applied, and fix the war phase popup to show total coins/ronin per clan.",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/utils/gameLogic.ts line 348: change `hostage(s), gains ${player.hostages.length} coin(s)` to `hostages, gains ${player.hostages.length} coins` (remove the (s))",
+    "2. In src/utils/gameLogic.ts line 879: change `for ${effectiveCost} coin(s)` to `for ${effectiveCost} coins`",
+    "3. In src/utils/gameLogic.ts line 927: change `for ${effectiveCost} coin(s) (Ryujin)` to `for ${effectiveCost} coins (Ryujin)`",
+    "4. In src/utils/gameLogic.ts line 1049: change `${rewards.coins} moneda(s)` to `${rewards.coins} monedas`",
+    "5. In src/i18n/en.ts line 61: change `coin(s) as incentive` to `coins as incentive`",
+    "6. In src/i18n/en.ts line 128: change `coin(s) to distribute` to `coins to distribute`",
+    "7. In src/i18n/en.ts line 231: change `coin(s)?` to `coins?`",
+    "8. In src/i18n/es.ts line 63: change `moneda(s) como incentivo` to `monedas como incentivo`",
+    "9. In src/i18n/es.ts line 130: change `moneda(s) por repartir` to `monedas por repartir`",
+    "10. In src/i18n/es.ts line 182: change `moneda(s)?` to `monedas?`",
+    "11. Fix Imperial Poets (src/utils/gameLogic.ts around line 1864): Currently it counts surviving figures of the bidder (`curProvIP.figures.filter(f => f.owner === highestBidder).length`). The correct behavior is: gain 1 VP per figure that DIED during this battle (from seppuku, from battle result, from monster/card effects). To implement this: add a counter variable `battleDeathCount` at the start of the tactic resolution loop (before the switch statement over tactics). In the seppuku case, add `battleDeathCount += killCount;`. In the take-hostage case, add `battleDeathCount += 1;` (hostage counts as a killed figure). Then in the imperial-poets case, use `battleDeathCount` plus any figures killed by other effects. IMPORTANT: Re-read the tactic processing loop carefully - the variable needs to accumulate deaths from seppuku and take-hostage that happen BEFORE imperial-poets is resolved. Note that imperial-poets should count ALL figures that died in the battle province during tactic resolution, not just the bidder's. Review the code at line ~1775-1870 carefully.",
+    "12. Verify Seppuku honor: Read the gainHonor function (line 2501). It swaps with the player at idx-1 (better position). The seppuku case calls gainHonor in a loop for killCount. This should be working correctly. If seppuku is the issue, check if the honor track state is being properly propagated (since gameLogic uses mutation of newState). Ensure the seppuku loop truly calls gainHonor on the correct state object.",
+    "13. Fix Sol clan power (applySolTiebreakBonus at line ~2426): The function currently logs `${winner.name} (Sol) gana +1 Moneda +1 PV por empate de Honor`. Change the log to include the loser names and state what they lose. New format: `${winner.name} (Sol) gana +1 Moneda +1 PV por empate y ganar en Honor a ${loserNames} que pierde -1 Moneda -1 PV` where loserNames is the comma-joined names of the losers. The deduction logic (loser.coins -= 1, loser.victoryPoints -= 1) already exists and is correct.",
+    "14. In the war phase popup (src/components/GameBoard.tsx around line 555-595), enhance it to show for each clan: clan seal (ClanShield), player name, coin icon + total coins, ronin icon + total ronin. Add a section after the bonuses display (or replace existing content) that shows this summary for all players. For Koi clan, show ronin as 0 (since Koi converts ronin to coins functionally). Import CoinIcon and RoninIcon from Icons.tsx if not already imported."
+  ],
+  "acceptance_criteria": [
+    "No instances of '(s)' remain in gameLogic.ts log messages or i18n files",
+    "Imperial Poets awards VP based on total figures killed during the battle (seppuku + hostage + battle casualties), not surviving figures",
+    "Sol clan power log includes the names of losers who lost coins/VP",
+    "War phase popup shows clan seal, player name, coins total, and ronin total for each player (Koi shows 0 ronin)",
+    "TypeScript compiles without errors"
+  ],
+  "verification": [
+    "npx tsc -b",
+    "npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
