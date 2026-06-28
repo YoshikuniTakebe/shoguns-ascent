@@ -725,7 +725,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ gameState: advanced, betrayMode: false, undoMandateState: null, ...detectWarTransitionWithPopup(advanced), ...detectKamiPopupPending(advanced) });
     } else {
       const newCurrentPlayerId = ns.players[ns.currentPlayerIndex]?.id || null;
-      set({ gameState: ns, ...(gameState.mode === 'hotseat' ? { turnPopupPlayer: newCurrentPlayerId } : {}) });
+      set({ gameState: ns, undoMandateState: JSON.parse(JSON.stringify(ns)), ...(gameState.mode === 'hotseat' ? { turnPopupPlayer: newCurrentPlayerId } : {}) });
     }
   },
   doSkipBetrayTurn: () => {
