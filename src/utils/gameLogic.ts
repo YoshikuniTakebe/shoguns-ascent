@@ -2448,7 +2448,7 @@ function applySolTiebreakBonus(state: GameState, winnerId: string, losers: strin
       if (loser.victoryPoints > 0) loser.victoryPoints -= 1;
     }
   }
-  state.log = [...state.log, `${winner.name} (Sol) gana +1 Moneda +1 PV por empate y ganar en Honor a ${losers.map((id) => state.players.find((p) => p.id === id)?.name).join(', ')} que pierde -1 Moneda -1 PV`];
+  state.log = [...state.log, `${winner.name} (Sol) gana +1 Moneda +1 PV por empate y ganar en Honor a ${losers.map((id) => state.players.find((p) => p.id === id)?.name ?? id).join(', ')} que pierde -1 Moneda -1 PV`];
 }
 
 export function calculateForce(province: Province & { figures: Figure[] }, playerId: string, state: GameState): number {
