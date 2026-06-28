@@ -18,6 +18,7 @@ import { KamiResolutionPopup } from './KamiResolutionPopup';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
+import type { TranslationKey } from '../i18n';
 
 const MAP_WIDTH = 1672;
 const MAP_HEIGHT = 941;
@@ -200,7 +201,7 @@ export const GameBoard = () => {
             {gameState.currentSeason === 'summer' && <SummerIcon size={24} color="#1a1a2e" />}
             {gameState.currentSeason === 'autumn' && <AutumnIcon size={24} color="#1a1a2e" />}
             {gameState.currentSeason === 'winter' && <WinterIcon size={24} color="#1a1a2e" />}
-            <span className="season-name">{t(`season.${gameState.currentSeason}` as any)}</span>
+            <span className="season-name">{t(`season.${gameState.currentSeason}` as TranslationKey)}</span>
             <span className="phase-name">{phaseLabels[gameState.currentPhase] || gameState.currentPhase.toUpperCase()}</span>
           </div>
           {gameState.activeDeckGroup && (
@@ -242,7 +243,7 @@ export const GameBoard = () => {
               <div className="kami-action-overlay" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <span>{t('kami.resolution.fujinMoves', { count: String(gameState.fujinMovesRemaining) })}</span>
                 <button className="btn-primary" onClick={() => { setMoveFrom(null); setSelectedFigures([]); }} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
-                  {t('kami.resolution.fujinCancel' as any)}
+                  {t('kami.resolution.fujinCancel')}
                 </button>
                 <button className="btn-primary" onClick={doFujinDone} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
                   {t('kami.resolution.fujinDone')}
@@ -511,14 +512,14 @@ export const GameBoard = () => {
         <div className="harvest-popup-backdrop">
           <div className="harvest-popup" style={{ borderColor: '#9B59B6', maxWidth: '420px', minWidth: '320px' }}>
             <h3 style={{ color: '#9B59B6', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem' }}>
-              {t('kami.phaseStart.title' as any)}
+              {t('kami.phaseStart.title')}
             </h3>
             <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.85, marginBottom: '16px' }}>
-              {t('kami.phaseStart.description' as any)}
+              {t('kami.phaseStart.description')}
             </p>
             <div style={{ textAlign: 'center' }}>
               <button className="btn-primary harvest-popup-btn" onClick={dismissKamiPhasePopup} style={{ borderColor: '#9B59B6' }}>
-                {t('kami.phaseStart.accept' as any)}
+                {t('kami.phaseStart.accept')}
               </button>
             </div>
           </div>
@@ -530,12 +531,12 @@ export const GameBoard = () => {
         <div className="harvest-popup-backdrop">
           <div className="harvest-popup" style={{ borderColor: '#DC143C', maxWidth: '450px', minWidth: '320px' }}>
             <h3 style={{ color: '#DC143C', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem' }}>
-              {t('war.phaseStart.title' as any)}
+              {t('war.phaseStart.title')}
             </h3>
             {warPhaseUpgradeSummary.length > 0 ? (
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: '8px', textAlign: 'center' }}>
-                  {t('war.phaseStart.bonuses' as any)}
+                  {t('war.phaseStart.bonuses')}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {warPhaseUpgradeSummary.map((entry, idx) => {
@@ -556,12 +557,12 @@ export const GameBoard = () => {
               </div>
             ) : (
               <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.7, marginBottom: '16px', fontStyle: 'italic' }}>
-                {t('war.phaseStart.noBonuses' as any)}
+                {t('war.phaseStart.noBonuses')}
               </p>
             )}
             <div style={{ textAlign: 'center' }}>
               <button className="btn-primary harvest-popup-btn" onClick={dismissWarPhasePopup} style={{ borderColor: '#DC143C' }}>
-                {t('war.phaseStart.accept' as any)}
+                {t('war.phaseStart.accept')}
               </button>
             </div>
           </div>
