@@ -375,7 +375,7 @@ export function breakAllAlliances(state: GameState): GameState {
   return newState;
 }
 
-export function proposeAlliance(state: GameState, fromId: string, toId: string, bribeAmount: number = 0): GameState {
+export function proposeAlliance(state: GameState, fromId: string, toId: string, bribeAmount: number = 0, requestAmount: number = 0): GameState {
   const newState = { ...state, allianceProposals: [...state.allianceProposals], log: [...state.log] };
   const from = newState.players.find((p) => p.id === fromId);
   const to = newState.players.find((p) => p.id === toId);
@@ -392,6 +392,8 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string, 
 
   // Cap bribe amount to proposer's actual coins
   const effectiveBribe = Math.min(bribeAmount, from.coins);
+  // Cap request amount to target's actual coins
+  const effectiveRequest = Math.min(requestAmount, to.coins);
 
   // If the target already proposed to us, auto-accept that proposal instead
   const reverseProposal = newState.allianceProposals.find(
@@ -420,13 +422,35 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string, 
         }
       }
     }
+    // Handle request in reverse-proposal case: target (toId) pays requestAmount to proposer (fromId)
+    if (effectiveRequest > 0) {
+      const requester = resultState.players.find((p) => p.id === fromId);
+      const payer = resultState.players.find((p) => p.id === toId);
+      if (requester && payer) {
+        const actualRequest = Math.min(effectiveRequest, payer.coins);
+        if (actualRequest > 0) {
+          const updatedPlayers = resultState.players.map((p) => {
+            if (p.id === toId) return { ...p, coins: p.coins - actualRequest };
+            if (p.id === fromId) return { ...p, coins: p.coins + actualRequest };
+            return p;
+          });
+          resultState = {
+            ...resultState,
+            players: updatedPlayers,
+            log: [...resultState.log, `${requester.name} recibe ${actualRequest} monedas de peticion de ${payer.name}`],
+          };
+        }
+      }
+    }
     return resultState;
   }
 
-  const proposal: AllianceProposal = { from: fromId, to: toId, bribeAmount: effectiveBribe > 0 ? effectiveBribe : undefined };
+  const proposal: AllianceProposal = { from: fromId, to: toId, bribeAmount: effectiveBribe > 0 ? effectiveBribe : undefined, requestAmount: effectiveRequest > 0 ? effectiveRequest : undefined };
   newState.allianceProposals.push(proposal);
   if (effectiveBribe > 0) {
     newState.log = [...newState.log, `${from.name} propone alianza a ${to.name} ofreciendo ${effectiveBribe} monedas`];
+  } else if (effectiveRequest > 0) {
+    newState.log = [...newState.log, `${from.name} propone alianza a ${to.name} pidiendo ${effectiveRequest} monedas`];
   } else {
     newState.log = [...newState.log, `${from.name} propone alianza a ${to.name}`];
   }
@@ -452,6 +476,7 @@ export function acceptAlliance(state: GameState, fromId: string, toId: string): 
     (ap) => ap.from === fromId && ap.to === toId
   );
   const bribeAmount = proposal?.bribeAmount || 0;
+  const requestAmount = proposal?.requestAmount || 0;
 
   // Transfer bribe coins from proposer to accepter
   if (bribeAmount > 0) {
@@ -460,6 +485,16 @@ export function acceptAlliance(state: GameState, fromId: string, toId: string): 
       from.coins -= actualBribe;
       to.coins += actualBribe;
       newState.log = [...newState.log, `${to.name} recibe ${actualBribe} monedas de soborno de ${from.name}`];
+    }
+  }
+
+  // Transfer request coins from accepter (to) to proposer (from)
+  if (requestAmount > 0) {
+    const actualRequest = Math.min(requestAmount, to.coins);
+    if (actualRequest > 0) {
+      to.coins -= actualRequest;
+      from.coins += actualRequest;
+      newState.log = [...newState.log, `${from.name} recibe ${actualRequest} monedas de peticion de ${to.name}`];
     }
   }
 

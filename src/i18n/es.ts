@@ -357,4 +357,8 @@ export const es: Record<TranslationKey, string> = {
   // Jinmenju
   'actions.jinmenjuSummon': 'Invocar con Jinmenju',
   'actions.jinmenjuCost': 'Perder 1 posicion de Honor',
+
+  // Alliance Request
+  'actions.requestLabel': 'Peticion',
+  'actions.requestingCoins': 'Pidiendo {amount} monedas por la alianza',
 };

@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Add a 'request' (petition) slider to the tea ceremony alliance proposal UI. In addition to offering a bribe (pay coins TO the target), players can now request coins FROM the target as a condition of the alliance. The two sliders are mutually exclusive: increasing one resets the other to 0. Only a bribe OR a request can be sent, not both.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "In src/types/game.ts, add `requestAmount?: number` to the AllianceProposal interface.",
     "In src/utils/gameLogic.ts proposeAlliance function, add a `requestAmount` parameter (default 0). Include it in the proposal object when > 0. Update log messages to indicate when a request is made.",
