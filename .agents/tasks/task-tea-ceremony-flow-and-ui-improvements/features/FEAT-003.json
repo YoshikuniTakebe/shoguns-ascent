@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Add Kami Phase start popup, War Phase start popup (with war upgrade bonus summary), and fix Fujin reward to work like Marshal (single figure selection/movement, allowing same figure to move twice). Also fix Susanoo reward popup to show VP gained.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Add a new 'Kami Phase start' popup. In the store, add a new state field kamiPhasePopupVisible (boolean, default false). When advancePlayer triggers a kami turn (isKamiTurn returns true), before setting kamiResolutionActive, set kamiPhasePopupVisible = true and kamiResolutionActive = false (delay the resolution). In GameBoard.tsx, render a popup when kamiPhasePopupVisible is true: show an elegant popup with the PoliticsTrack icon or a kami-themed icon, title 'Comienza la Fase Kami' / 'Kami Phase Begins', with an Accept button. Add a dismissKamiPhasePopup action that sets kamiPhasePopupVisible = false and then triggers the actual kami resolution (setting kamiResolutionActive = true with the temples data that was prepared).",
     "2. Add a new 'War Phase start' popup. In the store, add warPhasePopupVisible (boolean, default false) and warPhaseUpgradeSummary (array of {playerName, clanId, bonuses: string[]}). When advancePhase transitions from politics to war (or when detectWarTransition fires), instead of immediately showing battles, set warPhasePopupVisible = true. Compute a summary of war upgrade card bonuses applied during initiateWarPhase by parsing the log entries that applyWarUpgrades added. Show a popup: 'Comienza la Fase de Guerra' / 'War Phase Begins', list each clan's war upgrade bonuses (if any), Accept button. On dismiss, set warPhasePopupVisible = false and proceed to battleStepPhase = 'popup'.",
@@ -24,5 +24,5 @@
     "Run npx vite build to verify build succeeds"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All acceptance criteria implemented. The kamiPhasePopupPending flag is set in gameLogic.ts advancePlayer and detected in the store to show the popup before activating kami resolution. War transitions now show warPhasePopupVisible with upgrade summary computed from log entries. Fujin uses a dedicated branch in moveForces that enforces single-figure movement without marshalMovedFigures tracking. Susanoo VP is computed during advancePlayer when building kamiResolutionTemples data."
 }
