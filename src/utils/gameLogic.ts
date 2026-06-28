@@ -1880,7 +1880,7 @@ export function resolveNextBattle(state: GameState): GameState {
         }
         battleDeathCount += killCount;
         const seppukuHonorPos = getHonorRank(newState, highestBidder);
-        newState.log = [...newState.log, `${bidder.name} commits Seppuku: kills ${killCount} figures for ${killCount}VP and ${killCount}Honor now ${bidder.victoryPoints}PV and position ${seppukuHonorPos} at Honor`];
+        newState.log = [...newState.log, `${bidder.name} commits Seppuku: kills ${killCount} figures for ${killCount} VP and ${killCount} Honor now ${bidder.victoryPoints} PV and position ${seppukuHonorPos} at Honor`];
         break;
       }
       case 'take-hostage': {

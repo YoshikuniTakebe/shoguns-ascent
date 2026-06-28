@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import type { Battle, GameState } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { CoinIcon, BushiIcon, ShintoIcon } from './Icons';
+import { CoinIcon, BushiIcon, ShintoIcon, VPIcon, HonorIcon } from './Icons';
 import { useT } from '../i18n';
 import { calculateForce } from '../utils/gameLogic';
 import { BattleBiddingOverlay } from './BattleBiddingOverlay';
@@ -79,6 +79,111 @@ function renderBattleLogEntry(entry: string, players: { id: string; name: string
       }
     }
     segments = newSegments;
+  }
+
+  // Replace VP/PV patterns with VPIcon
+  {
+    const vpPattern = /(\d+)\s*(?:VP|PV)/g;
+    const newSegs: Segment[] = [];
+    for (const seg of segments) {
+      if (seg.type !== 'text') {
+        newSegs.push(seg);
+        continue;
+      }
+      const text = seg.value;
+      let lastIndex = 0;
+      const regex = new RegExp(vpPattern.source, 'g');
+      let match: RegExpExecArray | null;
+      while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          newSegs.push({ type: 'text', value: text.slice(lastIndex, match.index) });
+        }
+        nodeCounter++;
+        newSegs.push({
+          type: 'node',
+          value: (
+            <span key={`vp-${nodeCounter}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+              <span>{match[1]}</span>
+              <VPIcon size={14} color="#f5c842" />
+            </span>
+          )
+        });
+        lastIndex = regex.lastIndex;
+      }
+      if (lastIndex < text.length) {
+        newSegs.push({ type: 'text', value: text.slice(lastIndex) });
+      }
+    }
+    segments = newSegs;
+  }
+
+  // Replace "at Honor" at end with "at [HonorIcon] Track"
+  {
+    const atHonorPattern = /at Honor\s*$/;
+    const newSegs: Segment[] = [];
+    for (const seg of segments) {
+      if (seg.type !== 'text') {
+        newSegs.push(seg);
+        continue;
+      }
+      const text = seg.value;
+      const match = atHonorPattern.exec(text);
+      if (match) {
+        if (match.index > 0) {
+          newSegs.push({ type: 'text', value: text.slice(0, match.index) });
+        }
+        nodeCounter++;
+        newSegs.push({
+          type: 'node',
+          value: (
+            <span key={`ah-${nodeCounter}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+              <span>at</span>
+              <HonorIcon size={14} color="#e57373" />
+              <span>Track</span>
+            </span>
+          )
+        });
+      } else {
+        newSegs.push(seg);
+      }
+    }
+    segments = newSegs;
+  }
+
+  // Replace remaining "Honor" (standalone, not already handled) with HonorIcon
+  {
+    const honorPattern = /(\d+)\s*Honor/g;
+    const newSegs: Segment[] = [];
+    for (const seg of segments) {
+      if (seg.type !== 'text') {
+        newSegs.push(seg);
+        continue;
+      }
+      const text = seg.value;
+      let lastIndex = 0;
+      const regex = new RegExp(honorPattern.source, 'g');
+      let match: RegExpExecArray | null;
+      while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          newSegs.push({ type: 'text', value: text.slice(lastIndex, match.index) });
+        }
+        nodeCounter++;
+        newSegs.push({
+          type: 'node',
+          value: (
+            <span key={`hon-${nodeCounter}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+              <span>{match[1]}</span>
+              <HonorIcon size={14} color="#e57373" />
+            </span>
+          )
+        });
+        lastIndex = regex.lastIndex;
+      }
+      if (lastIndex < text.length) {
+        newSegs.push({ type: 'text', value: text.slice(lastIndex) });
+      }
+    }
+    segments = newSegs;
   }
 
   return segments.map((seg, i) =>
