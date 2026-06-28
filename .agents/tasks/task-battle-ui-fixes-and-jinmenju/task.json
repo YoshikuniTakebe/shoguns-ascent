@@ -1,0 +1,8 @@
+{
+  "task_id": "task-battle-ui-fixes-and-jinmenju",
+  "task_description": "Fix multiple battle/war UI and logic issues: remove (s) from logs, fix Imperial Poets to count dead figures, fix Sol clan power log, fix Seppuku honor, implement Jinmenju monster ability, fix bidding layout to single row with vertical separator, fix bidding header with clan seal and neutral text color, make honor track visible during bidding, hide coins during war, fix turn/battle popup overlap, and show total coins/ronin per clan in war popup.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null,
+  "review_fixes_applied": "Applied 2 fixes from review: (1) Added ?? id fallback to Sol clan power log in gameLogic.ts to prevent undefined in log messages, (2) Added Luna clan max-2-figures-per-province check to doJinmenjuPlace in gameStore.ts to prevent bypassing figure limits via Jinmenju."
+}
