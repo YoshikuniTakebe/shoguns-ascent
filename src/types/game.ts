@@ -141,6 +141,7 @@ export const DECK_GROUPS: DeckName[] = ['Archway', 'Tower', 'Teapot', 'Horseman'
 export interface DeckConfig {
   chosenDeck: DeckName | 'random';
   extraMonsters: 0 | 1 | 2;
+  selectedKami?: KamiType[];
 }
 
 export interface KamiResolutionTemple {

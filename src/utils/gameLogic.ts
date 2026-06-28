@@ -2,7 +2,7 @@ import type {
   GameState, Player, Province, Season, MandateType,
   Battle, Figure, Temple, WarProvinceSlot, SeasonCard,
   AllianceProposal, Hostage, DeckConfig, DeckName, KamiType,
-  KamiResolutionTemple,
+  KamiResolutionTemple, KamiData,
 } from '../types/game';
 import {
   CLANS, PROVINCES_DATA, HOME_PROVINCES, WAR_TACTICS,
@@ -149,9 +149,14 @@ export function createInitialGameState(
     .sort((a, b) => a.honor - b.honor)
     .map((p) => p.id);
 
-  // Create initial temples (4 random kami types)
-  const shuffledKami = shuffle(KAMI_DATA);
-  const temples: Temple[] = shuffledKami.slice(0, 4).map((kami, idx) => ({
+  // Create initial temples (4 kami types - manual selection or random)
+  let selectedKamiData: KamiData[];
+  if (deckConfig?.selectedKami && deckConfig.selectedKami.length === 4) {
+    selectedKamiData = deckConfig.selectedKami.map(type => KAMI_DATA.find(k => k.type === type)!);
+  } else {
+    selectedKamiData = shuffle(KAMI_DATA).slice(0, 4);
+  }
+  const temples: Temple[] = selectedKamiData.map((kami, idx) => ({
     id: `temple-${idx}`,
     position: idx + 1,
     kamiType: kami.type,

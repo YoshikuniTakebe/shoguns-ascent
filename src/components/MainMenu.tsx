@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, DECK_GROUPS, CLAN_INCOME } from '../types/game';
-import type { DeckConfig, DeckName } from '../types/game';
+import { CLANS, DECK_GROUPS, CLAN_INCOME, KAMI_DATA } from '../types/game';
+import type { DeckConfig, DeckName, KamiType } from '../types/game';
 import type { TranslationKey } from '../i18n';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
@@ -29,12 +29,24 @@ export const MainMenu = () => {
   const [clans, setClans] = useState(CLANS.map(c => c.id));
   const [chosenDeck, setChosenDeck] = useState<DeckName | 'random'>('random');
   const [extraMonsters, setExtraMonsters] = useState<0 | 1 | 2>(0);
+  const [kamiMode, setKamiMode] = useState<'random' | 'manual'>('random');
+  const [selectedKami, setSelectedKami] = useState<KamiType[]>([]);
   const [url, setUrl] = useState('ws://localhost:3001');
   const [oName, setOName] = useState('');
   const [oClan, setOClan] = useState('koi');
   const [lid, setLid] = useState('');
 
   const hasSolOrLuna = clans.slice(0, pc).some(id => id === 'sol' || id === 'luna');
+
+  const toggleKami = (type: KamiType) => {
+    setSelectedKami(prev => {
+      if (prev.includes(type)) {
+        return prev.filter(k => k !== type);
+      }
+      if (prev.length >= 4) return prev;
+      return [...prev, type];
+    });
+  };
 
   const DECK_NAME_KEYS: Record<DeckName, TranslationKey> = {
     Archway: 'deck.archway',
@@ -48,6 +60,7 @@ export const MainMenu = () => {
   const getDeckConfig = (): DeckConfig => ({
     chosenDeck,
     extraMonsters,
+    selectedKami: kamiMode === 'manual' && selectedKami.length === 4 ? selectedKami : undefined,
   });
 
   return (
@@ -199,9 +212,52 @@ export const MainMenu = () => {
               </div>
             )}
           </div>
+
+          <div className="kami-config-section">
+            <h3>{t('kami.config')}</h3>
+            <div className="kami-mode-selector">
+              <button
+                className={`deck-group-btn${kamiMode === 'random' ? ' active' : ''}`}
+                onClick={() => setKamiMode('random')}
+              >
+                &#127922; {t('kami.random')}
+              </button>
+              <button
+                className={`deck-group-btn${kamiMode === 'manual' ? ' active' : ''}`}
+                onClick={() => setKamiMode('manual')}
+              >
+                &#9998; {t('kami.manual')}
+              </button>
+            </div>
+            {kamiMode === 'manual' && (
+              <div className="kami-selection-panel">
+                <span className="kami-selection-counter">
+                  {selectedKami.length}/4 {t('kami.selected')}
+                </span>
+                <div className="kami-selection-grid">
+                  {KAMI_DATA.map(kami => {
+                    const isSelected = selectedKami.includes(kami.type);
+                    return (
+                      <button
+                        key={kami.type}
+                        className={`kami-select-btn${isSelected ? ' selected' : ''}`}
+                        onClick={() => toggleKami(kami.type)}
+                        title={kami.effect}
+                      >
+                        <span className="kami-select-name">{kami.name}</span>
+                        <span className="kami-select-effect">{kami.effect}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="setup-actions">
             <button
               className="btn-primary"
+              disabled={kamiMode === 'manual' && selectedKami.length !== 4}
               onClick={() =>
                 createGame(
                   Array.from({ length: pc }, (_, i) => ({ name: names[i], clanId: clans[i] })),

@@ -31,6 +31,12 @@ export const es: Record<TranslationKey, string> = {
   'deck.kickstarterHint': 'Incluye cartas de Kickstarter y Monster Pack',
   'deck.dynastyNote': 'Las cartas de Invasi\u00F3n Din\u00E1stica se incluyen autom\u00E1ticamente (clan Sol o Luna seleccionado).',
 
+  // Kami Config
+  'kami.config': 'Dioses (Kami)',
+  'kami.random': 'Aleatorio',
+  'kami.manual': 'Manual',
+  'kami.selected': 'seleccionados',
+
   // GameBoard
   'phase.seasonSetup': 'PREPARACI\u00D3N DE ESTACI\u00D3N',
   'phase.tea': 'CEREMONIA DEL T\u00C9',
