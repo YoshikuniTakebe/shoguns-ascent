@@ -86,7 +86,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, setMoveFrom, setSelectedFigures } = useGameStore();
   const t = useT();
 
   const [translateX, setTranslateX] = useState(0);
@@ -241,6 +241,9 @@ export const GameBoard = () => {
             return (
               <div className="kami-action-overlay" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <span>{t('kami.resolution.fujinMoves', { count: String(gameState.fujinMovesRemaining) })}</span>
+                <button className="btn-primary" onClick={() => { setMoveFrom(null); setSelectedFigures([]); }} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
+                  {t('kami.resolution.fujinCancel' as any)}
+                </button>
                 <button className="btn-primary" onClick={doFujinDone} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
                   {t('kami.resolution.fujinDone')}
                 </button>
@@ -502,6 +505,68 @@ export const GameBoard = () => {
 
       {/* Kami Resolution Popup */}
       <KamiResolutionPopup />
+
+      {/* Kami Phase Start Popup */}
+      {kamiPhasePopupVisible && (
+        <div className="harvest-popup-backdrop">
+          <div className="harvest-popup" style={{ borderColor: '#9B59B6', maxWidth: '420px', minWidth: '320px' }}>
+            <h3 style={{ color: '#9B59B6', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem' }}>
+              {t('kami.phaseStart.title' as any)}
+            </h3>
+            <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.85, marginBottom: '16px' }}>
+              {t('kami.phaseStart.description' as any)}
+            </p>
+            <div style={{ textAlign: 'center' }}>
+              <button className="btn-primary harvest-popup-btn" onClick={dismissKamiPhasePopup} style={{ borderColor: '#9B59B6' }}>
+                {t('kami.phaseStart.accept' as any)}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* War Phase Start Popup */}
+      {warPhasePopupVisible && (
+        <div className="harvest-popup-backdrop">
+          <div className="harvest-popup" style={{ borderColor: '#DC143C', maxWidth: '450px', minWidth: '320px' }}>
+            <h3 style={{ color: '#DC143C', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem' }}>
+              {t('war.phaseStart.title' as any)}
+            </h3>
+            {warPhaseUpgradeSummary.length > 0 ? (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: '8px', textAlign: 'center' }}>
+                  {t('war.phaseStart.bonuses' as any)}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {warPhaseUpgradeSummary.map((entry, idx) => {
+                    const clan = CLANS.find(c => c.id === entry.clanId);
+                    return (
+                      <div key={idx} style={{ padding: '6px 10px', borderRadius: '6px', background: `${clan?.color || '#666'}22`, border: `1px solid ${clan?.color || '#666'}44` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                          <ClanShield clanId={entry.clanId} size={20} />
+                          <span style={{ color: clan?.color, fontWeight: 'bold', fontSize: '0.9rem' }}>{entry.playerName}</span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', opacity: 0.9, paddingLeft: '26px' }}>
+                          {entry.bonuses.map((b, bi) => <div key={bi}>{b}</div>)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.7, marginBottom: '16px', fontStyle: 'italic' }}>
+                {t('war.phaseStart.noBonuses' as any)}
+              </p>
+            )}
+            <div style={{ textAlign: 'center' }}>
+              <button className="btn-primary harvest-popup-btn" onClick={dismissWarPhasePopup} style={{ borderColor: '#DC143C' }}>
+                {t('war.phaseStart.accept' as any)}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

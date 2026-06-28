@@ -147,6 +147,7 @@ export interface KamiResolutionTemple {
   winnerId: string | null;
   reward: string;
   forces: { playerId: string; count: number }[];
+  susanooVPGained?: number;
 }
 
 export interface GameState {
@@ -216,6 +217,7 @@ export interface GameState {
   lotoChoicePhase?: boolean;
   lotoDiscardedMandate?: MandateType | null;
   lastMandateIssuerId: string | null;
+  kamiPhasePopupPending?: boolean;
   gameOver: boolean;
   winner?: string;
   coinDistributionPending?: {

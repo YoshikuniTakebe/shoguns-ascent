@@ -2297,6 +2297,54 @@ export function moveForces(
     return newState;
   }
 
+  // During Fujin kami resolution, enforce single-figure movement (like marshal) but without move tracking
+  if (state.kamiResolutionActive && state.fujinMovesRemaining > 0) {
+    // Only accept a single figureId at a time
+    if (figureIds.length !== 1) return state;
+
+    const figureId = figureIds[0];
+
+    // Find the figure
+    const figure = fromProvince.figures.find(f => f.id === figureId && f.owner === playerId);
+    if (!figure) return state;
+
+    // Reject fortress movement unless player is Tortuga clan
+    const player = state.players.find(p => p.id === playerId);
+    if (!player) return state;
+
+    if (figure.type === 'fortress' && player.clanId !== 'tortuga') return state;
+
+    // Adjacency check: skip for Libelula clan (can move anywhere)
+    if (player.clanId !== 'libelula') {
+      if (!isValidMove(fromProvinceId, toProvinceId)) return state;
+    } else {
+      // Libelula can move to any province except the same one
+      if (fromProvinceId === toProvinceId) return state;
+    }
+
+    // Luna clan power: max 2 figures per province (excluding fortresses)
+    if (player.clanId === 'luna' && figure.type !== 'fortress') {
+      const lunaFiguresInDest = toProvince.figures.filter(
+        (f) => f.owner === playerId && f.type !== 'fortress'
+      ).length;
+      if (lunaFiguresInDest >= 2) return state;
+    }
+
+    // Move the figure - no tracking (same figure can move twice)
+    const movedFigures = [figure];
+    const remainingFigures = fromProvince.figures.filter(f => f.id !== figureId);
+
+    newState.provinces[fromProvinceId] = { ...fromProvince, figures: remainingFigures };
+    newState.provinces[toProvinceId] = { ...toProvince, figures: [...toProvince.figures, ...movedFigures] };
+
+    const figureDisplayName = figure.type === 'monster'
+      ? `monster(${player.seasonCards.find(c => c.cardType === 'monster')?.name || 'monster'})`
+      : figure.type;
+    newState.log = [...newState.log, `${player.name} mueve ${figureDisplayName} de ${fromProvince.name} a ${toProvince.name} (Fujin)`];
+
+    return newState;
+  }
+
   // Non-marshal movement (standard)
   // Check valid move (adjacent or sea route)
   if (!isValidMove(fromProvinceId, toProvinceId)) return state;
@@ -2574,6 +2622,18 @@ export function advancePlayer(state: GameState): GameState {
         reward = kamiData?.effect || '';
       }
 
+      // Compute susanoo VP if applicable
+      let susanooVPGained: number | undefined;
+      if (temple.kamiType === 'susanoo' && winnerId) {
+        let fortressCount = 0;
+        Object.values(newState.provinces).forEach((province) => {
+          fortressCount += province.figures.filter(
+            (f) => f.owner === winnerId && f.type === 'fortress'
+          ).length;
+        });
+        susanooVPGained = fortressCount;
+      }
+
       const templeIndex = newState.temples.findIndex(t => t.id === temple.id);
       kamiResolutionTemples.push({
         templeIndex,
@@ -2581,6 +2641,7 @@ export function advancePlayer(state: GameState): GameState {
         winnerId,
         reward,
         forces,
+        ...(susanooVPGained !== undefined ? { susanooVPGained } : {}),
       });
     }
 
@@ -2595,7 +2656,8 @@ export function advancePlayer(state: GameState): GameState {
       return newState;
     }
 
-    newState.kamiResolutionActive = true;
+    // Set pending flag - store will show popup first, then activate resolution
+    newState.kamiPhasePopupPending = true;
     newState.kamiResolutionTemples = kamiResolutionTemples;
     newState.kamiResolutionIndex = 0;
     newState.kamiResolutionStep = 'showing';

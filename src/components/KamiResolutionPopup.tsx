@@ -159,6 +159,11 @@ export const KamiResolutionPopup = () => {
                   {t('kami.resolution.reward', { reward: currentTemple.reward })}
                 </span>
               )}
+              {currentTemple.kamiType === 'susanoo' && currentTemple.susanooVPGained !== undefined && (
+                <span style={{ fontSize: '0.9rem', color: palette.primary, fontWeight: 'bold' }}>
+                  {t('kami.resolution.susanooVP' as any, { vp: String(currentTemple.susanooVPGained), fortresses: String(currentTemple.susanooVPGained) })}
+                </span>
+              )}
             </div>
           ) : (
             <span style={{ opacity: 0.7, fontStyle: 'italic' }}>

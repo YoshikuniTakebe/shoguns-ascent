@@ -310,9 +310,22 @@ export const en = {
   'kami.resolution.force': 'Shinto Force',
   'kami.resolution.fujinMoves': 'Movements {count}',
   'kami.resolution.fujinDone': 'End movements',
+  'kami.resolution.fujinCancel': 'Cancel Movement',
   'kami.resolution.raijinPlace': 'Place Bushi in a province',
   'kami.resolution.ryujinBuy': 'Buy a Season Card',
   'kami.resolution.templeOf': 'Temple {number}',
+  'kami.resolution.susanooVP': 'Gains {vp} VP ({fortresses} Fortresses on map)',
+
+  // Kami Phase Popup
+  'kami.phaseStart.title': 'Kami Phase Begins',
+  'kami.phaseStart.description': 'Temples will now be resolved from left to right. The player with the most Shinto force in each temple wins the Kami reward.',
+  'kami.phaseStart.accept': 'Accept',
+
+  // War Phase Popup
+  'war.phaseStart.title': 'War Phase Begins',
+  'war.phaseStart.bonuses': 'War Upgrade Bonuses',
+  'war.phaseStart.noBonuses': 'No war upgrade bonuses active.',
+  'war.phaseStart.accept': 'Accept',
 
   // Turn Popup
   'game.turnPopupAccept': 'Accept',
