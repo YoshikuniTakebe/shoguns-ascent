@@ -131,6 +131,16 @@ export const es: Record<TranslationKey, string> = {
   'battle.coinDistributionInstruction': 'Elige a qué perdedor dar 1 moneda extra',
   'battle.coinPool': 'Monedas asignadas',
   'battle.confirmBidsOverlay': 'Confirmar Apuestas ({total} monedas)',
+  'battle.tacticDesc.seppuku': 'Mata a tus propios Bushi. Gana 1 PV y 1 Honor por cada figura eliminada.',
+  'battle.tacticDesc.take-hostage': 'Captura 1 Bushi o Shinto enemigo como rehen. Gana 1 PV.',
+  'battle.tacticDesc.hire-ronin': 'Tus fichas de Ronin suman su fuerza a tu total en el calculo final de batalla.',
+  'battle.tacticDesc.imperial-poets': 'Gana PV igual al numero de tus figuras que quedan en la provincia.',
+  'battle.battleResolution': 'Resultado de Batalla',
+  'battle.killedFigures': 'Bajas',
+  'battle.figuresKilled': '{count} {type} eliminados',
+  'battle.figureTypeBushi': 'bushi',
+  'battle.figureTypeShinto': 'shinto',
+  'battle.figureTypeMonster': 'monstruo',
 
   // GameOverScreen
   'gameOver.title': 'FIN DEL JUEGO',

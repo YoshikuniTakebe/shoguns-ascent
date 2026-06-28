@@ -3,10 +3,11 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import type { Battle, GameState } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { CoinIcon } from './Icons';
+import { CoinIcon, BushiIcon, ShintoIcon } from './Icons';
 import { useT } from '../i18n';
 import { calculateForce } from '../utils/gameLogic';
 import { BattleBiddingOverlay } from './BattleBiddingOverlay';
+import type { BattleCombatant } from './BattleBiddingOverlay';
 
 /**
  * Extract log entries for a resolved battle using its logStartIndex
@@ -86,6 +87,20 @@ function renderBattleLogEntry(entry: string, players: { id: string; name: string
 }
 
 /**
+ * Render icon for a figure type in the battle result display.
+ */
+function FigureTypeIcon({ figureType, size = 16 }: { figureType: string; size?: number }) {
+  switch (figureType) {
+    case 'bushi':
+      return <BushiIcon size={size} color="#fff" />;
+    case 'shinto':
+      return <ShintoIcon size={size} color="#fff" />;
+    default:
+      return <span style={{ fontSize: size * 0.7 }}>👹</span>;
+  }
+}
+
+/**
  * Shared battle result popup content used by both hotseat and online modes.
  */
 function BattleResultPopup({
@@ -123,6 +138,28 @@ function BattleResultPopup({
           <p style={{ color: winnerClan?.color, margin: '0.25rem 0' }}>
             {t('battle.resultWarToken', { province: resProvince?.name || battle.provinceId })}
           </p>
+        )}
+        {/* Killed figures display */}
+        {battle.killedFigures && battle.killedFigures.length > 0 && (
+          <div style={{ margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>
+              {t('battle.killedFigures')}
+            </p>
+            {battle.killedFigures.map((kf, i) => {
+              const owner = gameState.players.find(p => p.id === kf.owner);
+              const ownerClan = owner ? CLANS.find(c => c.id === owner.clanId) : null;
+              const figTypeKey = `battle.figureType${kf.figureType.charAt(0).toUpperCase() + kf.figureType.slice(1)}` as string;
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.2rem 0', fontSize: '0.9em' }}>
+                  <ClanShield clanId={owner?.clanId || ''} size={16} />
+                  <span style={{ color: ownerClan?.color, fontWeight: 'bold' }}>{owner?.name}</span>
+                  <span style={{ opacity: 0.8 }}>-</span>
+                  <FigureTypeIcon figureType={kf.figureType} size={14} />
+                  <span>{t('battle.figuresKilled', { count: kf.count, type: t(figTypeKey) })}</span>
+                </div>
+              );
+            })}
+          </div>
         )}
         {battleLogs.length > 0 && (
           <div style={{ textAlign: 'left', margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', fontSize: '0.9em' }}>
@@ -344,6 +381,12 @@ export const BattlePanel = () => {
     const playerClan = player ? CLANS.find(c => c.id === player.clanId) : null;
     const maxCoins = player?.coins || 0;
 
+    const combatants: BattleCombatant[] = battle.participants.map(pid => {
+      const p = gameState.players.find(x => x.id === pid)!;
+      const force = province ? calculateForce(province, pid, gameState) : 0;
+      return { playerId: pid, playerName: p.name, clanId: p.clanId, force };
+    });
+
     const handleOverlayConfirm = (bidValues: Record<string, number>) => {
       if (!currentParticipant) return;
       doSubmitWarTacticBids(battle.provinceId, bidValues);
@@ -357,6 +400,7 @@ export const BattlePanel = () => {
         provinceName={province?.name || battle.provinceId}
         battleNumber={battleNumber}
         onConfirm={handleOverlayConfirm}
+        combatants={combatants}
       />
     );
   }
@@ -417,6 +461,11 @@ export const BattlePanel = () => {
             if (!apid) return;
             doSubmitWarTacticBids(battle.provinceId, bidValues);
           }}
+          combatants={battle.participants.map(pid => {
+            const p = gameState.players.find(x => x.id === pid)!;
+            const force = province ? calculateForce(province, pid, gameState) : 0;
+            return { playerId: pid, playerName: p.name, clanId: p.clanId, force };
+          })}
         />
       )}
 
