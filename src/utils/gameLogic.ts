@@ -1867,7 +1867,7 @@ export function resolveNextBattle(state: GameState): GameState {
           if (fig.type === 'bushi') {
             bidder.bushi += 1;
           } else if (fig.type === 'daimyo') {
-            bidder.hasDaimyo = false;
+            bidder.hasDaimyo = true;
           }
         }
         const killedIds = ownFigures.map((f) => f.id);
@@ -2020,7 +2020,7 @@ export function resolveNextBattle(state: GameState): GameState {
         const loser = newState.players.find((p) => p.id === pid)!;
         if (fig.type === 'bushi') loser.bushi += 1;
         else if (fig.type === 'shinto') loser.shinto += 1;
-        else if (fig.type === 'daimyo') loser.hasDaimyo = false;
+        else if (fig.type === 'daimyo') loser.hasDaimyo = true;
         // Track killed figures for display
         if (!killedMap[pid]) killedMap[pid] = {};
         killedMap[pid][fig.type] = (killedMap[pid][fig.type] || 0) + 1;

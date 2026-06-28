@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix Daimyo death in battle and seppuku. Daimyo should die like any other troop when losing a battle or committing seppuku. Daimyo cannot be taken as hostage (already correct). Daimyo death counts for Imperial Poets VP.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/utils/gameLogic.ts, in the battle resolution section (around line 1970), find the `loserFigures.forEach` loop. Remove the line `if (fig.type === 'daimyo') return; // Daimyo immune`. Add daimyo handling: when fig.type === 'daimyo', set `loser.hasDaimyo = false;` (hasDaimyo=false means daimyo returned to reserve/dead). Also add daimyo to the killedMap tracking so it counts for Imperial Poets VP.",
     "In the same file, in the figure filter after battle (around line 2001), find: `figures: finalProvince.figures.filter((f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'daimyo' || f.type === 'fortress')`. Remove `|| f.type === 'daimyo'` - losing daimyos should be removed from the province.",
@@ -21,5 +21,5 @@
     "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit 2>&1 | grep -v 'BattleBiddingOverlay\\|BattlePanel' | head -20` to check for new TS errors (excluding pre-existing ones)"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes successfully. Only pre-existing TS errors in BattleBiddingOverlay.tsx and BattlePanel.tsx remain. The daimyo figure type translation key was missing and has been added to both en.ts and es.ts. Review fix applied: hasDaimyo semantics were inverted (false=deployed, true=reserve). Changed hasDaimyo=false to hasDaimyo=true in both battle resolution and seppuku paths so that daimyo correctly returns to reserve when killed."
 }
