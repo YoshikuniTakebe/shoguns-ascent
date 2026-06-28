@@ -345,7 +345,7 @@ function returnHostages(state: GameState): GameState {
   newState.players.forEach((player) => {
     if (player.hostages.length > 0) {
       player.coins += player.hostages.length;
-      newState.log = [...newState.log, `${player.name} returns ${player.hostages.length} hostage(s), gains ${player.hostages.length} coin(s)`];
+      newState.log = [...newState.log, `${player.name} returns ${player.hostages.length} hostages, gains ${player.hostages.length} coins`];
       player.hostages = [];
     }
   });
@@ -876,7 +876,7 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
       return { ...p };
     }),
     seasonCardsDeck: state.seasonCardsDeck.filter((c) => c.id !== cardId),
-    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coin(s)${isDiscounted ? ' (discounted)' : ''}`],
+    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coins${isDiscounted ? ' (discounted)' : ''}`],
   };
 
   return newState;
@@ -924,7 +924,7 @@ export function ryujinBuyCard(state: GameState, playerId: string, cardId: string
       return { ...p };
     }),
     seasonCardsDeck: state.seasonCardsDeck.filter((c) => c.id !== cardId),
-    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coin(s) (Ryujin)`],
+    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coins (Ryujin)`],
   };
 
   return newState;
@@ -1046,7 +1046,7 @@ export function advanceHarvestResolution(state: GameState): GameState {
       const provinceName = newState.provinces[entry.provinceId]?.name || entry.provinceId;
       const rewardParts: string[] = [];
       if (rewards.vp) rewardParts.push(`${rewards.vp} PV`);
-      if (rewards.coins) rewardParts.push(`${rewards.coins} moneda(s)`);
+      if (rewards.coins) rewardParts.push(`${rewards.coins} monedas`);
       if (rewards.ronin) rewardParts.push(`${rewards.ronin} ronin`);
       if (rewards.honor) rewardParts.push(`${rewards.honor} honor`);
       newState.log = [...newState.log, `${player.name} obtiene recompensa de ${provinceName}: ${rewardParts.join(', ')}`];
@@ -1753,6 +1753,7 @@ export function resolveNextBattle(state: GameState): GameState {
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages] })),
     provinces: { ...state.provinces },
     activeBattles: state.activeBattles.map((b) => ({ ...b, warTacticBids: { ...b.warTacticBids } })),
+    honorTrack: [...state.honorTrack],
     log: [...state.log],
   };
 
@@ -1768,6 +1769,9 @@ export function resolveNextBattle(state: GameState): GameState {
 
   // Resolve War Tactics (left to right: Seppuku, Take Hostage, Hire Ronin, Imperial Poets)
   const sortedTactics = [...WAR_TACTICS].sort((a, b) => a.order - b.order);
+
+  let battleDeathCount = 0;
+  let imperialPoetsBidder: string | null = null;
 
   for (const tactic of sortedTactics) {
     // Find highest bidder for this tactic
@@ -1826,6 +1830,7 @@ export function resolveNextBattle(state: GameState): GameState {
         for (let i = 0; i < killCount; i++) {
           gainHonor(newState, highestBidder);
         }
+        battleDeathCount += killCount;
         newState.log = [...newState.log, `${bidder.name} commits Seppuku: kills ${killCount} figures for VP and Honor`];
         break;
       }
@@ -1848,6 +1853,7 @@ export function resolveNextBattle(state: GameState): GameState {
             if (enemyFigure.type === 'bushi') victim.bushi += 1;
             else if (enemyFigure.type === 'shinto') victim.shinto += 1;
           }
+          battleDeathCount += 1;
           newState.log = [...newState.log, `${bidder.name} takes a hostage from ${victim?.name}`];
         }
         break;
@@ -1862,11 +1868,8 @@ export function resolveNextBattle(state: GameState): GameState {
         break;
       }
       case 'imperial-poets': {
-        // Gain VP per figure in battle
-        const curProvIP = newState.provinces[battle.provinceId];
-        const figureCount = curProvIP.figures.filter((f) => f.owner === highestBidder).length;
-        bidder.victoryPoints += figureCount;
-        newState.log = [...newState.log, `${bidder.name} gains ${figureCount} VP from Imperial Poets`];
+        // Defer VP award until after battle casualties are calculated
+        imperialPoetsBidder = highestBidder;
         break;
       }
     }
@@ -1984,6 +1987,15 @@ export function resolveNextBattle(state: GameState): GameState {
       }
     }
     battle.killedFigures = killedFigures;
+
+    // Imperial Poets: award VP for total figures that died during this battle
+    const battleCasualtyCount = killedFigures.reduce((sum, kf) => sum + kf.count, 0);
+    if (imperialPoetsBidder) {
+      const totalDeaths = battleDeathCount + battleCasualtyCount;
+      const poetsBidder = newState.players.find((p) => p.id === imperialPoetsBidder)!;
+      poetsBidder.victoryPoints += totalDeaths;
+      newState.log = [...newState.log, `${poetsBidder.name} gains ${totalDeaths} VP from Imperial Poets`];
+    }
 
     // Remove killed figures from province (keep winner's figures, allied figures, daimyos, and fortresses)
     newState.provinces[battle.provinceId] = {
@@ -2390,7 +2402,7 @@ export function moveForces(
 
   const player = newState.players.find((p) => p.id === playerId);
   if (player) {
-    newState.log = [...newState.log, `${player.name} mueve ${figureIds.length} figura(s) de ${fromProvince.name} a ${toProvince.name}`];
+    newState.log = [...newState.log, `${player.name} mueve ${figureIds.length} figuras de ${fromProvince.name} a ${toProvince.name}`];
   }
 
   return newState;
@@ -2421,7 +2433,7 @@ export function getPlayerSeasonCardEffects(state: GameState, playerId: string): 
 
 /**
  * Sol clan power: when Sol wins a tiebreak by honor, Sol gains 1 coin + 1 VP,
- * and the tied loser(s) lose 1 coin + 1 VP (if they have them).
+ * and the tied losers lose 1 coin + 1 VP (if they have them).
  */
 function applySolTiebreakBonus(state: GameState, winnerId: string, losers: string[]): void {
   const winner = state.players.find((p) => p.id === winnerId);
@@ -2436,7 +2448,7 @@ function applySolTiebreakBonus(state: GameState, winnerId: string, losers: strin
       if (loser.victoryPoints > 0) loser.victoryPoints -= 1;
     }
   }
-  state.log = [...state.log, `${winner.name} (Sol) gana +1 Moneda +1 PV por empate de Honor`];
+  state.log = [...state.log, `${winner.name} (Sol) gana +1 Moneda +1 PV por empate y ganar en Honor a ${losers.map((id) => state.players.find((p) => p.id === id)?.name).join(', ')} que pierde -1 Moneda -1 PV`];
 }
 
 export function calculateForce(province: Province & { figures: Figure[] }, playerId: string, state: GameState): number {
