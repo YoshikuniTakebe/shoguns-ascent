@@ -287,7 +287,7 @@ export const CLAN_INCOME: { [clanId: string]: number } = {
   libelula: 6,
   zorro: 5,
   bonsai: 4,
-  luna: 2,
+  luna: 4,
 };
 
 // --- War Tactics (resolved left to right, order 1-4) ---
