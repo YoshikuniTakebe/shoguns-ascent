@@ -192,7 +192,7 @@ export const BattlePanel = () => {
                 <button
                   key={loserId}
                   className="btn-primary"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'rgba(30,50,80,0.9)', border: '1px solid var(--border-gold)', color: 'var(--text-primary)' }}
                   onClick={() => doCoinDistributionChoice(loserId)}
                 >
                   <ClanShield clanId={loser?.clanId || ''} size={20} />
