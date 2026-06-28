@@ -200,6 +200,9 @@ interface GameStore {
   doFujinUndo: () => void;
   fujinPreMoveState: GameState | null;
   doRaijinPlace: (provinceId: string) => void;
+  doRaijinConfirm: () => void;
+  doRaijinUndo: () => void;
+  raijinPrePlaceState: GameState | null;
   doRyujinBuyCard: (cardId: string) => void;
   doRyujinSkip: () => void;
 
@@ -1238,6 +1241,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   fujinPreMoveState: null,
 
+  raijinPrePlaceState: null,
+
   doFujinMove: (fromProvinceId: string, toProvinceId: string, figureIds: string[]) => {
     const { gameState } = get();
     if (!gameState || !gameState.kamiResolutionActive || gameState.fujinMovesRemaining <= 0) return;
@@ -1310,6 +1315,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const province = gameState.provinces[provinceId];
     if (!province) return;
 
+    // Save pre-placement state for undo
+    const preState = JSON.parse(JSON.stringify(gameState));
+
     const figureId = Math.random().toString(36).substring(2, 10);
     const newFigure = { type: 'bushi' as const, owner: currentTemple.winnerId, id: figureId };
 
@@ -1328,21 +1336,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return p;
     });
 
-    let ns: GameState = {
+    const ns: GameState = {
       ...gameState,
       provinces: updatedProvinces,
       players: updatedPlayers,
       raijinPlacementActive: false,
+      raijinPlacementDone: true,
       log: [...gameState.log, `${player.name} summons a Bushi to ${province.name} (Raijin)`],
     };
 
+    // Do NOT advance kami resolution yet - wait for player to confirm
+    set({ gameState: ns, raijinPrePlaceState: preState });
+  },
+
+  doRaijinConfirm: () => {
+    const { gameState } = get();
+    if (!gameState || !gameState.raijinPlacementDone) return;
+
+    let ns: GameState = { ...gameState, raijinPlacementDone: false };
     ns = advanceKamiResolution(ns);
 
     if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
-      set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+      set({ gameState: ns, raijinPrePlaceState: null, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
     } else {
-      set({ gameState: ns, ...detectWarTransitionWithPopup(ns) });
+      set({ gameState: ns, raijinPrePlaceState: null, ...detectWarTransitionWithPopup(ns) });
     }
+  },
+
+  doRaijinUndo: () => {
+    const { raijinPrePlaceState } = get();
+    if (!raijinPrePlaceState) return;
+    set({ gameState: JSON.parse(JSON.stringify(raijinPrePlaceState)), raijinPrePlaceState: null });
   },
 
   doRyujinBuyCard: (cardId: string) => {

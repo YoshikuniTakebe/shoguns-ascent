@@ -212,6 +212,7 @@ export interface GameState {
   kamiResolutionNextPlayerIndex: number;
   fujinMovesRemaining: number;
   raijinPlacementActive: boolean;
+  raijinPlacementDone?: boolean;
   ryujinBuyActive: boolean;
   zorroPlacementActive: boolean;
   zorroPlacementPlayerId: string | null;
