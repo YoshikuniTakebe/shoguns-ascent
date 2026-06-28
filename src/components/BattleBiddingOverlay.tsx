@@ -16,6 +16,7 @@ interface BattleBiddingOverlayProps {
   playerClanColor: string;
   maxCoins: number;
   provinceName: string;
+  provinceColor?: string;
   battleNumber: number;
   onConfirm: (bids: Record<string, number>) => void;
   combatants?: BattleCombatant[];
@@ -43,6 +44,7 @@ export const BattleBiddingOverlay = ({
   playerClanColor,
   maxCoins,
   provinceName,
+  provinceColor,
   battleNumber,
   onConfirm,
   combatants,
@@ -219,7 +221,7 @@ export const BattleBiddingOverlay = ({
         {/* Header */}
         <div className="bidding-overlay-header">
           <h2 className="bidding-overlay-title">
-            {t('battle.battleNumber', { number: battleNumber })}: {provinceName}
+            {t('battle.battleNumber', { number: battleNumber })}: <span style={{ color: provinceColor }}>{provinceName}</span>
           </h2>
           <p className="bidding-overlay-player" style={{ color: playerClanColor }}>
             {playerName} - {t('battle.warTactics')}

@@ -20,7 +20,6 @@ export const PlayerPanel = () => {
 
   return (
     <div className="player-panel">
-      <h3>Players</h3>
       <div className="player-list">
         {[...gameState.players]
           .sort((a, b) => gameState.turnOrder.indexOf(a.id) - gameState.turnOrder.indexOf(b.id))

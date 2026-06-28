@@ -264,19 +264,20 @@ export const SpringIcon = ({ size = 24, color = 'currentColor', className }: Ico
     height={size}
     viewBox="0 0 24 24"
     fill="none"
-    stroke={color}
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
+    stroke="none"
   >
-    {/* Five petals of a sakura flower */}
-    <path d="M12 2 C13 4, 14 6, 12 8 C10 6, 11 4, 12 2" fill={color} />
-    <path d="M17.5 5.5 C16 7, 14.5 8, 12.5 7.5 C13.5 5.5, 15.5 5, 17.5 5.5" fill={color} />
-    <path d="M19.5 11.5 C17 11.5, 15 11, 14 9.5 C16 9, 18 9.5, 19.5 11.5" fill={color} />
-    <path d="M6.5 5.5 C8 7, 9.5 8, 11.5 7.5 C10.5 5.5, 8.5 5, 6.5 5.5" fill={color} />
-    <path d="M4.5 11.5 C7 11.5, 9 11, 10 9.5 C8 9, 6 9.5, 4.5 11.5" fill={color} />
-    {/* Center */}
-    <circle cx="12" cy="9" r="1.5" fill={color} opacity="0.6" />
+    {/* Five heart-shaped petals arranged radially */}
+    <path d="M12 4 C12.8 2.5, 14 2, 14.5 3 C15 4, 14 5.5, 12 7 C10 5.5, 9 4, 9.5 3 C10 2, 11.2 2.5, 12 4" fill={color} />
+    <path d="M16.5 8.5 C18 7.5, 19.5 7.5, 19.5 8.5 C19.5 9.5, 18 10.5, 15.5 10.5 C17 8.5, 16.5 7.5, 16.5 8.5" fill={color} />
+    <path d="M15 14.5 C16.5 15.8, 16.5 17.3, 15.5 17.3 C14.5 17.3, 13.5 16, 13 13.5 C14.5 14.5, 15.5 14, 15 14.5" fill={color} />
+    <path d="M9 14.5 C7.5 15.8, 7.5 17.3, 8.5 17.3 C9.5 17.3, 10.5 16, 11 13.5 C9.5 14.5, 8.5 14, 9 14.5" fill={color} />
+    <path d="M7.5 8.5 C6 7.5, 4.5 7.5, 4.5 8.5 C4.5 9.5, 6 10.5, 8.5 10.5 C7 8.5, 7.5 7.5, 7.5 8.5" fill={color} />
+    {/* Center stamen dots */}
+    <circle cx="12" cy="10" r="1.2" fill={color} opacity="0.7" />
+    <circle cx="10.5" cy="11" r="0.6" fill={color} opacity="0.5" />
+    <circle cx="13.5" cy="11" r="0.6" fill={color} opacity="0.5" />
+    <circle cx="11" cy="9" r="0.6" fill={color} opacity="0.5" />
+    <circle cx="13" cy="9" r="0.6" fill={color} opacity="0.5" />
   </svg>
 );
 
@@ -314,10 +315,10 @@ export const AutumnIcon = ({ size = 24, color = 'currentColor', className }: Ico
     fill={color}
     stroke="none"
   >
-    {/* Simplified maple leaf shape */}
-    <path d="M12 2 L13.5 6 L17 4 L15 8 L20 9 L16 11 L19 14 L14 13 L14 17 L12 14 L10 17 L10 13 L5 14 L8 11 L4 9 L9 8 L7 4 L10.5 6 Z" />
+    {/* Palmate maple leaf with 5 pointed lobes */}
+    <path d="M12 2 L13 5 L15.5 3.5 L14.5 6.5 L17.5 5.5 L15.5 8 L19 7.5 L16 10 L20 11 L16.5 12 L19 14.5 L15 13.5 L15.5 16 L13 14 L12 17 L11 14 L8.5 16 L9 13.5 L5 14.5 L7.5 12 L4 11 L8 10 L5 7.5 L8.5 8 L6.5 5.5 L9.5 6.5 L8.5 3.5 L11 5 Z" />
     {/* Stem */}
-    <rect x="11.5" y="17" width="1" height="5" rx="0.5" />
+    <path d="M12 17 L12 22" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
   </svg>
 );
 

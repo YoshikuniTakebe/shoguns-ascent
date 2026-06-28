@@ -1812,7 +1812,7 @@ export function resolveNextBattle(state: GameState): GameState {
         const ownFigures = currentProvFigures.figures.filter(
           (f) => f.owner === highestBidder && f.type === 'bushi'
         );
-        const killCount = Math.min(ownFigures.length, highestBid);
+        const killCount = ownFigures.length;
         for (let i = 0; i < killCount; i++) {
           bidder.victoryPoints += 1;
           bidder.bushi += 1;
