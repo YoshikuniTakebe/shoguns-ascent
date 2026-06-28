@@ -197,6 +197,8 @@ interface GameStore {
   doCompleteKamiInteractive: () => void;
   doFujinMove: (fromProvince: string, toProvince: string, figureIds: string[]) => void;
   doFujinDone: () => void;
+  doFujinUndo: () => void;
+  fujinPreMoveState: GameState | null;
   doRaijinPlace: (provinceId: string) => void;
   doRyujinBuyCard: (cardId: string) => void;
   doRyujinSkip: () => void;
@@ -711,24 +713,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ ruleViolationMessage: msg });
       return;
     }
-    // Auto-advance when placements reach 0
-    if (ns.recruitPlacementsRemaining <= 0) {
-      let advanced = skipRecruitTurn(ns);
-      if (!advanced.recruitMandateActive) {
-        advanced = advancePlayer(advanced);
-      }
-      // Detect war phase transition and set up battle step phase for hotseat
-      set({
-        gameState: advanced,
-        recruitMode: advanced.recruitMandateActive,
-        undoMandateState: advanced.recruitMandateActive ? JSON.parse(JSON.stringify(advanced)) : null,
-        ...detectWarTransitionWithPopup(advanced),
-        ...detectKamiPopupPending(advanced),
-        ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' && !advanced.kamiResolutionActive && !advanced.kamiPhasePopupPending ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}),
-      });
-    } else {
-      set({ gameState: ns });
-    }
+    // Do NOT auto-advance when placements reach 0 - player must press Terminar manually
+    set({ gameState: ns });
   },
   doRecruitPlaceTempleShinto: (templeId: string) => {
     const { gameState, localPlayerId, recruitFigureType } = get();
@@ -783,24 +769,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       log: [...gameState.log, `${player.name} places a shinto at ${temple.kamiType} shrine`],
     };
 
-    // Auto-advance when placements reach 0
-    if (ns.recruitPlacementsRemaining <= 0) {
-      let advanced = skipRecruitTurn(ns);
-      if (!advanced.recruitMandateActive) {
-        advanced = advancePlayer(advanced);
-      }
-      // Detect war phase transition and set up battle step phase for hotseat
-      set({
-        gameState: advanced,
-        recruitMode: advanced.recruitMandateActive,
-        undoMandateState: advanced.recruitMandateActive ? JSON.parse(JSON.stringify(advanced)) : null,
-        ...detectWarTransitionWithPopup(advanced),
-        ...detectKamiPopupPending(advanced),
-        ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' && !advanced.kamiResolutionActive && !advanced.kamiPhasePopupPending ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}),
-      });
-    } else {
-      set({ gameState: ns });
-    }
+    // Do NOT auto-advance when placements reach 0 - player must press Terminar manually
+    set({ gameState: ns });
   },
   doSkipRecruitTurn: () => {
     const { gameState, ws } = get();
@@ -1230,7 +1200,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (ns.kamiResolutionStep === 'interactive') {
       // For fujin, enable moveMode
       if (currentTemple.kamiType === 'fujin') {
-        set({ gameState: ns, moveMode: true, moveFrom: null, selectedFigures: [] });
+        set({ gameState: ns, moveMode: true, moveFrom: null, selectedFigures: [], fujinPreMoveState: null });
       } else if (currentTemple.kamiType === 'raijin') {
         set({ gameState: ns });
       } else if (currentTemple.kamiType === 'ryujin') {
@@ -1266,12 +1236,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
+  fujinPreMoveState: null,
+
   doFujinMove: (fromProvinceId: string, toProvinceId: string, figureIds: string[]) => {
     const { gameState } = get();
     if (!gameState || !gameState.kamiResolutionActive || gameState.fujinMovesRemaining <= 0) return;
 
     const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
     if (!currentTemple || !currentTemple.winnerId) return;
+
+    // Save pre-move state for undo
+    const preMoveSnapshot = JSON.parse(JSON.stringify(gameState));
 
     const ns = moveForces(gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds);
     // If moveForces returned the same state (validation failed), show feedback
@@ -1288,13 +1263,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Auto-complete
       const advanced = advanceKamiResolution(updated);
       if (!advanced.kamiResolutionActive && advanced.currentPhase === 'politics' && gameState.mode === 'hotseat') {
-        set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null });
+        set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], fujinPreMoveState: preMoveSnapshot, turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null });
       } else {
-        set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], ...detectWarTransitionWithPopup(advanced) });
+        set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], fujinPreMoveState: preMoveSnapshot, ...detectWarTransitionWithPopup(advanced) });
       }
     } else {
-      set({ gameState: updated, moveFrom: null, selectedFigures: [] });
+      set({ gameState: updated, moveFrom: null, selectedFigures: [], fujinPreMoveState: preMoveSnapshot });
     }
+  },
+
+  doFujinUndo: () => {
+    const { fujinPreMoveState } = get();
+    if (!fujinPreMoveState) return;
+    set({
+      gameState: JSON.parse(JSON.stringify(fujinPreMoveState)),
+      fujinPreMoveState: null,
+      moveFrom: null,
+      selectedFigures: [],
+    });
   },
 
   doFujinDone: () => {
@@ -1305,9 +1291,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const advanced = advanceKamiResolution(ns);
 
     if (!advanced.kamiResolutionActive && advanced.currentPhase === 'politics' && gameState.mode === 'hotseat') {
-      set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null });
+      set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], fujinPreMoveState: null, turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null });
     } else {
-      set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], ...detectWarTransitionWithPopup(advanced) });
+      set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], fujinPreMoveState: null, ...detectWarTransitionWithPopup(advanced) });
     }
   },
 
