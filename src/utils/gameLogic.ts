@@ -1473,6 +1473,7 @@ export function advanceKamiResolution(state: GameState): GameState {
       raijinPlacementActive: false,
       ryujinBuyActive: false,
     };
+    newState.log = [...newState.log, '--- End Kami Turn ---'];
 
     // Check if politics phase is done
     if (newState.politicsMandateCount >= newState.maxMandates) {
