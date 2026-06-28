@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Enhance Kami Phase Start popup with kami icons flanking the title (torii gate diamond style from PoliticsTrack), bold 'izquierda a derecha'/'left to right' text, and more color/decoration. Also add '--- End Kami Turn ---' log entry when all shrines are resolved in advanceKamiResolution().",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/i18n/en.ts: Split kami.phaseStart.description into parts to allow bold rendering. Change value to use a marker for the bold part: 'Shrines will now be resolved from **left to right**. The player with the most Shinto force in each shrine wins the Kami reward.' -- Or better: keep the string as-is and handle bold rendering in the component by splitting on the key phrase.",
     "In src/i18n/es.ts: Same approach - the description already contains 'izquierda a derecha' which will be bolded in the component.",
@@ -21,5 +21,5 @@
     "cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Successfully enhanced the Kami Phase popup with inline torii gate SVG icons (gold color, 28px) flanking the title, bold gold-colored 'left to right'/'izquierda a derecha' phrase in the description, and a purple gradient background with glow effect. Added '--- End Kami Turn ---' log entry after all shrines are resolved in advanceKamiResolution(). Build and type-check pass cleanly."
 }
