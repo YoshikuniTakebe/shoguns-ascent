@@ -345,7 +345,16 @@ function returnHostages(state: GameState): GameState {
   newState.players.forEach((player) => {
     if (player.hostages.length > 0) {
       player.coins += player.hostages.length;
-      newState.log = [...newState.log, `${player.name} returns ${player.hostages.length} hostages, gains ${player.hostages.length} coins`];
+      // Group hostages by their original owner (fromClanId = player ID)
+      const hostagesByOwner: Record<string, number> = {};
+      player.hostages.forEach((h) => {
+        hostagesByOwner[h.fromClanId] = (hostagesByOwner[h.fromClanId] || 0) + 1;
+      });
+      Object.entries(hostagesByOwner).forEach(([ownerId, count]) => {
+        const targetPlayer = newState.players.find((p) => p.id === ownerId);
+        const targetName = targetPlayer ? targetPlayer.name : ownerId;
+        newState.log = [...newState.log, `${player.name} returns ${count} hostage(s) to ${targetName}, gains ${count} coin(s)`];
+      });
       player.hostages = [];
     }
   });
