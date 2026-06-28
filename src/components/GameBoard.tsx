@@ -15,7 +15,7 @@ import { PoliticsTrack } from './PoliticsTrack';
 import { RegionDetailModal } from './RegionDetailModal';
 import { HarvestPopup } from './HarvestPopup';
 import { KamiResolutionPopup } from './KamiResolutionPopup';
-import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon } from './Icons';
+import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 
@@ -249,11 +249,22 @@ export const GameBoard = () => {
           })()}
 
           {/* Raijin Interactive Overlay - between kami track and map */}
-          {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.raijinPlacementActive && (
-            <div className="kami-action-overlay">
-              <span>{t('kami.resolution.raijinPlace')}</span>
-            </div>
-          )}
+          {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.raijinPlacementActive && (() => {
+            const currentTemple = gameState.kamiResolutionTemples?.[gameState.kamiResolutionIndex ?? 0];
+            const winnerPlayer = currentTemple?.winnerId ? gameState.players.find(p => p.id === currentTemple.winnerId) : null;
+            const winnerClan = winnerPlayer ? CLANS.find(c => c.id === winnerPlayer.clanId) : null;
+            const clanColor = winnerClan?.color || '#fff';
+            return (
+              <div className="kami-action-overlay">
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
+                  {' coloca un '}
+                  <BushiIcon size={16} color={clanColor} />
+                  {' Bushi en cualquier provincia'}
+                </span>
+              </div>
+            );
+          })()}
 
           {/* Zorro Placement Overlay */}
           {gameState.zorroPlacementActive && (

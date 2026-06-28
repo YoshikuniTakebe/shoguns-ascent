@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix multiple UI and game logic issues: coin format in GameLog, VPIcon color in HarvestPopup, Raijin overlay message with player name, Luna temple force calculation, and verify BattleBiddingOverlay rendering",
+  "status": "in_progress",
+  "steps": [
+    "1. Fix GameLog coin display (src/components/GameLog.tsx around line 175-177): The coinPattern regex `/(\\ d+\\s*)?\\b(moneda|monedas|coin|coins)\\b/gi` matches e.g. '2 coins'. Currently it renders `{m}<CoinIcon />` which outputs '2 coins [icon]'. Fix: extract the number from the match using a regex capture group, then render `<CoinIcon />{number}` (icon first, then number only, dropping the word coin/moneda). The match `m` contains the full match like '2 coins' or '2 monedas', so parse out just the digit(s) from it.",
+    "2. Fix VPIcon color in HarvestPopup (src/components/HarvestPopup.tsx around line 54): Change `<VPIcon size={40} color=\"#c8a951\" />` to `<VPIcon size={40} color=\"#E63946\" />` (red instead of gold).",
+    "3. Fix Raijin placement message in GameBoard (src/components/GameBoard.tsx around line 252-255): Replace the simple `{t('kami.resolution.raijinPlace')}` with a richer message showing '[PlayerName in clan color] coloca un [BushiIcon] Bushi en cualquier provincia'. Get the current winner from `gameState.kamiResolutionTemples[gameState.kamiResolutionIndex].winnerId`, find the player and their clan color from gameState.players and CLANS. Import BushiIcon from './Icons'. Render: `<span style={{color: clanColor}}>{playerName}</span> coloca un <BushiIcon size={16} color={clanColor} /> Bushi en cualquier provincia`.",
+    "4. Fix Luna clan temple force calculation (src/utils/gameLogic.ts): The `computeTempleWinner` function currently counts each figure as force 1. Luna's clan power states 'All figures have Force 2'. Add a `players` parameter (array of {id: string, clanId: string}) to `computeTempleWinner`. For each figure, check if the figure's player has clanId === 'luna'; if so, add 2 to the force instead of 1. Update both call sites: (a) in `resolveKamiTurn` at line 1354 pass `newState.players` and (b) in the kami resolution flow at line 2555 pass `newState.players`.",
+    "5. Also update the KamiResolutionPopup force display (src/components/KamiResolutionPopup.tsx): The popup reads `currentTemple.forces` which is already computed by `computeTempleWinner`. Since we fixed the computation in step 4, the forces stored in `kamiResolutionTemples` will already be correct (the count field will reflect Luna's x2). No code change needed here - just verify it works transitively.",
+    "6. Verify BattleBiddingOverlay (src/components/BattleBiddingOverlay.tsx): Review the component for any conditions that could cause it to return null or not render. The component does NOT have any early return/null paths - it always renders. The issue is likely browser caching on the user's end. No code change needed, but confirm the component is unconditionally rendered and the BattlePanel integration is correct."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compiles with no errors (npx tsc --noEmit)",
+    "Vite build succeeds (npx vite build)",
+    "In GameLog.tsx, the coin pattern replacement renders CoinIcon BEFORE the number and does NOT include the word coin/moneda",
+    "In HarvestPopup.tsx, VPIcon uses color '#E63946'",
+    "In GameBoard.tsx, the Raijin overlay shows the winner's name in clan color + BushiIcon + 'Bushi en cualquier provincia'",
+    "In gameLogic.ts, computeTempleWinner accepts a players parameter and multiplies force by 2 for luna clan players",
+    "Both call sites of computeTempleWinner pass the players array"
+  ],
+  "verification": [
+    "npx tsc --noEmit",
+    "npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
