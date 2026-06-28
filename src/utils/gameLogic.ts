@@ -1853,7 +1853,11 @@ export function resolveNextBattle(state: GameState): GameState {
       }
       case 'hire-ronin': {
         // Ronin tokens add force (tracked for final calculation)
-        newState.log = [...newState.log, `${bidder.name} hires ronin: +${bidder.ronin} force`];
+        let roninForce = bidder.ronin;
+        if (bidder.clanId === 'koi') {
+          roninForce += bidder.coins;
+        }
+        newState.log = [...newState.log, `${bidder.name} hires ronin: +${roninForce} force`];
         break;
       }
       case 'imperial-poets': {

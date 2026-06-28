@@ -1423,7 +1423,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       players: newPlayers,
       log: newLog,
       coinDistributionPending: newRemainder > 0
-        ? { ...pending, remainder: newRemainder, distributed: pending.distributed + 1 }
+        ? { ...pending, remainder: newRemainder, distributed: pending.distributed + 1, losers: pending.losers.filter(id => id !== targetPlayerId) }
         : null,
     };
 
