@@ -3,6 +3,7 @@ import { WAR_TACTICS, CLANS } from '../types/game';
 import coinImg from '../img/coin.png';
 import { useT } from '../i18n';
 import { ClanShield } from './ClanShields';
+import { RoninIcon, VPIcon } from './Icons';
 
 export interface BattleCombatant {
   playerId: string;
@@ -249,12 +250,12 @@ export const BattleBiddingOverlay = ({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '4px', fontSize: '0.9rem' }}>
               {playerRonin !== undefined && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#e74c3c' }}>
-                  <span style={{ fontWeight: 'bold' }}>Ronin:</span> {playerRonin}
+                  <RoninIcon size={18} color="#e74c3c" /> {playerRonin}
                 </span>
               )}
               {playerVP !== undefined && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#f1c40f' }}>
-                  <span style={{ fontWeight: 'bold' }}>PV:</span> {playerVP}
+                  <VPIcon size={18} color="#f1c40f" /> {playerVP}
                 </span>
               )}
             </div>

@@ -633,7 +633,7 @@ export const GameBoard = () => {
                             <span style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '0.85rem', marginLeft: 'auto' }}>
                               {b.resource === 'coins' && <CoinIcon size={14} color="#f1c40f" />}
                               {b.resource === 'ronin' && <RoninIcon size={14} color="#e74c3c" />}
-                              {b.resource === 'VP' && <VPIcon size={14} color="#9B59B6" />}
+                              {b.resource === 'vp' && <VPIcon size={14} color="#9B59B6" />}
                               <span style={{ fontWeight: 'bold' }}>{b.amount}</span>
                             </span>
                           </div>
