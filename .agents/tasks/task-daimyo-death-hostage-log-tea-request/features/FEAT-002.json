@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix hostage return log messages. Instead of a generic message like 'Player 2 returns 3 hostages, gains 3 coins', group hostages by their original owner (fromClanId field = player ID) and generate per-target log messages like 'Player 2 returns 1 hostage(s) to Player 1, gains 1 coin(s)'. The log rendering system in GameLog.tsx auto-colors player names found in the text.",
+  "status": "pending",
+  "steps": [
+    "In src/utils/gameLogic.ts, find the `returnHostages` function (around line 346). Replace the current simple log with logic that groups hostages by `fromClanId` (which is actually the owner player ID). For each group, find the target player name and generate a log message like: `${player.name} returns ${count} hostage(s) to ${targetPlayer.name}, gains ${count} coin(s)`. The GameLog renderLogEntry will auto-color both player names."
+  ],
+  "acceptance_criteria": [
+    "Hostage return logs show individual entries per target player",
+    "Each entry includes the returning player's name and the target player's name (both auto-colored)",
+    "Format is: 'PlayerName returns N hostage(s) to TargetName, gains N coin(s)'",
+    "Total coins gained remains correct (1 per hostage returned)",
+    "The code compiles without new TypeScript errors"
+  ],
+  "verification": [
+    "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit 2>&1 | grep -v 'BattleBiddingOverlay\\|BattlePanel' | head -20` to check for new TS errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

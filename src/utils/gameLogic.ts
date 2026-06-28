@@ -1815,14 +1815,18 @@ export function resolveNextBattle(state: GameState): GameState {
       case 'seppuku': {
         // Kill own figures for VP and Honor
         const ownFigures = currentProvFigures.figures.filter(
-          (f) => f.owner === highestBidder && f.type === 'bushi'
+          (f) => f.owner === highestBidder && (f.type === 'bushi' || f.type === 'daimyo')
         );
         const killCount = ownFigures.length;
-        for (let i = 0; i < killCount; i++) {
+        for (const fig of ownFigures) {
           bidder.victoryPoints += 1;
-          bidder.bushi += 1;
+          if (fig.type === 'bushi') {
+            bidder.bushi += 1;
+          } else if (fig.type === 'daimyo') {
+            bidder.hasDaimyo = false;
+          }
         }
-        const killedIds = ownFigures.slice(0, killCount).map((f) => f.id);
+        const killedIds = ownFigures.map((f) => f.id);
         newState.provinces[battle.provinceId] = {
           ...currentProvFigures,
           figures: currentProvFigures.figures.filter((f) => !killedIds.includes(f.id)),
@@ -1959,7 +1963,7 @@ export function resolveNextBattle(state: GameState): GameState {
       winner.warProvinceTokens.push({ season: slot.season, provinceId: slot.provinceId });
     }
 
-    // Losing players' figures are killed (return to reserve). Daimyo is immune to kill effects.
+    // Losing players' figures are killed (return to reserve).
     // Allied figures of the winner are also protected.
     const killedMap: Record<string, Record<string, number>> = {};
     battle.participants.forEach((pid) => {
@@ -1968,11 +1972,11 @@ export function resolveNextBattle(state: GameState): GameState {
       if (winner.allies.includes(pid)) return;
       const loserFigures = finalProvince.figures.filter((f) => f.owner === pid);
       loserFigures.forEach((fig) => {
-        if (fig.type === 'daimyo') return; // Daimyo immune
         if (fig.type === 'fortress') return; // Fortresses immune
         const loser = newState.players.find((p) => p.id === pid)!;
         if (fig.type === 'bushi') loser.bushi += 1;
         else if (fig.type === 'shinto') loser.shinto += 1;
+        else if (fig.type === 'daimyo') loser.hasDaimyo = false;
         // Track killed figures for display
         if (!killedMap[pid]) killedMap[pid] = {};
         killedMap[pid][fig.type] = (killedMap[pid][fig.type] || 0) + 1;
@@ -2001,7 +2005,7 @@ export function resolveNextBattle(state: GameState): GameState {
     newState.provinces[battle.provinceId] = {
       ...finalProvince,
       figures: finalProvince.figures.filter(
-        (f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'daimyo' || f.type === 'fortress'
+        (f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'fortress'
       ),
     };
 
