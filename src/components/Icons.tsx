@@ -264,22 +264,17 @@ export const SpringIcon = ({ size = 24, color = 'currentColor', className }: Ico
     height={size}
     viewBox="0 0 24 24"
     fill="none"
-    stroke={color}
-    strokeWidth="0.5"
+    stroke="none"
   >
-    {/* Five sakura petals with notched tips arranged radially around center */}
-    {/* Top petal */}
-    <path d="M12 11 C11 9, 10.2 6.5, 10.5 4.5 C10.7 3.2, 11.3 2.5, 12 3.5 C12.7 2.5, 13.3 3.2, 13.5 4.5 C13.8 6.5, 13 9, 12 11 Z" fill={color} />
-    {/* Top-right petal */}
-    <path d="M12.5 11.5 C14 10, 16 8.5, 17.8 8 C19 7.7, 19.7 8.2, 19 9.1 C19.9 9.6, 19.4 10.3, 18.3 10.8 C16.5 11.6, 14.2 11.5, 12.5 11.5 Z" fill={color} />
-    {/* Bottom-right petal */}
-    <path d="M12.3 12.5 C13.5 13.8, 14.8 16, 15 17.8 C15.1 19, 14.6 19.7, 13.8 19 C13.5 19.9, 12.7 19.5, 12.3 18.4 C11.7 16.6, 12 14.3, 12.3 12.5 Z" fill={color} />
-    {/* Bottom-left petal */}
-    <path d="M11.7 12.5 C10.5 13.8, 9.2 16, 9 17.8 C8.9 19, 9.4 19.7, 10.2 19 C10.5 19.9, 11.3 19.5, 11.7 18.4 C12.3 16.6, 12 14.3, 11.7 12.5 Z" fill={color} />
-    {/* Top-left petal */}
-    <path d="M11.5 11.5 C10 10, 8 8.5, 6.2 8 C5 7.7, 4.3 8.2, 5 9.1 C4.1 9.6, 4.6 10.3, 5.7 10.8 C7.5 11.6, 9.8 11.5, 11.5 11.5 Z" fill={color} />
-    {/* Center circle */}
-    <circle cx="12" cy="12" r="1.5" fill={color} opacity="0.8" />
+    {/* Five sakura petals with notched tips, rotated 72 degrees apart */}
+    {/* Each petal: rounded bulbous shape tapering at base with V-notch at tip */}
+    <path d="M12 12 C10.8 10 10 7.5 10.5 5.5 C10.7 4.5 11.2 3.8 11.5 4.2 L12 3.2 L12.5 4.2 C12.8 3.8 13.3 4.5 13.5 5.5 C14 7.5 13.2 10 12 12 Z" fill={color} transform="rotate(0 12 12)" />
+    <path d="M12 12 C10.8 10 10 7.5 10.5 5.5 C10.7 4.5 11.2 3.8 11.5 4.2 L12 3.2 L12.5 4.2 C12.8 3.8 13.3 4.5 13.5 5.5 C14 7.5 13.2 10 12 12 Z" fill={color} transform="rotate(72 12 12)" />
+    <path d="M12 12 C10.8 10 10 7.5 10.5 5.5 C10.7 4.5 11.2 3.8 11.5 4.2 L12 3.2 L12.5 4.2 C12.8 3.8 13.3 4.5 13.5 5.5 C14 7.5 13.2 10 12 12 Z" fill={color} transform="rotate(144 12 12)" />
+    <path d="M12 12 C10.8 10 10 7.5 10.5 5.5 C10.7 4.5 11.2 3.8 11.5 4.2 L12 3.2 L12.5 4.2 C12.8 3.8 13.3 4.5 13.5 5.5 C14 7.5 13.2 10 12 12 Z" fill={color} transform="rotate(216 12 12)" />
+    <path d="M12 12 C10.8 10 10 7.5 10.5 5.5 C10.7 4.5 11.2 3.8 11.5 4.2 L12 3.2 L12.5 4.2 C12.8 3.8 13.3 4.5 13.5 5.5 C14 7.5 13.2 10 12 12 Z" fill={color} transform="rotate(288 12 12)" />
+    {/* Center stamen circle */}
+    <circle cx="12" cy="12" r="2" fill={color} opacity="0.85" />
   </svg>
 );
 
