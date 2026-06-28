@@ -16,6 +16,8 @@ interface BattleBiddingOverlayProps {
   playerClanColor: string;
   playerClanId?: string;
   maxCoins: number;
+  playerRonin?: number;
+  playerVP?: number;
   provinceName: string;
   provinceColor?: string;
   battleNumber: number;
@@ -45,6 +47,8 @@ export const BattleBiddingOverlay = ({
   playerClanColor,
   playerClanId,
   maxCoins,
+  playerRonin,
+  playerVP,
   provinceName,
   provinceColor,
   battleNumber,
@@ -230,6 +234,20 @@ export const BattleBiddingOverlay = ({
             <span style={{ color: playerClanColor }}>{playerName}</span>
             <span style={{ color: '#ffffff' }}> - {t('battle.warTactics')}</span>
           </p>
+          {(playerRonin !== undefined || playerVP !== undefined) && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '4px', fontSize: '0.9rem' }}>
+              {playerRonin !== undefined && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#e74c3c' }}>
+                  <span style={{ fontWeight: 'bold' }}>Ronin:</span> {playerRonin}
+                </span>
+              )}
+              {playerVP !== undefined && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#f1c40f' }}>
+                  <span style={{ fontWeight: 'bold' }}>PV:</span> {playerVP}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Combatants Panel */}

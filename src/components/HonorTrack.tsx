@@ -8,8 +8,8 @@ export const HonorTrack = () => {
   const [promotedPlayerId, setPromotedPlayerId] = useState<string | null>(null);
   const prevFirstRef = useRef<string | null>(null);
 
-  // Sort players by honor ascending: honor 1 = best/highest position
-  const sortedPlayers = gameState ? [...gameState.players].sort((a, b) => a.honor - b.honor) : [];
+  // Use honorTrack ordering directly for accurate position display
+  const sortedPlayers = gameState ? gameState.honorTrack.map(pid => gameState.players.find(p => p.id === pid)).filter((p): p is NonNullable<typeof p> => p != null) : [];
   const currentFirst = sortedPlayers.length > 0 ? sortedPlayers[0].id : null;
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export const HonorTrack = () => {
         <span>Honor</span>
       </div>
       <div className="honor-track-hexagons">
-        {sortedPlayers.map((player) => {
+        {sortedPlayers.map((player, index) => {
           const clan = CLANS.find(c => c.id === player.clanId);
           if (!clan) return null;
           const isPromoted = player.id === promotedPlayerId;
@@ -59,7 +59,7 @@ export const HonorTrack = () => {
                 <span className="honor-clan-name" style={{ color: clan.color }}>
                   {clan.name}
                 </span>
-                <span className="honor-value">{player.honor}</span>
+                <span className="honor-value">{index + 1}</span>
               </div>
             </div>
           );

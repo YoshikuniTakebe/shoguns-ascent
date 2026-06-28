@@ -1879,7 +1879,8 @@ export function resolveNextBattle(state: GameState): GameState {
           gainHonor(newState, highestBidder);
         }
         battleDeathCount += killCount;
-        newState.log = [...newState.log, `${bidder.name} commits Seppuku: kills ${killCount} figures for VP and Honor`];
+        const seppukuHonorPos = getHonorRank(newState, highestBidder);
+        newState.log = [...newState.log, `${bidder.name} commits Seppuku: kills ${killCount} figures for ${killCount}VP and ${killCount}Honor now ${bidder.victoryPoints}PV and position ${seppukuHonorPos} at Honor`];
         break;
       }
       case 'take-hostage': {
@@ -2558,12 +2559,20 @@ export function getHonorRank(state: GameState, playerId: string): number {
   return state.honorTrack.indexOf(playerId) + 1;
 }
 
+function syncHonorValues(state: GameState): void {
+  state.honorTrack.forEach((pid, i) => {
+    const p = state.players.find(pl => pl.id === pid);
+    if (p) p.honor = i + 1;
+  });
+}
+
 function gainHonor(state: GameState, playerId: string): void {
   const idx = state.honorTrack.indexOf(playerId);
   if (idx > 0) {
     // Move toward index 0 = better honor (lower index = higher honor)
     [state.honorTrack[idx], state.honorTrack[idx - 1]] = [state.honorTrack[idx - 1], state.honorTrack[idx]];
   }
+  syncHonorValues(state);
 }
 
 export function loseHonor(state: GameState, playerId: string): void {
@@ -2572,6 +2581,7 @@ export function loseHonor(state: GameState, playerId: string): void {
     // Move toward higher index = worse honor (lower index = higher honor)
     [state.honorTrack[idx], state.honorTrack[idx + 1]] = [state.honorTrack[idx + 1], state.honorTrack[idx]];
   }
+  syncHonorValues(state);
 }
 
 // ============================================================
