@@ -154,7 +154,7 @@ export const es: Record<TranslationKey, string> = {
   'gameOver.warTokens': 'Fichas de Guerra',
   'gameOver.cards': 'Cartas',
   'gameOver.returnToMenu': 'Volver al Men\u00FA',
-  'gameOver.warProvinceTokens': 'Fichas de Provincia de Guerra',
+  'gameOver.warProvinceTokens': 'Fichas de Provincia en Guerra',
   'gameOver.sharedVictory': 'Victoria compartida con aliados:',
 
   // SeasonCardsMarket
