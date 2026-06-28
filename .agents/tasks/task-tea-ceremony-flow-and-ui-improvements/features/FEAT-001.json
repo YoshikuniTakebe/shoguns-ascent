@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "UI text improvements for mandate panels, harvest popup, and fortress button. Fixes the Marshal mandate text formatting, adds clan shield to harvest popup, shows province name in harvest popup, improves fortress cost display with gold coin icon, and changes Fujin movement bar text.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/ActionPanel.tsx, update the marshal mandate section (around line 215). Replace the inline text 'Mandato Movilizar - Player puede mover figuras.' with a new layout: First line shows just 'Movilizar' (or 'Marshal' in English) in uppercase black text with the mandate color. Second line shows player name preceded by ClanShield, with text in clan color. Third line shows the 'puede mover figuras' / 'may move figures' text in normal color. Same pattern for other mandates (recruit, train, betray) that also show inline 'Mandato X' text.",
     "2. In src/components/ActionPanel.tsx, update the fortress button text and the marshalBonus text. Remove '(3 monedas)' / '(3 coins)' from both places and replace with a bold gold CoinIcon next to the number 3. The fortress button should show: 'Construir Fortaleza' + large CoinIcon + bold gold '3'. Same for the text reference to building a fortress.",
@@ -24,5 +24,5 @@
     "Run npx vite build to verify build succeeds"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All mandate panels (marshal, recruit, train, betray) updated to new 3-line format. Fortress button uses CoinIcon + bold gold number. HarvestPopup uses ClanShield and province name from PROVINCES_DATA/PROVINCE_COLORS. Fujin text simplified. New i18n keys added: actions.mandateName.marshal/recruit/train/betray, actions.mandateDesc.marshal/recruit/train/betray, actions.marshalBonusFortress. Build and tsc pass cleanly."
 }
