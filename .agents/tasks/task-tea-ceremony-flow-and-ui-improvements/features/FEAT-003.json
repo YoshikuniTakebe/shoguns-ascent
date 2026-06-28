@@ -1,25 +1,28 @@
 {
   "id": "FEAT-003",
-  "type": "fix",
-  "description": "Fix Luna clan temple shinto limit: change from 'max 2 total across all temples' to 'max 2 per temple'. Also add per-temple limit of 1 for non-Luna clans. Add console.warn feedback when placement is blocked.",
-  "status": "completed",
+  "type": "feat",
+  "description": "Add Kami Phase start popup, War Phase start popup (with war upgrade bonus summary), and fix Fujin reward to work like Marshal (single figure selection/movement, allowing same figure to move twice). Also fix Susanoo reward popup to show VP gained.",
+  "status": "in_progress",
   "steps": [
-    "1. In doRecruitPlaceTempleShinto (src/store/gameStore.ts ~line 484): Change Luna check to count shintos only in the targeted temple (templeId), not all temples combined. Change limit check from totalTempleShinto to per-temple count.",
-    "2. Add a per-temple limit of 1 for non-Luna clans before the Luna check.",
-    "3. In doKomainuPlaceAtTemple (~line 707): Apply the same fix - check per-temple count instead of total.",
-    "4. Add console.warn when placement is silently blocked so debugging is easier.",
-    "5. Verify with npx tsc --noEmit."
+    "1. Add a new 'Kami Phase start' popup. In the store, add a new state field kamiPhasePopupVisible (boolean, default false). When advancePlayer triggers a kami turn (isKamiTurn returns true), before setting kamiResolutionActive, set kamiPhasePopupVisible = true and kamiResolutionActive = false (delay the resolution). In GameBoard.tsx, render a popup when kamiPhasePopupVisible is true: show an elegant popup with the PoliticsTrack icon or a kami-themed icon, title 'Comienza la Fase Kami' / 'Kami Phase Begins', with an Accept button. Add a dismissKamiPhasePopup action that sets kamiPhasePopupVisible = false and then triggers the actual kami resolution (setting kamiResolutionActive = true with the temples data that was prepared).",
+    "2. Add a new 'War Phase start' popup. In the store, add warPhasePopupVisible (boolean, default false) and warPhaseUpgradeSummary (array of {playerName, clanId, bonuses: string[]}). When advancePhase transitions from politics to war (or when detectWarTransition fires), instead of immediately showing battles, set warPhasePopupVisible = true. Compute a summary of war upgrade card bonuses applied during initiateWarPhase by parsing the log entries that applyWarUpgrades added. Show a popup: 'Comienza la Fase de Guerra' / 'War Phase Begins', list each clan's war upgrade bonuses (if any), Accept button. On dismiss, set warPhasePopupVisible = false and proceed to battleStepPhase = 'popup'.",
+    "3. Fix Fujin reward to work like Marshal: In src/store/gameStore.ts doFujinMove, currently it receives fromProvince, toProvince, and figureIds (accepting all selected). Change the flow: Fujin should use the same moveMode/moveFrom/selectedFigures UI as Marshal. The user clicks a province (sets moveFrom), clicks ONE figure, clicks destination. The key difference from marshal: allow the SAME figure to be moved a second time (2 total moves, can be 2 different figures or the same figure twice). In gameLogic.ts moveForces, when called during Fujin (kamiResolutionActive && fujinMovesRemaining > 0), do NOT check marshalMovedFigures. Just validate single figure movement, adjacency (unless libelula), and move it. Remove the auto-selection of all figures in the Fujin flow.",
+    "4. Add a 'Cancel Movement' button during Fujin interactive mode, just like Marshal has. In GameBoard.tsx where the Fujin overlay is rendered, add a button that resets moveFrom and selectedFigures without consuming a move.",
+    "5. Update the Susanoo reward in KamiResolutionPopup.tsx: After the Susanoo kami is resolved, the popup should indicate how many VP the winner gained. Add a susanooVPGained field to the resolution temple data or compute it from the number of fortresses. Show it in the reward text like 'Gains X VP (X Fortresses on map)'.",
+    "6. Add all necessary i18n keys to en.ts and es.ts for: kami phase popup title/description, war phase popup title/description, Susanoo VP text, Fujin cancel movement button."
   ],
   "acceptance_criteria": [
-    "npx tsc --noEmit passes with no errors",
-    "Luna clan can place up to 2 shintos per temple (not limited to 2 total across all temples)",
-    "Non-Luna clans are limited to 1 shinto per temple",
-    "Same fixes applied to doKomainuPlaceAtTemple",
-    "Console warnings are logged when placement is blocked"
+    "Before Kami resolution begins, a popup appears saying 'Kami Phase Begins' that must be accepted",
+    "Before war battles begin, a popup shows 'War Phase Begins' with a summary of war upgrade bonuses per clan",
+    "Fujin works like Marshal: click province, click ONE figure, click destination. Same figure can move twice.",
+    "Fujin has a Cancel Movement button like Marshal",
+    "Susanoo reward popup shows the number of VP gained",
+    "The final kami before war does NOT trigger turn popup, and the war popup appears instead"
   ],
   "verification": [
-    "Run `npx tsc --noEmit` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
+    "Run npx tsc --noEmit to verify no type errors",
+    "Run npx vite build to verify build succeeds"
   ],
   "blocked_reason": null,
-  "findings": "Fixed both doRecruitPlaceTempleShinto and doKomainuPlaceAtTemple. The bug was that the Luna check counted shintos across ALL temples instead of in the specific target temple. Also added a missing per-temple limit of 1 for non-Luna clans, which was completely absent. Added console.warn messages when placement is blocked for easier debugging."
+  "findings": ""
 }

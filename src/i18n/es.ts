@@ -312,9 +312,22 @@ export const es: Record<TranslationKey, string> = {
   'kami.resolution.force': 'Fuerza Sintoista',
   'kami.resolution.fujinMoves': 'Movimientos {count}',
   'kami.resolution.fujinDone': 'Finalizar movimientos',
+  'kami.resolution.fujinCancel': 'Cancelar Movimiento',
   'kami.resolution.raijinPlace': 'Coloca un Bushi en una provincia',
   'kami.resolution.ryujinBuy': 'Compra una carta de Estacion',
   'kami.resolution.templeOf': 'Templo {number}',
+  'kami.resolution.susanooVP': 'Gana {vp} PV ({fortresses} Fortalezas en mapa)',
+
+  // Kami Phase Popup
+  'kami.phaseStart.title': 'Comienza la Fase Kami',
+  'kami.phaseStart.description': 'Los templos se resolveran de izquierda a derecha. El jugador con mas fuerza Sintoista en cada templo gana la recompensa del Kami.',
+  'kami.phaseStart.accept': 'Aceptar',
+
+  // War Phase Popup
+  'war.phaseStart.title': 'Comienza la Fase de Guerra',
+  'war.phaseStart.bonuses': 'Bonificaciones de Mejora de Guerra',
+  'war.phaseStart.noBonuses': 'No hay bonificaciones de mejora de guerra activas.',
+  'war.phaseStart.accept': 'Aceptar',
 
   // Turn Popup
   'game.turnPopupAccept': 'Aceptar',
