@@ -215,6 +215,23 @@ export const BattlePanel = () => {
   // If uncontested -> show popup. If contested -> show bidding flow. If all resolved -> war complete.
   const currentBattleIndex = allBattles.findIndex(b => !b.resolved);
 
+  // Show battle result popup BEFORE showing "war complete" — even if all battles are resolved
+  if (battleStepPhase === 'result') {
+    const resolvedBattles = allBattles.filter(b => b.resolved && !b.uncontested);
+    const justResolved = resolvedBattles[resolvedBattles.length - 1];
+
+    if (justResolved) {
+      return (
+        <BattleResultPopup
+          battle={justResolved}
+          gameState={gameState}
+          onAccept={doAcceptBattlePopup}
+          t={t}
+        />
+      );
+    }
+  }
+
   // All battles resolved - war complete
   if (currentBattleIndex === -1) {
     return (
