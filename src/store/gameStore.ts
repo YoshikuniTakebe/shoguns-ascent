@@ -66,7 +66,7 @@ function computeWarUpgradeSummary(state: GameState): { playerName: string; clanI
         const cardName = parenMatch ? parenMatch[1] : entry;
         // Extract resource and amount: "gains N coins/ronin/VP"
         const gainsMatch = entry.match(/gains\s+(\d+)\s+(\w+)/);
-        const resource = gainsMatch ? gainsMatch[2] : 'coins';
+        const resource = gainsMatch ? gainsMatch[2].toLowerCase() : 'coins';
         const amount = gainsMatch ? parseInt(gainsMatch[1], 10) : 0;
         playerMap.get(player.id)!.bonuses.push({ cardName, resource, amount });
       }
