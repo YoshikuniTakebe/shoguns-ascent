@@ -652,7 +652,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Harvest fully resolved, advance player
       ns = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
-      set({ gameState: ns, ...detectWarTransition(ns) });
+      const warTransition = detectWarTransition(ns);
+      set({
+        gameState: ns,
+        ...warTransition,
+        ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' && !ns.kamiResolutionActive && Object.keys(warTransition).length === 0
+          ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null }
+          : {}),
+      });
     } else {
       set({ gameState: ns });
     }
@@ -686,6 +693,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
         if (!ns.trainMandateActive) {
           ns = advancePlayer(ns);
+          const warTransition = detectWarTransition(ns);
           set({
             gameState: ns,
             showTrainModal: false,
@@ -694,7 +702,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
             monsterPlacementPlayerId: null,
             monsterPlacementPopupVisible: false,
             komainuChoiceVisible: false,
-            ...detectWarTransition(ns),
+            ...warTransition,
+            ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' && !ns.kamiResolutionActive && Object.keys(warTransition).length === 0
+              ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null }
+              : {}),
           });
         } else {
           set({
@@ -764,7 +775,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
         set({ ...clearState, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
       } else {
-        set(clearState);
+        set({ ...clearState, ...detectWarTransition(ns) });
       }
       return;
     }
@@ -779,6 +790,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
+      const warTransition = detectWarTransition(ns);
       set({
         gameState: ns,
         showTrainModal: false,
@@ -787,7 +799,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         monsterPlacementPlayerId: null,
         monsterPlacementPopupVisible: false,
         komainuChoiceVisible: false,
-        ...detectWarTransition(ns),
+        ...warTransition,
+        ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' && !ns.kamiResolutionActive && Object.keys(warTransition).length === 0
+          ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null }
+          : {}),
       });
     } else {
       set({
@@ -877,7 +892,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
         set({ ...clearState, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
       } else {
-        set(clearState);
+        set({ ...clearState, ...detectWarTransition(ns) });
       }
       return;
     }
@@ -891,13 +906,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.trainMandateActive) {
       ns = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
+      const warTransition = detectWarTransition(ns);
       set({
         gameState: ns,
         showTrainModal: false,
         komainuPrayMode: false,
         komainuPrayPlayerId: null,
         monsterPlacementPlayerId: null,
-        ...detectWarTransition(ns),
+        ...warTransition,
+        ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' && !ns.kamiResolutionActive && Object.keys(warTransition).length === 0
+          ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null }
+          : {}),
       });
     } else {
       set({
@@ -970,7 +989,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
         set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
       } else {
-        set({ gameState: ns });
+        set({ gameState: ns, ...detectWarTransition(ns) });
       }
       return;
     }
@@ -1000,7 +1019,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
       set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
     } else {
-      set({ gameState: ns });
+      set({ gameState: ns, ...detectWarTransition(ns) });
     }
   },
 
@@ -1014,7 +1033,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
       set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [], turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
     } else {
-      set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [] });
+      set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [], ...detectWarTransition(ns) });
     }
   },
 
@@ -1035,7 +1054,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!advanced.kamiResolutionActive && advanced.currentPhase === 'politics' && gameState.mode === 'hotseat') {
         set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null });
       } else {
-        set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [] });
+        set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], ...detectWarTransition(advanced) });
       }
     } else {
       set({ gameState: updated, moveFrom: null, selectedFigures: [] });
@@ -1052,7 +1071,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!advanced.kamiResolutionActive && advanced.currentPhase === 'politics' && gameState.mode === 'hotseat') {
       set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null });
     } else {
-      set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [] });
+      set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], ...detectWarTransition(advanced) });
     }
   },
 
@@ -1100,7 +1119,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
       set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
     } else {
-      set({ gameState: ns });
+      set({ gameState: ns, ...detectWarTransition(ns) });
     }
   },
 
@@ -1152,7 +1171,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!updated.kamiResolutionActive && updated.currentPhase === 'politics' && gameState.mode === 'hotseat') {
       set({ gameState: updated, turnPopupPlayer: updated.players[updated.currentPlayerIndex]?.id || null });
     } else {
-      set({ gameState: updated });
+      set({ gameState: updated, ...detectWarTransition(updated) });
     }
   },
 
@@ -1171,7 +1190,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
       set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
     } else {
-      set({ gameState: ns });
+      set({ gameState: ns, ...detectWarTransition(ns) });
     }
   },
 
