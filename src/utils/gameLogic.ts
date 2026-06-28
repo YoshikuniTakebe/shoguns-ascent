@@ -1937,6 +1937,14 @@ export function resolveNextBattle(state: GameState): GameState {
     }
   }
 
+  // Zero force edge case: if no player has force, the player with best honor among participants wins
+  if (maxForce === 0 && !winnerId) {
+    const sortedByHonor = [...battle.participants].sort((a, b) => {
+      return newState.honorTrack.indexOf(a) - newState.honorTrack.indexOf(b);
+    });
+    winnerId = sortedByHonor[0];
+  }
+
   if (winnerId) {
     battle.winner = winnerId;
     const winner = newState.players.find((p) => p.id === winnerId)!;
@@ -1948,22 +1956,39 @@ export function resolveNextBattle(state: GameState): GameState {
     }
 
     // Losing players' figures are killed (return to reserve). Daimyo is immune to kill effects.
+    // Allied figures of the winner are also protected.
+    const killedMap: Record<string, Record<string, number>> = {};
     battle.participants.forEach((pid) => {
       if (pid === winnerId) return;
+      // Skip killing figures of players allied with the winner
+      if (winner.allies.includes(pid)) return;
       const loserFigures = finalProvince.figures.filter((f) => f.owner === pid);
       loserFigures.forEach((fig) => {
         if (fig.type === 'daimyo') return; // Daimyo immune
+        if (fig.type === 'fortress') return; // Fortresses immune
         const loser = newState.players.find((p) => p.id === pid)!;
         if (fig.type === 'bushi') loser.bushi += 1;
         else if (fig.type === 'shinto') loser.shinto += 1;
+        // Track killed figures for display
+        if (!killedMap[pid]) killedMap[pid] = {};
+        killedMap[pid][fig.type] = (killedMap[pid][fig.type] || 0) + 1;
       });
     });
 
-    // Remove killed figures from province (keep winner's figures, keep daimyos and fortresses)
+    // Build killedFigures array from the map
+    const killedFigures: { owner: string; figureType: string; count: number }[] = [];
+    for (const ownerId of Object.keys(killedMap)) {
+      for (const figType of Object.keys(killedMap[ownerId])) {
+        killedFigures.push({ owner: ownerId, figureType: figType, count: killedMap[ownerId][figType] });
+      }
+    }
+    battle.killedFigures = killedFigures;
+
+    // Remove killed figures from province (keep winner's figures, allied figures, daimyos, and fortresses)
     newState.provinces[battle.provinceId] = {
       ...finalProvince,
       figures: finalProvince.figures.filter(
-        (f) => f.owner === winnerId || f.type === 'daimyo' || f.type === 'fortress'
+        (f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'daimyo' || f.type === 'fortress'
       ),
     };
 

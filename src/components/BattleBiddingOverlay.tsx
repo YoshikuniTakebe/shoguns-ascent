@@ -1,7 +1,15 @@
 import { useState, useCallback, useEffect, useRef, type DragEvent, type TouchEvent as ReactTouchEvent } from 'react';
-import { WAR_TACTICS } from '../types/game';
+import { WAR_TACTICS, CLANS } from '../types/game';
 import coinImg from '../img/coin.png';
 import { useT } from '../i18n';
+import { ClanShield } from './ClanShields';
+
+export interface BattleCombatant {
+  playerId: string;
+  playerName: string;
+  clanId: string;
+  force: number;
+}
 
 interface BattleBiddingOverlayProps {
   playerName: string;
@@ -10,6 +18,7 @@ interface BattleBiddingOverlayProps {
   provinceName: string;
   battleNumber: number;
   onConfirm: (bids: Record<string, number>) => void;
+  combatants?: BattleCombatant[];
 }
 
 const TACTIC_KANJI: Record<string, string> = {
@@ -36,6 +45,7 @@ export const BattleBiddingOverlay = ({
   provinceName,
   battleNumber,
   onConfirm,
+  combatants,
 }: BattleBiddingOverlayProps) => {
   const t = useT();
 
@@ -216,41 +226,70 @@ export const BattleBiddingOverlay = ({
           </p>
         </div>
 
+        {/* Combatants Panel */}
+        {combatants && combatants.length > 0 && (
+          <div className="bidding-combatants-panel">
+            {combatants.map(c => {
+              const clan = CLANS.find(cl => cl.id === c.clanId);
+              return (
+                <div key={c.playerId} className="bidding-combatant-item">
+                  <ClanShield clanId={c.clanId} size={20} />
+                  <span className="bidding-combatant-name" style={{ color: clan?.color || '#fff' }}>{c.playerName}</span>
+                  <span className="bidding-combatant-force">{t('battle.force')}: {c.force}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Tactic Tiles */}
         <div className="bidding-tactics-row">
-          {WAR_TACTICS.map(tactic => {
+          {WAR_TACTICS.map((tactic, idx) => {
             const tacticCoins = Object.entries(coinPositions).filter(([, pos]) => pos === tactic.id);
             const isOver = dragOverTarget === tactic.id;
+            const tooltipKey = `battle.tacticDesc.${tactic.id}` as const;
             return (
-              <div
-                key={tactic.id}
-                className={`bidding-tactic-tile${isOver ? ' bidding-drop-highlight' : ''}`}
-                data-drop-target={tactic.id}
-                onDragOver={handleDragOver}
-                onDragEnter={(e) => handleDragEnter(e, tactic.id)}
-                onDragLeave={(e) => handleDragLeave(e, tactic.id)}
-                onDrop={(e) => handleDrop(e, tactic.id)}
-              >
-                <div className="bidding-tactic-symbol">{TACTIC_SYMBOLS[tactic.id]}</div>
-                <div className="bidding-tactic-kanji">{TACTIC_KANJI[tactic.id]}</div>
-                <div className="bidding-tactic-name">{tactic.name}</div>
-                <div className="bidding-tactic-coins-area">
-                  {tacticCoins.map(([coinId]) => (
-                    <img
-                      key={coinId}
-                      src={coinImg}
-                      alt="coin"
-                      className="bidding-coin"
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, coinId)}
-                      onTouchStart={(e) => handleTouchStart(e, coinId)}
-                      onTouchMove={handleTouchMove}
-                      onTouchEnd={handleTouchEnd}
-                    />
-                  ))}
-                </div>
-                <div className="bidding-tactic-count">
-                  {tacticCoins.length > 0 && <span>{tacticCoins.length}</span>}
+              <div key={tactic.id} style={{ display: 'contents' }}>
+                {/* Separator between Hire Ronin (order 3) and Imperial Poets (order 4) */}
+                {idx === 3 && (
+                  <div className="bidding-battle-resolution-separator">
+                    <div className="bidding-separator-line" />
+                    <span className="bidding-separator-text">{t('battle.battleResolution')}</span>
+                    <div className="bidding-separator-line" />
+                  </div>
+                )}
+                <div
+                  className={`bidding-tactic-tile${isOver ? ' bidding-drop-highlight' : ''}`}
+                  data-drop-target={tactic.id}
+                  onDragOver={handleDragOver}
+                  onDragEnter={(e) => handleDragEnter(e, tactic.id)}
+                  onDragLeave={(e) => handleDragLeave(e, tactic.id)}
+                  onDrop={(e) => handleDrop(e, tactic.id)}
+                >
+                  <div className="bidding-tactic-symbol">{TACTIC_SYMBOLS[tactic.id]}</div>
+                  <div className="bidding-tactic-kanji">{TACTIC_KANJI[tactic.id]}</div>
+                  <div className="bidding-tactic-name">{tactic.name}</div>
+                  <div className="bidding-tactic-tooltip">
+                    {t(tooltipKey)}
+                  </div>
+                  <div className="bidding-tactic-coins-area">
+                    {tacticCoins.map(([coinId]) => (
+                      <img
+                        key={coinId}
+                        src={coinImg}
+                        alt="coin"
+                        className="bidding-coin"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, coinId)}
+                        onTouchStart={(e) => handleTouchStart(e, coinId)}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                      />
+                    ))}
+                  </div>
+                  <div className="bidding-tactic-count">
+                    {tacticCoins.length > 0 && <span>{tacticCoins.length}</span>}
+                  </div>
                 </div>
               </div>
             );

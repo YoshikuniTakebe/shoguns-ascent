@@ -129,6 +129,16 @@ export const en = {
   'battle.coinDistributionInstruction': 'Choose which loser gets 1 extra coin',
   'battle.coinPool': 'Coins assigned',
   'battle.confirmBidsOverlay': 'Confirm Bids ({total} coins)',
+  'battle.tacticDesc.seppuku': 'Kill your own Bushi. Gain 1 VP and 1 Honor for each figure killed.',
+  'battle.tacticDesc.take-hostage': 'Capture 1 enemy Bushi or Shinto as a hostage. Gain 1 VP.',
+  'battle.tacticDesc.hire-ronin': 'Your Ronin tokens add their force to your total in the final battle calculation.',
+  'battle.tacticDesc.imperial-poets': 'Gain VP equal to the number of your figures remaining in the province.',
+  'battle.battleResolution': 'Battle Resolution',
+  'battle.killedFigures': 'Casualties',
+  'battle.figuresKilled': '{count} {type} killed',
+  'battle.figureTypeBushi': 'bushi',
+  'battle.figureTypeShinto': 'shinto',
+  'battle.figureTypeMonster': 'monster',
 
   // GameOverScreen
   'gameOver.title': 'GAME OVER',

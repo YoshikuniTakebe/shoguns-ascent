@@ -169,7 +169,7 @@
 .bidding-overlay-title{font-size:1.4rem;font-weight:bold;color:var(--accent-gold);letter-spacing:0.08em;text-shadow:0 0 12px rgba(200,169,81,0.5);margin-bottom:0.3rem}
 .bidding-overlay-player{font-size:1.1rem;font-weight:600;letter-spacing:0.05em}
 .bidding-tactics-row{display:flex;gap:1rem;justify-content:center;align-items:stretch;flex-wrap:wrap}
-.bidding-tactic-tile{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:160px;min-height:260px;background:linear-gradient(180deg,rgba(15,52,96,0.9) 0%,rgba(26,26,46,0.95) 100%);border:2px solid var(--border-gold);border-radius:12px;padding:1rem 0.7rem;gap:0.5rem;transition:border-color 0.2s,box-shadow 0.2s;cursor:default}
+.bidding-tactic-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:160px;min-height:260px;background:linear-gradient(180deg,rgba(15,52,96,0.9) 0%,rgba(26,26,46,0.95) 100%);border:2px solid var(--border-gold);border-radius:12px;padding:1rem 0.7rem;gap:0.5rem;transition:border-color 0.2s,box-shadow 0.2s;cursor:default}
 .bidding-tactic-tile:hover{border-color:var(--accent-gold);box-shadow:0 0 16px rgba(200,169,81,0.3)}
 .bidding-tactic-symbol{font-size:1.8rem;margin-bottom:0.2rem}
 .bidding-tactic-kanji{font-size:2.4rem;font-weight:bold;color:var(--accent-gold);text-shadow:0 0 10px rgba(200,169,81,0.4);line-height:1.1}
@@ -186,3 +186,19 @@
 .bidding-confirm-btn{margin-top:0.5rem;padding:0.9rem 3rem;font-size:1.1rem;letter-spacing:0.05em}
 .bidding-drop-highlight{border-color:var(--accent-gold) !important;box-shadow:0 0 20px rgba(200,169,81,0.6),0 0 40px rgba(200,169,81,0.25) !important}
 .bidding-coin-touch-ghost{filter:drop-shadow(0 4px 8px rgba(200,169,81,0.7))}
+
+/* Bidding Combatants Panel */
+.bidding-combatants-panel{display:flex;flex-wrap:wrap;gap:0.6rem;justify-content:center;padding:0.6rem 1rem;background:rgba(0,0,0,0.3);border:1px solid rgba(200,169,81,0.3);border-radius:8px;width:100%;max-width:600px}
+.bidding-combatant-item{display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.6rem;background:rgba(15,52,96,0.5);border-radius:6px;border:1px solid rgba(200,169,81,0.2)}
+.bidding-combatant-name{font-weight:bold;font-size:0.85rem}
+.bidding-combatant-force{font-size:0.8rem;opacity:0.8;margin-left:0.2rem}
+
+/* Bidding Tactic Tooltip */
+.bidding-tactic-tooltip{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:200px;padding:0.6rem 0.8rem;background:rgba(10,10,20,0.95);border:1px solid var(--accent-gold);border-radius:8px;color:var(--text-primary);font-size:0.78rem;line-height:1.4;text-align:center;z-index:1100;box-shadow:0 4px 16px rgba(0,0,0,0.6);pointer-events:none}
+.bidding-tactic-tile:hover .bidding-tactic-tooltip{display:block}
+.bidding-tactic-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:6px;border-style:solid;border-color:var(--accent-gold) transparent transparent transparent}
+
+/* Battle Resolution Separator */
+.bidding-battle-resolution-separator{display:flex;align-items:center;gap:0.5rem;width:100%;padding:0.3rem 0;margin:0.2rem 0}
+.bidding-separator-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--accent-gold),transparent)}
+.bidding-separator-text{font-size:0.8rem;font-weight:bold;color:var(--accent-gold);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;text-shadow:0 0 8px rgba(200,169,81,0.4)}
