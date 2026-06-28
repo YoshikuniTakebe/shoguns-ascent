@@ -264,20 +264,22 @@ export const SpringIcon = ({ size = 24, color = 'currentColor', className }: Ico
     height={size}
     viewBox="0 0 24 24"
     fill="none"
-    stroke="none"
+    stroke={color}
+    strokeWidth="0.5"
   >
-    {/* Five heart-shaped petals arranged radially */}
-    <path d="M12 4 C12.8 2.5, 14 2, 14.5 3 C15 4, 14 5.5, 12 7 C10 5.5, 9 4, 9.5 3 C10 2, 11.2 2.5, 12 4" fill={color} />
-    <path d="M16.5 8.5 C18 7.5, 19.5 7.5, 19.5 8.5 C19.5 9.5, 18 10.5, 15.5 10.5 C17 8.5, 16.5 7.5, 16.5 8.5" fill={color} />
-    <path d="M15 14.5 C16.5 15.8, 16.5 17.3, 15.5 17.3 C14.5 17.3, 13.5 16, 13 13.5 C14.5 14.5, 15.5 14, 15 14.5" fill={color} />
-    <path d="M9 14.5 C7.5 15.8, 7.5 17.3, 8.5 17.3 C9.5 17.3, 10.5 16, 11 13.5 C9.5 14.5, 8.5 14, 9 14.5" fill={color} />
-    <path d="M7.5 8.5 C6 7.5, 4.5 7.5, 4.5 8.5 C4.5 9.5, 6 10.5, 8.5 10.5 C7 8.5, 7.5 7.5, 7.5 8.5" fill={color} />
-    {/* Center stamen dots */}
-    <circle cx="12" cy="10" r="1.2" fill={color} opacity="0.7" />
-    <circle cx="10.5" cy="11" r="0.6" fill={color} opacity="0.5" />
-    <circle cx="13.5" cy="11" r="0.6" fill={color} opacity="0.5" />
-    <circle cx="11" cy="9" r="0.6" fill={color} opacity="0.5" />
-    <circle cx="13" cy="9" r="0.6" fill={color} opacity="0.5" />
+    {/* Five sakura petals with notched tips arranged radially around center */}
+    {/* Top petal */}
+    <path d="M12 11 C11 9, 10.2 6.5, 10.5 4.5 C10.7 3.2, 11.3 2.5, 12 3.5 C12.7 2.5, 13.3 3.2, 13.5 4.5 C13.8 6.5, 13 9, 12 11 Z" fill={color} />
+    {/* Top-right petal */}
+    <path d="M12.5 11.5 C14 10, 16 8.5, 17.8 8 C19 7.7, 19.7 8.2, 19 9.1 C19.9 9.6, 19.4 10.3, 18.3 10.8 C16.5 11.6, 14.2 11.5, 12.5 11.5 Z" fill={color} />
+    {/* Bottom-right petal */}
+    <path d="M12.3 12.5 C13.5 13.8, 14.8 16, 15 17.8 C15.1 19, 14.6 19.7, 13.8 19 C13.5 19.9, 12.7 19.5, 12.3 18.4 C11.7 16.6, 12 14.3, 12.3 12.5 Z" fill={color} />
+    {/* Bottom-left petal */}
+    <path d="M11.7 12.5 C10.5 13.8, 9.2 16, 9 17.8 C8.9 19, 9.4 19.7, 10.2 19 C10.5 19.9, 11.3 19.5, 11.7 18.4 C12.3 16.6, 12 14.3, 11.7 12.5 Z" fill={color} />
+    {/* Top-left petal */}
+    <path d="M11.5 11.5 C10 10, 8 8.5, 6.2 8 C5 7.7, 4.3 8.2, 5 9.1 C4.1 9.6, 4.6 10.3, 5.7 10.8 C7.5 11.6, 9.8 11.5, 11.5 11.5 Z" fill={color} />
+    {/* Center circle */}
+    <circle cx="12" cy="12" r="1.5" fill={color} opacity="0.8" />
   </svg>
 );
 

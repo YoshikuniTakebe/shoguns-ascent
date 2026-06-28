@@ -195,7 +195,7 @@ export const ActionPanel = () => {
             return (
               <div className="train-active">
                 <p className="train-notice" style={{ margin: 0 }}>
-                  <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#000' }}>{t('actions.mandateName.train')}</span>
+                  <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent-gold)' }}>{t('actions.mandateName.train')}</span>
                 </p>
                 <p style={{ margin: '4px 0' }}>
                   <ClanShield clanId={cp?.clanId || ''} size={20} />
@@ -219,7 +219,7 @@ export const ActionPanel = () => {
             return (
               <div className="marshal-active">
                 <p className="marshal-notice" style={{ margin: 0 }}>
-                  <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#000' }}>{t('actions.mandateName.marshal')}</span>
+                  <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent-gold)' }}>{t('actions.mandateName.marshal')}</span>
                 </p>
                 <p style={{ margin: '4px 0' }}>
                   <ClanShield clanId={cp?.clanId || ''} size={20} />
@@ -237,7 +237,7 @@ export const ActionPanel = () => {
                   <p className="marshal-moved-count">{t('actions.marshalMovedCount', { count: gameState.marshalMovedFigures.length })}</p>
                 )}
                 <div className="march-controls">
-                  <button className={`btn-secondary ${moveMode ? 'active' : ''}`} style={{ width: '100%' }} onClick={toggleMoveMode}>
+                  <button className={`btn-secondary ${moveMode ? 'active' : ''}`} style={{ width: '100%', fontSize: '0.85rem' }} onClick={toggleMoveMode}>
                     {moveMode ? t('actions.cancelMove') : t('actions.moveForces')}
                   </button>
                   {moveMode && (
@@ -252,7 +252,7 @@ export const ActionPanel = () => {
                   !gameState.marshalFortressBuiltBy.includes(cp!.id) &&
                   cp!.fortresses > 0 && cp!.coins >= 3 && (
                   <div style={{ marginTop: '6px' }}>
-                    <button className={`btn-secondary ${buildFortressMode ? 'active' : ''}`} onClick={toggleBuildFortressMode}>
+                    <button className={`btn-secondary ${buildFortressMode ? 'active' : ''}`} style={{ fontSize: '0.85rem' }} onClick={toggleBuildFortressMode}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                         {t('actions.buildFortress')}
                         <CoinIcon size={22} color="#DAA520" />
@@ -273,7 +273,7 @@ export const ActionPanel = () => {
           {gameState.recruitMandateActive && (
             <div className="recruit-active" style={{ borderColor: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan ? clan.color : undefined; })() }}>
               <p className="recruit-notice" style={{ margin: 0 }}>
-                <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#000' }}>{t('actions.mandateName.recruit')}</span>
+                <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent-gold)' }}>{t('actions.mandateName.recruit')}</span>
               </p>
               <p style={{ margin: '4px 0' }}>
                 <ClanShield clanId={cp?.clanId || ''} size={20} />
@@ -325,7 +325,7 @@ export const ActionPanel = () => {
             return (
               <div className="betray-active">
                 <p className="betray-notice" style={{ margin: 0 }}>
-                  <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#000' }}>{t('actions.mandateName.betray')}</span>
+                  <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent-gold)' }}>{t('actions.mandateName.betray')}</span>
                 </p>
                 <p style={{ margin: '4px 0' }}>
                   <ClanShield clanId={cp?.clanId || ''} size={20} />
