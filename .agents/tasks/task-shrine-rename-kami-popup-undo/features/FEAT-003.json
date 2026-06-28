@@ -28,5 +28,5 @@
     "cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": "Successfully implemented the undo system for mandate turns. Added UndoIcon SVG component, undoMandateState field and doUndoMandate action in the store, snapshot saving/clearing logic in doChooseMandateTile, doLotoChooseActualMandate, doSkipMarshalTurn, doSkipRecruitTurn, doSkipBetrayTurn, doBetraySelectFigure, doRecruitPlaceFigure, and doRecruitPlaceTempleShinto. Added undo buttons in ActionPanel for marshal, recruit, and betray sections. Build and type-check pass cleanly."
+  "findings": "Successfully implemented the undo system for mandate turns. Added UndoIcon SVG component, undoMandateState field and doUndoMandate action in the store, snapshot saving/clearing logic in doChooseMandateTile, doLotoChooseActualMandate, doSkipMarshalTurn, doSkipRecruitTurn, doSkipBetrayTurn, doBetraySelectFigure, doRecruitPlaceFigure, and doRecruitPlaceTempleShinto. Added undo buttons in ActionPanel for marshal, recruit, and betray sections. Build and type-check pass cleanly. Post-review fix: added undoMandateState refresh in doBetraySelectFigure else branch (when betrayMandateActive remains true after player advance) so that subsequent players get a fresh snapshot instead of reverting to player 1's state."
 }
