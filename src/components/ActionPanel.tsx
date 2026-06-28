@@ -194,8 +194,15 @@ export const ActionPanel = () => {
             const cpClan = cp ? CLANS.find(c => c.id === cp.clanId) : null;
             return (
               <div className="train-active">
-                <p className="train-notice">
-                  Mandato Entrenar - <span style={{ color: cpClan?.color || '#8B4513', fontWeight: 'bold' }}>{cp?.name || ''}</span> puede comprar una carta del Mercado de Estación o pasar.
+                <p className="train-notice" style={{ margin: 0 }}>
+                  <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#000' }}>{t('actions.mandateName.train' as any)}</span>
+                </p>
+                <p style={{ margin: '4px 0' }}>
+                  <ClanShield clanId={cp?.clanId || ''} size={20} />
+                  <span style={{ color: cpClan?.color || '#8B4513', fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
+                </p>
+                <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
+                  {t('actions.mandateDesc.train' as any)}
                 </p>
                 <p className="recruit-player-info">
                   JUGADOR {gameState.trainResolutionIndex + 1} DE {gameState.trainResolutionOrder.length}
@@ -211,9 +218,16 @@ export const ActionPanel = () => {
               (cp.id === gameState.marshalMandateIssuerId || gameState.players.find(p => p.id === gameState.marshalMandateIssuerId)?.allies.includes(cp.id));
             return (
               <div className="marshal-active">
-                <p className="marshal-notice">
-                  Mandato Movilizar - <span style={{ color: cpClan?.color || '#4CAF50', fontWeight: 'bold' }}>{cp?.name || ''}</span> puede mover figuras.{' '}
-                  {hasBonus && t('actions.marshalBonus')}
+                <p className="marshal-notice" style={{ margin: 0 }}>
+                  <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#000' }}>{t('actions.mandateName.marshal' as any)}</span>
+                </p>
+                <p style={{ margin: '4px 0' }}>
+                  <ClanShield clanId={cp?.clanId || ''} size={20} />
+                  <span style={{ color: cpClan?.color || '#4CAF50', fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
+                </p>
+                <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
+                  {t('actions.mandateDesc.marshal' as any)}{' '}
+                  {hasBonus && t('actions.marshalBonusFortress' as any)}
                 </p>
                 <p className="recruit-player-info">
                   JUGADOR {gameState.marshalResolutionIndex + 1} DE {gameState.marshalResolutionOrder.length}
@@ -239,7 +253,11 @@ export const ActionPanel = () => {
                   cp!.fortresses > 0 && cp!.coins >= 3 && (
                   <div style={{ marginTop: '6px' }}>
                     <button className={`btn-secondary ${buildFortressMode ? 'active' : ''}`} onClick={toggleBuildFortressMode}>
-                      {t('actions.buildFortress')}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        {t('actions.buildFortress')}
+                        <CoinIcon size={22} color="#DAA520" />
+                        <span style={{ fontWeight: 'bold', color: '#DAA520', fontSize: '1.1em' }}>3</span>
+                      </span>
                     </button>
                     {buildFortressMode && <p className="move-instruction">{t('actions.marshalSelectProvince')}</p>}
                   </div>
@@ -254,8 +272,15 @@ export const ActionPanel = () => {
           {/* Recruit mandate active - show figure type selector and place/end turn options */}
           {gameState.recruitMandateActive && (
             <div className="recruit-active" style={{ borderColor: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan ? clan.color : undefined; })() }}>
-              <p className="recruit-notice">
-                Mandato Reclutar - <span style={{ color: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })(), fontWeight: 'bold' }}>{cp?.name || ''}</span> puede invocar figuras en sus fortalezas.{' '}
+              <p className="recruit-notice" style={{ margin: 0 }}>
+                <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#000' }}>{t('actions.mandateName.recruit' as any)}</span>
+              </p>
+              <p style={{ margin: '4px 0' }}>
+                <ClanShield clanId={cp?.clanId || ''} size={20} />
+                <span style={{ color: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })(), fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
+              </p>
+              <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
+                {t('actions.mandateDesc.recruit' as any)}{' '}
                 {gameState.recruitMandateIssuerId && cp &&
                   (cp.id === gameState.recruitMandateIssuerId || gameState.players.find(p => p.id === gameState.recruitMandateIssuerId)?.allies.includes(cp.id)) &&
                   t('actions.recruitBonus')}
@@ -299,8 +324,15 @@ export const ActionPanel = () => {
             const cpClan = cp ? CLANS.find(c => c.id === cp.clanId) : null;
             return (
               <div className="betray-active">
-                <p className="betray-notice">
-                  Mandato Traicionar - <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold' }}>{cp?.name || ''}</span> puede reemplazar figuras enemigas.
+                <p className="betray-notice" style={{ margin: 0 }}>
+                  <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#000' }}>{t('actions.mandateName.betray' as any)}</span>
+                </p>
+                <p style={{ margin: '4px 0' }}>
+                  <ClanShield clanId={cp?.clanId || ''} size={20} />
+                  <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
+                </p>
+                <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
+                  {t('actions.mandateDesc.betray' as any)}
                 </p>
                 <p className="recruit-player-info">
                   JUGADOR 1 DE 1
