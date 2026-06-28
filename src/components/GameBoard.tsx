@@ -510,12 +510,38 @@ export const GameBoard = () => {
       {/* Kami Phase Start Popup */}
       {kamiPhasePopupVisible && (
         <div className="harvest-popup-backdrop">
-          <div className="harvest-popup" style={{ borderColor: '#9B59B6', maxWidth: '420px', minWidth: '320px' }}>
-            <h3 style={{ color: '#9B59B6', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem' }}>
-              {t('kami.phaseStart.title')}
+          <div className="harvest-popup" style={{ borderColor: '#9B59B6', maxWidth: '420px', minWidth: '320px', background: 'linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #1a0a2e 100%)', boxShadow: '0 0 20px rgba(155, 89, 182, 0.4), inset 0 0 30px rgba(155, 89, 182, 0.05)', borderWidth: '2px' }}>
+            <h3 style={{ color: '#9B59B6', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                <path d="M4 6h16M5 6c0-1 2-3 7-3s7 2 7 3" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
+                <path d="M6 6v16M18 6v16" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
+                <path d="M6 11h12" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+              </svg>
+              <span>{t('kami.phaseStart.title')}</span>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                <path d="M4 6h16M5 6c0-1 2-3 7-3s7 2 7 3" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
+                <path d="M6 6v16M18 6v16" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
+                <path d="M6 11h12" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+              </svg>
             </h3>
             <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.85, marginBottom: '16px' }}>
-              {t('kami.phaseStart.description')}
+              {(() => {
+                const desc = t('kami.phaseStart.description');
+                const boldPhrases = ['left to right', 'izquierda a derecha'];
+                for (const phrase of boldPhrases) {
+                  const idx = desc.indexOf(phrase);
+                  if (idx !== -1) {
+                    return (
+                      <>
+                        {desc.slice(0, idx)}
+                        <strong style={{ color: '#D4AF37' }}>{phrase}</strong>
+                        {desc.slice(idx + phrase.length)}
+                      </>
+                    );
+                  }
+                }
+                return desc;
+              })()}
             </p>
             <div style={{ textAlign: 'center' }}>
               <button className="btn-primary harvest-popup-btn" onClick={dismissKamiPhasePopup} style={{ borderColor: '#9B59B6' }}>
