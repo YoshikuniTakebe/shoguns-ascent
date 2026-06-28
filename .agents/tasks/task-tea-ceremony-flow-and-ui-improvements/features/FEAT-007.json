@@ -2,7 +2,7 @@
   "id": "FEAT-007",
   "type": "fix",
   "description": "Remove recruit auto-advance, enhance Raijin overlay, add Fujin undo button, fix season cards modal z-index, and improve kami-action-overlay width.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Remove recruit auto-advance in gameStore.ts - player must press Terminar manually",
     "2. Enhance Raijin overlay in GameBoard.tsx with ClanShield, font-size reduction, bigger BushiIcon",
@@ -23,5 +23,6 @@
     "Run npx tsc --noEmit to verify no type errors",
     "Run npx vite build to verify build succeeds"
   ],
-  "blocked_reason": null
+  "blocked_reason": null,
+  "findings": "All changes verified with tsc --noEmit and vite build. Both recruit placement handlers (province and temple shinto) no longer auto-advance; player must use doSkipRecruitTurn. Fujin undo stores pre-move snapshot as fujinPreMoveState, cleared on Fujin phase start and doFujinDone. Translations changed from 'Movimientos {count}' to '{count} Movimientos'. Season cards modal z-index raised to 1200 to render above honor track (1100). Kami overlay widened to 700px with nowrap."
 }
