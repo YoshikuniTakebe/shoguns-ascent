@@ -1,0 +1,26 @@
+{
+  "project_type": "React + TypeScript board game (Shogun's Ascent)",
+  "language": "TypeScript/React",
+  "build_system": "Vite + TSC",
+  "test_framework": "No test framework (no tests directory found)",
+  "build_command": "npx tsc --noEmit && npx vite build",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "Run TypeScript type-check (npx tsc --noEmit) and Vite build (npx vite build) to ensure no compilation errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "OPEN_INTERNET - full access available",
+  "contribution_requirements": "No CONTRIBUTING.md found. Maintain existing code style and patterns.",
+  "key_patterns": "Zustand store (src/store/gameStore.ts), i18n with useT() hook, Icon components in src/components/Icons.tsx, CLANS array in src/types/game.ts with {id, name, color, initialHonor}. Game logic in src/utils/gameLogic.ts. GameLog uses applyPattern() to replace text segments with React nodes for icons/styling.",
+  "relevant_files": [
+    "src/components/GameLog.tsx",
+    "src/components/HarvestPopup.tsx",
+    "src/components/GameBoard.tsx",
+    "src/utils/gameLogic.ts",
+    "src/components/BattleBiddingOverlay.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/components/KamiResolutionPopup.tsx",
+    "src/components/Icons.tsx",
+    "src/types/game.ts"
+  ],
+  "directory_structure": "src/components/ (React components), src/utils/gameLogic.ts (core game logic), src/store/gameStore.ts (Zustand store), src/types/game.ts (types + constants like CLANS), src/i18n/ (translations)"
+}
