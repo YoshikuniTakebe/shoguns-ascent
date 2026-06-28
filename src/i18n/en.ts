@@ -337,6 +337,9 @@ export const en = {
   'war.phaseStart.noBonuses': 'No war upgrade bonuses active.',
   'war.phaseStart.accept': 'Accept',
 
+  // Rule violations
+  'rule.invalidMove': 'Invalid move',
+
   // Turn Popup
   'game.turnPopupAccept': 'Accept',
 

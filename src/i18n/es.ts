@@ -339,6 +339,9 @@ export const es: Record<TranslationKey, string> = {
   'war.phaseStart.noBonuses': 'No hay bonificaciones de mejora de guerra activas.',
   'war.phaseStart.accept': 'Aceptar',
 
+  // Rule violations
+  'rule.invalidMove': 'Movimiento no valido',
+
   // Turn Popup
   'game.turnPopupAccept': 'Aceptar',
 

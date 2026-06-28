@@ -1129,8 +1129,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!currentTemple || !currentTemple.winnerId) return;
 
     const ns = moveForces(gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds);
-    // If moveForces returned the same state (validation failed), do nothing
-    if (ns === gameState) return;
+    // If moveForces returned the same state (validation failed), show feedback
+    if (ns === gameState) {
+      const lang = get().language;
+      set({ ruleViolationMessage: lang === 'en' ? 'Invalid move' : 'Movimiento no valido' });
+      return;
+    }
 
     const remaining = ns.fujinMovesRemaining - 1;
     const updated: GameState = { ...ns, fujinMovesRemaining: remaining };
