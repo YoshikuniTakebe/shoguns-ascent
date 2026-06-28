@@ -309,6 +309,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (recruitFigureType === 'bushi' && player.bushi <= 0) return;
     if (recruitFigureType === 'shinto' && player.shinto <= 0) return;
 
+    // Luna clan power: max 2 figures per province (excluding fortresses)
+    if (player.clanId === 'luna') {
+      const lunaFiguresInProvince = jinmenjuProvince.figures.filter(
+        (f) => f.owner === cp.id && f.type !== 'fortress'
+      ).length;
+      if (lunaFiguresInProvince >= 2) return;
+    }
+
     const figureId = Math.random().toString(36).substring(2, 10);
     const newFigure = { type: recruitFigureType as 'bushi' | 'shinto', owner: cp.id, id: figureId };
 
