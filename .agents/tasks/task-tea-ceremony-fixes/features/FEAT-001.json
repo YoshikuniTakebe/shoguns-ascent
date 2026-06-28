@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix multiple UI and game logic issues: coin format in GameLog, VPIcon color in HarvestPopup, Raijin overlay message with player name, Luna temple force calculation, and verify BattleBiddingOverlay rendering",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Fix GameLog coin display (src/components/GameLog.tsx around line 175-177): The coinPattern regex `/(\\ d+\\s*)?\\b(moneda|monedas|coin|coins)\\b/gi` matches e.g. '2 coins'. Currently it renders `{m}<CoinIcon />` which outputs '2 coins [icon]'. Fix: extract the number from the match using a regex capture group, then render `<CoinIcon />{number}` (icon first, then number only, dropping the word coin/moneda). The match `m` contains the full match like '2 coins' or '2 monedas', so parse out just the digit(s) from it.",
     "2. Fix VPIcon color in HarvestPopup (src/components/HarvestPopup.tsx around line 54): Change `<VPIcon size={40} color=\"#c8a951\" />` to `<VPIcon size={40} color=\"#E63946\" />` (red instead of gold).",
@@ -25,5 +25,5 @@
     "npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 4 code changes implemented successfully. Issue 5 (BattleBiddingOverlay) confirmed as no code change needed - the component has no early returns and renders unconditionally. TypeScript type-check and Vite build both pass cleanly."
 }
