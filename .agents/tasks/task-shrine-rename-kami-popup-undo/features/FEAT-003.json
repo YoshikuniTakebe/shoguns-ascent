@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Add undo system for mandate turns (marshal, recruit, betray). Store a snapshot of gameState when each player's mandate turn begins, add an undo button (circular arrow icon) to the ActionPanel, and restore the snapshot on click. The confirm/end-turn button finalizes (clears snapshot).",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "In src/components/Icons.tsx: Add a new UndoIcon component - a circular arrow (counterclockwise) SVG icon following the same IconProps pattern as other icons.",
     "In src/store/gameStore.ts interface GameStore: Add 'undoMandateState: GameState | null' field. Add 'doUndoMandate: () => void' action. Add 'saveMandateSnapshot: () => void' helper (or inline).",

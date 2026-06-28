@@ -4,7 +4,7 @@ import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
-import { BushiIcon, ShintoIcon, CoinIcon } from './Icons';
+import { BushiIcon, ShintoIcon, CoinIcon, UndoIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 
 export const ActionPanel = () => {
@@ -17,6 +17,7 @@ export const ActionPanel = () => {
     doSkipRecruitTurn, toggleRecruitMode, recruitMode, recruitFigureType, setRecruitFigureType,
     doSkipBetrayTurn,
     doResolveWinter,
+    undoMandateState, doUndoMandate,
   } = useGameStore();
   const t = useT();
 
@@ -262,9 +263,21 @@ export const ActionPanel = () => {
                     {buildFortressMode && <p className="move-instruction">{t('actions.marshalSelectProvince')}</p>}
                   </div>
                 )}
-                <button className="btn-primary" style={{ marginTop: '8px', width: '100%' }} onClick={doSkipMarshalTurn}>
-                  {t('actions.endMarshalTurn')}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                  {undoMandateState && (
+                    <button
+                      className="btn-secondary"
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '50%', padding: 0, marginRight: '8px' }}
+                      onClick={doUndoMandate}
+                      title="Undo"
+                    >
+                      <UndoIcon size={20} color="currentColor" />
+                    </button>
+                  )}
+                  <button className="btn-primary" style={{ flex: 1 }} onClick={doSkipMarshalTurn}>
+                    {t('actions.endMarshalTurn')}
+                  </button>
+                </div>
               </div>
             );
           })()}
@@ -313,9 +326,21 @@ export const ActionPanel = () => {
                 </button>
               </div>
               {recruitMode && <p className="move-instruction">{recruitFigureType === 'shinto' ? t('actions.recruitSelectProvinceOrTemple') : t('actions.recruitSelectProvince')}</p>}
-              <button className="btn-primary" style={{ marginTop: '8px' }} onClick={doSkipRecruitTurn}>
-                {t('actions.endRecruitTurn')}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                {undoMandateState && (
+                  <button
+                    className="btn-secondary"
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '50%', padding: 0, marginRight: '8px' }}
+                    onClick={doUndoMandate}
+                    title="Undo"
+                  >
+                    <UndoIcon size={20} color="currentColor" />
+                  </button>
+                )}
+                <button className="btn-primary" style={{ flex: 1 }} onClick={doSkipRecruitTurn}>
+                  {t('actions.endRecruitTurn')}
+                </button>
+              </div>
             </div>
           )}
 
@@ -339,9 +364,21 @@ export const ActionPanel = () => {
                 </p>
                 <p className="betray-selections">{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
                 <p className="betray-instruction">{t('actions.betrayClickInstruction')}</p>
-                <button className="btn-primary" style={{ marginTop: '8px', width: '100%' }} onClick={doSkipBetrayTurn}>
-                  {t('actions.betrayEndTurn')}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                  {undoMandateState && (
+                    <button
+                      className="btn-secondary"
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '50%', padding: 0, marginRight: '8px' }}
+                      onClick={doUndoMandate}
+                      title="Undo"
+                    >
+                      <UndoIcon size={20} color="currentColor" />
+                    </button>
+                  )}
+                  <button className="btn-primary" style={{ flex: 1 }} onClick={doSkipBetrayTurn}>
+                    {t('actions.betrayEndTurn')}
+                  </button>
+                </div>
               </div>
             );
           })()}
