@@ -2518,7 +2518,7 @@ function gainHonor(state: GameState, playerId: string): void {
   }
 }
 
-function loseHonor(state: GameState, playerId: string): void {
+export function loseHonor(state: GameState, playerId: string): void {
   const idx = state.honorTrack.indexOf(playerId);
   if (idx < state.honorTrack.length - 1) {
     // Move toward higher index = worse honor (lower index = higher honor)

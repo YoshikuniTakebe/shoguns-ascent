@@ -396,6 +396,7 @@ export const BattlePanel = () => {
       <BattleBiddingOverlay
         playerName={player?.name || ''}
         playerClanColor={playerClan?.color || '#fff'}
+        playerClanId={player?.clanId || ''}
         maxCoins={maxCoins}
         provinceName={province?.name || battle.provinceId}
         provinceColor={PROVINCE_COLORS[battle.provinceId]}
@@ -455,6 +456,7 @@ export const BattlePanel = () => {
         <BattleBiddingOverlay
           playerName={gameState.players.find(p => p.id === apid)?.name || ''}
           playerClanColor={CLANS.find(c => c.id === gameState.players.find(p => p.id === apid)?.clanId)?.color || '#fff'}
+          playerClanId={gameState.players.find(p => p.id === apid)?.clanId || ''}
           maxCoins={maxCoins}
           provinceName={province?.name || battle.provinceId}
           provinceColor={PROVINCE_COLORS[battle.provinceId]}

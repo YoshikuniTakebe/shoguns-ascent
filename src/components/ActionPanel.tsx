@@ -18,6 +18,7 @@ export const ActionPanel = () => {
     doSkipBetrayTurn,
     doResolveWinter,
     undoMandateState, doUndoMandate,
+    jinmenjuSummonActive, doJinmenjuActivate, doJinmenjuCancel,
   } = useGameStore();
   const t = useT();
 
@@ -326,6 +327,39 @@ export const ActionPanel = () => {
                 </button>
               </div>
               {recruitMode && <p className="move-instruction">{recruitFigureType === 'shinto' ? t('actions.recruitSelectProvinceOrTemple') : t('actions.recruitSelectProvince')}</p>}
+              {/* Jinmenju ability button */}
+              {cp && !jinmenjuSummonActive && (() => {
+                const hasJinmenju = cp.seasonCards.some(c => c.id === 'sp-jinmenju');
+                if (!hasJinmenju) return null;
+                // Check if Jinmenju is placed on the map
+                const jinmenjuOnMap = Object.values(gameState.provinces).some(prov =>
+                  prov.figures.some(f => f.owner === cp.id && f.monsterCardId === 'sp-jinmenju')
+                );
+                if (!jinmenjuOnMap) return null;
+                return (
+                  <div style={{ marginTop: '8px', padding: '0.5rem', background: 'rgba(155,89,182,0.15)', border: '1px solid rgba(155,89,182,0.4)', borderRadius: '6px' }}>
+                    <button className="btn-secondary" style={{ width: '100%', color: '#c89bdb', borderColor: '#9b59b6' }} onClick={doJinmenjuActivate}>
+                      {t('actions.jinmenjuSummon')}
+                    </button>
+                    <p style={{ fontSize: '0.75rem', color: '#e57373', margin: '4px 0 0', textAlign: 'center' }}>
+                      {t('actions.jinmenjuCost')}
+                    </p>
+                  </div>
+                );
+              })()}
+              {jinmenjuSummonActive && (
+                <div style={{ marginTop: '8px', padding: '0.5rem', background: 'rgba(155,89,182,0.2)', border: '1px solid rgba(155,89,182,0.5)', borderRadius: '6px' }}>
+                  <p style={{ fontSize: '0.85rem', color: '#c89bdb', fontWeight: 'bold', margin: '0 0 4px', textAlign: 'center' }}>
+                    {t('actions.jinmenjuSummon')}
+                  </p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 6px', textAlign: 'center' }}>
+                    {recruitFigureType === 'shinto' ? t('actions.recruitSelectProvinceOrTemple') : t('actions.recruitSelectProvince')}
+                  </p>
+                  <button className="btn-secondary" style={{ width: '100%', fontSize: '0.8rem' }} onClick={doJinmenjuCancel}>
+                    {t('actions.recruitCancelPlace')}
+                  </button>
+                </div>
+              )}
               <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
                 {undoMandateState && (
                   <button

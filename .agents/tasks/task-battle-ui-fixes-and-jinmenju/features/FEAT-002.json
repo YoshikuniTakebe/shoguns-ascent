@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Implement Jinmenju monster ability, fix bidding UI layout (all tiles in one row with vertical separator), fix bidding header (clan seal + neutral color text), fix honor track z-index visibility during bidding, hide coins during war phase, fix turn/battle popup overlap.",
+  "status": "in_progress",
+  "steps": [
+    "1. JINMENJU IMPLEMENTATION: The card 'sp-jinmenju' exists in types/game.ts but has no game logic. Implement: During Recruit mandate, if the current player owns Jinmenju AND it is placed on the map (check provinces for a figure with monsterCardId === 'sp-jinmenju'), show an 'Invocar con Jinmenju' button in the recruit UI (src/components/ActionPanel.tsx, inside the recruitMandateActive section). Below the button, show text: 'Perder 1 posicion de Honor'. When clicked, the player can summon 1 figure (bushi or shinto) to the province where Jinmenju is located. If the figure is a Shinto, it can be sent to pray at a shrine instead. After placement, call loseHonor for that player. Implementation details: (a) Add a new state field `jinmenjuSummonActive` to gameStore, (b) Add a store action `doJinmenjuSummon` that handles the summon and honor loss, (c) Add i18n strings for the button and description text (both en.ts and es.ts), (d) Export loseHonor from gameLogic.ts if not already exported (currently it's a private function - need to export it), (e) In the ActionPanel recruit section, check if current player has sp-jinmenju placed on map and show the button, (f) Add the jinmenjuSummonActive boolean and a field to track which province Jinmenju is in, (g) When jinmenjuSummonActive is true, highlight only the province where Jinmenju is (and temples if shinto selected) for placement.",
+    "2. BIDDING LAYOUT FIX: In src/components/BattleBiddingOverlay.tsx around line 253, the separator between Hire Ronin and Imperial Poets uses a full-width horizontal div with className 'bidding-battle-resolution-separator'. Change this to a VERTICAL separator that sits between the 3rd and 4th tiles in the same row. Implementation: (a) Remove the full-width horizontal separator div, (b) Instead, insert a vertical separator element between tactic tiles at idx===3 position that has the text 'Battle Resolution' rotated 90 degrees (using CSS writing-mode: vertical-rl or transform: rotate(-90deg)). (c) Update CSS in App.css: change .bidding-battle-resolution-separator to be a flex column with writing-mode vertical, the separator lines to be vertical (width:1px, flex:1), and the text rotated. (d) Ensure .bidding-tactics-row does NOT wrap (remove flex-wrap:wrap, add flex-wrap:nowrap) so all 4 tiles + separator stay in one row. Adjust tile widths if needed to fit.",
+    "3. BIDDING HEADER FIX: In src/components/BattleBiddingOverlay.tsx around line 230, the header shows `{playerName} - {t('battle.warTactics')}` all in playerClanColor. Change to: (a) Add ClanShield before player name using the player's clanId (need to pass clanId as a new prop to BattleBiddingOverlay), (b) Keep player name in playerClanColor, (c) Change the ' - Tacticas de Guerra - Asignar Monedas:' part to white (#ffffff) color so it doesn't get confused with any clan color. Split the <p> into spans with different colors.",
+    "4. HONOR TRACK Z-INDEX: In src/App.css line 3, .honor-track has z-index:10. The .bidding-overlay has z-index:1000. The honor track needs to be VISIBLE on top of the bidding overlay during battles. Change .honor-track z-index to 1100 (higher than bidding-overlay's 1000) so it remains visible during bidding.",
+    "5. HIDE COINS DURING WAR: In src/components/PlayerPanel.tsx, the coin stat is always shown. Add logic: when gameState.currentPhase === 'war' AND the warPhasePopupVisible is false (meaning war popup was already accepted), hide the coin count (show '?' or hide the value). Need to access warPhasePopupVisible from the store. For Koi clan, also show ronin as 0 during war (since ronin were converted to coins). Implementation: read from store whether war popup has been dismissed, conditionally render coin value as hidden.",
+    "6. POPUP OVERLAP FIX: In src/components/GameBoard.tsx line ~484, the turnPopupPlayer renders independently of battleStepPhase. The issue: when war starts, both the turn popup and the battle popup can be visible simultaneously. Fix: In the turnPopupPlayer render condition (line 484), add an additional check: only show turnPopupPlayer popup if currentPhase is NOT 'war' OR if there are no active battles. Alternatively, when dismissWarPhasePopup is called, also clear turnPopupPlayer. The simplest fix: in the turnPopupPlayer rendering condition, add `&& gameState.currentPhase !== 'war'` to prevent the turn popup from showing during war phase."
+  ],
+  "acceptance_criteria": [
+    "During Recruit mandate, if player owns Jinmenju on the map, an 'Invocar con Jinmenju' button appears with honor loss warning text",
+    "Clicking the Jinmenju button allows placing a figure at Jinmenju's province (or shrine for shinto), then loses 1 honor",
+    "All 4 bidding tactic tiles display in a single row with a vertical separator between Hire Ronin and Imperial Poets",
+    "The vertical separator has 'Battle Resolution' text rotated 90 degrees",
+    "Bidding header shows: ClanShield + PlayerName (in clan color) + ' - Tacticas de Guerra - Asignar Monedas:' (in white)",
+    "Honor track is visible above the bidding overlay during battles",
+    "Player coins are hidden in PlayerPanel during war phase (after popup dismissed). Koi ronin shows 0.",
+    "Turn popup does not overlap with battle popup during war phase",
+    "TypeScript compiles without errors"
+  ],
+  "verification": [
+    "npx tsc -b",
+    "npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
