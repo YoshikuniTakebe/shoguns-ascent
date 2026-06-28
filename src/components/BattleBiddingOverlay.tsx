@@ -23,6 +23,9 @@ interface BattleBiddingOverlayProps {
   battleNumber: number;
   onConfirm: (bids: Record<string, number>) => void;
   combatants?: BattleCombatant[];
+  playerBattleIndex?: number;
+  playerTotalBattles?: number;
+  onPeekMap?: () => void;
 }
 
 const TACTIC_KANJI: Record<string, string> = {
@@ -54,6 +57,9 @@ export const BattleBiddingOverlay = ({
   battleNumber,
   onConfirm,
   combatants,
+  playerBattleIndex,
+  playerTotalBattles,
+  onPeekMap,
 }: BattleBiddingOverlayProps) => {
   const t = useT();
 
@@ -234,6 +240,11 @@ export const BattleBiddingOverlay = ({
             <span style={{ color: playerClanColor }}>{playerName}</span>
             <span style={{ color: '#ffffff' }}> - {t('battle.warTactics')}</span>
           </p>
+          {playerBattleIndex !== undefined && playerTotalBattles !== undefined && playerTotalBattles > 0 && (
+            <p style={{ margin: '2px 0 0', fontSize: '0.85rem', opacity: 0.8, color: '#ccc' }}>
+              {t('battle.battleCount', { current: playerBattleIndex, total: playerTotalBattles })}
+            </p>
+          )}
           {(playerRonin !== undefined || playerVP !== undefined) && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '4px', fontSize: '0.9rem' }}>
               {playerRonin !== undefined && (
@@ -247,6 +258,19 @@ export const BattleBiddingOverlay = ({
                 </span>
               )}
             </div>
+          )}
+          {onPeekMap && (
+            <button
+              className="bidding-peek-map-btn"
+              onClick={onPeekMap}
+              title={t('battle.peekMap')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <span>{t('battle.peekMap')}</span>
+            </button>
           )}
         </div>
 

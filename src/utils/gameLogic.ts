@@ -1911,7 +1911,10 @@ export function resolveNextBattle(state: GameState): GameState {
         // Ronin tokens add force (tracked for final calculation)
         let roninForce = bidder.ronin;
         if (bidder.clanId === 'koi') {
-          roninForce += bidder.coins;
+          // Koi clan: coins count as ronin, but only coins remaining after all bids
+          const totalBidByBidder = Object.values(battle.warTacticBids[highestBidder] || {}).reduce((s, v) => s + v, 0);
+          const remainingCoins = bidder.coins - totalBidByBidder;
+          roninForce += Math.max(0, remainingCoins);
         }
         newState.log = [...newState.log, `${bidder.name} hires ronin: +${roninForce} force`];
         break;
@@ -1956,9 +1959,11 @@ export function resolveNextBattle(state: GameState): GameState {
     // Add ronin force only if this player won the hire-ronin tactic
     if (pid === hireRoninWinner) {
       force += player.ronin;
-      // Koi clan power: coins also count as ronin for hire-ronin
+      // Koi clan power: coins also count as ronin for hire-ronin, but only remaining coins after bids
       if (player.clanId === 'koi') {
-        force += player.coins;
+        const totalBidByPlayer = Object.values(battle.warTacticBids[pid] || {}).reduce((s, v) => s + v, 0);
+        const remainingCoins = player.coins - totalBidByPlayer;
+        force += Math.max(0, remainingCoins);
       }
     }
     if (force > maxForce) {
@@ -1980,7 +1985,11 @@ export function resolveNextBattle(state: GameState): GameState {
       let force = calculateForce(finalProvince, pid, newState);
       if (pid === hireRoninWinner) {
         force += player.ronin;
-        if (player.clanId === 'koi') force += player.coins;
+        if (player.clanId === 'koi') {
+          const totalBidByPlayer = Object.values(battle.warTacticBids[pid] || {}).reduce((s, v) => s + v, 0);
+          const remainingCoins = player.coins - totalBidByPlayer;
+          force += Math.max(0, remainingCoins);
+        }
       }
       return force === maxForce;
     });
@@ -2072,15 +2081,15 @@ export function resolveNextBattle(state: GameState): GameState {
             newState.log = [...newState.log, `${loser.name} recibe ${share} monedas del ganador`];
           });
         }
-        if (remainder > 0) {
-          newState.coinDistributionPending = {
-            battleProvinceId: battle.provinceId,
-            winnerId,
-            losers,
-            remainder,
-            distributed: share * losers.length,
-          };
-        }
+        // Always show coin distribution popup to inform the winner of the distribution
+        newState.coinDistributionPending = {
+          battleProvinceId: battle.provinceId,
+          winnerId,
+          losers,
+          remainder,
+          distributed: share * losers.length,
+          sharePerLoser: share,
+        };
       }
     }
 
