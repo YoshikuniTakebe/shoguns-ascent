@@ -29,6 +29,12 @@ export const en = {
   'deck.kickstarterHint': 'Includes Kickstarter and Monster Pack cards',
   'deck.dynastyNote': 'Dynasty Invasion cards are automatically included (Sol or Luna clan selected).',
 
+  // Kami Config
+  'kami.config': 'Gods (Kami)',
+  'kami.random': 'Random',
+  'kami.manual': 'Manual',
+  'kami.selected': 'selected',
+
   // GameBoard
   'phase.seasonSetup': 'SEASON SETUP',
   'phase.tea': 'TEA CEREMONY',
