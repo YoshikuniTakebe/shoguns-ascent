@@ -1358,7 +1358,7 @@ export function resolveKamiTurn(state: GameState): GameState {
     const kamiInfo = KAMI_DATA.find((k) => k.type === temple.kamiType);
 
     if (forces.length === 0) {
-      newState.log = [...newState.log, `Temple ${temple.position} (${kamiInfo?.name || temple.kamiType}) - no figures, skipped`];
+      newState.log = [...newState.log, `Shrine ${temple.position} (${kamiInfo?.name || temple.kamiType}) - no figures, skipped`];
       continue;
     }
 
@@ -1375,7 +1375,7 @@ export function resolveKamiTurn(state: GameState): GameState {
     if (winnerId) {
       const winner = newState.players.find((p) => p.id === winnerId);
       if (winner && kamiInfo) {
-        newState.log = [...newState.log, `Temple ${temple.position}: ${winner.name} wins ${kamiInfo.name} (force: ${forces.find(f => f.playerId === winnerId)?.count || 0})`];
+        newState.log = [...newState.log, `Shrine ${temple.position}: ${winner.name} wins ${kamiInfo.name} (force: ${forces.find(f => f.playerId === winnerId)?.count || 0})`];
         // Apply the kami ability
         newState = resolveKamiAbility(newState, temple.kamiType, winnerId);
       }
@@ -2637,7 +2637,7 @@ export function advancePlayer(state: GameState): GameState {
 
       // Skip empty temples (no figures = no winner, no need to show popup)
       if (!winnerId && forces.length === 0) {
-        newState.log = [...newState.log, `Temple ${temple.position} (${kamiData?.name || temple.kamiType}) - no figures, skipped`];
+        newState.log = [...newState.log, `Shrine ${temple.position} (${kamiData?.name || temple.kamiType}) - no figures, skipped`];
         continue;
       }
 

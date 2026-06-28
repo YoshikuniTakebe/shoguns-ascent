@@ -267,7 +267,7 @@ export const en = {
   'actions.recruitNoBonus': '',
   'actions.endRecruitTurn': 'End Recruit Turn',
   'actions.recruitSelectProvince': 'Select a province to place a figure.',
-  'actions.recruitSelectProvinceOrTemple': 'Select a province or temple to place a shinto.',
+  'actions.recruitSelectProvinceOrTemple': 'Select a province or shrine to place a shinto.',
   'actions.recruitPlacementsLeft': 'Placements remaining: {count}',
   'actions.recruitFigureType': 'Figure type:',
   'actions.recruitBushi': 'Bushi',
@@ -289,11 +289,11 @@ export const en = {
   // Monster Placement
   'monster.selectPlacement': 'Select where to place {name}',
   'monster.accept': 'Accept',
-  'monster.komainuChoice': 'Komainu: Place on map or send to worship at a temple?',
+  'monster.komainuChoice': 'Komainu: Place on map or send to worship at a shrine?',
   'monster.komainuMap': 'Place on map',
   'monster.komainuPray': 'Send to worship',
   'monster.placed': '{name} placed in {province}',
-  'monster.selectTemple': 'Select a temple for the Shinto',
+  'monster.selectTemple': 'Select a shrine for the Shinto',
 
   // Player Cards Modal
   'playerCards.title': '{name} ({clan}) - Cards',
@@ -323,12 +323,12 @@ export const en = {
   'kami.resolution.fujinCancel': 'Cancel Movement',
   'kami.resolution.raijinPlace': 'Place Bushi in a province',
   'kami.resolution.ryujinBuy': 'Buy a Season Card',
-  'kami.resolution.templeOf': 'Temple {number}',
+  'kami.resolution.templeOf': 'Shrine {number}',
   'kami.resolution.susanooVP': 'Gains {vp} VP ({fortresses} Fortresses on map)',
 
   // Kami Phase Popup
   'kami.phaseStart.title': 'Kami Phase Begins',
-  'kami.phaseStart.description': 'Temples will now be resolved from left to right. The player with the most Shinto force in each temple wins the Kami reward.',
+  'kami.phaseStart.description': 'Shrines will now be resolved from left to right. The player with the most Shinto force in each shrine wins the Kami reward.',
   'kami.phaseStart.accept': 'Accept',
 
   // War Phase Popup

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-shrine-rename-kami-popup-undo",
+  "task_description": "1) Rename temple/templo to shrine/santuario everywhere. 2) Enhance Kami Phase popup with kami icons, bold directional text, and more color. 3) Fix game log to show '--- Kami Turn ---' before resolution and '--- End Kami Turn ---' after. 4) Add undo system for marshal/recruit/betray mandate turns with circular arrow button.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

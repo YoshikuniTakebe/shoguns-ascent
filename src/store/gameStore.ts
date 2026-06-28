@@ -635,7 +635,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       temples: updatedTemples,
       players: updatedPlayers,
       recruitPlacementsRemaining: gameState.recruitPlacementsRemaining - 1,
-      log: [...gameState.log, `${player.name} places a shinto at ${temple.kamiType} temple`],
+      log: [...gameState.log, `${player.name} places a shinto at ${temple.kamiType} shrine`],
     };
 
     // Auto-advance when placements reach 0

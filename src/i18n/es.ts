@@ -269,7 +269,7 @@ export const es: Record<TranslationKey, string> = {
   'actions.recruitNoBonus': '',
   'actions.endRecruitTurn': 'Terminar Turno de Reclutar',
   'actions.recruitSelectProvince': 'Selecciona una provincia para colocar una figura.',
-  'actions.recruitSelectProvinceOrTemple': 'Selecciona una provincia o un templo para colocar un shinto.',
+  'actions.recruitSelectProvinceOrTemple': 'Selecciona una provincia o un santuario para colocar un shinto.',
   'actions.recruitPlacementsLeft': 'Colocaciones restantes: {count}',
   'actions.recruitFigureType': 'Tipo de figura:',
   'actions.recruitBushi': 'Bushi',
@@ -291,11 +291,11 @@ export const es: Record<TranslationKey, string> = {
   // Monster Placement
   'monster.selectPlacement': 'Selecciona donde sacar {name}',
   'monster.accept': 'Aceptar',
-  'monster.komainuChoice': 'Komainu: Colocar en mapa o enviar a rezar a un templo?',
+  'monster.komainuChoice': 'Komainu: Colocar en mapa o enviar a rezar a un santuario?',
   'monster.komainuMap': 'Colocar en mapa',
   'monster.komainuPray': 'Enviar a rezar',
   'monster.placed': '{name} colocado en {province}',
-  'monster.selectTemple': 'Selecciona un templo para el Shinto',
+  'monster.selectTemple': 'Selecciona un santuario para el Shinto',
 
   // Player Cards Modal
   'playerCards.title': '{name} ({clan}) - Cartas',
@@ -325,12 +325,12 @@ export const es: Record<TranslationKey, string> = {
   'kami.resolution.fujinCancel': 'Cancelar Movimiento',
   'kami.resolution.raijinPlace': 'Coloca un Bushi en una provincia',
   'kami.resolution.ryujinBuy': 'Compra una carta de Estacion',
-  'kami.resolution.templeOf': 'Templo {number}',
+  'kami.resolution.templeOf': 'Santuario {number}',
   'kami.resolution.susanooVP': 'Gana {vp} PV ({fortresses} Fortalezas en mapa)',
 
   // Kami Phase Popup
   'kami.phaseStart.title': 'Comienza la Fase Kami',
-  'kami.phaseStart.description': 'Los templos se resolveran de izquierda a derecha. El jugador con mas fuerza Sintoista en cada templo gana la recompensa del Kami.',
+  'kami.phaseStart.description': 'Los santuarios se resolveran de izquierda a derecha. El jugador con mas fuerza Sintoista en cada santuario gana la recompensa del Kami.',
   'kami.phaseStart.accept': 'Aceptar',
 
   // War Phase Popup
