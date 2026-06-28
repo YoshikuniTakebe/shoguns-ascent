@@ -18,17 +18,17 @@ export const BushiIcon = ({ size = 24, color = 'currentColor', className }: Icon
     viewBox="0 0 24 24"
     fill="none"
     stroke={color}
-    strokeWidth="1.5"
+    strokeWidth="2.5"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    {/* Left katana (blade + guard + handle) */}
-    <line x1="4" y1="20" x2="17" y2="3" />
-    <circle cx="15.5" cy="5.5" r="1.2" fill={color} stroke="none" />
+    {/* Left katana (curved blade + guard + handle) */}
+    <path d="M4 20 Q9 13 17 3" />
+    <circle cx="15.5" cy="5.5" r="1.3" fill={color} stroke="none" />
     <line x1="17" y1="3" x2="19" y2="1" />
-    {/* Right katana (blade + guard + handle) */}
-    <line x1="20" y1="20" x2="7" y2="3" />
-    <circle cx="8.5" cy="5.5" r="1.2" fill={color} stroke="none" />
+    {/* Right katana (curved blade + guard + handle) */}
+    <path d="M20 20 Q15 13 7 3" />
+    <circle cx="8.5" cy="5.5" r="1.3" fill={color} stroke="none" />
     <line x1="7" y1="3" x2="5" y2="1" />
   </svg>
 );
