@@ -252,10 +252,10 @@ export const ActionPanel = () => {
                   !gameState.marshalFortressBuiltBy.includes(cp!.id) &&
                   cp!.fortresses > 0 && cp!.coins >= 3 && (
                   <div style={{ marginTop: '6px' }}>
-                    <button className={`btn-secondary ${buildFortressMode ? 'active' : ''}`} style={{ fontSize: '0.85rem' }} onClick={toggleBuildFortressMode}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <button className={`btn-secondary ${buildFortressMode ? 'active' : ''}`} style={{ fontSize: '0.85rem', width: '100%' }} onClick={toggleBuildFortressMode}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
                         {t('actions.buildFortress')}
-                        <CoinIcon size={22} color="#DAA520" />
+                        <CoinIcon size={16} color="#DAA520" />
                         <span style={{ fontWeight: 'bold', color: '#DAA520', fontSize: '1.1em' }}>3</span>
                       </span>
                     </button>
