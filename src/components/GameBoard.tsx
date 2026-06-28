@@ -487,7 +487,7 @@ export const GameBoard = () => {
         if (!popupPlayer) return null;
         const clanColor = CLANS.find(c => c.id === popupPlayer.clanId)?.color;
         return (
-          <div className="monster-placement-popup">
+          <div className="monster-placement-popup" style={{ zIndex: 1200 }}>
             <div className="monster-placement-popup-content" style={{ borderColor: clanColor }}>
               <ClanShield clanId={popupPlayer.clanId} size={48} />
               <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem' }}>
