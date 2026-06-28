@@ -349,6 +349,26 @@ export const WinterIcon = ({ size = 24, color = 'currentColor', className }: Ico
   </svg>
 );
 
+/** Circular counterclockwise arrow - used for Undo action */
+export const UndoIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* Circular arrow (counterclockwise) */}
+    <path d="M3 12a9 9 0 1 0 3-6.7" />
+    {/* Arrowhead */}
+    <polyline points="3 2 3 8 9 8" fill="none" />
+  </svg>
+);
+
 /** Ronin warrior in attack pose framed in hexagon border */
 export const RoninIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
