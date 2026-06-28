@@ -398,6 +398,7 @@ export const BattlePanel = () => {
         playerClanColor={playerClan?.color || '#fff'}
         maxCoins={maxCoins}
         provinceName={province?.name || battle.provinceId}
+        provinceColor={PROVINCE_COLORS[battle.provinceId]}
         battleNumber={battleNumber}
         onConfirm={handleOverlayConfirm}
         combatants={combatants}
@@ -456,6 +457,7 @@ export const BattlePanel = () => {
           playerClanColor={CLANS.find(c => c.id === gameState.players.find(p => p.id === apid)?.clanId)?.color || '#fff'}
           maxCoins={maxCoins}
           provinceName={province?.name || battle.provinceId}
+          provinceColor={PROVINCE_COLORS[battle.provinceId]}
           battleNumber={battleNumber}
           onConfirm={(bidValues) => {
             if (!apid) return;
