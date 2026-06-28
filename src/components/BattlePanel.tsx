@@ -186,6 +186,9 @@ export const BattlePanel = () => {
     battleCurrentBiddingIndex,
     doAcceptBattlePopup,
     doCoinDistributionChoice,
+    doCoinDistributionDismiss,
+    biddingMapPeek,
+    setBiddingMapPeek,
   } = useGameStore();
   const t = useT();
 
@@ -198,6 +201,49 @@ export const BattlePanel = () => {
     const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
     const province = gameState.provinces[pending.battleProvinceId];
 
+    // If no remainder, show informational popup only
+    if (pending.remainder === 0) {
+      return (
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card">
+            <h3 className="battle-popup-title">{t('battle.coinDistributionTitle')}</h3>
+            <p style={{ fontSize: '0.95em', marginBottom: '0.5rem' }}>
+              {province?.name || pending.battleProvinceId}
+            </p>
+            {winner && winnerClan && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <ClanShield clanId={winner.clanId} size={28} />
+                <span style={{ color: winnerClan.color, fontWeight: 'bold' }}>
+                  {winner.name}
+                </span>
+              </div>
+            )}
+            <p style={{ margin: '0.5rem 0', fontSize: '0.95em' }}>
+              {t('battle.coinDistributionInfo', { amount: pending.sharePerLoser })}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.75rem' }}>
+              {pending.losers.map(loserId => {
+                const loser = gameState.players.find(p => p.id === loserId);
+                const loserClan = loser ? CLANS.find(c => c.id === loser.clanId) : null;
+                return (
+                  <div key={loserId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <ClanShield clanId={loser?.clanId || ''} size={20} />
+                    <span style={{ color: loserClan?.color, fontWeight: 'bold' }}>{loser?.name}</span>
+                    <CoinIcon size={14} color="#FFD700" />
+                    <span style={{ color: '#FFD700', fontWeight: 'bold' }}>+{pending.sharePerLoser}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <button className="btn-primary battle-popup-accept" onClick={doCoinDistributionDismiss}>
+              {t('battle.continue')}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Remainder > 0: show choice selector
     return (
       <div className="battle-popup-overlay">
         <div className="battle-popup-card">
@@ -212,6 +258,11 @@ export const BattlePanel = () => {
                 {winner.name}
               </span>
             </div>
+          )}
+          {pending.sharePerLoser > 0 && (
+            <p style={{ margin: '0.25rem 0 0.5rem', fontSize: '0.9em', opacity: 0.8 }}>
+              {t('battle.coinDistributionInfo', { amount: pending.sharePerLoser })}
+            </p>
           )}
           <p style={{ margin: '0.5rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
             <CoinIcon size={16} color="#FFD700" />
@@ -376,10 +427,18 @@ export const BattlePanel = () => {
 
   // In hotseat mode with bidding phase: show bidding UI for current participant
   if (isHotseat && effectiveBattleStepPhase === 'bidding') {
+    // If map peek is active, hide the overlay
+    if (biddingMapPeek) return null;
+
     const currentParticipant = battle.participants[battleCurrentBiddingIndex];
     const player = gameState.players.find(p => p.id === currentParticipant);
     const playerClan = player ? CLANS.find(c => c.id === player.clanId) : null;
     const maxCoins = player?.coins || 0;
+
+    // Calculate battle count for current player
+    const playerBattles = allBattles.filter(b => b.participants.includes(currentParticipant));
+    const playerBattleIndex = playerBattles.findIndex(b => b.provinceId === battle.provinceId) + 1;
+    const playerTotalBattles = playerBattles.length;
 
     const combatants: BattleCombatant[] = battle.participants.map(pid => {
       const p = gameState.players.find(x => x.id === pid)!;
@@ -405,6 +464,9 @@ export const BattlePanel = () => {
         battleNumber={battleNumber}
         onConfirm={handleOverlayConfirm}
         combatants={combatants}
+        playerBattleIndex={playerBattleIndex}
+        playerTotalBattles={playerTotalBattles}
+        onPeekMap={() => setBiddingMapPeek(true)}
       />
     );
   }
@@ -474,6 +536,9 @@ export const BattlePanel = () => {
             const force = province ? calculateForce(province, pid, gameState) : 0;
             return { playerId: pid, playerName: p.name, clanId: p.clanId, force };
           })}
+          playerBattleIndex={(() => { const pb = allBattles.filter(b => b.participants.includes(apid!)); return pb.findIndex(b => b.provinceId === battle.provinceId) + 1; })()}
+          playerTotalBattles={allBattles.filter(b => b.participants.includes(apid!)).length}
+          onPeekMap={() => setBiddingMapPeek(true)}
         />
       )}
 

@@ -229,6 +229,7 @@ export interface GameState {
     losers: string[];
     remainder: number;
     distributed: number;
+    sharePerLoser: number;
   } | null;
   log: string[];
   logHistory: { [season: string]: string[] };

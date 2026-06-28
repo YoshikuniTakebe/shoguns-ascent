@@ -220,6 +220,7 @@ interface GameStore {
 
   // Coin Distribution
   doCoinDistributionChoice: (targetPlayerId: string) => void;
+  doCoinDistributionDismiss: () => void;
 
   // Cleanup & Winter
   doResolveWinter: () => void;
@@ -248,6 +249,10 @@ interface GameStore {
   // Undo mandate state
   undoMandateState: GameState | null;
   doUndoMandate: () => void;
+
+  // Map peek during bidding
+  biddingMapPeek: boolean;
+  setBiddingMapPeek: (v: boolean) => void;
 
   // Rule violation feedback
   ruleViolationMessage: string | null;
@@ -428,6 +433,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   kamiPendingTemples: null,
   warPhasePopupVisible: false,
   warPhaseUpgradeSummary: [],
+  biddingMapPeek: false,
+  setBiddingMapPeek: (peek) => set({ biddingMapPeek: peek }),
   language: (localStorage.getItem('shoguns-ascent-language') as 'en' | 'es') || 'es',
   setLanguage: (lang) => {
     localStorage.setItem('shoguns-ascent-language', lang);
@@ -1698,6 +1705,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       coinDistributionPending: newRemainder > 0
         ? { ...pending, remainder: newRemainder, distributed: pending.distributed + 1, losers: pending.losers.filter(id => id !== targetPlayerId) }
         : null,
+    };
+
+    set({ gameState: newState });
+  },
+
+  // --- Coin Distribution Dismiss (informational only, no remainder) ---
+  doCoinDistributionDismiss: () => {
+    const { gameState } = get();
+    if (!gameState || !gameState.coinDistributionPending) return;
+
+    const newState: GameState = {
+      ...gameState,
+      coinDistributionPending: null,
     };
 
     set({ gameState: newState });
