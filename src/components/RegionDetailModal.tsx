@@ -238,11 +238,12 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
   const midFigures: FigureEntry[] = [];
   const backFigures: FigureEntry[] = [];
 
-  const maxPerRow = 4;
+  const maxFront = 4;
+  const maxMid = 5;
   for (let i = 0; i < allFigures.length; i++) {
-    if (frontFigures.length < maxPerRow) {
+    if (frontFigures.length < maxFront) {
       frontFigures.push(allFigures[i]);
-    } else if (midFigures.length < maxPerRow) {
+    } else if (midFigures.length < maxMid) {
       midFigures.push(allFigures[i]);
     } else {
       backFigures.push(allFigures[i]);
@@ -344,7 +345,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
             {forceByOwner.map(({ playerId, playerName, clanId: ownerClanId, clanColor, force }) => (
               <span key={playerId} className="region-diorama-force-item" style={{ borderColor: clanColor }}>
                 <ClanShield clanId={ownerClanId} size={18} />
-                <span className="region-diorama-force-name">{playerName}</span>
+                <span className="region-diorama-force-name" style={{ color: clanColor }}>{playerName}</span>
                 <FistIcon size={14} color="var(--accent-gold)" />
                 <span className="region-diorama-force-value">{force}</span>
               </span>

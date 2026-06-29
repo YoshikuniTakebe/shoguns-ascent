@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "fix",
   "description": "Three UI improvements: (1) Remove X close button from card zoom overlays and make clicking anywhere close them, (2) Move ClanShield outside the owner badge in RegionDetailModal for better visibility, (3) Redesign FistIcon as a solid raised fist silhouette.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In SeasonCardsModal.tsx and PlayerCardsModal.tsx, remove the X close button from the card zoom overlay and remove e.stopPropagation from the zoom content div so clicking anywhere including the image closes the overlay",
     "In RegionDetailModal.tsx, move ClanShield outside and before the owner badge span, wrapping in a flex container for all occurrences",
@@ -18,5 +18,5 @@
     "Run `npx vite build` in /projects/sandbox/shoguns-ascent and confirm exit code 0 with no errors"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All three changes implemented: (1) Removed X close button and stopPropagation from card zoom overlays in both SeasonCardsModal and PlayerCardsModal so clicking anywhere closes, (2) Moved ClanShield outside the colored owner badge in RegionDetailModal using a flex wrapper for all 5 occurrences, (3) Replaced multi-path FistIcon with single solid path raised fist silhouette. Vite build passes cleanly."
 }
