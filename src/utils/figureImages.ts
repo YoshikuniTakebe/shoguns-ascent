@@ -54,6 +54,7 @@ import yureiFigImg from '../img/Yurei_fig.png';
 import kitsuneFigImg from '../img/Kitsune_fig.png';
 import oniOfPlaguesFigImg from '../img/Oni of Plagues_fig.png';
 import sunakakeBabaFigImg from '../img/Sunakake-Baba_fig.png';
+import ebisuFigImg from '../img/Ebisu_fig.png';
 
 // Region background image imports
 import edoBg from '../img/Edo.png';
@@ -134,6 +135,7 @@ export const MONSTER_FIGURE_MAP: Record<string, string> = {
   'au-kitsune': kitsuneFigImg,
   'au-oni-of-plagues': oniOfPlaguesFigImg,
   'su-sunakake-baba': sunakakeBabaFigImg,
+  'au-ebisu': ebisuFigImg,
 };
 
 /** Maps clan IDs to their castle image file */
