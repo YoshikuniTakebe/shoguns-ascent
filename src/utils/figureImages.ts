@@ -1,3 +1,7 @@
+// Template figure image (used as placeholder for miniatures without final images)
+import templateFigImg from '../img/template_fig.png';
+export const TEMPLATE_FIGURE_IMG = templateFigImg;
+
 // Monster card image imports (for season cards display)
 import daikokutenImg from '../img/Daikokuten.png';
 import earthDragonImg from '../img/Earth Dragon.png';

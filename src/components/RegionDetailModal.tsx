@@ -3,9 +3,9 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS, PROVINCE_COLORS } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
-import { BushiIcon, ShintoIcon, DaimyoIcon, MonsterIcon, FortressIcon, FistIcon } from './Icons';
+import { FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
-import { getMonsterFigureImage, getCastleImage, getRegionBackground } from '../utils/figureImages';
+import { getMonsterFigureImage, getCastleImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
 import { calculateForce } from '../utils/gameLogic';
 
 interface RegionDetailModalProps {
@@ -114,10 +114,10 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
         </div>
       );
     }
-    // Fallback to MonsterIcon SVG when no image file exists for this monster
+    // Fallback to template figure image when no specific image file exists for this monster
     return (
       <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
-        <MonsterIcon size={iconSize} color={ownerColor} />
+        <img src={TEMPLATE_FIGURE_IMG} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
           <ClanShield clanId={ownerClanId} size={18} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
@@ -128,7 +128,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     );
   }
 
-  // Fortress with castle image, with FortressIcon SVG as fallback
+  // Fortress with castle image, with template figure as fallback
   if (figure.type === 'fortress') {
     const img = getCastleImage(ownerClanId);
     if (img) {
@@ -144,10 +144,10 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
         </div>
       );
     }
-    // Fallback to FortressIcon SVG if castle image not found
+    // Fallback to template figure image if castle image not found
     return (
       <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
-        <FortressIcon size={iconSize} color={ownerColor} />
+        <img src={TEMPLATE_FIGURE_IMG} alt="Fortress" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
           <ClanShield clanId={ownerClanId} size={18} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
@@ -158,19 +158,19 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     );
   }
 
-  // SVG icons for bushi, daimyo, shinto, kami
+  // SVG icons for kami, template figure for bushi, daimyo, shinto
   const renderIcon = () => {
     switch (figure.type) {
       case 'bushi':
-        return <BushiIcon size={iconSize} color={ownerColor} />;
+        return <img src={TEMPLATE_FIGURE_IMG} alt="Bushi" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
       case 'daimyo':
-        return <DaimyoIcon size={iconSize} color={ownerColor} />;
+        return <img src={TEMPLATE_FIGURE_IMG} alt="Daimyo" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
       case 'shinto':
-        return <ShintoIcon size={iconSize} color={ownerColor} />;
+        return <img src={TEMPLATE_FIGURE_IMG} alt="Shinto" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
       case 'kami':
         return <KamiIcon size={iconSize} color={ownerColor} />;
       default:
-        return <BushiIcon size={iconSize} color={ownerColor} />;
+        return <img src={TEMPLATE_FIGURE_IMG} alt="Figure" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
     }
   };
 
@@ -223,6 +223,16 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
   });
 
   // Distribute ALL figures equitably across 3 rows, starting from front, max 5 per row
+  // Sort by priority: monsters first, then daimyo, bushi, shinto, fortress last
+  const FIGURE_PRIORITY: Record<string, number> = {
+    monster: 0,
+    daimyo: 1,
+    bushi: 2,
+    shinto: 3,
+    fortress: 4,
+    kami: 5,
+  };
+
   const allFigures: FigureEntry[] = province.figures.map(fig => {
     const player = gameState.players.find(p => p.id === fig.owner);
     const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
@@ -232,6 +242,10 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
       ownerClanId: clan?.id || '',
       ownerName: player?.name || 'Unknown',
     };
+  }).sort((a, b) => {
+    const priorityA = FIGURE_PRIORITY[a.figure.type] ?? 99;
+    const priorityB = FIGURE_PRIORITY[b.figure.type] ?? 99;
+    return priorityA - priorityB;
   });
 
   const frontFigures: FigureEntry[] = [];
@@ -273,26 +287,26 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
         if (img) {
           return <img src={img} alt="Monster" style={{ height: '60vh', objectFit: 'contain' }} />;
         }
-        return <MonsterIcon size={200} color={ownerColor} />;
+        return <img src={TEMPLATE_FIGURE_IMG} alt="Monster" style={{ height: '60vh', objectFit: 'contain' }} />;
       }
       if (figure.type === 'fortress') {
         const img = getCastleImage(ownerClanId);
         if (img) {
           return <img src={img} alt="Castle" style={{ height: '60vh', objectFit: 'contain' }} />;
         }
-        return <FortressIcon size={200} color={ownerColor} />;
+        return <img src={TEMPLATE_FIGURE_IMG} alt="Fortress" style={{ height: '60vh', objectFit: 'contain' }} />;
       }
       switch (figure.type) {
         case 'bushi':
-          return <BushiIcon size={200} color={ownerColor} />;
+          return <img src={TEMPLATE_FIGURE_IMG} alt="Bushi" style={{ height: '60vh', objectFit: 'contain' }} />;
         case 'daimyo':
-          return <DaimyoIcon size={200} color={ownerColor} />;
+          return <img src={TEMPLATE_FIGURE_IMG} alt="Daimyo" style={{ height: '60vh', objectFit: 'contain' }} />;
         case 'shinto':
-          return <ShintoIcon size={200} color={ownerColor} />;
+          return <img src={TEMPLATE_FIGURE_IMG} alt="Shinto" style={{ height: '60vh', objectFit: 'contain' }} />;
         case 'kami':
           return <KamiIcon size={200} color={ownerColor} />;
         default:
-          return <BushiIcon size={200} color={ownerColor} />;
+          return <img src={TEMPLATE_FIGURE_IMG} alt="Figure" style={{ height: '60vh', objectFit: 'contain' }} />;
       }
     };
 
@@ -377,9 +391,9 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
               </div>
             )}
 
-            {/* Layer 2 - Middle: normal scale, fixed 265px from bottom */}
+            {/* Layer 2 - Middle: normal scale, fixed 255px from bottom */}
             {midFigures.length > 0 && (
-              <div className="region-diorama-layer region-diorama-layer-mid" style={{ transform: 'scale(0.8)', zIndex: 2, bottom: '265px' }}>
+              <div className="region-diorama-layer region-diorama-layer-mid" style={{ transform: 'scale(0.8)', zIndex: 2, bottom: '255px', gap: '27px' }}>
                 {midFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
                   <DioramaFigure
                     key={figure.id}
@@ -394,9 +408,9 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
               </div>
             )}
 
-            {/* Layer 1 - Front (bottom): largest, fixed 170px from bottom */}
+            {/* Layer 1 - Front (bottom): largest, fixed 160px from bottom */}
             {frontFigures.length > 0 && (
-              <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.0)', zIndex: 3, bottom: '170px' }}>
+              <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.0)', zIndex: 3, bottom: '160px' }}>
                 {frontFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
                   <DioramaFigure
                     key={figure.id}
