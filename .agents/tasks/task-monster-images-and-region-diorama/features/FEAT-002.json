@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Address review issues: restore gameplay information (force totals, owner labels, monster name tooltips), add FortressIcon fallback, add comment about monster image fallback, and add responsive media query for smaller screens.",
+  "status": "in_progress",
+  "steps": [
+    "Import FortressIcon and add it as fallback when getCastleImage returns null for fortress figures",
+    "Restore gameplay info: add force totals per owner, owner clan labels/badges, and hover tooltips with monster name and effect on monster figures",
+    "Add a comment in figureImages.ts explaining fallback behavior for monsters without images",
+    "Add responsive media query in App.css for the diorama modal on smaller screens"
+  ],
+  "acceptance_criteria": [
+    "FortressIcon renders when getCastleImage returns null",
+    "Monster figures show tooltip with name and effect on hover",
+    "Each figure shows its owner clan label/badge",
+    "Force totals per player are visible in the modal",
+    "A comment explains the image fallback behavior in figureImages.ts",
+    "Responsive media query adjusts diorama for screens under 768px",
+    "npx vite build completes without errors"
+  ],
+  "verification": [
+    "Run `npx vite build` in /projects/sandbox/shoguns-ascent and confirm exit code 0 with no errors"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}

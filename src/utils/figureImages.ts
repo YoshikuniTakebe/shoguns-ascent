@@ -63,7 +63,15 @@ export const CASTLE_IMAGE_MAP: Record<string, string> = {
   luna: castleMoonImg,
 };
 
-/** Get monster image by card ID, or null if not found */
+/**
+ * Get monster image by card ID, or null if not found.
+ *
+ * Not all monsters have images yet. Currently covered: all spring monsters
+ * and most summer monsters. Autumn monsters (au-benten, au-daikaiju, etc.)
+ * and some summer monsters (su-sunakake-baba, su-yurei) do not have image
+ * files in src/img/. When this function returns null, the caller should
+ * fall back to the generic MonsterIcon SVG component.
+ */
 export function getMonsterImage(monsterCardId: string): string | null {
   return MONSTER_IMAGE_MAP[monsterCardId] || null;
 }
