@@ -378,7 +378,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
             {backFigures.length > 0 && (
               <div className="region-diorama-layer region-diorama-layer-back" style={{ transform: 'scale(0.6)', zIndex: 1, bottom: '345px' }}>
                 {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }, index) => {
-                  const BACK_OFFSETS = [20, 10, 0, 0, 10, 20];
+                  const BACK_OFFSETS = [30, 20, 0, 0, 20, 30];
                   const offset = BACK_OFFSETS[index] || 0;
                   return (
                     <div key={figure.id} style={{ position: 'relative', top: `${offset}px` }}>
