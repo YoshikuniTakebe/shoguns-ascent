@@ -106,7 +106,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
         <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
           <img src={img} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
-            <ClanShield clanId={ownerClanId} size={18} />
+            <ClanShield clanId={ownerClanId} size={36} />
             <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
               {ownerName}
             </span>
@@ -119,7 +119,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
       <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
         <img src={TEMPLATE_FIGURE_IMG} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
-          <ClanShield clanId={ownerClanId} size={18} />
+          <ClanShield clanId={ownerClanId} size={36} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
             {ownerName}
           </span>
@@ -136,7 +136,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
         <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
           <img src={img} alt="Castle" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
-            <ClanShield clanId={ownerClanId} size={18} />
+            <ClanShield clanId={ownerClanId} size={36} />
             <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
               {ownerName}
             </span>
@@ -149,7 +149,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
       <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
         <img src={TEMPLATE_FIGURE_IMG} alt="Fortress" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
-          <ClanShield clanId={ownerClanId} size={18} />
+          <ClanShield clanId={ownerClanId} size={36} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
             {ownerName}
           </span>
@@ -178,7 +178,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
       {renderIcon()}
       <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
-        <ClanShield clanId={ownerClanId} size={18} />
+        <ClanShield clanId={ownerClanId} size={36} />
         <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
           {ownerName}
         </span>
@@ -422,7 +422,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
             {frontFigures.length > 0 && (
               <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.0)', zIndex: 3, bottom: '160px' }}>
                 {frontFigures.map(({ figure, ownerColor, ownerClanId, ownerName }, index) => {
-                  const FRONT_OFFSETS = [-10, 25, 25, -10];
+                  const FRONT_OFFSETS = [-10, 40, 40, -10];
                   const offset = FRONT_OFFSETS[index] || 0;
                   return (
                     <div key={figure.id} style={{ position: 'relative', top: `${offset}px` }}>

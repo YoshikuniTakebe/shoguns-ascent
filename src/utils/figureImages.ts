@@ -22,6 +22,12 @@ import konekoImg from '../img/Koneko.png';
 import nureOnnaImg from '../img/Nure-Onna.png';
 import oniOfBloodImg from '../img/Oni of Blood.png';
 
+// New card art imports
+import bentenImg from '../img/Benten.png';
+import daikaijuImg from '../img/Daikiaju.png';
+import ebisuImg from '../img/Ebisu.png';
+import sacredWarriorImg from '../img/Sacred Warrior.png';
+
 // Monster figure image imports (for region diorama miniatures)
 import daikokutenFigImg from '../img/Daikokuten_fig.png';
 import earthDragonFigImg from '../img/Earth Dragon_fig.png';
@@ -90,6 +96,10 @@ export const MONSTER_IMAGE_MAP: Record<string, string> = {
   'su-nure-onna': nureOnnaImg,
   'su-oni-of-blood': oniOfBloodImg,
   'su-oni-of-souls': oniOfSoulsImg,
+  'au-benten': bentenImg,
+  'au-daikaiju': daikaijuImg,
+  'au-ebisu': ebisuImg,
+  'au-sacred-warrior': sacredWarriorImg,
 };
 
 /**
