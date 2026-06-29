@@ -46,6 +46,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   const { gameState, doBuySeasonCard, doSkipTrainPurchase, doRyujinBuyCard, doRyujinSkip } = useGameStore();
   const t = useT();
   const [confirmCard, setConfirmCard] = useState<SeasonCard | null>(null);
+  const [zoomedCard, setZoomedCard] = useState<SeasonCard | null>(null);
   const [playerConfirmed, setPlayerConfirmed] = useState(false);
   const lastTrainIndexRef = useRef<number>(-1);
 
@@ -207,7 +208,9 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                   borderLeftColor: CARD_TYPE_COLORS[card.cardType],
                   opacity: isInteractiveMode && !affordable ? 0.4 : 1,
                   pointerEvents: isInteractiveMode && ((!isRyujinMode && !playerConfirmed) || !affordable) ? 'none' : 'auto',
+                  cursor: 'pointer',
                 }}
+                onClick={() => setZoomedCard(card)}
               >
                 {card.cardType === 'monster' && getMonsterImage(card.id) ? (
                   <div className="season-card-image-placeholder">
@@ -258,7 +261,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                   <button
                     className="btn-primary season-card-buy-btn"
                     style={{ marginTop: '6px', width: '100%', padding: '4px 8px', fontSize: '0.85em' }}
-                    onClick={() => handleBuyClick(card)}
+                    onClick={(e) => { e.stopPropagation(); handleBuyClick(card); }}
                   >
                     {t('seasonCardsModal.buyButton')} ({effectiveCost} &#x26C1;)
                   </button>
@@ -387,6 +390,24 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                   {t('seasonCardsModal.cancel')}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Card zoom overlay */}
+        {zoomedCard && (
+          <div className="card-zoom-overlay" onClick={() => setZoomedCard(null)}>
+            <button className="card-zoom-close" onClick={(e) => { e.stopPropagation(); setZoomedCard(null); }}>&times;</button>
+            <div className="card-zoom-content" onClick={(e) => e.stopPropagation()}>
+              {zoomedCard.cardType === 'monster' && getMonsterImage(zoomedCard.id) ? (
+                <img src={getMonsterImage(zoomedCard.id)!} alt={zoomedCard.name} />
+              ) : (
+                <div className="card-zoom-fallback">
+                  <span className="card-zoom-fallback-icon">&#x1F3B4;</span>
+                  <span className="card-zoom-fallback-name">{zoomedCard.name}</span>
+                  <span className="card-zoom-fallback-effect">{zoomedCard.effect}</span>
+                </div>
+              )}
             </div>
           </div>
         )}

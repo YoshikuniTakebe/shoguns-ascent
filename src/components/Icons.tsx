@@ -369,6 +369,35 @@ export const UndoIcon = ({ size = 24, color = 'currentColor', className }: IconP
   </svg>
 );
 
+/** Closed fist - used to represent Force/Strength */
+export const FistIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    stroke="none"
+  >
+    {/* Wrist */}
+    <rect x="8" y="18" width="8" height="4" rx="1.5" />
+    {/* Palm/back of hand */}
+    <path d="M7 10 C7 8, 8 7, 10 7 L14 7 C16 7, 17 8, 17 10 L17 16 C17 17.5, 16 18, 14 18 L10 18 C8 18, 7 17.5, 7 16 Z" />
+    {/* Curled fingers - four knuckles across the top */}
+    <path d="M8 10 C8 8.5, 8.5 7.5, 9 7 C9 6, 9.2 5, 9.5 4.5 C9.8 4, 10.2 4, 10.5 4.5 C10.8 5, 10.8 6, 10.5 7" />
+    <path d="M10.5 7 C10.5 5.5, 10.7 4.5, 11 4 C11.3 3.5, 11.7 3.5, 12 4 C12.3 4.5, 12.5 5.5, 12.5 7" />
+    <path d="M12.5 7 C12.5 5.5, 12.7 4.5, 13 4 C13.3 3.5, 13.7 3.5, 14 4 C14.3 4.5, 14.5 5.5, 14.5 7" />
+    <path d="M14.5 7 C14.5 6, 14.7 5, 15 4.5 C15.3 4, 15.7 4, 16 4.5 C16.3 5, 16.2 6, 16 7 C16 7.5, 16 8.5, 16 10" />
+    {/* Thumb wrapping across */}
+    <path d="M7 12 C6 12, 5.5 11, 6 10 C6.5 9, 7.5 9, 8 9.5 C8.5 10, 8.5 11, 8 12" fill={color} />
+    {/* Knuckle highlights */}
+    <circle cx="10" cy="7.5" r="1.2" fill={color} opacity="0.7" />
+    <circle cx="12" cy="7.2" r="1.2" fill={color} opacity="0.7" />
+    <circle cx="14" cy="7.2" r="1.2" fill={color} opacity="0.7" />
+    <circle cx="15.8" cy="7.8" r="1" fill={color} opacity="0.7" />
+  </svg>
+);
+
 /** Ronin warrior in attack pose framed in hexagon border */
 export const RoninIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg

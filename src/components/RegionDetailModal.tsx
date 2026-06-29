@@ -2,7 +2,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
-import { BushiIcon, ShintoIcon, DaimyoIcon, MonsterIcon, FortressIcon } from './Icons';
+import { BushiIcon, ShintoIcon, DaimyoIcon, MonsterIcon, FortressIcon, FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { getMonsterFigureImage, getCastleImage } from '../utils/figureImages';
 import { calculateForce } from '../utils/gameLogic';
@@ -95,7 +95,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
         <div className="region-diorama-figure" title={tooltipText}>
           <img src={img} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
-            <ClanShield clanId={ownerClanId} size={12} />
+            <ClanShield clanId={ownerClanId} size={16} />
             {ownerName}
           </span>
         </div>
@@ -106,7 +106,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
       <div className="region-diorama-figure" title={tooltipText}>
         <MonsterIcon size={iconSize} color={ownerColor} />
         <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
-          <ClanShield clanId={ownerClanId} size={12} />
+          <ClanShield clanId={ownerClanId} size={16} />
           {ownerName}
         </span>
       </div>
@@ -121,7 +121,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
         <div className="region-diorama-figure" title={tooltipText}>
           <img src={img} alt="Castle" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
-            <ClanShield clanId={ownerClanId} size={12} />
+            <ClanShield clanId={ownerClanId} size={16} />
             {ownerName}
           </span>
         </div>
@@ -132,7 +132,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
       <div className="region-diorama-figure" title={tooltipText}>
         <FortressIcon size={iconSize} color={ownerColor} />
         <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
-          <ClanShield clanId={ownerClanId} size={12} />
+          <ClanShield clanId={ownerClanId} size={16} />
           {ownerName}
         </span>
       </div>
@@ -159,7 +159,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
     <div className="region-diorama-figure" title={tooltipText}>
       {renderIcon()}
       <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
-        <ClanShield clanId={ownerClanId} size={12} />
+        <ClanShield clanId={ownerClanId} size={16} />
         {ownerName}
       </span>
     </div>
@@ -184,6 +184,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
     return {
       playerId: ownerId,
       playerName: player?.name || 'Unknown',
+      clanId: clan?.id || '',
       clanColor: clan?.color || '#666',
       force,
     };
@@ -217,10 +218,11 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
         {/* Force totals per player */}
         {forceByOwner.length > 0 && (
           <div className="region-diorama-force-bar">
-            {forceByOwner.map(({ playerId, playerName, clanColor, force }) => (
+            {forceByOwner.map(({ playerId, playerName, clanId: ownerClanId, clanColor, force }) => (
               <span key={playerId} className="region-diorama-force-item" style={{ borderColor: clanColor }}>
-                <span className="region-diorama-force-dot" style={{ backgroundColor: clanColor }} />
+                <ClanShield clanId={ownerClanId} size={18} />
                 <span className="region-diorama-force-name">{playerName}</span>
+                <FistIcon size={14} color="var(--accent-gold)" />
                 <span className="region-diorama-force-value">{force}</span>
               </span>
             ))}

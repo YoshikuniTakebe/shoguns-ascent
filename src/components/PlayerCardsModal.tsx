@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
-import type { CardType, Player } from '../types/game';
+import type { CardType, Player, SeasonCard } from '../types/game';
 import { CLANS } from '../types/game';
+import { getMonsterImage } from '../utils/figureImages';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
   monster: '#cd7f32',
@@ -27,6 +29,7 @@ interface PlayerCardsModalProps {
 export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => {
   const t = useT();
   const clan = CLANS.find(c => c.id === player.clanId);
+  const [zoomedCard, setZoomedCard] = useState<SeasonCard | null>(null);
 
   return (
     <div className="season-cards-modal-backdrop" onClick={onClose}>
@@ -45,11 +48,22 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
               <div
                 key={card.id}
                 className="season-card"
-                style={{ borderLeftColor: CARD_TYPE_COLORS[card.cardType] }}
+                style={{ borderLeftColor: CARD_TYPE_COLORS[card.cardType], cursor: 'pointer' }}
+                onClick={() => setZoomedCard(card)}
               >
-                <div className="season-card-image-placeholder">
-                  <span className="season-card-image-icon">&#x1F3B4;</span>
-                </div>
+                {card.cardType === 'monster' && getMonsterImage(card.id) ? (
+                  <div className="season-card-image-placeholder">
+                    <img
+                      src={getMonsterImage(card.id)!}
+                      alt={card.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }}
+                    />
+                  </div>
+                ) : (
+                  <div className="season-card-image-placeholder">
+                    <span className="season-card-image-icon">&#x1F3B4;</span>
+                  </div>
+                )}
                 <div className="season-card-header">
                   <span className="season-card-name">{card.name}</span>
                   <span className="season-card-cost">
@@ -72,6 +86,24 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Card zoom overlay */}
+        {zoomedCard && (
+          <div className="card-zoom-overlay" onClick={() => setZoomedCard(null)}>
+            <button className="card-zoom-close" onClick={(e) => { e.stopPropagation(); setZoomedCard(null); }}>&times;</button>
+            <div className="card-zoom-content" onClick={(e) => e.stopPropagation()}>
+              {zoomedCard.cardType === 'monster' && getMonsterImage(zoomedCard.id) ? (
+                <img src={getMonsterImage(zoomedCard.id)!} alt={zoomedCard.name} />
+              ) : (
+                <div className="card-zoom-fallback">
+                  <span className="card-zoom-fallback-icon">&#x1F3B4;</span>
+                  <span className="card-zoom-fallback-name">{zoomedCard.name}</span>
+                  <span className="card-zoom-fallback-effect">{zoomedCard.effect}</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
