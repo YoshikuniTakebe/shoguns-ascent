@@ -1,0 +1,27 @@
+{
+  "project_type": "React + TypeScript + Vite board game (Zustand state management)",
+  "language": "TypeScript / TSX",
+  "build_system": "Vite with tsc type checking, no tests framework",
+  "test_framework": "None (no test files exist)",
+  "build_command": "cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit && npx vite build",
+  "test_command": "cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit",
+  "verification_instructions": "Run tsc --noEmit to verify type correctness, then vite build to confirm bundling succeeds.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/shoguns-ascent && npm install",
+  "environment_constraints": "No test runner available. Verification is type-checking and build only.",
+  "contribution_requirements": "Branch is fix/tea-ceremony-flow-and-ui-improvements. All changes must compile cleanly.",
+  "key_patterns": "Zustand store in src/store/gameStore.ts with game logic functions in src/utils/gameLogic.ts. i18n via src/i18n/en.ts and src/i18n/es.ts (Record<TranslationKey, string>). Icons as SVG components in src/components/Icons.tsx. CSS in src/App.css (single file). GameBoard.tsx has popup overlays. ActionPanel.tsx shows mandate controls.",
+  "relevant_files": [
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/components/GameBoard.tsx",
+    "src/components/PoliticsTrack.tsx",
+    "src/components/ActionPanel.tsx",
+    "src/components/Icons.tsx",
+    "src/store/gameStore.ts",
+    "src/utils/gameLogic.ts",
+    "src/types/game.ts",
+    "src/App.css"
+  ],
+  "directory_structure": "src/components/ (UI), src/store/ (Zustand), src/utils/ (game logic), src/types/ (TypeScript types), src/i18n/ (translations)"
+}

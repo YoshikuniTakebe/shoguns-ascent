@@ -1,10 +1,10 @@
 import type { CSSProperties } from 'react';
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, PROVINCES_DATA } from '../types/game';
+import { CLANS, PROVINCES_DATA, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
-import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon } from './Icons';
+import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon } from './Icons';
 
 const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
   // SVG-based icons for bushi, shinto, fortress; Unicode for others
@@ -36,6 +36,16 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
       </span>
     );
   }
+  if (figure.type === 'monster') {
+    const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
+    const monsterCard = figure.monsterCardId ? allCards.find(c => c.id === figure.monsterCardId) : null;
+    const monsterName = monsterCard?.name || 'Monster';
+    return (
+      <span className="figure-icon" title={monsterName}>
+        <MonsterIcon size={14} color={color} />
+      </span>
+    );
+  }
 
   const icons: Record<string, string> = {
     monster: '\u2620',
@@ -49,7 +59,7 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
 };
 
 export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSProperties }) => {
-  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure, monsterPlacementMode, monsterPlacementPlayerId, doPlaceMonster } = useGameStore();
+  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure, monsterPlacementMode, monsterPlacementPlayerId, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, jinmenjuSummonActive, doJinmenjuPlace } = useGameStore();
   const t = useT();
   if (!gameState) return null;
 
@@ -63,12 +73,24 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
   const activePlayer = apid ? gameState.players.find(p => p.id === apid) : null;
   const isMarshalMove = moveMode && gameState.marshalMandateActive;
+  const isFujinMove = moveMode && gameState.kamiResolutionActive && gameState.fujinMovesRemaining > 0;
+  const fujinPlayerId = isFujinMove
+    ? gameState.kamiResolutionTemples[gameState.kamiResolutionIndex]?.winnerId
+    : null;
+  const movePlayerId = isFujinMove ? fujinPlayerId : apid;
   const isLibelula = activePlayer?.clanId === 'libelula';
 
   // Move target logic: for Libelula during marshal, all provinces except moveFrom are valid
+  // For Fujin movement, use the fujin player's clan for Libelula check
+  const movePlayerClan = isFujinMove
+    ? gameState.players.find(p => p.id === fujinPlayerId)?.clanId
+    : activePlayer?.clanId;
+  const isMovePlayerLibelula = movePlayerClan === 'libelula';
   let isMoveTarget = false;
   if (moveMode && moveFrom && moveFrom !== regionId && selectedFigures.length > 0) {
     if (isMarshalMove && isLibelula) {
+      isMoveTarget = true;
+    } else if (isFujinMove && isMovePlayerLibelula) {
       isMoveTarget = true;
     } else {
       const moveFromData = PROVINCES_DATA.find(p => p.id === moveFrom);
@@ -79,6 +101,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
 
   // Monster placement target logic
   let isMonsterTarget = false;
+  let isMonsterDimmed = false;
   if (monsterPlacementMode && monsterPlacementPlayerId) {
     const placingPlayer = gameState.players.find(p => p.id === monsterPlacementPlayerId);
     if (placingPlayer) {
@@ -87,15 +110,52 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
         isMonsterTarget = true;
       } else {
         // Can only place where the player has a fortress
-        isMonsterTarget = province.figures.some(f => f.type === 'fortress' && f.owner === monsterPlacementPlayerId);
+        const hasFortress = province.figures.some(f => f.type === 'fortress' && f.owner === monsterPlacementPlayerId);
+        if (hasFortress) {
+          // Luna clan power: max 2 figures per province (excluding fortresses)
+          if (placingPlayer.clanId === 'luna') {
+            const lunaFigures = province.figures.filter(f => f.owner === monsterPlacementPlayerId && f.type !== 'fortress').length;
+            if (lunaFigures >= 2) {
+              isMonsterDimmed = true;
+            } else {
+              isMonsterTarget = true;
+            }
+          } else {
+            isMonsterTarget = true;
+          }
+        } else {
+          isMonsterDimmed = true;
+        }
       }
+    }
+  }
+
+  // Zorro placement target logic
+  let isZorroTarget = false;
+  if (gameState.zorroPlacementActive && gameState.zorroPlacementPlayerId) {
+    const isBattleProvince = gameState.warProvinceSlots.some(s => s.provinceId === regionId);
+    const hasZorroFigure = province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId);
+    if (isBattleProvince && !hasZorroFigure) {
+      isZorroTarget = true;
     }
   }
 
   // Recruit province highlighting logic
   let isRecruitTarget = false;
   let isRecruitDimmed = false;
-  if (recruitMode && !monsterPlacementMode) {
+  if (gameState.kamiResolutionActive && gameState.raijinPlacementActive) {
+    isRecruitTarget = true;
+  } else if (jinmenjuSummonActive && recruitMode && !monsterPlacementMode) {
+    // When Jinmenju summon is active, only highlight the province where Jinmenju is
+    if (apid) {
+      const hasJinmenju = province.figures.some(f => f.owner === apid && f.monsterCardId === 'sp-jinmenju');
+      if (hasJinmenju) {
+        isRecruitTarget = true;
+      } else {
+        isRecruitDimmed = true;
+      }
+    }
+  } else if (recruitMode && !monsterPlacementMode) {
     if (apid) {
       const isDragonfly = activePlayer?.clanId === 'libelula';
       if (isDragonfly) {
@@ -113,6 +173,16 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   }
 
   const handleClick = () => {
+    // Zorro placement: click province to place bushi
+    if (gameState.zorroPlacementActive && isZorroTarget) {
+      doZorroPlaceBushi(regionId);
+      return;
+    }
+    // Raijin placement: click province to summon bushi
+    if (gameState.kamiResolutionActive && gameState.raijinPlacementActive) {
+      doRaijinPlace(regionId);
+      return;
+    }
     if (monsterPlacementMode) {
       if (isMonsterTarget) {
         doPlaceMonster(regionId);
@@ -125,6 +195,10 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
     }
     if (recruitMode) {
       if (isRecruitDimmed) return;
+      if (jinmenjuSummonActive) {
+        doJinmenjuPlace(regionId);
+        return;
+      }
       doRecruitPlaceFigure(regionId);
       return;
     }
@@ -137,16 +211,17 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
         doMoveForces(moveFrom, regionId, selectedFigures);
       }
     } else if (moveMode && !moveFrom) {
-      // During marshal: set moveFrom but do NOT auto-select all figures
+      // During marshal or fujin: set moveFrom but do NOT auto-select all figures
       // Player must click individual figures
-      if (isMarshalMove) {
+      if (isMarshalMove || isFujinMove) {
         setMoveFrom(regionId);
         setSelectedFigures([]);
       } else {
         setMoveFrom(regionId);
-        // Non-marshal: pre-select all figures owned by current player in this province
-        if (apid) {
-          const myFigures = province.figures.filter(f => f.owner === apid);
+        // Non-marshal, non-fujin: pre-select all figures owned by current player in this province
+        const ownerId = movePlayerId || apid;
+        if (ownerId) {
+          const myFigures = province.figures.filter(f => f.owner === ownerId);
           setSelectedFigures(myFigures.map(f => f.id));
         }
       }
@@ -162,20 +237,24 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
       return;
     }
 
-    // Marshal move mode: clicking a figure in the source province selects it
-    if (isMarshalMove && moveFrom === regionId) {
+    // Marshal or Fujin move mode: clicking a figure in the source province selects it
+    if ((isMarshalMove || isFujinMove) && moveFrom === regionId) {
       e.stopPropagation();
       const figure = province.figures.find(f => f.id === figureId);
       if (!figure) return;
 
-      // Cannot select figures that are not owned by current player
-      if (figure.owner !== apid) return;
+      // Cannot select figures that are not owned by the moving player
+      const ownerId = isFujinMove ? fujinPlayerId : apid;
+      if (figure.owner !== ownerId) return;
 
-      // Cannot select already-moved figures
-      if (gameState.marshalMovedFigures.includes(figureId)) return;
+      // Cannot select already-moved figures (marshal only)
+      if (isMarshalMove && gameState.marshalMovedFigures.includes(figureId)) return;
 
-      // Cannot select fortress unless Tortuga
-      if (figure.type === 'fortress' && activePlayer?.clanId !== 'tortuga') return;
+      // Cannot select fortress unless player is Tortuga
+      const movingPlayerClan = isFujinMove
+        ? gameState.players.find(p => p.id === fujinPlayerId)?.clanId
+        : activePlayer?.clanId;
+      if (figure.type === 'fortress' && movingPlayerClan !== 'tortuga') return;
 
       // Toggle selection: if already selected, deselect; otherwise select only this one
       if (selectedFigures.includes(figureId)) {
@@ -188,13 +267,20 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
 
   // Check if a figure is dimmed (already moved during marshal)
   const isFigureDimmed = (fig: Figure): boolean => {
+    if (isFujinMove) return false; // Fujin doesn't track moved figures
     if (!isMarshalMove) return false;
     if (gameState.marshalMovedFigures.includes(fig.id)) return true;
     return false;
   };
 
-  // Check if a figure is unselectable during marshal move
+  // Check if a figure is unselectable during marshal or fujin move
   const isFigureUnselectable = (fig: Figure): boolean => {
+    if (isFujinMove) {
+      if (fig.owner !== fujinPlayerId) return true;
+      const fujinPlayerClan = gameState.players.find(p => p.id === fujinPlayerId)?.clanId;
+      if (fig.type === 'fortress' && fujinPlayerClan !== 'tortuga') return true;
+      return false;
+    }
     if (!isMarshalMove) return false;
     if (fig.owner !== apid) return true;
     if (gameState.marshalMovedFigures.includes(fig.id)) return true;
@@ -212,10 +298,25 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   // Check for war province token
   const warSlot = gameState.warProvinceSlots.find(s => s.provinceId === regionId);
 
+  // Marshal/Fujin glow: when moveMode is true but source not yet selected, glow regions with active player's troops
+  const isMarshalGlowCandidate = (isMarshalMove || isFujinMove) && moveMode && !moveFrom;
+  const marshalGlowPlayerId = isFujinMove ? fujinPlayerId : apid;
+  const glowPlayerClanId = marshalGlowPlayerId ? gameState.players.find(p => p.id === marshalGlowPlayerId)?.clanId : undefined;
+  const hasTroopsForGlow = isMarshalGlowCandidate && marshalGlowPlayerId
+    ? province.figures.some(f => f.owner === marshalGlowPlayerId && (f.type !== 'fortress' || glowPlayerClanId === 'tortuga') && !gameState.marshalMovedFigures.includes(f.id))
+    : false;
+  const marshalGlowColor = hasTroopsForGlow
+    ? (() => {
+        const glowPlayer = gameState.players.find(p => p.id === marshalGlowPlayerId);
+        const glowClan = glowPlayer ? CLANS.find(c => c.id === glowPlayer.clanId) : null;
+        return glowClan?.color || '#DAA520';
+      })()
+    : undefined;
+
   return (
     <div
-      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''}`}
-      style={style}
+      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${isMonsterDimmed ? 'recruit-dimmed' : ''} ${isZorroTarget ? 'recruit-target' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''}`}
+      style={{ ...style, ...(hasTroopsForGlow ? { '--marshal-glow-color': marshalGlowColor } as React.CSSProperties : {}) }}
       onClick={handleClick}
     >
       <div className="region-name">{province.name}</div>

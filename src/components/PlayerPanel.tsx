@@ -3,14 +3,14 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { Player } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { BushiIcon, CoinIcon, HonorIcon, VPIcon, RoninIcon, ShintoIcon, FortressIcon, WarTokenIcon, HostageIcon } from './Icons';
+import { BushiIcon, CoinIcon, HonorIcon, VPIcon, RoninIcon, ShintoIcon, FortressIcon, WarTokenIcon, HostageIcon, DaimyoIcon, MonsterIcon } from './Icons';
 import { PlayerCardsModal } from './PlayerCardsModal';
 import { WarTokensModal } from './WarTokensModal';
 import { HostagesModal } from './HostagesModal';
 import { useT } from '../i18n';
 
 export const PlayerPanel = () => {
-  const { gameState, localPlayerId } = useGameStore();
+  const { gameState, localPlayerId, warPhasePopupVisible } = useGameStore();
   const t = useT();
   const [viewingCardsPlayer, setViewingCardsPlayer] = useState<Player | null>(null);
   const [viewingWarTokensPlayer, setViewingWarTokensPlayer] = useState<Player | null>(null);
@@ -20,21 +20,24 @@ export const PlayerPanel = () => {
 
   return (
     <div className="player-panel">
-      <h3>Players</h3>
       <div className="player-list">
-        {gameState.players.map(player => {
+        {[...gameState.players]
+          .sort((a, b) => gameState.turnOrder.indexOf(a.id) - gameState.turnOrder.indexOf(b.id))
+          .map(player => {
           const clan = CLANS.find(c => c.id === player.clanId)!;
           return (
             <div
               key={player.id}
               className={`player-card ${player.id === cp?.id ? 'active' : ''} ${player.id === localPlayerId ? 'local' : ''}`}
-              style={{ borderLeftColor: clan.color }}
+              style={{
+                borderLeftColor: clan.color,
+                ...(player.id === cp?.id ? { boxShadow: `0 0 12px 3px ${clan.color}, inset 0 0 8px ${clan.color}40` } : {})
+              }}
             >
               <div className="player-header">
                 <span className="player-name" style={{ color: clan.color }}>
-                  <ClanShield clanId={player.clanId} size={24} />
+                  <ClanShield clanId={player.clanId} size={48} />
                   {player.name}
-                  {player.id === cp?.id && ' \u2B05'}
                 </span>
                 <span className="clan-badge" style={{ '--clan-color': clan.color } as React.CSSProperties}>{clan.name}</span>
               </div>
@@ -45,7 +48,7 @@ export const PlayerPanel = () => {
                 </div>
                 <div className="stat">
                   <span className="stat-icon"><CoinIcon size={16} color={clan.color} /></span>
-                  <span className="stat-value">{player.coins} coins</span>
+                  <span className="stat-value">{gameState.currentPhase === 'war' && !warPhasePopupVisible ? '?' : player.coins} coins</span>
                 </div>
                 <div className="stat">
                   <span className="stat-icon"><HonorIcon size={16} color={clan.color} /></span>
@@ -53,23 +56,30 @@ export const PlayerPanel = () => {
                 </div>
                 <div className="stat">
                   <span className="stat-icon"><RoninIcon size={16} color={clan.color} /></span>
-                  <span className="stat-value">{player.ronin} ronin</span>
+                  <span className="stat-value">{gameState.currentPhase === 'war' && !warPhasePopupVisible && player.clanId === 'koi' ? 0 : player.ronin} ronin</span>
                 </div>
               </div>
               <div className="player-reserves">
-                <span className="reserve-item" title="Bushi in reserve">
-                  <BushiIcon size={24} color={clan.color} className="reserve-icon" />
+                <span className="reserve-item" title="Bushi">
+                  <BushiIcon size={18} color={clan.color} className="reserve-icon" />
                   <span className="reserve-count">{player.bushi}</span>
                 </span>
-                <span className="reserve-item" title="Shinto in reserve">
-                  <ShintoIcon size={24} color={clan.color} className="reserve-icon" />
+                <span className="reserve-item" title="Shinto">
+                  <ShintoIcon size={18} color={clan.color} className="reserve-icon" />
                   <span className="reserve-count">{player.shinto}</span>
                 </span>
-                <span className="reserve-item" title="Fortresses in reserve">
-                  <FortressIcon size={24} color={clan.color} className="reserve-icon" />
+                <span className="reserve-item" title="Fortaleza">
+                  <FortressIcon size={18} color={clan.color} className="reserve-icon" />
                   <span className="reserve-count">{player.fortresses}</span>
                 </span>
-                {player.hasDaimyo && <span className="reserve-item daimyo-indicator">&#9813;</span>}
+                <span className="reserve-item" title="Daimyo">
+                  <DaimyoIcon size={18} color={clan.color} className="reserve-icon" />
+                  <span className="reserve-count">{player.hasDaimyo ? 1 : 0}</span>
+                </span>
+                <span className="reserve-item" title="Monstruo">
+                  <MonsterIcon size={18} color={clan.color} className="reserve-icon" />
+                  <span className="reserve-count">{player.monsters ?? 0}</span>
+                </span>
               </div>
               <div className="player-extras">
                 {player.warProvinceTokens.length > 0 && (

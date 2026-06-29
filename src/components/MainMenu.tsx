@@ -1,11 +1,22 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, DECK_GROUPS } from '../types/game';
-import type { DeckConfig, DeckName } from '../types/game';
+import { CLANS, DECK_GROUPS, CLAN_INCOME, KAMI_DATA } from '../types/game';
+import type { DeckConfig, DeckName, KamiType } from '../types/game';
 import type { TranslationKey } from '../i18n';
 import { ClanShield } from './ClanShields';
-import { DaimyoPortrait } from './DaimyoPortraits';
 import { useT } from '../i18n';
+import { shuffle } from '../utils/gameLogic';
+
+const CLAN_POWERS: Record<string, string> = {
+  koi: 'Monedas como Ronin. Al inicio de Guerra cambia Ronin por Monedas. En Contratar Ronin, sus Monedas suman Fuerza.',
+  sol: 'Al ganar empate por Honor, gana 1 Moneda + 1 PV. El perdedor pierde 1 Moneda + 1 PV.',
+  loto: 'Elige cualquier Orden Politica, sin importar las fichas que robe.',
+  tortuga: 'Fortalezas se mueven como figuras y cuentan como 1 de Fuerza.',
+  libelula: 'Invoca figuras en cualquier Provincia. Mueve figuras a cualquier Provincia.',
+  zorro: 'Al inicio de Guerra, coloca 1 Bushi gratis en cada provincia sin unidades propias.',
+  bonsai: 'El coste maximo de cualquier compra es 1 Moneda.',
+  luna: 'Todas sus figuras tienen Fuerza 2. Max 2 figuras por provincia y max 2 en Santuarios.',
+};
 
 export const MainMenu = () => {
   const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage } = useGameStore();
@@ -18,12 +29,24 @@ export const MainMenu = () => {
   const [clans, setClans] = useState(CLANS.map(c => c.id));
   const [chosenDeck, setChosenDeck] = useState<DeckName | 'random'>('random');
   const [extraMonsters, setExtraMonsters] = useState<0 | 1 | 2>(0);
+  const [kamiMode, setKamiMode] = useState<'random' | 'manual'>('random');
+  const [selectedKami, setSelectedKami] = useState<KamiType[]>([]);
   const [url, setUrl] = useState('ws://localhost:3001');
   const [oName, setOName] = useState('');
   const [oClan, setOClan] = useState('koi');
   const [lid, setLid] = useState('');
 
   const hasSolOrLuna = clans.slice(0, pc).some(id => id === 'sol' || id === 'luna');
+
+  const toggleKami = (type: KamiType) => {
+    setSelectedKami(prev => {
+      if (prev.includes(type)) {
+        return prev.filter(k => k !== type);
+      }
+      if (prev.length >= 4) return prev;
+      return [...prev, type];
+    });
+  };
 
   const DECK_NAME_KEYS: Record<DeckName, TranslationKey> = {
     Archway: 'deck.archway',
@@ -37,6 +60,7 @@ export const MainMenu = () => {
   const getDeckConfig = (): DeckConfig => ({
     chosenDeck,
     extraMonsters,
+    selectedKami: kamiMode === 'manual' && selectedKami.length === 4 ? selectedKami : undefined,
   });
 
   return (
@@ -64,12 +88,27 @@ export const MainMenu = () => {
       {mode === 'select' && (
         <div className="menu-options">
           <button className="menu-btn" onClick={() => setMode('hotseat')}>
-            <span className="btn-icon">&#9876;</span>
+            <span className="btn-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8" cy="7" r="3.5" />
+                <circle cx="16" cy="7" r="3.5" />
+                <path d="M1 20c0-3.5 3-6 7-6s7 2.5 7 6" opacity="0.7" />
+                <path d="M10 20c0-3.5 3-6 7-6s7 2.5 7 6" opacity="0.7" />
+              </svg>
+            </span>
             <span className="btn-text">{t('menu.hotseatMode')}</span>
             <span className="btn-desc">{t('menu.hotseatDesc')}</span>
           </button>
           <button className="menu-btn" onClick={() => setMode('online')}>
-            <span className="btn-icon">&#9733;</span>
+            <span className="btn-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" />
+                <ellipse cx="12" cy="12" rx="4.5" ry="10" />
+                <path d="M2 12h20" />
+                <path d="M4 7h16" />
+                <path d="M4 17h16" />
+              </svg>
+            </span>
             <span className="btn-text">{t('menu.onlineMode')}</span>
             <span className="btn-desc">{t('menu.onlineDesc')}</span>
           </button>
@@ -86,6 +125,15 @@ export const MainMenu = () => {
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
+            <button
+              className="btn-randomize"
+              onClick={() => {
+                const shuffled = shuffle(CLANS.map(c => c.id));
+                setClans(shuffled);
+              }}
+            >
+              &#127922; {t('menu.randomize')}
+            </button>
           </div>
           <div className="player-setup-list">
             {Array.from({ length: pc }, (_, i) => {
@@ -93,7 +141,7 @@ export const MainMenu = () => {
               return (
                 <div key={i} className="player-setup-row">
                   <div className="player-setup-clan-icon">
-                    <ClanShield clanId={clans[i]} size={24} />
+                    <ClanShield clanId={clans[i]} size={48} />
                   </div>
                   <input
                     value={names[i]}
@@ -120,6 +168,7 @@ export const MainMenu = () => {
               );
             })}
           </div>
+
           <div className="deck-config-section">
             <h3>{t('deck.config')}</h3>
             <div className="deck-group-selector">
@@ -163,9 +212,55 @@ export const MainMenu = () => {
               </div>
             )}
           </div>
+
+          <div className="kami-config-section">
+            <h3>{t('kami.config')}</h3>
+            <div className="kami-mode-selector">
+              <button
+                className={`deck-group-btn${kamiMode === 'random' ? ' active' : ''}`}
+                onClick={() => setKamiMode('random')}
+              >
+                &#127922; {t('kami.random')}
+              </button>
+              <button
+                className={`deck-group-btn${kamiMode === 'manual' ? ' active' : ''}`}
+                onClick={() => setKamiMode('manual')}
+              >
+                &#9998; {t('kami.manual')}
+              </button>
+            </div>
+            {kamiMode === 'manual' && (
+              <div className="kami-selection-panel">
+                <span className="kami-selection-counter">
+                  {selectedKami.length}/4 {t('kami.selected')}
+                </span>
+                <div className="kami-selection-grid">
+                  {KAMI_DATA.map(kami => {
+                    const isSelected = selectedKami.includes(kami.type);
+                    return (
+                      <button
+                        key={kami.type}
+                        className={`kami-select-btn${isSelected ? ' selected' : ''}`}
+                        onClick={() => toggleKami(kami.type)}
+                        title={kami.effect}
+                      >
+                        {isSelected && (
+                          <span className="kami-select-order">{selectedKami.indexOf(kami.type) + 1}</span>
+                        )}
+                        <span className="kami-select-name">{kami.name}</span>
+                        <span className="kami-select-effect">{kami.effect}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="setup-actions">
             <button
               className="btn-primary"
+              disabled={kamiMode === 'manual' && selectedKami.length !== 4}
               onClick={() =>
                 createGame(
                   Array.from({ length: pc }, (_, i) => ({ name: names[i], clanId: clans[i] })),
@@ -221,17 +316,16 @@ export const MainMenu = () => {
       )}
 
       <div className="menu-footer">
-        <p>{t('menu.clans')}</p>
+        <p className="clans-title">{t('menu.clans')}</p>
         <div className="clan-preview-list">
           {CLANS.map(c => (
-            <div key={c.id} className="clan-preview" style={{ borderColor: c.color }}>
-              <div className="clan-preview-header">
-                <ClanShield clanId={c.id} size={32} />
-                <span className="clan-name" style={{ color: c.color }}>{c.name}</span>
-              </div>
-              <div className="clan-preview-body">
-                <DaimyoPortrait clanId={c.id} size={56} />
-                <span className="clan-honor">{t('menu.initialHonor')} {c.initialHonor}</span>
+            <div key={c.id} className="clan-preview-seal-wrapper">
+              <ClanShield clanId={c.id} size={150} />
+              <div className="clan-tooltip" style={{ borderColor: c.color }}>
+                <span className="clan-tooltip-name" style={{ color: c.color }}>{c.name}</span>
+                <span className="clan-tooltip-stat">Honor inicial: {c.initialHonor}</span>
+                <span className="clan-tooltip-stat">Ingresos: {CLAN_INCOME[c.id] ?? 0}</span>
+                <span className="clan-tooltip-power">Poder: {CLAN_POWERS[c.id] ?? ''}</span>
               </div>
             </div>
           ))}

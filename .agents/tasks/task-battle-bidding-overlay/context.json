@@ -1,0 +1,24 @@
+{
+  "project_type": "React + TypeScript board game (Vite)",
+  "language": "TypeScript / React",
+  "build_system": "Vite with TypeScript checking via tsc -b",
+  "test_framework": "No test framework found (no test files, no test script in package.json)",
+  "build_command": "npx vite build",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "1. Run npx tsc --noEmit to verify no type errors. 2. Run npx vite build to verify successful build.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install (already done, node_modules present)",
+  "environment_constraints": "OPEN_INTERNET - full access",
+  "contribution_requirements": "No CONTRIBUTING.md found. Follow existing patterns in components.",
+  "key_patterns": "Components are in src/components/ as .tsx files. CSS is in a single src/App.css file. i18n translations in src/i18n/en.ts and src/i18n/es.ts. State management via Zustand in src/store/gameStore.ts. WAR_TACTICS constant in src/types/game.ts defines 4 tactics in order. Coin image at src/img/coin.png. BattlePanel.tsx currently handles all battle UI including bidding sliders.",
+  "relevant_files": [
+    "src/components/BattlePanel.tsx",
+    "src/App.css",
+    "src/types/game.ts",
+    "src/store/gameStore.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/img/coin.png"
+  ],
+  "directory_structure": "Root: index.html, package.json, vite.config.ts. src/: App.tsx, App.css, main.tsx. src/components/: all UI components. src/store/: Zustand game store. src/types/: game.ts with all types and constants. src/i18n/: translation files. src/img/: game images. src/utils/: game logic utilities."
+}

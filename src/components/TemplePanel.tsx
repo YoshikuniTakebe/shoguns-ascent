@@ -15,6 +15,16 @@ const KAMI_BASE_EFFECT_KEYS: Record<KamiType, TranslationKey> = {
   tsukuyomi: 'kami.tsukuyomi.baseEffect',
 };
 
+const KAMI_SUMMARY_KEYS: Record<KamiType, TranslationKey> = {
+  amaterasu: 'kami.amaterasu.summary',
+  fujin: 'kami.fujin.summary',
+  hachiman: 'kami.hachiman.summary',
+  raijin: 'kami.raijin.summary',
+  ryujin: 'kami.ryujin.summary',
+  susanoo: 'kami.susanoo.summary',
+  tsukuyomi: 'kami.tsukuyomi.summary',
+};
+
 import amaterasuImg from '../img/Amaterasu.png';
 import fujinImg from '../img/Fujin.png';
 import hachimanImg from '../img/Hachiman.png';
@@ -44,7 +54,7 @@ const KAMI_IMAGES: Record<KamiType, string> = {
 };
 
 export const TemplePanel = () => {
-  const { gameState, komainuPrayMode, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto } = useGameStore();
+  const { gameState, komainuPrayMode, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto, jinmenjuSummonActive, doJinmenjuPlaceTemple } = useGameStore();
   const [selectedKami, setSelectedKami] = useState<KamiType | null>(null);
   const t = useT();
 
@@ -118,6 +128,8 @@ export const TemplePanel = () => {
               onClick={() => {
                 if (komainuPrayMode) {
                   doKomainuPlaceAtTemple(temple.id);
+                } else if (jinmenjuSummonActive && isRecruitShintoTarget) {
+                  doJinmenjuPlaceTemple(temple.id);
                 } else if (isRecruitShintoTarget) {
                   doRecruitPlaceTempleShinto(temple.id);
                 } else {
@@ -139,7 +151,7 @@ export const TemplePanel = () => {
                   {kami?.name || temple.kamiType}
                 </div>
                 <div className="kami-slot-effect">
-                  {kami ? t(KAMI_BASE_EFFECT_KEYS[kami.type]) : ''}
+                  {kami ? t(KAMI_SUMMARY_KEYS[kami.type]) : ''}
                 </div>
               </div>
               {temple.figures.length > 0 && (
@@ -201,16 +213,22 @@ export const TemplePanel = () => {
             {figuresByClan.length > 0 && (
               <div className="kami-modal-figures">
                 <h4 className="kami-modal-figures-title">{t('kamiModal.shintoFigures')}</h4>
-                {figuresByClan.map(({ clanId, clanName, color, count }) => (
-                  <div key={clanId} className="kami-modal-figure-row">
-                    <span
-                      className="kami-modal-clan-dot"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="kami-modal-clan-name">{clanName}</span>
-                    <span className="kami-modal-figure-count">{count}</span>
-                  </div>
-                ))}
+                {figuresByClan.map(({ clanId, clanName, color, count }) => {
+                  const force = clanId === 'luna' ? count * 2 : count * 1;
+                  return (
+                    <div key={clanId} className="kami-modal-figure-row">
+                      <span
+                        className="kami-modal-clan-dot"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="kami-modal-clan-name">{clanName}</span>
+                      <span className="kami-modal-figure-count">{count}</span>
+                      <span className="kami-modal-figure-force" style={{ color: '#DAA520', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
+                        (Fuerza: {force})
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

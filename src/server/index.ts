@@ -138,7 +138,9 @@ wss.on('connection', (ws: WebSocket) => {
           const mandate = data.payload?.mandate;
           if (!mandate) return;
           let s = chooseMandateTile(l.gameState, mandate, data.playerId);
-          s = advancePlayer(s);
+          if (!s.betrayMandateActive && !s.trainMandateActive && !s.marshalMandateActive && !s.recruitMandateActive && !s.harvestMandateActive) {
+            s = advancePlayer(s);
+          }
           l.gameState = s;
           broadcastState(l);
           break;

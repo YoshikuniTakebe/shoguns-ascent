@@ -1,0 +1,7 @@
+{
+  "task_id": "task-battle-bidding-overlay",
+  "task_description": "Replace the slider-based battle bidding UI with a full-screen visual drag-and-drop overlay featuring tactic tiles with kanji art and draggable coin images",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

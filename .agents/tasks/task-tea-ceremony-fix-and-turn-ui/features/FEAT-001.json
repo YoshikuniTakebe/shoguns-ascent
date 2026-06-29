@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix tea ceremony order, add clan shield to turn header, and implement turn transition popup for hotseat mode",
+  "status": "completed",
+  "steps": [
+    "TASK 1 - Tea Ceremony Order Fix: In src/utils/gameLogic.ts at line ~262, change `const firstPlayerId = state.honorTrack[0]` to `const firstPlayerId = state.turnOrder[0]`. The honorTrack is dynamic (modified at lines 938, 1148, 2153 during gameplay) while turnOrder is static (set once at game creation, line 164). The advanceTeaPlayer function (line ~2373) already uses turnOrder for advancement, so setupSeason must match. Also update the comment on line ~261 to say 'from turn order' instead of 'from honor track'.",
+    "TASK 2 - Clan Shield in Turn Header: In src/components/GameBoard.tsx, import ClanShield from './ClanShields'. In the turn-indicator div (around line ~204), add <ClanShield clanId={cp?.clanId || ''} size={28} /> to the LEFT of the current-player-name span. The turn-indicator div currently contains the span.current-player-name and optional hotseat/waiting labels.",
+    "TASK 3 - Turn Popup Between Mandate Turns (Hotseat): Add a turnPopupPlayer field (string | null, default null) to the GameStore interface and initial state in src/store/gameStore.ts. Create a dismissTurnPopup action that sets turnPopupPlayer to null. In all places where mandate resolution advances to the next player within a mandate (when the mandate is still active after a player's turn), set turnPopupPlayer to the new current player's id. These locations are: (a) doSkipTrainPurchase and doBuySeasonCard - when ns.trainMandateActive is still true after advancing, (b) doSkipMarshalTurn - when ns.marshalMandateActive is still true, (c) doRecruitPlaceFigure, doRecruitPlaceTempleShinto, doSkipRecruitTurn - when ns.recruitMandateActive is still true, (d) doBetraySelectFigure - when ns.betrayMandateActive is still true. Only set turnPopupPlayer when gameState.mode === 'hotseat'. In GameBoard.tsx, add a popup overlay (reusing the monster-placement-popup pattern) that shows when turnPopupPlayer is set. It should display: the ClanShield (size 48) of the player, then 'Turno de [PlayerName]' with the player name in clan color, and an 'Aceptar' button that calls dismissTurnPopup. Add i18n keys 'game.turnPopup' with value 'Turno de {name}' (es) / '{name}\\'s Turn' (en) and 'game.turnPopupAccept' with value 'Aceptar' (es) / 'Accept' (en)."
+  ],
+  "acceptance_criteria": [
+    "setupSeason uses state.turnOrder[0] instead of state.honorTrack[0] for first tea player",
+    "GameBoard turn header shows ClanShield (size 28) to the left of the player name",
+    "In hotseat mode, when a mandate turn advances to the next player (while mandate is still active), a blocking popup appears showing the new player's clan shield and name in clan color with an Aceptar button",
+    "The popup blocks interaction until dismissed via the Aceptar button",
+    "npx tsc --noEmit passes with no errors"
+  ],
+  "verification": [
+    "Run `npx tsc --noEmit` and confirm it passes with no type errors"
+  ],
+  "blocked_reason": null,
+  "findings": "All three changes implemented successfully. TypeScript compilation passes. The tea ceremony now uses turnOrder[0] (static) instead of honorTrack[0] (dynamic). ClanShield added to turn header. Turn popup added for all mandate transitions in hotseat mode (train, marshal, recruit, betray)."
+}

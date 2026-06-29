@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-005",
+  "title": "Post-review fixes: fortress enforcement, betray label, war helper, log cap",
+  "status": "completed",
+  "description": "Address issues found in semantic review: (1) Fix fortress enforcement to also check monsters, (2) Add dedicated i18n key for betray mandate label, (3) Extract war phase detection helper to reduce duplication, (4) Remove slice(-20) cap for archived season logs.",
+  "steps": [
+    "Fix fortress enforcement guard to include monster type in gameLogic.ts",
+    "Add dedicated i18n key for betray mandate label in en.ts and es.ts",
+    "Update ActionPanel.tsx to use the new betray label key",
+    "Extract detectWarTransition helper in gameStore.ts",
+    "Remove slice(-20) cap for archived season logs in GameLog.tsx"
+  ],
+  "acceptance_criteria": [
+    "Fortress enforcement applies to both bushi and monster figure types",
+    "Betray mandate label uses a dedicated translation key instead of string manipulation",
+    "War phase detection logic is extracted into a helper function",
+    "Archived season logs display all entries without truncation",
+    "Build passes cleanly"
+  ],
+  "findings": "All 4 fixes implemented successfully. The fortress enforcement for monsters is forward-compatible since the recruit UI currently only offers bushi/shinto, but the gameLogic function now accepts and properly enforces monster type. The detectWarTransition helper reduced ~175 lines of duplicated conditional logic to ~72 lines using the helper. The doSkipRecruitTurn case was handled with a slightly different pattern (checking Object.keys) to preserve the auto-enable recruitMode comment clarity.",
+  "blocked_reason": null
+}

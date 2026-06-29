@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Add a 'request' (petition) slider to the tea ceremony alliance proposal UI. In addition to offering a bribe (pay coins TO the target), players can now request coins FROM the target as a condition of the alliance. The two sliders are mutually exclusive: increasing one resets the other to 0. Only a bribe OR a request can be sent, not both.",
+  "status": "completed",
+  "steps": [
+    "In src/types/game.ts, add `requestAmount?: number` to the AllianceProposal interface.",
+    "In src/utils/gameLogic.ts proposeAlliance function, add a `requestAmount` parameter (default 0). Include it in the proposal object when > 0. Update log messages to indicate when a request is made.",
+    "In src/utils/gameLogic.ts acceptAlliance function, handle requestAmount: when accepting a proposal with requestAmount, the ACCEPTER pays requestAmount to the proposer (fromId). Cap at accepter's coins. Add log message.",
+    "In src/store/gameStore.ts, update the doProposeAlliance signature and implementation to pass requestAmount. Update the store interface type to include requestAmount parameter.",
+    "In src/components/ActionPanel.tsx, add a `requestAmount` state variable (useState<number>(0)). Add a second slider for 'Request' below or next to the bribe slider. When bribe slider value increases above 0, set requestAmount to 0. When request slider increases above 0, set bribeAmount to 0. The request slider max should be reasonable (e.g., max coins the target player has, or a fixed cap). Pass requestAmount to doProposeAlliance.",
+    "In the pending proposals display in ActionPanel.tsx, show the requestAmount if present (similar to how bribeAmount is shown but with different styling/icon to indicate it's a request/cost).",
+    "Add i18n translations to en.ts and es.ts: 'actions.requestLabel' = 'Request' / 'Peticion', 'actions.requestingCoins' = 'Requesting {amount} coins for alliance' / 'Pidiendo {amount} monedas por la alianza'."
+  ],
+  "acceptance_criteria": [
+    "Tea ceremony UI shows two sliders: Bribe and Request, mutually exclusive",
+    "Increasing bribe resets request to 0 and vice versa",
+    "When a proposal with requestAmount is accepted, the accepter pays requestAmount to the proposer",
+    "Pending proposals display shows requestAmount when present",
+    "Log messages reflect whether a bribe or request was part of the alliance",
+    "AllianceProposal type includes optional requestAmount field",
+    "The code compiles without new TypeScript errors"
+  ],
+  "verification": [
+    "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit 2>&1 | grep -v 'BattleBiddingOverlay\\|BattlePanel' | head -20` to check for new TS errors"
+  ],
+  "blocked_reason": null,
+  "findings": "Implementation complete. All acceptance criteria met. TypeScript compiles cleanly (no new errors beyond the pre-existing BattleBiddingOverlay/BattlePanel ones). The request slider max is set to the target player's coins. Mutual exclusivity works by resetting the other slider to 0 when one is increased above 0."
+}

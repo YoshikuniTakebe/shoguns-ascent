@@ -1,0 +1,31 @@
+{
+  "project_type": "React + TypeScript + Vite board game (adaptation of Rising Sun)",
+  "language": "TypeScript",
+  "build_system": "Vite with TypeScript, npm scripts",
+  "test_framework": "No test framework configured (no tests/ directory)",
+  "build_command": "npx vite build",
+  "test_command": "npx vite build (only build verification available, no tests)",
+  "verification_instructions": "Run npx vite build to confirm the project builds without breaking changes",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install && npx vite build",
+  "environment_constraints": "OPEN_INTERNET mode. Pre-existing TS errors in BattlePanel.tsx (type mismatch for t function prop) that do not block vite build. The build uses vite which transpiles TS without strict checking.",
+  "contribution_requirements": "No CONTRIBUTING.md found. Follow existing patterns in the codebase.",
+  "key_patterns": "Zustand store (gameStore.ts) holds all game state and actions. Game logic in utils/gameLogic.ts is pure functions that take/return GameState. Components use useGameStore hook. i18n with TranslationKey types. Icons defined as SVG components in Icons.tsx. CSS in single minified App.css file. CLANS array has color definitions. HARVEST_BADGE_META in GameBoard.tsx defines region hex colors. ClanShield renders PNG seals. Popups use .monster-placement-popup class pattern.",
+  "relevant_files": [
+    "src/components/PoliticsTrack.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/components/RegionDetailModal.tsx",
+    "src/components/RegionCard.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/GameLog.tsx",
+    "src/components/TemplePanel.tsx",
+    "src/components/Icons.tsx",
+    "src/utils/gameLogic.ts",
+    "src/store/gameStore.ts",
+    "src/App.css",
+    "src/types/game.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts"
+  ],
+  "directory_structure": "src/components/ (all React components), src/store/ (Zustand store), src/utils/ (game logic), src/types/ (TypeScript types), src/i18n/ (translations), src/img/ (images), public/ (static assets)"
+}

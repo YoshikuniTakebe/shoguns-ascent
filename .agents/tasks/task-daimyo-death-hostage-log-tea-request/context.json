@@ -1,0 +1,24 @@
+{
+  "project_type": "React + TypeScript + Vite board game (Rising Sun adaptation)",
+  "language": "TypeScript",
+  "build_system": "Vite with tsc -b for type checking",
+  "test_framework": "No test framework installed (no test files exist)",
+  "build_command": "npm run build (tsc -b && vite build)",
+  "test_command": "No tests - rely on build passing",
+  "verification_instructions": "Run npm run build - note there are pre-existing TS errors in BattleBiddingOverlay.tsx and BattlePanel.tsx related to dynamic TranslationKey types. These are NOT introduced by our changes.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install (already done, node_modules exists)",
+  "environment_constraints": "No test framework. Verification is via TypeScript compilation and code review.",
+  "contribution_requirements": "Branch: fix/tea-ceremony-flow-and-ui-improvements. No PR workflow needed.",
+  "key_patterns": "Game logic in src/utils/gameLogic.ts (pure functions that take/return GameState). Store in src/store/gameStore.ts (Zustand). UI in src/components/. i18n in src/i18n/en.ts and es.ts. Log entries use player names which are auto-colored by GameLog.tsx renderLogEntry() function. Types in src/types/game.ts. AllianceProposal interface defines alliance proposal shape.",
+  "relevant_files": [
+    "src/utils/gameLogic.ts",
+    "src/types/game.ts",
+    "src/components/ActionPanel.tsx",
+    "src/store/gameStore.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/components/GameLog.tsx"
+  ],
+  "directory_structure": "src/utils/gameLogic.ts = main game logic, src/types/game.ts = type definitions, src/components/ = React components, src/store/ = Zustand store, src/i18n/ = translations (en.ts, es.ts, index.ts)"
+}

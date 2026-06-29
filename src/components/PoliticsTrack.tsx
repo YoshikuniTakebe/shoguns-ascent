@@ -177,11 +177,14 @@ export const PoliticsTrack = () => {
   useEffect(() => {
     if (gameState?.trainMandateActive) {
       setShowSeasonCards(true);
+    } else if (gameState?.ryujinBuyActive && gameState?.kamiResolutionStep === 'interactive') {
+      // Only open for Ryujin when in interactive step (not while showing popup)
+      setShowSeasonCards(true);
     } else {
       // Auto-close when train mandate completes
       setShowSeasonCards(false);
     }
-  }, [gameState?.trainMandateActive]);
+  }, [gameState?.trainMandateActive, gameState?.ryujinBuyActive, gameState?.kamiResolutionStep]);
 
   // Close the modal when monster placement is active
   useEffect(() => {
@@ -212,7 +215,9 @@ export const PoliticsTrack = () => {
     betray: 0,
   };
   for (const m of mandates) {
-    mandateCounts[m.type]++;
+    if (!m.hidden) {
+      mandateCounts[m.type]++;
+    }
   }
 
   // Exhausted mandates (played 2 times already)
@@ -225,9 +230,42 @@ export const PoliticsTrack = () => {
     const isCurrent = slotIndex === mandateCount && gameState.currentPhase === 'politics';
 
     if (mandate) {
-      const clan = CLANS.find((c) => c.id === mandate.issuer);
+      const player = gameState.players.find(p => p.id === mandate.issuer);
+      const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
       const clanColor = clan?.color || '#888';
-      const playerName = gameState.players.find(p => p.id === mandate.issuer)?.name;
+      const playerName = player?.name;
+
+      // Loto clan power: mandate tile is face down (hidden from other players)
+      if (mandate.hidden) {
+        return (
+          <div
+            key={`slot-${slotIndex}`}
+            className="politics-track-slot filled hidden-mandate"
+            style={{
+              borderColor: '#4a3a6a',
+              backgroundColor: 'rgba(30, 20, 50, 0.85)',
+            }}
+            title={`Mandato secreto - ${clan?.name || 'Loto'}`}
+          >
+            <div className="slot-illustration hidden-illustration">
+              <svg width={40} height={40} viewBox="0 0 64 64" fill="none">
+                <rect x="8" y="8" width="48" height="48" rx="6" fill="#1a1030" opacity="0.9" />
+                <text x="32" y="42" textAnchor="middle" fontSize="28" fill="#9b7fcf" opacity="0.9" fontFamily="serif">秘</text>
+              </svg>
+            </div>
+            <span className="slot-mandate-label" style={{ color: '#9b7fcf' }}>
+              Secreto
+            </span>
+            {playerName && (
+              <span className="slot-player-name" style={{ color: clanColor }}>
+                {playerName}
+              </span>
+            )}
+            <span className="slot-clan-dot" style={{ backgroundColor: clanColor }} />
+          </div>
+        );
+      }
+
       return (
         <div
           key={`slot-${slotIndex}`}
@@ -267,10 +305,27 @@ export const PoliticsTrack = () => {
   const renderKamiIcon = (key: string) => (
     <div key={key} className="politics-track-kami" title="Kami Turn">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        {/* Torii gate - spiritual gateway */}
         <path
-          d="M12 2L14.5 8.5L21 9.5L16 14L17.5 21L12 17.5L6.5 21L8 14L3 9.5L9.5 8.5L12 2Z"
-          fill="var(--accent-gold)"
+          d="M4 6h16M5 6c0-1 2-3 7-3s7 2 7 3"
+          stroke="var(--accent-gold)"
+          strokeWidth="2"
+          strokeLinecap="round"
           opacity="0.9"
+        />
+        <path
+          d="M6 6v16M18 6v16"
+          stroke="var(--accent-gold)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          opacity="0.9"
+        />
+        <path
+          d="M6 11h12"
+          stroke="var(--accent-gold)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          opacity="0.7"
         />
       </svg>
     </div>
@@ -281,14 +336,41 @@ export const PoliticsTrack = () => {
       {/* Tea Ceremony icon */}
       <div className="politics-track-phase-icon tea" title="Tea Ceremony">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          {/* Japanese teapot (kyusu) silhouette */}
           <path
-            d="M5 12h14a2 2 0 01-2 6H7a2 2 0 01-2-6zm1-2c0-3 2-5 6-5s6 2 6 5"
+            d="M6 11c0-2 1.5-4 6-4s6 2 6 4v3c0 3-2 5-6 5s-6-2-6-5v-3z"
+            fill="var(--accent-cream)"
+            opacity="0.85"
+          />
+          {/* Lid knob */}
+          <circle cx="12" cy="6" r="1.5" fill="var(--accent-cream)" opacity="0.9" />
+          {/* Lid */}
+          <path
+            d="M8 7.5h8"
+            stroke="var(--accent-cream)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            opacity="0.7"
+          />
+          {/* Handle on left side */}
+          <path
+            d="M6 10c-2 0-3.5 1-3.5 3s1.5 3 3.5 3"
             stroke="var(--accent-cream)"
             strokeWidth="1.5"
             fill="none"
+            opacity="0.8"
           />
-          <path d="M8 8c0-1 1-2.5 4-2.5s4 1.5 4 2.5" stroke="var(--accent-cream)" strokeWidth="1" opacity="0.5" />
-          <path d="M10 5V3M12 5V2M14 5V3" stroke="var(--accent-cream)" strokeWidth="1" opacity="0.6" strokeLinecap="round" />
+          {/* Spout on right side */}
+          <path
+            d="M18 12l3-2"
+            stroke="var(--accent-cream)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            opacity="0.8"
+          />
+          {/* Steam wisps */}
+          <path d="M10 4c0-1.5 1-2.5 1-3.5" stroke="var(--accent-cream)" strokeWidth="0.8" opacity="0.5" strokeLinecap="round" />
+          <path d="M14 4c0-1.5 1-2.5 1-3.5" stroke="var(--accent-cream)" strokeWidth="0.8" opacity="0.5" strokeLinecap="round" />
         </svg>
       </div>
 
@@ -311,17 +393,43 @@ export const PoliticsTrack = () => {
       {renderSlot(5)}
       {renderSlot(6)}
 
+      {/* Kami turn */}
+      {renderKamiIcon('kami-3')}
+
+      {/* Vertical red separator between Kami and War */}
+      <div style={{ margin: '0 0.5rem', display: 'flex', alignItems: 'center' }}>
+        <svg width="8" height="32" viewBox="0 0 8 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="4" y1="0" x2="4" y2="12" stroke="var(--accent-red)" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M4 12 L7 16 L4 20 L1 16 Z" fill="var(--accent-red)" opacity="0.85" />
+          <line x1="4" y1="20" x2="4" y2="32" stroke="var(--accent-red)" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </div>
+
       {/* War phase icon */}
       <div className="politics-track-phase-icon war" title="War Phase">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          {/* Crossed katanas */}
           <path
-            d="M6 3l6 4 6-4v14l-6 4-6-4V3z"
+            d="M4 4l16 16"
             stroke="var(--accent-red)"
-            strokeWidth="1.5"
-            fill="none"
+            strokeWidth="2"
+            strokeLinecap="round"
           />
-          <path d="M12 7v10" stroke="var(--accent-red)" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M9 9l3 2 3-2" stroke="var(--accent-red)" strokeWidth="1" opacity="0.7" />
+          <path
+            d="M20 4l-16 16"
+            stroke="var(--accent-red)"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          {/* Katana guards (tsuba) */}
+          <circle cx="8" cy="8" r="2" stroke="var(--accent-red)" strokeWidth="1" fill="none" opacity="0.7" />
+          <circle cx="16" cy="8" r="2" stroke="var(--accent-red)" strokeWidth="1" fill="none" opacity="0.7" />
+          {/* Blade tips */}
+          <path d="M3 3l1.5 0.5L4 4" fill="var(--accent-red)" opacity="0.9" />
+          <path d="M21 3l-1.5 0.5L20 4" fill="var(--accent-red)" opacity="0.9" />
+          {/* Impact spark at center */}
+          <circle cx="12" cy="12" r="1.5" fill="var(--accent-red)" opacity="0.6" />
+          <path d="M12 9v-1.5M12 15v1.5M9 12h-1.5M15 12h1.5" stroke="var(--accent-red)" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
         </svg>
       </div>
 

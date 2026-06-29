@@ -16,7 +16,8 @@ export const en = {
   'menu.clan': 'Clan:',
   'menu.lobbyId': 'Lobby ID:',
   'menu.join': 'Join',
-  'menu.clans': 'Clans:',
+  'menu.clans': 'CLANS',
+  'menu.randomize': 'Randomize',
   'menu.initialHonor': 'Initial Honor:',
 
   // Deck Config
@@ -27,6 +28,12 @@ export const en = {
   'deck.none': 'None',
   'deck.kickstarterHint': 'Includes Kickstarter and Monster Pack cards',
   'deck.dynastyNote': 'Dynasty Invasion cards are automatically included (Sol or Luna clan selected).',
+
+  // Kami Config
+  'kami.config': 'Gods (Kami)',
+  'kami.random': 'Random',
+  'kami.manual': 'Manual',
+  'kami.selected': 'selected',
 
   // GameBoard
   'phase.seasonSetup': 'SEASON SETUP',
@@ -53,7 +60,13 @@ export const en = {
   'actions.wantsAlliance': '{name} wants alliance',
   'actions.accept': 'Accept',
   'actions.proposeAlliance': 'Propose Alliance:',
-  'actions.endTeaTurn': 'End My Tea Turn',
+  'actions.endTeaTurn': 'Propose Alliance',
+  'actions.passTurn': 'Pass',
+  'actions.bribeLabel': 'Bribe',
+  'actions.bribeCoinsLabel': 'coins',
+  'actions.offeringCoins': 'Offering {amount} coins as incentive',
+  'actions.teaActivePlayer': '{name} propose an alliance',
+  'actions.teaActivePlayerSuffix': 'propose an alliance',
   'actions.politics': 'Politics - Mandate {current}/{total}',
   'actions.politicsDesc': 'Draw mandate tiles and pick one for all players to execute.',
   'actions.trainNotice': 'Train mandate - {name} may buy a card from the Season Market or skip.',
@@ -112,6 +125,31 @@ export const en = {
   'battle.discarded': 'No figures - token discarded',
   'battle.alliedWin': '{name} wins war token in {region} (allied)',
   'battle.accept': 'Accept',
+  'battle.resultTitle': 'Battle Result',
+  'battle.resultWinner': '{name} wins the battle!',
+  'battle.resultWarToken': 'Receives war token in {province}',
+  'battle.continue': 'Continue',
+  'battle.force': 'Force',
+  'battle.coinDistributionTitle': 'Coin Distribution',
+  'battle.coinDistributionRemaining': 'coins to distribute',
+  'battle.coinDistributionInstruction': 'Choose which loser gets 1 extra coin',
+  'battle.coinDistributionInfo': 'Each loser receives {amount} coins',
+  'battle.coinPool': 'Coins assigned',
+  'battle.confirmBidsOverlay': 'Confirm Bids ({total} coins)',
+  'battle.battleCount': 'Battle {current} of {total}',
+  'battle.peekMap': 'View Map',
+  'battle.returnToBids': 'Return to Bids',
+  'battle.tacticDesc.seppuku': 'Kill your own Bushi. Gain 1 VP and 1 Honor for each figure killed.',
+  'battle.tacticDesc.take-hostage': 'Capture 1 enemy Bushi or Shinto as a hostage. Gain 1 VP.',
+  'battle.tacticDesc.hire-ronin': 'Your Ronin tokens add their force to your total in the final battle calculation.',
+  'battle.tacticDesc.imperial-poets': 'Gain VP equal to the number of your figures remaining in the province.',
+  'battle.battleResolution': 'Battle Resolution',
+  'battle.killedFigures': 'Casualties',
+  'battle.figuresKilled': '{count} {type} killed',
+  'battle.figureTypeBushi': 'bushi',
+  'battle.figureTypeShinto': 'shinto',
+  'battle.figureTypeMonster': 'monster',
+  'battle.figureTypeDaimyo': 'daimyo',
 
   // GameOverScreen
   'gameOver.title': 'GAME OVER',
@@ -162,6 +200,15 @@ export const en = {
 
   // Kami Effects (Expansion)
   'kami.amaterasu.expansionEffect': 'Figures of highest-honor player in this Province cannot be killed by others.',
+
+  // Kami Summaries (short)
+  'kami.amaterasu.summary': 'Honor #1',
+  'kami.fujin.summary': '+2 Moves',
+  'kami.raijin.summary': 'Summon 1 Bushi anywhere',
+  'kami.ryujin.summary': 'Buy 1 Season Card',
+  'kami.hachiman.summary': '+2 Ronin',
+  'kami.susanoo.summary': 'VP = Fortresses on map',
+  'kami.tsukuyomi.summary': '+2 Coins',
   'kami.fujin.expansionEffect': 'Double Harvest reward here. War winner also gets Harvest reward.',
   'kami.hachiman.expansionEffect': 'Ronin count as Force 2 each in this Province.',
   'kami.raijin.expansionEffect': 'Only Bushi and Kami count Force in this Province.',
@@ -189,9 +236,10 @@ export const en = {
 
   // Season Cards Modal
   'seasonCardsModal.title': 'Season Cards',
+  'seasonCardsModal.titleSeason': '{season} Cards',
   'seasonCardsModal.force': 'Force: {value}',
   'seasonCardsModal.confirmTitle': 'Confirm Purchase',
-  'seasonCardsModal.confirmMessage': 'Buy {name} for {cost} coin(s)?',
+  'seasonCardsModal.confirmMessage': 'Buy {name} for {cost} coins?',
   'seasonCardsModal.confirm': 'Confirm',
   'seasonCardsModal.cancel': 'Cancel',
   'seasonCardsModal.discount': '(discount -1)',
@@ -207,8 +255,17 @@ export const en = {
   'actions.marshalPlayer': '(Player {current} of {total})',
   'actions.marshalBonus': 'May also build a fortress (3 coins).',
   'actions.marshalNoBonus': '',
-  'actions.buildFortress': 'Build Fortress (3 coins)',
-  'actions.endMarshalTurn': 'End Marshal Turn',
+  'actions.buildFortress': 'Build Fortress',
+  'actions.mandateName.marshal': 'MARSHAL',
+  'actions.mandateName.recruit': 'RECRUIT',
+  'actions.mandateName.train': 'TRAIN',
+  'actions.mandateName.betray': 'BETRAY',
+  'actions.mandateDesc.marshal': 'may move figures.',
+  'actions.mandateDesc.recruit': 'may summon figures at their fortresses.',
+  'actions.mandateDesc.train': 'may buy a card from the Season Market or skip.',
+  'actions.mandateDesc.betray': 'may replace enemy figures.',
+  'actions.marshalBonusFortress': 'May also build a fortress.',
+  'actions.endMarshalTurn': 'Finish',
   'actions.marshalSelectProvince': 'Select a province to build a fortress.',
   'actions.marshalMoveInstruction': 'Select one figure at a time and move it to an adjacent province. Each figure can only move once.',
   'actions.marshalMoveSteps': '1. Click source province. 2. Click the figure to move. 3. Click the destination.',
@@ -219,9 +276,9 @@ export const en = {
   'actions.recruitPlayer': '(Player {current} of {total})',
   'actions.recruitBonus': '+1 bonus placement (issuer/ally).',
   'actions.recruitNoBonus': '',
-  'actions.endRecruitTurn': 'End Recruit Turn',
+  'actions.endRecruitTurn': 'Finish',
   'actions.recruitSelectProvince': 'Select a province to place a figure.',
-  'actions.recruitSelectProvinceOrTemple': 'Select a province or temple to place a shinto.',
+  'actions.recruitSelectProvinceOrTemple': 'Select a province or shrine to place a shinto.',
   'actions.recruitPlacementsLeft': 'Placements remaining: {count}',
   'actions.recruitFigureType': 'Figure type:',
   'actions.recruitBushi': 'Bushi',
@@ -231,9 +288,10 @@ export const en = {
   'actions.recruitPlaceFigure': 'Place Figure',
 
   // Betray Mandate
+  'actions.betrayMandateLabel': 'Betray Mandate',
   'actions.betrayNotice': 'Betray mandate - {name} may replace up to 2 enemy figures.',
   'actions.betraySelectionsLeft': 'Replacements remaining: {count}',
-  'actions.betrayEndTurn': 'End Betray Turn',
+  'actions.betrayEndTurn': 'Finish',
   'actions.betraySelectTarget': 'Click on an enemy figure on the map to replace it.',
   'actions.betrayClickInstruction': 'Click on the figure you want to replace on the map',
   'actions.betrayNoTargets': 'No valid targets available.',
@@ -242,11 +300,11 @@ export const en = {
   // Monster Placement
   'monster.selectPlacement': 'Select where to place {name}',
   'monster.accept': 'Accept',
-  'monster.komainuChoice': 'Komainu: Place on map or send to worship at a temple?',
+  'monster.komainuChoice': 'Komainu: Place on map or send to worship at a shrine?',
   'monster.komainuMap': 'Place on map',
   'monster.komainuPray': 'Send to worship',
   'monster.placed': '{name} placed in {province}',
-  'monster.selectTemple': 'Select a temple for the Shinto',
+  'monster.selectTemple': 'Select a shrine for the Shinto',
 
   // Player Cards Modal
   'playerCards.title': '{name} ({clan}) - Cards',
@@ -260,8 +318,42 @@ export const en = {
   'regionDetail.empty': 'No figures in this province.',
 
   // Harvest Popup
+  'harvest.allPlayersReceived': 'All players have received',
   'harvest.received': '{name} has received:',
   'harvest.accept': 'Accept',
+
+  // Kami Resolution
+  'kami.resolution.title': 'Kami Resolution',
+  'kami.resolution.winner': '{name} wins!',
+  'kami.resolution.noWinner': 'No winner',
+  'kami.resolution.reward': 'Reward: {reward}',
+  'kami.resolution.continue': 'Continue',
+  'kami.resolution.force': 'Shinto Force',
+  'kami.resolution.fujinMoves': '{count} Movements',
+  'kami.resolution.fujinUndo': 'Undo',
+  'kami.resolution.fujinDone': 'End movements',
+  'kami.resolution.fujinCancel': 'Cancel Movement',
+  'kami.resolution.raijinPlace': 'Place Bushi in a province',
+  'kami.resolution.ryujinBuy': 'Buy a Season Card',
+  'kami.resolution.templeOf': 'Shrine {number}',
+  'kami.resolution.susanooVP': 'Gains {vp} VP ({fortresses} Fortresses on map)',
+
+  // Kami Phase Popup
+  'kami.phaseStart.title': 'Kami Phase Begins',
+  'kami.phaseStart.description': 'Shrines will now be resolved from left to right. The player with the most Shinto force in each shrine wins the Kami reward.',
+  'kami.phaseStart.accept': 'Accept',
+
+  // War Phase Popup
+  'war.phaseStart.title': 'War Phase Begins',
+  'war.phaseStart.bonuses': 'War Upgrade Bonuses',
+  'war.phaseStart.noBonuses': 'No war upgrade bonuses active.',
+  'war.phaseStart.accept': 'Accept',
+
+  // Rule violations
+  'rule.invalidMove': 'Invalid move',
+
+  // Turn Popup
+  'game.turnPopupAccept': 'Accept',
 
   // War Tokens Modal
   'warTokens.title': 'War Province Tokens',
@@ -270,6 +362,14 @@ export const en = {
   // Hostages Modal
   'hostages.title': 'Hostages',
   'hostages.empty': 'No hostages',
+
+  // Jinmenju
+  'actions.jinmenjuSummon': 'Summon with Jinmenju',
+  'actions.jinmenjuCost': 'Lose 1 Honor position',
+
+  // Alliance Request
+  'actions.requestLabel': 'Request',
+  'actions.requestingCoins': 'Requesting {amount} coins for alliance',
 } as const;
 
 export type TranslationKey = keyof typeof en;

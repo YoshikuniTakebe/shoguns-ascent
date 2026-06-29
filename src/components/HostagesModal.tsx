@@ -1,7 +1,8 @@
 import { useT } from '../i18n';
 import type { Player } from '../types/game';
 import { CLANS } from '../types/game';
-import { BushiIcon, ShintoIcon, RoninIcon } from './Icons';
+import { BushiIcon } from './Icons';
+import { ClanShield } from './ClanShields';
 
 interface HostagesModalProps {
   player: Player;
@@ -25,23 +26,11 @@ export const HostagesModal = ({ player, onClose }: HostagesModalProps) => {
             {player.hostages.map((hostage, idx) => {
               const clan = CLANS.find(c => c.id === hostage.fromClanId);
               const color = clan?.color || '#888';
-              const clanName = clan?.name || hostage.fromClanId;
-
-              let IconComponent: React.FC<{ size?: number; color?: string; className?: string }>;
-              if (hostage.figureType === 'bushi') {
-                IconComponent = BushiIcon;
-              } else if (hostage.figureType === 'shinto') {
-                IconComponent = ShintoIcon;
-              } else {
-                // monster or other types
-                IconComponent = RoninIcon;
-              }
 
               return (
                 <div key={`${hostage.fromClanId}-${hostage.figureType}-${idx}`} className="hostage-item">
-                  <IconComponent size={48} color={color} />
-                  <span className="hostage-clan-name" style={{ color }}>{clanName}</span>
-                  <span className="hostage-figure-type">{hostage.figureType}</span>
+                  <BushiIcon size={48} color={color} />
+                  <ClanShield clanId={hostage.fromClanId} size={36} />
                 </div>
               );
             })}

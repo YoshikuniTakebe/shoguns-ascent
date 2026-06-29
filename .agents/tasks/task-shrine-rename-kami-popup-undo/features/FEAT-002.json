@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Enhance Kami Phase Start popup with kami icons flanking the title (torii gate diamond style from PoliticsTrack), bold 'izquierda a derecha'/'left to right' text, and more color/decoration. Also add '--- End Kami Turn ---' log entry when all shrines are resolved in advanceKamiResolution().",
+  "status": "completed",
+  "steps": [
+    "In src/i18n/en.ts: Split kami.phaseStart.description into parts to allow bold rendering. Change value to use a marker for the bold part: 'Shrines will now be resolved from **left to right**. The player with the most Shinto force in each shrine wins the Kami reward.' -- Or better: keep the string as-is and handle bold rendering in the component by splitting on the key phrase.",
+    "In src/i18n/es.ts: Same approach - the description already contains 'izquierda a derecha' which will be bolded in the component.",
+    "In src/components/GameBoard.tsx around line 510 (the kamiPhasePopupVisible block): Add torii gate kami icons flanking the h3 title. Use inline SVG matching the PoliticsTrack renderKamiIcon pattern (diamond-shaped container with torii SVG, gold color). Wrap the title in a flex container with icons on both sides. For the description paragraph, split the text on 'left to right' (en) or 'izquierda a derecha' (es) and wrap that part in <strong> tags. Add decorative styling: subtle purple gradient background, glow effect on the border, maybe a subtle background pattern.",
+    "In src/utils/gameLogic.ts in the advanceKamiResolution() function: When nextIndex >= state.kamiResolutionTemples.length (all temples resolved), add '--- End Kami Turn ---' to the log array of the newState, right after setting kamiResolutionActive to false."
+  ],
+  "acceptance_criteria": [
+    "Kami Phase popup has torii gate icons on both sides of the title",
+    "The phrase 'left to right' / 'izquierda a derecha' is rendered in bold in the popup description",
+    "The popup has enhanced visual styling (purple theme with decoration)",
+    "Game log shows '--- End Kami Turn ---' after all shrines are resolved",
+    "Project compiles with npx tsc --noEmit"
+  ],
+  "verification": [
+    "cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit",
+    "cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": "Successfully enhanced the Kami Phase popup with inline torii gate SVG icons (gold color, 28px) flanking the title, bold gold-colored 'left to right'/'izquierda a derecha' phrase in the description, and a purple gradient background with glow effect. Added '--- End Kami Turn ---' log entry after all shrines are resolved in advanceKamiResolution(). Build and type-check pass cleanly."
+}

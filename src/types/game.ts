@@ -28,6 +28,7 @@ export interface Figure {
   type: FigureType;
   owner: string;
   id: string;
+  monsterCardId?: string;
 }
 
 export interface Province {
@@ -79,6 +80,7 @@ export interface Player {
   shinto: number;
   hasDaimyo: boolean;
   fortresses: number;
+  monsters: number;
   seasonCards: SeasonCard[];
   warProvinceTokens: WarProvinceToken[];
   allies: string[];
@@ -102,6 +104,7 @@ export interface Mandate {
   type: MandateType;
   issuer: string;
   executed: boolean;
+  hidden?: boolean;
 }
 
 export interface Battle {
@@ -111,12 +114,16 @@ export interface Battle {
   resolved: boolean;
   winner?: string;
   uncontested?: boolean;
+  logStartIndex?: number;
+  killedFigures?: { owner: string; figureType: string; count: number }[];
 }
 
 export interface AllianceProposal {
   from: string;
   to: string;
   accepted?: boolean;
+  bribeAmount?: number;
+  requestAmount?: number;
 }
 
 export interface WarProvinceSlot {
@@ -134,6 +141,16 @@ export const DECK_GROUPS: DeckName[] = ['Archway', 'Tower', 'Teapot', 'Horseman'
 export interface DeckConfig {
   chosenDeck: DeckName | 'random';
   extraMonsters: 0 | 1 | 2;
+  selectedKami?: KamiType[];
+}
+
+export interface KamiResolutionTemple {
+  templeIndex: number;
+  kamiType: KamiType;
+  winnerId: string | null;
+  reward: string;
+  forces: { playerId: string; count: number }[];
+  susanooVPGained?: number;
 }
 
 export interface GameState {
@@ -179,6 +196,7 @@ export interface GameState {
   recruitResolutionIndex: number;
   recruitMandateIssuerId: string | null;
   recruitPlacementsRemaining: number;
+  recruitUsedFortressProvinces: string[];
   betrayMandateActive: boolean;
   betraySelectionsRemaining: number;
   betraySelectedOwners: string[];
@@ -188,10 +206,34 @@ export interface GameState {
   harvestResolutionIndex: number;
   harvestPlayerRewards: { playerId: string; provinceId: string; rewards: { vp?: number; coins?: number; ronin?: number; honor?: number } }[];
   harvestPopupVisible: boolean;
+  kamiResolutionActive: boolean;
+  kamiResolutionTemples: KamiResolutionTemple[];
+  kamiResolutionIndex: number;
+  kamiResolutionStep: 'showing' | 'interactive' | null;
+  kamiResolutionNextPlayerIndex: number;
+  fujinMovesRemaining: number;
+  raijinPlacementActive: boolean;
+  raijinPlacementDone?: boolean;
+  ryujinBuyActive: boolean;
+  zorroPlacementActive: boolean;
+  zorroPlacementPlayerId: string | null;
+  zorroPlacementsRemaining: number;
+  lotoChoicePhase?: boolean;
+  lotoDiscardedMandate?: MandateType | null;
   lastMandateIssuerId: string | null;
+  kamiPhasePopupPending?: boolean;
   gameOver: boolean;
   winner?: string;
+  coinDistributionPending?: {
+    battleProvinceId: string;
+    winnerId: string;
+    losers: string[];
+    remainder: number;
+    distributed: number;
+    sharePerLoser: number;
+  } | null;
   log: string[];
+  logHistory: { [season: string]: string[] };
   hostId?: string;
 }
 
@@ -248,7 +290,7 @@ export const CLAN_INCOME: { [clanId: string]: number } = {
   libelula: 6,
   zorro: 5,
   bonsai: 4,
-  luna: 2,
+  luna: 4,
 };
 
 // --- War Tactics (resolved left to right, order 1-4) ---
@@ -387,4 +429,17 @@ export const SEASON_CARDS_DATA: SeasonCard[] = [
   ...SUMMER_CARDS,
   ...AUTUMN_CARDS,
 ];
+
+// --- Province Colors ---
+
+export const PROVINCE_COLORS: Record<string, string> = {
+  hokkaido: '#5BC0EB',
+  oshu: '#9B8EC4',
+  edo: '#2D8B4E',
+  kanto: '#E63946',
+  kansai: '#F57C20',
+  nagato: '#8B5CF6',
+  shikoku: '#8B6914',
+  kyushu: '#F5D020',
+};
 

@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-005",
+  "type": "fix",
+  "description": "Address review findings: fix winner coin deduction, online desync, reverse-proposal bribe, log ordering, and justify bribe slider non-issue",
+  "status": "completed",
+  "steps": [
+    "In src/utils/gameLogic.ts, add `winner.coins -= totalBid` before the coin distribution loop so the winner's balance is reduced.",
+    "In src/store/gameStore.ts, add online-mode WebSocket sync check at the start of doCoinDistributionChoice, mirroring the pattern used by other actions.",
+    "In src/utils/gameLogic.ts, when reverseProposal is found in proposeAlliance, also transfer the current proposer's bribeAmount from fromId to toId after calling acceptAlliance.",
+    "In src/utils/gameLogic.ts, move the winner 'gasto X monedas' log entry before the distribution loop that logs each loser's received coins.",
+    "Document that the bribe slider reset (issue 5) is a non-issue because React useState does not reset on re-render, only on unmount."
+  ],
+  "acceptance_criteria": [
+    "Winner's coins are deducted by totalBid before distributing to losers",
+    "doCoinDistributionChoice sends a WebSocket action in online mode before returning",
+    "Reverse-proposal auto-accept also transfers the counter-proposer's bribe",
+    "The winner-spend log entry appears before per-loser receive log entries",
+    "TypeScript compiles without errors (npx tsc --noEmit passes)"
+  ],
+  "verification": [
+    "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit` and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": "All four issues fixed. Issue 5 (bribe slider reset) is a non-issue: React useState only resets on component unmount, not on re-renders. Since the ActionPanel component stays mounted throughout the Tea Ceremony phase, the bribeAmount state persists correctly across re-renders from unrelated state changes. No code change needed."
+}

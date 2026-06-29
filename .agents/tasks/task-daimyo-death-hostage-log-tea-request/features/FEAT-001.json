@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix Daimyo death in battle and seppuku. Daimyo should die like any other troop when losing a battle or committing seppuku. Daimyo cannot be taken as hostage (already correct). Daimyo death counts for Imperial Poets VP.",
+  "status": "completed",
+  "steps": [
+    "In src/utils/gameLogic.ts, in the battle resolution section (around line 1970), find the `loserFigures.forEach` loop. Remove the line `if (fig.type === 'daimyo') return; // Daimyo immune`. Add daimyo handling: when fig.type === 'daimyo', set `loser.hasDaimyo = false;` (hasDaimyo=false means daimyo returned to reserve/dead). Also add daimyo to the killedMap tracking so it counts for Imperial Poets VP.",
+    "In the same file, in the figure filter after battle (around line 2001), find: `figures: finalProvince.figures.filter((f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'daimyo' || f.type === 'fortress')`. Remove `|| f.type === 'daimyo'` - losing daimyos should be removed from the province.",
+    "In the seppuku case (around line 1811), change the filter from `(f) => f.owner === highestBidder && f.type === 'bushi'` to `(f) => f.owner === highestBidder && (f.type === 'bushi' || f.type === 'daimyo')`. In the kill loop, add handling: when the figure is a daimyo, do `bidder.hasDaimyo = false;` instead of `bidder.bushi += 1;`. The daimyo kill still gives VP and honor per seppuku rules. Ensure battleDeathCount includes daimyo kills.",
+    "In BattlePanel.tsx or wherever killedFigures displays figure types, ensure 'daimyo' type is handled in the display (check if battle.figureTypeDaimyo translation key is needed and add it to en.ts and es.ts if so)."
+  ],
+  "acceptance_criteria": [
+    "When a player loses a battle, their daimyo (if present in that province) is killed and removed from the province",
+    "When daimyo is killed in battle, player.hasDaimyo is set to false (reserve)",
+    "Daimyo kills in battle count toward Imperial Poets VP via the killedMap/killedFigures tracking",
+    "In seppuku, daimyo is included in the kill count and awards VP and honor",
+    "Daimyo still cannot be taken as hostage (take-hostage only targets bushi/shinto - already correct)",
+    "The code compiles without new TypeScript errors"
+  ],
+  "verification": [
+    "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit 2>&1 | grep -v 'BattleBiddingOverlay\\|BattlePanel' | head -20` to check for new TS errors (excluding pre-existing ones)"
+  ],
+  "blocked_reason": null,
+  "findings": "Build passes successfully. Only pre-existing TS errors in BattleBiddingOverlay.tsx and BattlePanel.tsx remain. The daimyo figure type translation key was missing and has been added to both en.ts and es.ts. Review fix applied: hasDaimyo semantics were inverted (false=deployed, true=reserve). Changed hasDaimyo=false to hasDaimyo=true in both battle resolution and seppuku paths so that daimyo correctly returns to reserve when killed."
+}

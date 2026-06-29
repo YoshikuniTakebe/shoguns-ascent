@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Implement battle winner coin distribution with remainder allocation popup and detailed logging",
+  "status": "completed",
+  "steps": [
+    "In src/types/game.ts, add a new field to GameState for the coin remainder popup: `coinDistributionPending?: { battleProvinceId: string; winnerId: string; losers: string[]; remainder: number; distributed: number } | null`",
+    "In src/utils/gameLogic.ts, modify the coin distribution block (around line 1920-1930) in the battle resolution to: (1) calculate the remainder (totalBid % losers.length), (2) distribute the floor share to each loser, (3) if remainder > 0 set `coinDistributionPending` on the state with the winner, losers, and remainder amount, (4) if remainder === 0 do NOT set the pending state. Add detailed log entries: 'WINNER spent X monedas' and 'LOSER receives Y monedas from winner' for each loser. Also log what each loser spent: 'LOSER discards Z monedas'.",
+    "In src/store/gameStore.ts, add a new action `doCoinDistributionChoice(targetPlayerId: string)` that: (1) reads `coinDistributionPending` from gameState, (2) gives 1 coin to the target player, (3) decrements remainder, (4) if remainder reaches 0 clears `coinDistributionPending`, (5) logs 'WINNER gives 1 extra moneda to TARGET'. Also expose the pending state for the UI.",
+    "In src/components/BattlePanel.tsx, add a coin distribution popup that shows when `gameState.coinDistributionPending` is set and is the 'result' phase. The popup shows who is the winner, lists the losers as clickable buttons, and allows the winner to choose who gets each extra coin. Each click calls `doCoinDistributionChoice(loserId)`. The popup dismisses when remainder reaches 0.",
+    "Add any needed i18n keys to both src/i18n/en.ts and src/i18n/es.ts for the coin distribution UI."
+  ],
+  "acceptance_criteria": [
+    "When battle winner's total bid is not evenly divisible by losers count, a popup appears for the winner to allocate remainder coins one at a time",
+    "Each allocation click gives 1 coin to the chosen loser and logs it",
+    "When remainder is evenly divisible, no popup appears and distribution is automatic",
+    "Detailed log entries show: winner spent X, each loser received Y from winner, each loser discarded Z",
+    "TypeScript compiles without errors"
+  ],
+  "verification": [
+    "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit` and confirm zero errors",
+    "Run `cd /projects/sandbox/shoguns-ascent && npx vite build` and confirm successful build"
+  ],
+  "blocked_reason": null,
+  "findings": "Implemented coinDistributionPending as optional field on GameState. The distribution popup is rendered as a priority overlay in BattlePanel before any other battle UI, so the winner must allocate all remainder coins before the next battle proceeds. The gameLogic.ts now logs detailed messages for winner spending, each loser receiving coins, and each loser discarding coins. The store action doCoinDistributionChoice handles 1-coin-at-a-time allocation with logging. Both tsc --noEmit and vite build pass cleanly."
+}

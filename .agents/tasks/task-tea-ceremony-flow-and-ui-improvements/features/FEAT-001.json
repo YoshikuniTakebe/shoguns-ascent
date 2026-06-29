@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "UI text improvements for mandate panels, harvest popup, and fortress button. Fixes the Marshal mandate text formatting, adds clan shield to harvest popup, shows province name in harvest popup, improves fortress cost display with gold coin icon, and changes Fujin movement bar text.",
+  "status": "completed",
+  "steps": [
+    "1. In src/components/ActionPanel.tsx, update the marshal mandate section (around line 215). Replace the inline text 'Mandato Movilizar - Player puede mover figuras.' with a new layout: First line shows just 'Movilizar' (or 'Marshal' in English) in uppercase black text with the mandate color. Second line shows player name preceded by ClanShield, with text in clan color. Third line shows the 'puede mover figuras' / 'may move figures' text in normal color. Same pattern for other mandates (recruit, train, betray) that also show inline 'Mandato X' text.",
+    "2. In src/components/ActionPanel.tsx, update the fortress button text and the marshalBonus text. Remove '(3 monedas)' / '(3 coins)' from both places and replace with a bold gold CoinIcon next to the number 3. The fortress button should show: 'Construir Fortaleza' + large CoinIcon + bold gold '3'. Same for the text reference to building a fortress.",
+    "3. In src/components/HarvestPopup.tsx, add the ClanShield before the player name in the individual reward popup. Import and use ClanShield component with the player's clanId.",
+    "4. In src/components/HarvestPopup.tsx, add the province name (in bold italic, colored with the province color from PROVINCE_COLORS) to the individual reward popup, showing which province the reward comes from. Import PROVINCE_COLORS from types/game.ts.",
+    "5. In the Fujin overlay bar (GameBoard.tsx around the fujinMovesRemaining display), change the text from 'Movimientos restantes: {count}' to 'Movimientos {count}' (remove 'restantes' and the colon). Update both en.ts and es.ts i18n keys.",
+    "6. Add all necessary i18n keys to both src/i18n/en.ts and src/i18n/es.ts for the new text elements. Ensure mandate names like 'Marshal'/'Movilizar', 'Recruit'/'Reclutar', etc. have proper keys."
+  ],
+  "acceptance_criteria": [
+    "Marshal mandate panel shows 'Movilizar' (or 'Marshal') on first line in uppercase, player name with clan shield and clan color on second line, and description text on third line",
+    "Fortress button shows CoinIcon in gold with number 3 instead of text '(3 monedas)'",
+    "Harvest popup shows ClanShield before player name",
+    "Harvest popup shows province name in bold italic with province color",
+    "Fujin movement bar shows 'Movimientos 2' instead of 'Movimientos restantes: 2'",
+    "All new text has both English and Spanish translations"
+  ],
+  "verification": [
+    "Run npx tsc --noEmit to verify no type errors",
+    "Run npx vite build to verify build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": "All mandate panels (marshal, recruit, train, betray) updated to new 3-line format. Fortress button uses CoinIcon + bold gold number. HarvestPopup uses ClanShield and province name from PROVINCES_DATA/PROVINCE_COLORS. Fujin text simplified. New i18n keys added: actions.mandateName.marshal/recruit/train/betray, actions.mandateDesc.marshal/recruit/train/betray, actions.marshalBonusFortress. Build and tsc pass cleanly."
+}

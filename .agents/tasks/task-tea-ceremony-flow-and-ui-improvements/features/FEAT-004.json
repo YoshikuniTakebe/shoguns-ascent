@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-004",
+  "type": "fix",
+  "description": "Fix battle resolution: (1) Add ally protection to figure killing - allied figures of winner should NOT die. (2) Improve battle result popup to show specific units killed per clan. (3) Add tooltips to war tactic tiles in BattleBiddingOverlay. (4) Add 'Battle Resolution' separator between Hire Ronin and Imperial Poets. (5) Add combatants panel with force totals to bidding overlay. (6) Translate battle result text. (7) Verify battle resolution rules are correct per the rulebook.",
+  "status": "completed",
+  "steps": [
+    "1. In src/utils/gameLogic.ts resolveNextBattle function (around line 1958), fix the figure killing logic. Currently: figures: finalProvince.figures.filter(f => f.owner === winnerId || f.type === 'daimyo' || f.type === 'fortress'). This kills ALL figures of losing players regardless of alliance. Fix: also keep figures whose owner is allied with the winner. Check winner.allies.includes(f.owner) in the filter. Also update the loop that returns figures to reserve to skip allied players.",
+    "2. Also in resolveNextBattle: handle the edge case from the rules where 'if at the end of a Battle no player has Force in the Province, the player with most Honor wins.' After calculating winnerId based on force, if maxForce === 0 (all figures were killed via seppuku/hostage), set winnerId to the honorTrack[0] player among the battle participants.",
+    "3. In src/components/BattlePanel.tsx BattleResultPopup, change the battle result display to show SPECIFIC units killed per clan. Currently it shows generic log entries. Instead, track killed figures during resolveNextBattle by adding a killedFigures array to the Battle type: killedFigures: {owner: string, type: string, count: number}[]. Populate this in resolveNextBattle and display it in the popup with appropriate icons (BushiIcon, ShintoIcon), clan shield, and clan colors.",
+    "4. In src/components/BattleBiddingOverlay.tsx, add tooltips to war tactic tiles. When hovering over a tactic tile, show a well-designed tooltip explaining that tactic's rules. Add the rules text to i18n. Seppuku: kill own figures for 1VP + 1Honor each. Take Hostage: capture 1 enemy figure as hostage for 1VP. Hire Ronin: add ronin force to your total. Imperial Poets: gain VP equal to your figures in province.",
+    "5. In src/components/BattleBiddingOverlay.tsx, add a separator between 'Hire Ronin' (order 3) and 'Imperial Poets' (order 4) with the text 'Battle Resolution' / 'Resultado de Batalla'. This visually separates the pre-resolution tactics from the post-resolution scoring.",
+    "6. In src/components/BattleBiddingOverlay.tsx, add a combatants panel showing all clans involved in the battle with their: clan shield, player name (in clan color), and total force. Position this below the coin pool. Ensure the overall layout is centered both horizontally and vertically.",
+    "7. Add all necessary i18n keys to en.ts and es.ts for: tactic tooltip descriptions, 'Battle Resolution' separator text, any remaining untranslated battle text."
+  ],
+  "acceptance_criteria": [
+    "Allies of the winner do NOT have their figures killed in battle resolution",
+    "If no player has force after tactics, the player with best honor among participants wins",
+    "Battle result popup shows specific figure types killed per clan with icons and clan colors",
+    "War tactic tiles show an elegant tooltip with rules on hover",
+    "A 'Battle Resolution' / 'Resultado de Batalla' separator appears between Hire Ronin and Imperial Poets",
+    "Bidding overlay shows all combatants with clan shield, name, and force total",
+    "All battle-related text is properly translated in both en.ts and es.ts"
+  ],
+  "verification": [
+    "Run npx tsc --noEmit to verify no type errors",
+    "Run npx vite build to verify build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": "All acceptance criteria met. Build and type-check pass. Ally protection works by checking winner.allies.includes(pid) in both the return-to-reserve loop and the figure filter. Zero-force edge case handled by sorting participants by honor track position. Tooltip uses CSS hover approach. Separator placed at idx===3 (Imperial Poets is the 4th WAR_TACTICS element). Combatants panel passed as optional prop to maintain backwards compatibility."
+}

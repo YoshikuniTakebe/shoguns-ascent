@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Create a full-screen drag-and-drop battle bidding overlay component that replaces the current slider-based bidding UI. Displays 4 vertical tactic tiles (Seppuku, Take Hostage, Hire Ronin, Imperial Poets) arranged horizontally, a coin pool with draggable coin images (one per coin the player has), and a confirm button. Coins can be dragged from the pool onto tactic tiles and back.",
+  "status": "completed",
+  "steps": [
+    "Create a new component file src/components/BattleBiddingOverlay.tsx that implements the full-screen bidding overlay",
+    "The component receives props: playerName, playerClanColor, maxCoins (number of coins), onConfirm callback that passes {seppuku: N, 'take-hostage': N, 'hire-ronin': N, 'imperial-poets': N}, and battle info (province name, battle number)",
+    "Display 4 tactic tiles arranged horizontally left-to-right in order: Seppuku (切腹), Take Hostage (人質), Hire Ronin (浪人), Imperial Poets (詩人). Each tile should be tall/vertical with the kanji prominently displayed and a thematic visual representation (using CSS art/unicode since no tactic images exist)",
+    "Above/below the tactic tiles: a coin pool area showing individual coin images (import from src/img/coin.png), one image per coin the player has",
+    "Implement drag-and-drop using HTML5 drag-and-drop API (onDragStart, onDragOver, onDrop). Each coin gets a unique ID. Track coin positions in local state: Record<string, string> mapping coinId to tacticId or 'pool'",
+    "Coins dropped on a tactic tile stay visually inside that tile. Allow dragging coins back to the pool to reassign them",
+    "Add a 'Confirmar Apuestas' button at the bottom that derives bid values by counting coins per tactic and calls the onConfirm callback",
+    "In BattlePanel.tsx, replace the hotseat bidding section (where effectiveBattleStepPhase === 'bidding') with the new BattleBiddingOverlay component, passing the appropriate props and calling doSubmitWarTacticBids on confirm",
+    "Also replace the online mode bidding section (isPart && !hasBid) with the same BattleBiddingOverlay component",
+    "Add CSS styles for the overlay in src/App.css: full-screen overlay with dark semi-transparent background, tactic tiles with Japanese aesthetic (dark backgrounds, gold borders, vertical layout), coin pool styling, coin images sized ~32-40px, hover/drag states, and responsive layout",
+    "Add any needed i18n keys to src/i18n/en.ts and src/i18n/es.ts (e.g., 'battle.confirmBidsBtn' for the button text if different from existing)"
+  ],
+  "acceptance_criteria": [
+    "npx tsc --noEmit passes with no type errors",
+    "npx vite build succeeds",
+    "BattleBiddingOverlay.tsx exists and exports a React component",
+    "BattlePanel.tsx imports and renders BattleBiddingOverlay instead of slider-based bidding for both hotseat and online modes",
+    "The overlay shows 4 tactic tiles with kanji (切腹, 人質, 浪人, 詩人) arranged horizontally",
+    "Coin images from src/img/coin.png are rendered in a pool area, one per coin the player has",
+    "HTML5 drag-and-drop is implemented: coins can be dragged from pool to tactic tiles and back",
+    "Dropped coins visually remain in the tile where they were dropped",
+    "The confirm button calls doSubmitWarTacticBids with the correct bid distribution derived from coin positions"
+  ],
+  "verification": [
+    "npx tsc --noEmit",
+    "npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": "Successfully replaced slider-based bidding with drag-and-drop overlay. The coin.png image was not previously used via import in the codebase - it imports cleanly as a module in Vite. Removed unused useState, WAR_TACTICS import from BattlePanel since they were only needed for the old slider UI. Both tsc --noEmit and vite build pass cleanly. Review fixes applied: (1) Added touch event handlers for mobile support using onTouchStart/onTouchMove/onTouchEnd with ghost element and elementFromPoint for drop detection, (2) Added drop-target highlight with dragenter/dragleave state and bidding-drop-highlight CSS class with gold glow, (3) Added useEffect to reinitialize coinPositions when maxCoins changes. Issues #2 (portal nesting) and #4 (combatant context) intentionally not addressed per orchestrator instructions."
+}

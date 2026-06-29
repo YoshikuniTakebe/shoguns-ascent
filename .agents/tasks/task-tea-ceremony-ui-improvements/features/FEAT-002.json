@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Marshal mandate region glow: When in Marshal mandate and the player presses the Move button, illuminate/glow the region card containers where the active player has troops, using a glow-in/glow-out CSS animation so regions with the player's figures are quickly identifiable.",
+  "status": "completed",
+  "steps": [
+    "In src/components/RegionCard.tsx, add logic to detect when marshalMandateActive is true AND moveMode is true AND moveFrom is null (player has pressed Move but not yet selected source). Compute whether the current player has any figures in this province.",
+    "Add a CSS class 'marshal-has-troops' to the region-card div when the above conditions are met and the player has troops in that province",
+    "In src/App.css, add a @keyframes glow-pulse animation using the active player's clan color (or a generic gold glow) and apply it to .region-card.marshal-has-troops with border glow and box-shadow that pulses in and out",
+    "The glow should use the active player's clan color. Pass the clan color as a CSS variable --marshal-glow-color on the element style"
+  ],
+  "acceptance_criteria": [
+    "During Marshal mandate with Move active and no source selected, regions where the current player has figures glow with a pulsing animation",
+    "The glow uses the active player's clan color",
+    "Once a source is selected (moveFrom is set), the glow stops for other regions and only the source shows the existing move-source style",
+    "npx vite build succeeds"
+  ],
+  "verification": ["npx vite build"],
+  "blocked_reason": null,
+  "findings": "Added marshal-has-troops class with CSS variable --marshal-glow-color on the region-card div. CSS keyframes animation marshal-glow-pulse pulses border-color and box-shadow using the clan color. Handles both Marshal mandate and Fujin kami resolution move scenarios. Build passes cleanly."
+}

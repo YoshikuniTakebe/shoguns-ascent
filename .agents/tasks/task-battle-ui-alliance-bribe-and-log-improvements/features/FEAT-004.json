@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Implement alliance bribery in Tea Ceremony - allow offering coins with alliance proposals",
+  "status": "completed",
+  "steps": [
+    "In src/types/game.ts, extend the AllianceProposal interface to include an optional `bribeAmount?: number` field.",
+    "In src/utils/gameLogic.ts, modify `proposeAlliance(state, fromId, toId)` to accept a 4th parameter `bribeAmount: number = 0`. When creating the proposal object, include the bribeAmount. In the log, if bribeAmount > 0, mention it: 'PLAYER proposes alliance to TARGET offering X monedas'. When the alliance is auto-accepted (reverse proposal exists), also handle the bribe transfer.",
+    "In src/utils/gameLogic.ts, modify `acceptAlliance(state, fromId, toId)` to find the proposal's bribeAmount and transfer those coins from the proposer to the accepter. Log: 'ACCEPTER receives X monedas as alliance bribe from PROPOSER'.",
+    "In src/store/gameStore.ts, update `doProposeAlliance` to accept a second parameter `bribeAmount: number` and pass it to `proposeAlliance()`. Update the type definition from `(to: string) => void` to `(to: string, bribeAmount?: number) => void`.",
+    "In src/components/ActionPanel.tsx, add a coin amount input (slider or number input, 0 to current player's coins) in the Tea Ceremony alliance section. When the player clicks 'Proponer Alianza', pass the selected bribe amount to `doProposeAlliance(target, amount)`. Show the bribe amount next to pending proposals so the target can see how much is offered.",
+    "In the pending proposals display (where doAcceptAlliance is called), show the bribe amount offered alongside the clan name so the player can see the incentive before accepting.",
+    "Add needed i18n keys to both en.ts and es.ts for bribe-related text (e.g., 'actions.bribeLabel', 'actions.offeringCoins')."
+  ],
+  "acceptance_criteria": [
+    "Players can set a bribe amount (0 to their available coins) when proposing an alliance",
+    "When an alliance is accepted, the bribe coins transfer from proposer to accepter",
+    "The bribe amount is visible in pending proposals for the target player",
+    "Log entries mention the bribe amount when > 0",
+    "If bribeAmount is 0, behavior is identical to current (no mention of bribe)",
+    "TypeScript compiles without errors"
+  ],
+  "verification": [
+    "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit` and confirm zero errors",
+    "Run `cd /projects/sandbox/shoguns-ascent && npx vite build` and confirm successful build"
+  ],
+  "blocked_reason": null,
+  "findings": "Implementation complete. Added bribeAmount to AllianceProposal interface, proposeAlliance accepts optional 4th param, acceptAlliance transfers coins using Math.min(bribeAmount, from.coins) to handle edge cases. Store passes bribeAmount through to proposeAlliance. ActionPanel shows a range slider (0 to cp.coins) when a target is selected and shows bribe amounts on pending proposals in gold. i18n keys added for both en and es. Both tsc --noEmit and vite build pass cleanly."
+}

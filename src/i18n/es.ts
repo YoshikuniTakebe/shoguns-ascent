@@ -18,7 +18,8 @@ export const es: Record<TranslationKey, string> = {
   'menu.clan': 'Clan:',
   'menu.lobbyId': 'ID de Sala:',
   'menu.join': 'Unirse',
-  'menu.clans': 'Clanes:',
+  'menu.clans': 'CLANES',
+  'menu.randomize': 'Aleatorio',
   'menu.initialHonor': 'Honor Inicial:',
 
   // Deck Config
@@ -29,6 +30,12 @@ export const es: Record<TranslationKey, string> = {
   'deck.none': 'Ninguno',
   'deck.kickstarterHint': 'Incluye cartas de Kickstarter y Monster Pack',
   'deck.dynastyNote': 'Las cartas de Invasi\u00F3n Din\u00E1stica se incluyen autom\u00E1ticamente (clan Sol o Luna seleccionado).',
+
+  // Kami Config
+  'kami.config': 'Dioses (Kami)',
+  'kami.random': 'Aleatorio',
+  'kami.manual': 'Manual',
+  'kami.selected': 'seleccionados',
 
   // GameBoard
   'phase.seasonSetup': 'PREPARACI\u00D3N DE ESTACI\u00D3N',
@@ -55,7 +62,13 @@ export const es: Record<TranslationKey, string> = {
   'actions.wantsAlliance': '{name} quiere alianza',
   'actions.accept': 'Aceptar',
   'actions.proposeAlliance': 'Proponer Alianza:',
-  'actions.endTeaTurn': 'Terminar Mi Turno de T\u00E9',
+  'actions.endTeaTurn': 'Proponer Alianza',
+  'actions.passTurn': 'Pasar',
+  'actions.bribeLabel': 'Soborno',
+  'actions.bribeCoinsLabel': 'monedas',
+  'actions.offeringCoins': 'Ofreciendo {amount} monedas como incentivo',
+  'actions.teaActivePlayer': '{name} propon una alianza',
+  'actions.teaActivePlayerSuffix': 'propon una alianza',
   'actions.politics': 'Pol\u00EDtica - Mandato {current}/{total}',
   'actions.politicsDesc': 'Sacar fichas de mandato y elegir una para que todos los jugadores ejecuten.',
   'actions.trainNotice': 'Mandato Entrenar - {name} puede comprar una carta del Mercado de Estaci\u00F3n o pasar.',
@@ -114,6 +127,31 @@ export const es: Record<TranslationKey, string> = {
   'battle.discarded': 'Sin figuras - loseta descartada',
   'battle.alliedWin': '{name} gana loseta de guerra de {region} (aliados)',
   'battle.accept': 'Aceptar',
+  'battle.resultTitle': 'Resultado de Batalla',
+  'battle.resultWinner': '\u00A1{name} gana la batalla!',
+  'battle.resultWarToken': 'Obtiene loseta de guerra en {province}',
+  'battle.continue': 'Continuar',
+  'battle.force': 'Fuerza',
+  'battle.coinDistributionTitle': 'Reparto de Monedas',
+  'battle.coinDistributionRemaining': 'monedas por repartir',
+  'battle.coinDistributionInstruction': 'Elige a qué perdedor dar 1 moneda extra',
+  'battle.coinDistributionInfo': 'Cada perdedor recibe {amount} monedas',
+  'battle.coinPool': 'Monedas asignadas',
+  'battle.confirmBidsOverlay': 'Confirmar Apuestas ({total} monedas)',
+  'battle.battleCount': 'Batalla {current} de {total}',
+  'battle.peekMap': 'Ver Mapa',
+  'battle.returnToBids': 'Volver a las Apuestas',
+  'battle.tacticDesc.seppuku': 'Mata a tus propios Bushi. Gana 1 PV y 1 Honor por cada figura eliminada.',
+  'battle.tacticDesc.take-hostage': 'Captura 1 Bushi o Shinto enemigo como rehen. Gana 1 PV.',
+  'battle.tacticDesc.hire-ronin': 'Tus fichas de Ronin suman su fuerza a tu total en el calculo final de batalla.',
+  'battle.tacticDesc.imperial-poets': 'Gana PV igual al numero de tus figuras que quedan en la provincia.',
+  'battle.battleResolution': 'Resultado de Batalla',
+  'battle.killedFigures': 'Bajas',
+  'battle.figuresKilled': '{count} {type} eliminados',
+  'battle.figureTypeBushi': 'bushi',
+  'battle.figureTypeShinto': 'shinto',
+  'battle.figureTypeMonster': 'monstruo',
+  'battle.figureTypeDaimyo': 'daimyo',
 
   // GameOverScreen
   'gameOver.title': 'FIN DEL JUEGO',
@@ -127,7 +165,7 @@ export const es: Record<TranslationKey, string> = {
   'gameOver.warTokens': 'Fichas de Guerra',
   'gameOver.cards': 'Cartas',
   'gameOver.returnToMenu': 'Volver al Men\u00FA',
-  'gameOver.warProvinceTokens': 'Fichas de Provincia de Guerra',
+  'gameOver.warProvinceTokens': 'Fichas de Provincia en Guerra',
   'gameOver.sharedVictory': 'Victoria compartida con aliados:',
 
   // SeasonCardsMarket
@@ -149,9 +187,10 @@ export const es: Record<TranslationKey, string> = {
 
   // Season Cards Modal
   'seasonCardsModal.title': 'Cartas de Estaci\u00F3n',
+  'seasonCardsModal.titleSeason': 'Cartas de {season}',
   'seasonCardsModal.force': 'Fuerza: {value}',
   'seasonCardsModal.confirmTitle': 'Confirmar Compra',
-  'seasonCardsModal.confirmMessage': '\u00BFComprar {name} por {cost} moneda(s)?',
+  'seasonCardsModal.confirmMessage': '\u00BFComprar {name} por {cost} monedas?',
   'seasonCardsModal.confirm': 'Confirmar',
   'seasonCardsModal.cancel': 'Cancelar',
   'seasonCardsModal.discount': '(descuento -1)',
@@ -182,6 +221,15 @@ export const es: Record<TranslationKey, string> = {
 
   // Kami Effects (Expansion)
   'kami.amaterasu.expansionEffect': 'Las figuras del jugador con el Honor más alto en esta Provincia no pueden ser asesinadas por los otros jugadores.',
+
+  // Kami Summaries (short)
+  'kami.amaterasu.summary': 'Honor #1',
+  'kami.fujin.summary': '+2 Movimientos',
+  'kami.raijin.summary': 'Invocar 1 Bushi en cualquier lugar',
+  'kami.ryujin.summary': 'Comprar 1 Carta de Estacion',
+  'kami.hachiman.summary': '+2 Ronin',
+  'kami.susanoo.summary': 'PV = Fortalezas en mapa',
+  'kami.tsukuyomi.summary': '+2 Monedas',
   'kami.fujin.expansionEffect': 'Dobla la Recompensa de Cosecha en esta Provincia. Al ganar el símbolo de Guerra de esta Provincia, también obtienes su Recompensa de Cosecha.',
   'kami.hachiman.expansionEffect': 'En esta Provincia, los símbolos de Ronin cuentan como Fuerza 2 cada uno.',
   'kami.raijin.expansionEffect': 'Solo las figuras de Bushi y Kami cuentan su Fuerza en esta Provincia.',
@@ -209,8 +257,17 @@ export const es: Record<TranslationKey, string> = {
   'actions.marshalPlayer': '(Jugador {current} de {total})',
   'actions.marshalBonus': 'Tambien puede construir una fortaleza (3 monedas).',
   'actions.marshalNoBonus': '',
-  'actions.buildFortress': 'Construir Fortaleza (3 monedas)',
-  'actions.endMarshalTurn': 'Terminar Turno de Movilizar',
+  'actions.buildFortress': 'Construir Fortaleza',
+  'actions.mandateName.marshal': 'MOVILIZAR',
+  'actions.mandateName.recruit': 'RECLUTAR',
+  'actions.mandateName.train': 'ENTRENAR',
+  'actions.mandateName.betray': 'TRAICIONAR',
+  'actions.mandateDesc.marshal': 'puede mover figuras.',
+  'actions.mandateDesc.recruit': 'puede invocar figuras en sus fortalezas.',
+  'actions.mandateDesc.train': 'puede comprar una carta del Mercado de Estacion o pasar.',
+  'actions.mandateDesc.betray': 'puede reemplazar figuras enemigas.',
+  'actions.marshalBonusFortress': 'Tambien puede construir una fortaleza.',
+  'actions.endMarshalTurn': 'Terminar',
   'actions.marshalSelectProvince': 'Selecciona una provincia para construir una fortaleza.',
   'actions.marshalMoveInstruction': 'Selecciona una figura y luego la provincia destino. Cada figura solo se mueve una vez.',
   'actions.marshalMoveSteps': '1. Haz clic en la provincia de origen. 2. Haz clic en la figura a mover. 3. Haz clic en el destino.',
@@ -221,9 +278,9 @@ export const es: Record<TranslationKey, string> = {
   'actions.recruitPlayer': '(Jugador {current} de {total})',
   'actions.recruitBonus': '+1 colocacion extra (emisor/aliado).',
   'actions.recruitNoBonus': '',
-  'actions.endRecruitTurn': 'Terminar Turno de Reclutar',
+  'actions.endRecruitTurn': 'Terminar',
   'actions.recruitSelectProvince': 'Selecciona una provincia para colocar una figura.',
-  'actions.recruitSelectProvinceOrTemple': 'Selecciona una provincia o un templo para colocar un shinto.',
+  'actions.recruitSelectProvinceOrTemple': 'Selecciona una provincia o un santuario para colocar un shinto.',
   'actions.recruitPlacementsLeft': 'Colocaciones restantes: {count}',
   'actions.recruitFigureType': 'Tipo de figura:',
   'actions.recruitBushi': 'Bushi',
@@ -233,9 +290,10 @@ export const es: Record<TranslationKey, string> = {
   'actions.recruitPlaceFigure': 'Colocar Figura',
 
   // Betray Mandate
+  'actions.betrayMandateLabel': 'Mandato Traicionar',
   'actions.betrayNotice': 'Mandato Traicionar - {name} puede reemplazar hasta 2 figuras enemigas.',
   'actions.betraySelectionsLeft': 'Reemplazos restantes: {count}',
-  'actions.betrayEndTurn': 'Terminar Turno de Traicionar',
+  'actions.betrayEndTurn': 'Terminar',
   'actions.betraySelectTarget': 'Haz clic en una figura enemiga en el mapa para reemplazarla.',
   'actions.betrayClickInstruction': 'Pulsa sobre la figura que quieras sustituir en el mapa',
   'actions.betrayNoTargets': 'No hay objetivos validos disponibles.',
@@ -244,11 +302,11 @@ export const es: Record<TranslationKey, string> = {
   // Monster Placement
   'monster.selectPlacement': 'Selecciona donde sacar {name}',
   'monster.accept': 'Aceptar',
-  'monster.komainuChoice': 'Komainu: Colocar en mapa o enviar a rezar a un templo?',
+  'monster.komainuChoice': 'Komainu: Colocar en mapa o enviar a rezar a un santuario?',
   'monster.komainuMap': 'Colocar en mapa',
   'monster.komainuPray': 'Enviar a rezar',
   'monster.placed': '{name} colocado en {province}',
-  'monster.selectTemple': 'Selecciona un templo para el Shinto',
+  'monster.selectTemple': 'Selecciona un santuario para el Shinto',
 
   // Player Cards Modal
   'playerCards.title': '{name} ({clan}) - Cartas',
@@ -262,8 +320,42 @@ export const es: Record<TranslationKey, string> = {
   'regionDetail.empty': 'No hay figuras en esta provincia.',
 
   // Harvest Popup
+  'harvest.allPlayersReceived': 'Todos los jugadores han recibido',
   'harvest.received': '{name} ha recibido:',
   'harvest.accept': 'Aceptar',
+
+  // Kami Resolution
+  'kami.resolution.title': 'Resolucion Kami',
+  'kami.resolution.winner': '{name} gana!',
+  'kami.resolution.noWinner': 'No hay ganador',
+  'kami.resolution.reward': 'Recompensa: {reward}',
+  'kami.resolution.continue': 'Continuar',
+  'kami.resolution.force': 'Fuerza Sintoista',
+  'kami.resolution.fujinMoves': '{count} Movimientos',
+  'kami.resolution.fujinUndo': 'Deshacer',
+  'kami.resolution.fujinDone': 'Finalizar movimientos',
+  'kami.resolution.fujinCancel': 'Cancelar Movimiento',
+  'kami.resolution.raijinPlace': 'Coloca un Bushi en una provincia',
+  'kami.resolution.ryujinBuy': 'Compra una carta de Estacion',
+  'kami.resolution.templeOf': 'Santuario {number}',
+  'kami.resolution.susanooVP': 'Gana {vp} PV ({fortresses} Fortalezas en mapa)',
+
+  // Kami Phase Popup
+  'kami.phaseStart.title': 'Comienza la Fase Kami',
+  'kami.phaseStart.description': 'Los santuarios se resolveran de izquierda a derecha. El jugador con mas fuerza Sintoista en cada santuario gana la recompensa del Kami.',
+  'kami.phaseStart.accept': 'Aceptar',
+
+  // War Phase Popup
+  'war.phaseStart.title': 'Comienza la Fase de Guerra',
+  'war.phaseStart.bonuses': 'Bonificaciones de Mejora de Guerra',
+  'war.phaseStart.noBonuses': 'No hay bonificaciones de mejora de guerra activas.',
+  'war.phaseStart.accept': 'Aceptar',
+
+  // Rule violations
+  'rule.invalidMove': 'Movimiento no valido',
+
+  // Turn Popup
+  'game.turnPopupAccept': 'Aceptar',
 
   // War Tokens Modal
   'warTokens.title': 'Losetas de Provincia de Guerra',
@@ -272,4 +364,12 @@ export const es: Record<TranslationKey, string> = {
   // Hostages Modal
   'hostages.title': 'Rehenes',
   'hostages.empty': 'Sin rehenes',
+
+  // Jinmenju
+  'actions.jinmenjuSummon': 'Invocar con Jinmenju',
+  'actions.jinmenjuCost': 'Perder 1 posicion de Honor',
+
+  // Alliance Request
+  'actions.requestLabel': 'Peticion',
+  'actions.requestingCoins': 'Pidiendo {amount} monedas por la alianza',
 };

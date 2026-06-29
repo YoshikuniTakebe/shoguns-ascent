@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-008",
+  "type": "fix",
+  "description": "Review fixes: Zorro participants bug, dead code removal, and province colors duplication",
+  "status": "completed",
+  "steps": [
+    "Fix Zorro participants bug in doZorroPlaceBushi and doZorroSkipPlacement in gameStore.ts - update activeBattles to include Zorro where they have figures",
+    "Remove dead code (unreachable else if luna branch inside isDragonfly block) in doRecruitPlaceFigure in gameStore.ts",
+    "Extract PROVINCE_COLORS to a shared constant in src/types/game.ts",
+    "Update BattlePanel.tsx to import and use shared PROVINCE_COLORS instead of local REGION_COLORS",
+    "Update GameLog.tsx to import shared PROVINCE_COLORS instead of defining it locally"
+  ],
+  "acceptance_criteria": [
+    "Zorro is added to battle participants when placed in a battle province",
+    "Dead code branch is removed from doRecruitPlaceFigure",
+    "PROVINCE_COLORS is defined once in types/game.ts and used from BattlePanel.tsx and GameLog.tsx",
+    "npx vite build succeeds"
+  ],
+  "verification": ["npx vite build"],
+  "blocked_reason": null,
+  "findings": "All three fixes implemented cleanly. For the Zorro participants bug, used fallback to gameState.zorroPlacementPlayerId since ns already clears it to null when placementDone is true. Build passes without issues."
+}

@@ -2,6 +2,7 @@ import type {
   GameState, Player, Province, Season, MandateType,
   Battle, Figure, Temple, WarProvinceSlot, SeasonCard,
   AllianceProposal, Hostage, DeckConfig, DeckName, KamiType,
+  KamiResolutionTemple, KamiData,
 } from '../types/game';
 import {
   CLANS, PROVINCES_DATA, HOME_PROVINCES, WAR_TACTICS,
@@ -119,7 +120,8 @@ export function createInitialGameState(
       bushi: 6,
       shinto: 3,
       hasDaimyo: false,
-      fortresses: 2,
+      fortresses: 4,
+      monsters: 0,
       seasonCards: [],
       warProvinceTokens: [],
       allies: [],
@@ -147,9 +149,14 @@ export function createInitialGameState(
     .sort((a, b) => a.honor - b.honor)
     .map((p) => p.id);
 
-  // Create initial temples (4 random kami types)
-  const shuffledKami = shuffle(KAMI_DATA);
-  const temples: Temple[] = shuffledKami.slice(0, 4).map((kami, idx) => ({
+  // Create initial temples (4 kami types - manual selection or random)
+  let selectedKamiData: KamiData[];
+  if (deckConfig?.selectedKami && deckConfig.selectedKami.length === 4) {
+    selectedKamiData = deckConfig.selectedKami.map(type => KAMI_DATA.find(k => k.type === type)!);
+  } else {
+    selectedKamiData = shuffle(KAMI_DATA).slice(0, 4);
+  }
+  const temples: Temple[] = selectedKamiData.map((kami, idx) => ({
     id: `temple-${idx}`,
     position: idx + 1,
     kamiType: kami.type,
@@ -219,6 +226,7 @@ export function createInitialGameState(
     recruitResolutionIndex: 0,
     recruitMandateIssuerId: null,
     recruitPlacementsRemaining: 0,
+    recruitUsedFortressProvinces: [],
     betrayMandateActive: false,
     betraySelectionsRemaining: 0,
     betraySelectedOwners: [],
@@ -228,9 +236,21 @@ export function createInitialGameState(
     harvestResolutionIndex: 0,
     harvestPlayerRewards: [],
     harvestPopupVisible: false,
+    kamiResolutionActive: false,
+    kamiResolutionTemples: [],
+    kamiResolutionIndex: 0,
+    kamiResolutionStep: null,
+    kamiResolutionNextPlayerIndex: 0,
+    fujinMovesRemaining: 0,
+    raijinPlacementActive: false,
+    ryujinBuyActive: false,
+    zorroPlacementActive: false,
+    zorroPlacementPlayerId: null,
+    zorroPlacementsRemaining: 0,
     lastMandateIssuerId: null,
     gameOver: false,
     log: ['Game started! Season: Spring'],
+    logHistory: {},
     hostId,
   };
 
@@ -252,6 +272,13 @@ function shuffleMandates(): MandateType[] {
 // ============================================================
 
 export function setupSeason(state: GameState, season: Season): GameState {
+  // Archive current season's log before transitioning
+  const archivedHistory = { ...state.logHistory, [state.currentSeason]: [...state.log] };
+
+  // Determine first player from turn order (static order set at game creation)
+  const firstPlayerId = state.turnOrder[0];
+  const firstPlayerIdx = state.players.findIndex(p => p.id === firstPlayerId);
+
   let newState: GameState = {
     ...state,
     players: state.players.map((p) => ({ ...p, seasonCards: [...p.seasonCards], warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages], allies: [...p.allies] })),
@@ -259,9 +286,10 @@ export function setupSeason(state: GameState, season: Season): GameState {
     warProvinceSlots: [] as WarProvinceSlot[],
     currentSeason: season,
     currentPhase: 'tea' as const,
-    currentPlayerIndex: 0,
+    currentPlayerIndex: firstPlayerIdx >= 0 ? firstPlayerIdx : 0,
     teaTurnIndex: 0,
-    log: [...state.log, `Season Setup: ${season.charAt(0).toUpperCase() + season.slice(1)}`],
+    logHistory: archivedHistory,
+    log: [`Season Setup: ${season.charAt(0).toUpperCase() + season.slice(1)}`],
   };
 
   // Place war province tokens (numPlayers + 2) on random provinces
@@ -322,7 +350,16 @@ function returnHostages(state: GameState): GameState {
   newState.players.forEach((player) => {
     if (player.hostages.length > 0) {
       player.coins += player.hostages.length;
-      newState.log = [...newState.log, `${player.name} returns ${player.hostages.length} hostage(s), gains ${player.hostages.length} coin(s)`];
+      // Group hostages by their original owner (fromClanId = player ID)
+      const hostagesByOwner: Record<string, number> = {};
+      player.hostages.forEach((h) => {
+        hostagesByOwner[h.fromClanId] = (hostagesByOwner[h.fromClanId] || 0) + 1;
+      });
+      Object.entries(hostagesByOwner).forEach(([ownerId, count]) => {
+        const targetPlayer = newState.players.find((p) => p.id === ownerId);
+        const targetName = targetPlayer ? targetPlayer.name : ownerId;
+        newState.log = [...newState.log, `${player.name} returns ${count} hostage(s) to ${targetName}, gains ${count} coin(s)`];
+      });
       player.hostages = [];
     }
   });
@@ -343,7 +380,7 @@ export function breakAllAlliances(state: GameState): GameState {
   return newState;
 }
 
-export function proposeAlliance(state: GameState, fromId: string, toId: string): GameState {
+export function proposeAlliance(state: GameState, fromId: string, toId: string, bribeAmount: number = 0, requestAmount: number = 0): GameState {
   const newState = { ...state, allianceProposals: [...state.allianceProposals], log: [...state.log] };
   const from = newState.players.find((p) => p.id === fromId);
   const to = newState.players.find((p) => p.id === toId);
@@ -352,15 +389,76 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string):
   // Cannot propose if either already has an ally
   if (from.allies.length > 0 || to.allies.length > 0) return state;
 
-  // Check for duplicate proposals
-  const existing = newState.allianceProposals.find(
-    (ap) => (ap.from === fromId && ap.to === toId) || (ap.from === toId && ap.to === fromId)
+  // Check if fromId already proposed to toId (exact duplicate)
+  const duplicateProposal = newState.allianceProposals.find(
+    (ap) => ap.from === fromId && ap.to === toId
   );
-  if (existing) return state;
+  if (duplicateProposal) return state;
 
-  const proposal: AllianceProposal = { from: fromId, to: toId };
+  // Cap bribe amount to proposer's actual coins
+  const effectiveBribe = Math.min(bribeAmount, from.coins);
+  // Cap request amount to target's actual coins
+  const effectiveRequest = Math.min(requestAmount, to.coins);
+
+  // If the target already proposed to us, auto-accept that proposal instead
+  const reverseProposal = newState.allianceProposals.find(
+    (ap) => ap.from === toId && ap.to === fromId
+  );
+  if (reverseProposal) {
+    // Treat this as accepting the existing proposal from toId to fromId
+    let resultState = acceptAlliance(state, toId, fromId);
+    // Also transfer the counter-proposer's bribe (fromId -> toId)
+    if (effectiveBribe > 0) {
+      const counterProposer = resultState.players.find((p) => p.id === fromId);
+      const counterTarget = resultState.players.find((p) => p.id === toId);
+      if (counterProposer && counterTarget) {
+        const actualBribe = Math.min(effectiveBribe, counterProposer.coins);
+        if (actualBribe > 0) {
+          const updatedPlayers = resultState.players.map((p) => {
+            if (p.id === fromId) return { ...p, coins: p.coins - actualBribe };
+            if (p.id === toId) return { ...p, coins: p.coins + actualBribe };
+            return p;
+          });
+          resultState = {
+            ...resultState,
+            players: updatedPlayers,
+            log: [...resultState.log, `${counterTarget.name} recibe ${actualBribe} monedas de soborno de ${counterProposer.name}`],
+          };
+        }
+      }
+    }
+    // Handle request in reverse-proposal case: target (toId) pays requestAmount to proposer (fromId)
+    if (effectiveRequest > 0) {
+      const requester = resultState.players.find((p) => p.id === fromId);
+      const payer = resultState.players.find((p) => p.id === toId);
+      if (requester && payer) {
+        const actualRequest = Math.min(effectiveRequest, payer.coins);
+        if (actualRequest > 0) {
+          const updatedPlayers = resultState.players.map((p) => {
+            if (p.id === toId) return { ...p, coins: p.coins - actualRequest };
+            if (p.id === fromId) return { ...p, coins: p.coins + actualRequest };
+            return p;
+          });
+          resultState = {
+            ...resultState,
+            players: updatedPlayers,
+            log: [...resultState.log, `${requester.name} recibe ${actualRequest} monedas de peticion de ${payer.name}`],
+          };
+        }
+      }
+    }
+    return resultState;
+  }
+
+  const proposal: AllianceProposal = { from: fromId, to: toId, bribeAmount: effectiveBribe > 0 ? effectiveBribe : undefined, requestAmount: effectiveRequest > 0 ? effectiveRequest : undefined };
   newState.allianceProposals.push(proposal);
-  newState.log = [...newState.log, `${from.name} proposes alliance to ${to.name}`];
+  if (effectiveBribe > 0) {
+    newState.log = [...newState.log, `${from.name} propone alianza a ${to.name} ofreciendo ${effectiveBribe} monedas`];
+  } else if (effectiveRequest > 0) {
+    newState.log = [...newState.log, `${from.name} propone alianza a ${to.name} pidiendo ${effectiveRequest} monedas`];
+  } else {
+    newState.log = [...newState.log, `${from.name} propone alianza a ${to.name}`];
+  }
   return newState;
 }
 
@@ -377,6 +475,33 @@ export function acceptAlliance(state: GameState, fromId: string, toId: string): 
 
   // Each player can have exactly 1 ally (pair system)
   if (from.allies.length > 0 || to.allies.length > 0) return state;
+
+  // Find the proposal to get the bribe amount
+  const proposal = newState.allianceProposals.find(
+    (ap) => ap.from === fromId && ap.to === toId
+  );
+  const bribeAmount = proposal?.bribeAmount || 0;
+  const requestAmount = proposal?.requestAmount || 0;
+
+  // Transfer bribe coins from proposer to accepter
+  if (bribeAmount > 0) {
+    const actualBribe = Math.min(bribeAmount, from.coins);
+    if (actualBribe > 0) {
+      from.coins -= actualBribe;
+      to.coins += actualBribe;
+      newState.log = [...newState.log, `${to.name} recibe ${actualBribe} monedas de soborno de ${from.name}`];
+    }
+  }
+
+  // Transfer request coins from accepter (to) to proposer (from)
+  if (requestAmount > 0) {
+    const actualRequest = Math.min(requestAmount, to.coins);
+    if (actualRequest > 0) {
+      to.coins -= actualRequest;
+      from.coins += actualRequest;
+      newState.log = [...newState.log, `${from.name} recibe ${actualRequest} monedas de peticion de ${to.name}`];
+    }
+  }
 
   from.allies = [toId];
   to.allies = [fromId];
@@ -419,8 +544,25 @@ export function drawMandateTiles(state: GameState): GameState {
 
 export function chooseMandateTile(state: GameState, mandate: MandateType, playerId: string): GameState {
   let newState: GameState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [...state.drawnMandates] };
+
+  const player = state.players.find((p) => p.id === playerId);
+  const isLoto = player?.clanId === 'loto';
+
   const chosenIdx = newState.drawnMandates.indexOf(mandate);
   if (chosenIdx === -1) return state;
+
+  // Loto clan two-step flow: first click discards the tile, then player picks actual mandate
+  if (isLoto && !state.lotoChoicePhase) {
+    // Step 1: Discard the clicked tile from the deck (secretly removed)
+    newState.drawnMandates.splice(chosenIdx, 1);
+    // Return remaining 3 tiles back to the deck
+    newState.mandatesDeck = [...newState.drawnMandates, ...newState.mandatesDeck];
+    newState.drawnMandates = [];
+    newState.mandateChoicePhase = false;
+    newState.lotoChoicePhase = true;
+    newState.lotoDiscardedMandate = mandate;
+    return newState;
+  }
 
   // Remove chosen mandate from drawn tiles
   newState.drawnMandates.splice(chosenIdx, 1);
@@ -437,12 +579,24 @@ export function chooseMandateTile(state: GameState, mandate: MandateType, player
   return newState;
 }
 
+export function lotoChooseActualMandate(state: GameState, mandate: MandateType, playerId: string): GameState {
+  let newState: GameState = {
+    ...state,
+    lotoChoicePhase: false,
+    lotoDiscardedMandate: null,
+    lastMandateIssuerId: playerId,
+  };
+  newState = executeMandate(newState, mandate, playerId);
+  return newState;
+}
+
 export function executeMandate(state: GameState, mandate: MandateType, playerId: string): GameState {
+  const issuingPlayer = state.players.find((p) => p.id === playerId);
   const newState: GameState = {
     ...state,
     players: state.players.map((p) => ({ ...p, allies: [...p.allies], seasonCards: [...p.seasonCards] })),
     provinces: { ...state.provinces },
-    mandatesThisTurn: [...state.mandatesThisTurn, { type: mandate, issuer: playerId, executed: false }],
+    mandatesThisTurn: [...state.mandatesThisTurn, { type: mandate, issuer: playerId, executed: false, hidden: issuingPlayer?.clanId === 'loto' }],
     log: [...state.log],
   };
   const player = newState.players.find((p) => p.id === playerId);
@@ -501,6 +655,7 @@ function executeRecruit(state: GameState, issuerId: string): GameState {
     recruitResolutionIndex: 0,
     recruitMandateIssuerId: issuerId,
     recruitPlacementsRemaining: 0,
+    recruitUsedFortressProvinces: [],
     log: [...state.log, `Recruit mandate issued by ${issuer?.name ?? 'Player'} - all players may summon figures at their fortresses in resolution order. Issuer and ally get +1 bonus placement.`],
   };
 
@@ -525,7 +680,7 @@ function calculateRecruitPlacements(state: GameState, playerId: string, issuerId
  * Place a figure during the recruit mandate.
  * Player chooses bushi or shinto, and a province (must have their fortress, or ANY if Dragonfly).
  */
-export function recruitPlaceFigure(state: GameState, playerId: string, provinceId: string, figureType: 'bushi' | 'shinto'): GameState {
+export function recruitPlaceFigure(state: GameState, playerId: string, provinceId: string, figureType: 'bushi' | 'shinto' | 'monster'): GameState {
   if (!state.recruitMandateActive) return state;
   if (state.recruitPlacementsRemaining <= 0) return state;
 
@@ -535,6 +690,7 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
   // Check reserve
   if (figureType === 'bushi' && player.bushi <= 0) return state;
   if (figureType === 'shinto' && player.shinto <= 0) return state;
+  // Monsters don't come from reserve - they come from purchased cards
 
   const province = state.provinces[provinceId];
   if (!province) return state;
@@ -546,11 +702,51 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
     if (!hasFortress) return state;
   }
 
+  // Luna clan power: max 2 figures per province (excluding fortresses)
+  if (player.clanId === 'luna' && (figureType === 'bushi' || figureType === 'shinto' || figureType === 'monster')) {
+    const lunaFiguresInProvince = province.figures.filter(
+      (f) => f.owner === playerId && f.type !== 'fortress'
+    ).length;
+    if (lunaFiguresInProvince >= 2) return state;
+  }
+
+  // For bushi (and monster) placements, enforce one-per-fortress-province rule.
+  // Shinto placements do NOT consume a fortress slot (they go to temples or provinces freely).
+  // Rule: each fortress province can be used once for a "base" bushi/monster placement.
+  // If the player is issuer/ally, they get +1 bonus that can go to ANY fortress province (even one already used).
+  if (figureType === 'bushi' || figureType === 'monster') {
+    const usedProvinces = state.recruitUsedFortressProvinces;
+    const timesProvinceUsed = usedProvinces.filter(p => p === provinceId).length;
+
+    if (timesProvinceUsed === 0) {
+      // First bushi/monster in this province - always allowed (base placement)
+    } else {
+      // Province already used for a base placement - only allow if bonus is available.
+      // Bonus is available when: player is issuer/ally AND only one bonus placement is allowed.
+      const isBonus = state.recruitMandateIssuerId ? isIssuerOrAlly(state, playerId, state.recruitMandateIssuerId) : false;
+
+      if (!isBonus) {
+        // Not issuer/ally - cannot reuse a province
+        return state;
+      }
+
+      // Count how many provinces have been used more than once (bonus uses)
+      const bonusUsesConsumed = usedProvinces.length - new Set(usedProvinces).size;
+      if (bonusUsesConsumed >= 1) {
+        // Bonus already consumed on another duplicate - block
+        return state;
+      }
+    }
+  }
+
   const newState: GameState = {
     ...state,
     provinces: { ...state.provinces },
     players: state.players.map((p) => ({ ...p })),
     recruitPlacementsRemaining: state.recruitPlacementsRemaining - 1,
+    recruitUsedFortressProvinces: (figureType === 'bushi' || figureType === 'monster')
+      ? [...state.recruitUsedFortressProvinces, provinceId]
+      : [...state.recruitUsedFortressProvinces],
     log: [...state.log, `${player.name} summons a ${figureType} in ${province.name}`],
   };
 
@@ -562,9 +758,10 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
   const updatedPlayer = newState.players.find((p) => p.id === playerId)!;
   if (figureType === 'bushi') {
     updatedPlayer.bushi -= 1;
-  } else {
+  } else if (figureType === 'shinto') {
     updatedPlayer.shinto -= 1;
   }
+  // Monsters don't decrement a reserve
 
   return newState;
 }
@@ -576,11 +773,9 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
  */
 export function skipRecruitTurn(state: GameState): GameState {
   if (!state.recruitMandateActive) return state;
-  const currentPlayer = state.players[state.currentPlayerIndex];
   const newState: GameState = {
     ...state,
     recruitResolutionIndex: state.recruitResolutionIndex + 1,
-    log: [...state.log, `${currentPlayer?.name ?? 'Player'} ends their recruit turn`],
   };
   return advanceRecruitResolution(newState);
 }
@@ -599,6 +794,8 @@ function advanceRecruitResolution(state: GameState): GameState {
       recruitResolutionIndex: 0,
       recruitMandateIssuerId: null,
       recruitPlacementsRemaining: 0,
+      recruitUsedFortressProvinces: [],
+      log: [...state.log, 'Recruit mandate resolved'],
     };
   }
   // Set currentPlayerIndex to the next player in resolution order and calculate their placements
@@ -617,7 +814,7 @@ function advanceRecruitResolution(state: GameState): GameState {
   }
 
   if (nextPlayerIdx >= 0) {
-    return { ...state, currentPlayerIndex: nextPlayerIdx, recruitPlacementsRemaining: placements };
+    return { ...state, currentPlayerIndex: nextPlayerIdx, recruitPlacementsRemaining: placements, recruitUsedFortressProvinces: [] };
   }
   return state;
 }
@@ -704,7 +901,13 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
   const isDiscounted = state.trainMandateIssuerId
     ? isIssuerOrAlly(state, playerId, state.trainMandateIssuerId)
     : false;
-  const effectiveCost = Math.max(0, card.cost - (isDiscounted ? 1 : 0));
+
+  // Bonsai clan power: max cost is 1 coin (applied BEFORE issuer discount)
+  let baseCost = card.cost;
+  if (player.clanId === 'bonsai' && baseCost >= 2) {
+    baseCost = 1;
+  }
+  const effectiveCost = Math.max(0, baseCost - (isDiscounted ? 1 : 0));
 
   // Check if player can afford the card (with discount applied)
   if (player.coins < effectiveCost) return state;
@@ -722,7 +925,55 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
       return { ...p };
     }),
     seasonCardsDeck: state.seasonCardsDeck.filter((c) => c.id !== cardId),
-    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coin(s)${isDiscounted ? ' (discounted)' : ''}`],
+    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coins${isDiscounted ? ' (discounted)' : ''}`],
+  };
+
+  return newState;
+}
+
+/**
+ * Buy a season card for the Ryujin kami reward. Full cost, no issuer discount.
+ * Bonsai clan power still applies.
+ */
+export function ryujinBuyCard(state: GameState, playerId: string, cardId: string): GameState {
+  const card = state.seasonCardsDeck.find((c) => c.id === cardId);
+  if (!card) return state;
+
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return state;
+
+  // Enforce purchase restrictions for monsters
+  if (card.cardType === 'monster') {
+    const cardGroups = card.group.split('/').map(g => g.trim());
+    const isDynastyInvasion = cardGroups.includes('Dynasty Invasion');
+    const isSolOrLuna = player.clanId === 'sol' || player.clanId === 'luna';
+    if (isSolOrLuna && !isDynastyInvasion) return state;
+    if (!isSolOrLuna && isDynastyInvasion) return state;
+  }
+
+  // Bonsai clan power: max cost is 1 coin
+  let baseCost = card.cost;
+  if (player.clanId === 'bonsai' && baseCost >= 2) {
+    baseCost = 1;
+  }
+  const effectiveCost = baseCost;
+
+  if (player.coins < effectiveCost) return state;
+
+  const newState: GameState = {
+    ...state,
+    players: state.players.map((p) => {
+      if (p.id === playerId) {
+        return {
+          ...p,
+          coins: p.coins - effectiveCost,
+          seasonCards: [...p.seasonCards, card],
+        };
+      }
+      return { ...p };
+    }),
+    seasonCardsDeck: state.seasonCardsDeck.filter((c) => c.id !== cardId),
+    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coins (Ryujin)`],
   };
 
   return newState;
@@ -774,6 +1025,12 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
         const bIdx = newState.honorTrack.indexOf(b.id);
         return aIdx - bIdx; // Lower index = higher honor = wins
       })[0]?.id ?? null;
+
+      // Sol clan power: bonus on honor tiebreak win
+      if (strongestId) {
+        const losers = tiedPlayers.filter((p) => p.id !== strongestId).map((p) => p.id);
+        applySolTiebreakBonus(newState, strongestId, losers);
+      }
     }
 
     // Only grant the reward if the strongest player is one of the harvesters (issuer or ally)
@@ -838,7 +1095,7 @@ export function advanceHarvestResolution(state: GameState): GameState {
       const provinceName = newState.provinces[entry.provinceId]?.name || entry.provinceId;
       const rewardParts: string[] = [];
       if (rewards.vp) rewardParts.push(`${rewards.vp} PV`);
-      if (rewards.coins) rewardParts.push(`${rewards.coins} moneda(s)`);
+      if (rewards.coins) rewardParts.push(`${rewards.coins} monedas`);
       if (rewards.ronin) rewardParts.push(`${rewards.ronin} ronin`);
       if (rewards.honor) rewardParts.push(`${rewards.honor} honor`);
       newState.log = [...newState.log, `${player.name} obtiene recompensa de ${provinceName}: ${rewardParts.join(', ')}`];
@@ -1042,6 +1299,11 @@ export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerI
       if (currentIdx > 0) {
         newState.honorTrack = newState.honorTrack.filter((id) => id !== playerId);
         newState.honorTrack.unshift(playerId);
+        // Update player.honor values to match new positions
+        newState.honorTrack.forEach((pid, idx) => {
+          const p = newState.players.find(pl => pl.id === pid);
+          if (p) p.honor = idx + 1;
+        });
         newState.log = [...newState.log, `${player.name} moves to top of Honor Track (Amaterasu)`];
       }
       break;
@@ -1071,28 +1333,61 @@ export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerI
       break;
     }
     case 'fujin': {
-      // UI-driven: player needs to perform up to 2 movements via UI
-      newState.log = [...newState.log, `${player.name} may perform up to 2 Movements (Fujin) - use Move Forces`];
+      // Interactive: handled by step-by-step flow (resolveCurrentKamiReward sets interactive mode)
       break;
     }
     case 'raijin': {
-      // UI-driven: player needs to choose province to summon bushi
-      // For now, decrement reserve if possible (placement needs UI)
-      if (player.bushi > 0) {
-        newState.log = [...newState.log, `${player.name} may Summon 1 Bushi to any Province (Raijin) - use the map to place`];
-      } else {
-        newState.log = [...newState.log, `${player.name} has no Bushi in reserve (Raijin - no effect)`];
-      }
+      // Interactive: handled by step-by-step flow (resolveCurrentKamiReward sets interactive mode)
       break;
     }
     case 'ryujin': {
-      // UI-driven: player needs to choose a season card to buy
-      newState.log = [...newState.log, `${player.name} may acquire a Season Card paying full cost (Ryujin)`];
+      // Interactive: handled by step-by-step flow (resolveCurrentKamiReward sets interactive mode)
       break;
     }
   }
 
   return newState;
+}
+
+/**
+ * Compute the winner of a temple based on shinto force and honor track tiebreaking.
+ * Returns the winnerId (or null if no figures) and a forces array.
+ */
+function computeTempleWinner(
+  templeFigures: { playerId: string }[],
+  honorTrack: string[],
+  players: { id: string; clanId: string }[]
+): { winnerId: string | null; forces: { playerId: string; count: number }[] } {
+  const forcesMap: { [playerId: string]: number } = {};
+  templeFigures.forEach((fig) => {
+    const player = players.find(p => p.id === fig.playerId);
+    const force = player?.clanId === 'luna' ? 2 : 1;
+    forcesMap[fig.playerId] = (forcesMap[fig.playerId] || 0) + force;
+  });
+
+  const forces = Object.entries(forcesMap).map(([playerId, count]) => ({ playerId, count }));
+
+  if (forces.length === 0) {
+    return { winnerId: null, forces: [] };
+  }
+
+  let maxForce = 0;
+  let winnerId: string | null = null;
+
+  Object.entries(forcesMap).forEach(([pid, force]) => {
+    if (force > maxForce) {
+      maxForce = force;
+      winnerId = pid;
+    } else if (force === maxForce && winnerId) {
+      const currentWinnerHonor = honorTrack.indexOf(winnerId);
+      const challengerHonor = honorTrack.indexOf(pid);
+      if (challengerHonor < currentWinnerHonor) {
+        winnerId = pid;
+      }
+    }
+  });
+
+  return { winnerId, forces };
 }
 
 export function resolveKamiTurn(state: GameState): GameState {
@@ -1101,44 +1396,35 @@ export function resolveKamiTurn(state: GameState): GameState {
     players: state.players.map((p) => ({ ...p })),
     temples: state.temples.map((t) => ({ ...t, figures: [...t.figures] })),
     honorTrack: [...state.honorTrack],
-    log: [...state.log, 'Kami Turn - resolving temple majorities'],
+    log: [...state.log, '--- Kami Turn ---'],
   };
 
   // For each temple (left to right by position)
   const sortedTemples = [...newState.temples].sort((a, b) => a.position - b.position);
 
   for (const temple of sortedTemples) {
-    // Count Shinto force per player at this temple
-    const forces: { [playerId: string]: number } = {};
-    temple.figures.forEach((fig) => {
-      forces[fig.playerId] = (forces[fig.playerId] || 0) + 1;
-    });
+    const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack, newState.players);
+    const kamiInfo = KAMI_DATA.find((k) => k.type === temple.kamiType);
 
-    if (Object.keys(forces).length === 0) continue;
+    if (forces.length === 0) {
+      newState.log = [...newState.log, `Shrine ${temple.position} (${kamiInfo?.name || temple.kamiType}) - no figures, skipped`];
+      continue;
+    }
 
-    // Find player with most Shinto force
-    let maxForce = 0;
-    let winnerId: string | null = null;
-
-    Object.entries(forces).forEach(([pid, force]) => {
-      if (force > maxForce) {
-        maxForce = force;
-        winnerId = pid;
-      } else if (force === maxForce) {
-        // Ties broken by honor (lower index = higher honor = wins)
-        const currentWinnerHonor = newState.honorTrack.indexOf(winnerId!);
-        const challengerHonor = newState.honorTrack.indexOf(pid);
-        if (challengerHonor < currentWinnerHonor) {
-          winnerId = pid;
-        }
+    // Sol clan power: bonus on temple honor tiebreak
+    if (winnerId && forces.length > 1) {
+      const maxForce = Math.max(...forces.map(f => f.count));
+      const tiedInTemple = forces.filter(f => f.count === maxForce);
+      if (tiedInTemple.length > 1) {
+        const losers = tiedInTemple.filter(f => f.playerId !== winnerId).map(f => f.playerId);
+        applySolTiebreakBonus(newState, winnerId, losers);
       }
-    });
+    }
 
     if (winnerId) {
       const winner = newState.players.find((p) => p.id === winnerId);
-      const kamiData = KAMI_DATA.find((k) => k.type === temple.kamiType);
-      if (winner && kamiData) {
-        newState.log = [...newState.log, `${winner.name} gains ${kamiData.name} ability at temple ${temple.position}`];
+      if (winner && kamiInfo) {
+        newState.log = [...newState.log, `Shrine ${temple.position}: ${winner.name} wins ${kamiInfo.name} (force: ${forces.find(f => f.playerId === winnerId)?.count || 0})`];
         // Apply the kami ability
         newState = resolveKamiAbility(newState, temple.kamiType, winnerId);
       }
@@ -1146,6 +1432,117 @@ export function resolveKamiTurn(state: GameState): GameState {
   }
 
   return newState;
+}
+
+/**
+ * Apply the kami ability for the current kamiResolutionIndex temple's winner.
+ * For auto rewards (amaterasu, hachiman, susanoo, tsukuyomi), apply the effect.
+ * For interactive rewards (fujin, raijin, ryujin), set interactive flags.
+ */
+export function resolveCurrentKamiReward(state: GameState): GameState {
+  if (!state.kamiResolutionActive) return state;
+  const currentTemple = state.kamiResolutionTemples[state.kamiResolutionIndex];
+  if (!currentTemple) return state;
+
+  // No winner - nothing to apply
+  if (!currentTemple.winnerId) {
+    return state;
+  }
+
+  const { kamiType, winnerId } = currentTemple;
+
+  // For interactive kami types, set the interactive flags
+  if (kamiType === 'fujin') {
+    return {
+      ...state,
+      kamiResolutionStep: 'interactive',
+      fujinMovesRemaining: 2,
+      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} may perform up to 2 Movements (Fujin)`],
+    };
+  }
+  if (kamiType === 'raijin') {
+    const player = state.players.find(p => p.id === winnerId);
+    if (player && player.bushi > 0) {
+      return {
+        ...state,
+        kamiResolutionStep: 'interactive',
+        raijinPlacementActive: true,
+        log: [...state.log, `${player.name} may Summon 1 Bushi to any Province (Raijin)`],
+      };
+    }
+    // No bushi in reserve - treat as auto (skip)
+    return {
+      ...state,
+      log: [...state.log, `${player?.name || ''} has no Bushi in reserve (Raijin - no effect)`],
+    };
+  }
+  if (kamiType === 'ryujin') {
+    return {
+      ...state,
+      kamiResolutionStep: 'interactive',
+      ryujinBuyActive: true,
+      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} may acquire a Season Card (Ryujin)`],
+    };
+  }
+
+  // Auto rewards - apply via resolveKamiAbility
+  let newState = resolveKamiAbility(state, kamiType, winnerId);
+
+  // Sol clan tiebreak bonus (same logic as resolveKamiTurn)
+  const temple = newState.temples[currentTemple.templeIndex];
+  if (temple && currentTemple.forces.length > 1) {
+    const maxForce = Math.max(...currentTemple.forces.map(f => f.count));
+    const tiedInTemple = currentTemple.forces.filter(f => f.count === maxForce);
+    if (tiedInTemple.length > 1) {
+      const losers = tiedInTemple.filter(f => f.playerId !== winnerId).map(f => f.playerId);
+      applySolTiebreakBonus(newState, winnerId, losers);
+    }
+  }
+
+  return newState;
+}
+
+/**
+ * Advance to the next temple in kami resolution, or finish the resolution.
+ */
+export function advanceKamiResolution(state: GameState): GameState {
+  if (!state.kamiResolutionActive) return state;
+
+  const nextIndex = state.kamiResolutionIndex + 1;
+
+  // All temples resolved
+  if (nextIndex >= state.kamiResolutionTemples.length) {
+    let newState: GameState = {
+      ...state,
+      kamiResolutionActive: false,
+      kamiResolutionTemples: [],
+      kamiResolutionIndex: 0,
+      kamiResolutionStep: null,
+      fujinMovesRemaining: 0,
+      raijinPlacementActive: false,
+      ryujinBuyActive: false,
+    };
+    newState.log = [...newState.log, '--- End Kami Turn ---'];
+
+    // Check if politics phase is done
+    if (newState.politicsMandateCount >= newState.maxMandates) {
+      return advancePhase(newState);
+    }
+
+    // Continue with next player's mandate turn
+    newState.currentPlayerIndex = state.kamiResolutionNextPlayerIndex;
+    return newState;
+  }
+
+  // Move to the next temple
+  return {
+    ...state,
+    kamiResolutionIndex: nextIndex,
+    kamiResolutionStep: 'showing',
+    fujinMovesRemaining: 0,
+    raijinPlacementActive: false,
+    ryujinBuyActive: false,
+  };
 }
 
 // ============================================================
@@ -1229,8 +1626,37 @@ export function initiateWarPhase(state: GameState): GameState {
     currentPhase: 'war' as const,
     activeBattles: [],
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], seasonCards: [...p.seasonCards] })),
-    log: [...state.log, 'War Phase begins - resolving battles'],
+    log: [...state.log, '=== War Phase begins ==='],
   };
+
+  // Koi clan power: swap all ronin for coins at the start of war
+  const koiPlayer = newState.players.find((p) => p.clanId === 'koi');
+  if (koiPlayer && koiPlayer.ronin > 0) {
+    const swapped = koiPlayer.ronin;
+    koiPlayer.coins += swapped;
+    koiPlayer.ronin = 0;
+    newState.log = [...newState.log, `${koiPlayer.name} (Koi) cambia ${swapped} Ronin por ${swapped} Monedas`];
+  }
+
+  // Zorro clan power: set up manual placement in battle provinces where Zorro has no figures
+  const zorroPlayer = newState.players.find((p) => p.clanId === 'zorro');
+  if (zorroPlayer && zorroPlayer.bushi > 0) {
+    // Determine battle provinces from warProvinceSlots
+    const battleProvinceIds = newState.warProvinceSlots.map(s => s.provinceId);
+    // Eligible provinces: battle provinces where Zorro has no figures
+    const eligibleProvinces = battleProvinceIds.filter(provId => {
+      const prov = newState.provinces[provId];
+      if (!prov) return false;
+      return !prov.figures.some((f) => f.owner === zorroPlayer.id);
+    });
+    if (eligibleProvinces.length > 0) {
+      const remaining = Math.min(zorroPlayer.bushi, eligibleProvinces.length);
+      newState.zorroPlacementActive = true;
+      newState.zorroPlacementPlayerId = zorroPlayer.id;
+      newState.zorroPlacementsRemaining = remaining;
+      newState.log = [...newState.log, `${zorroPlayer.name} (Zorro) puede colocar hasta ${remaining} Bushi en provincias de batalla vacias`];
+    }
+  }
 
   // Apply war upgrade card effects at start of war phase
   applyWarUpgrades(newState);
@@ -1307,11 +1733,27 @@ export function initiateWarPhase(state: GameState): GameState {
     // 2+ non-allied players - full battle
     const battle: Battle = {
       provinceId: slot.provinceId,
-      participants: playerIds,
+      participants: playerIds.sort((a, b) => {
+        const aIdx = newState.turnOrder.indexOf(a);
+        const bIdx = newState.turnOrder.indexOf(b);
+        return aIdx - bIdx;
+      }),
       warTacticBids: {},
       resolved: false,
     };
     newState.activeBattles.push(battle);
+  }
+
+  // Log summary of battles to resolve
+  const activeBattles = newState.activeBattles;
+  if (activeBattles.length > 0) {
+    const contestedCount = activeBattles.filter(b => !b.uncontested).length;
+    const uncontestedCount = activeBattles.length - contestedCount;
+    let summary = `${activeBattles.length} battles to resolve`;
+    if (contestedCount > 0 && uncontestedCount > 0) {
+      summary += ` (${contestedCount} contested, ${uncontestedCount} uncontested)`;
+    }
+    newState.log = [...newState.log, summary];
   }
 
   return newState;
@@ -1360,6 +1802,7 @@ export function resolveNextBattle(state: GameState): GameState {
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages] })),
     provinces: { ...state.provinces },
     activeBattles: state.activeBattles.map((b) => ({ ...b, warTacticBids: { ...b.warTacticBids } })),
+    honorTrack: [...state.honorTrack],
     log: [...state.log],
   };
 
@@ -1370,20 +1813,29 @@ export function resolveNextBattle(state: GameState): GameState {
     return newState;
   }
 
+  // Record the log index where this battle's entries begin
+  battle.logStartIndex = newState.log.length;
+
   // Resolve War Tactics (left to right: Seppuku, Take Hostage, Hire Ronin, Imperial Poets)
   const sortedTactics = [...WAR_TACTICS].sort((a, b) => a.order - b.order);
+
+  let battleDeathCount = 0;
+  let imperialPoetsBidder: string | null = null;
 
   for (const tactic of sortedTactics) {
     // Find highest bidder for this tactic
     let highestBid = 0;
     let highestBidder: string | null = null;
+    let tacticTied = false;
 
     battle.participants.forEach((pid) => {
       const playerBids = battle.warTacticBids[pid];
       if (playerBids && playerBids[tactic.id] > highestBid) {
         highestBid = playerBids[tactic.id];
         highestBidder = pid;
+        tacticTied = false;
       } else if (playerBids && playerBids[tactic.id] === highestBid && highestBid > 0) {
+        tacticTied = true;
         // Tie-breaking by honor (lower index = better honor = wins)
         const currentHonor = newState.honorTrack.indexOf(highestBidder!);
         const challengerHonor = newState.honorTrack.indexOf(pid);
@@ -1392,6 +1844,16 @@ export function resolveNextBattle(state: GameState): GameState {
         }
       }
     });
+
+    // Sol clan power: bonus on war tactic bid tie resolved by honor
+    if (tacticTied && highestBidder) {
+      const tiedLosers = battle.participants.filter((pid) => {
+        if (pid === highestBidder) return false;
+        const playerBids = battle.warTacticBids[pid];
+        return playerBids && playerBids[tactic.id] === highestBid;
+      });
+      applySolTiebreakBonus(newState, highestBidder, tiedLosers);
+    }
 
     if (!highestBidder || highestBid === 0) continue;
 
@@ -1402,20 +1864,28 @@ export function resolveNextBattle(state: GameState): GameState {
       case 'seppuku': {
         // Kill own figures for VP and Honor
         const ownFigures = currentProvFigures.figures.filter(
-          (f) => f.owner === highestBidder && f.type === 'bushi'
+          (f) => f.owner === highestBidder && (f.type === 'bushi' || f.type === 'daimyo')
         );
-        const killCount = Math.min(ownFigures.length, highestBid);
-        for (let i = 0; i < killCount; i++) {
+        const killCount = ownFigures.length;
+        for (const fig of ownFigures) {
           bidder.victoryPoints += 1;
-          bidder.bushi += 1;
+          if (fig.type === 'bushi') {
+            bidder.bushi += 1;
+          } else if (fig.type === 'daimyo') {
+            bidder.hasDaimyo = true;
+          }
         }
-        const killedIds = ownFigures.slice(0, killCount).map((f) => f.id);
+        const killedIds = ownFigures.map((f) => f.id);
         newState.provinces[battle.provinceId] = {
           ...currentProvFigures,
           figures: currentProvFigures.figures.filter((f) => !killedIds.includes(f.id)),
         };
-        gainHonor(newState, highestBidder);
-        newState.log = [...newState.log, `${bidder.name} commits Seppuku: kills ${killCount} figures for VP and Honor`];
+        for (let i = 0; i < killCount; i++) {
+          gainHonor(newState, highestBidder);
+        }
+        battleDeathCount += killCount;
+        const seppukuHonorPos = getHonorRank(newState, highestBidder);
+        newState.log = [...newState.log, `${bidder.name} commits Seppuku: kills ${killCount} figures for ${killCount} VP and ${killCount} Honor now ${bidder.victoryPoints} PV and position ${seppukuHonorPos} at Honor`];
         break;
       }
       case 'take-hostage': {
@@ -1437,21 +1907,26 @@ export function resolveNextBattle(state: GameState): GameState {
             if (enemyFigure.type === 'bushi') victim.bushi += 1;
             else if (enemyFigure.type === 'shinto') victim.shinto += 1;
           }
+          battleDeathCount += 1;
           newState.log = [...newState.log, `${bidder.name} takes a hostage from ${victim?.name}`];
         }
         break;
       }
       case 'hire-ronin': {
         // Ronin tokens add force (tracked for final calculation)
-        newState.log = [...newState.log, `${bidder.name} hires ronin: +${bidder.ronin} force`];
+        let roninForce = bidder.ronin;
+        if (bidder.clanId === 'koi') {
+          // Koi clan: coins count as ronin, but only coins remaining after all bids
+          const totalBidByBidder = Object.values(battle.warTacticBids[highestBidder] || {}).reduce((s, v) => s + v, 0);
+          const remainingCoins = bidder.coins - totalBidByBidder;
+          roninForce += Math.max(0, remainingCoins);
+        }
+        newState.log = [...newState.log, `${bidder.name} hires ronin: +${roninForce} force`];
         break;
       }
       case 'imperial-poets': {
-        // Gain VP per figure in battle
-        const curProvIP = newState.provinces[battle.provinceId];
-        const figureCount = curProvIP.figures.filter((f) => f.owner === highestBidder).length;
-        bidder.victoryPoints += figureCount;
-        newState.log = [...newState.log, `${bidder.name} gains ${figureCount} VP from Imperial Poets`];
+        // Defer VP award until after battle casualties are calculated
+        imperialPoetsBidder = highestBidder;
         break;
       }
     }
@@ -1489,6 +1964,12 @@ export function resolveNextBattle(state: GameState): GameState {
     // Add ronin force only if this player won the hire-ronin tactic
     if (pid === hireRoninWinner) {
       force += player.ronin;
+      // Koi clan power: coins also count as ronin for hire-ronin, but only remaining coins after bids
+      if (player.clanId === 'koi') {
+        const totalBidByPlayer = Object.values(battle.warTacticBids[pid] || {}).reduce((s, v) => s + v, 0);
+        const remainingCoins = player.coins - totalBidByPlayer;
+        force += Math.max(0, remainingCoins);
+      }
     }
     if (force > maxForce) {
       maxForce = force;
@@ -1502,6 +1983,35 @@ export function resolveNextBattle(state: GameState): GameState {
     }
   });
 
+  // Sol clan power: check if war force was tied and resolved by honor
+  if (winnerId && maxForce > 0) {
+    const tiedInWar = battle.participants.filter((pid) => {
+      const player = newState.players.find((p) => p.id === pid)!;
+      let force = calculateForce(finalProvince, pid, newState);
+      if (pid === hireRoninWinner) {
+        force += player.ronin;
+        if (player.clanId === 'koi') {
+          const totalBidByPlayer = Object.values(battle.warTacticBids[pid] || {}).reduce((s, v) => s + v, 0);
+          const remainingCoins = player.coins - totalBidByPlayer;
+          force += Math.max(0, remainingCoins);
+        }
+      }
+      return force === maxForce;
+    });
+    if (tiedInWar.length > 1) {
+      const losers = tiedInWar.filter((pid) => pid !== winnerId);
+      applySolTiebreakBonus(newState, winnerId, losers);
+    }
+  }
+
+  // Zero force edge case: if no player has force, the player with best honor among participants wins
+  if (maxForce === 0 && !winnerId) {
+    const sortedByHonor = [...battle.participants].sort((a, b) => {
+      return newState.honorTrack.indexOf(a) - newState.honorTrack.indexOf(b);
+    });
+    winnerId = sortedByHonor[0];
+  }
+
   if (winnerId) {
     battle.winner = winnerId;
     const winner = newState.players.find((p) => p.id === winnerId)!;
@@ -1512,23 +2022,49 @@ export function resolveNextBattle(state: GameState): GameState {
       winner.warProvinceTokens.push({ season: slot.season, provinceId: slot.provinceId });
     }
 
-    // Losing players' figures are killed (return to reserve). Daimyo is immune to kill effects.
+    // Losing players' figures are killed (return to reserve).
+    // Allied figures of the winner are also protected.
+    const killedMap: Record<string, Record<string, number>> = {};
     battle.participants.forEach((pid) => {
       if (pid === winnerId) return;
+      // Skip killing figures of players allied with the winner
+      if (winner.allies.includes(pid)) return;
       const loserFigures = finalProvince.figures.filter((f) => f.owner === pid);
       loserFigures.forEach((fig) => {
-        if (fig.type === 'daimyo') return; // Daimyo immune
+        if (fig.type === 'fortress') return; // Fortresses immune
         const loser = newState.players.find((p) => p.id === pid)!;
         if (fig.type === 'bushi') loser.bushi += 1;
         else if (fig.type === 'shinto') loser.shinto += 1;
+        else if (fig.type === 'daimyo') loser.hasDaimyo = true;
+        // Track killed figures for display
+        if (!killedMap[pid]) killedMap[pid] = {};
+        killedMap[pid][fig.type] = (killedMap[pid][fig.type] || 0) + 1;
       });
     });
 
-    // Remove killed figures from province (keep winner's figures, keep daimyos and fortresses)
+    // Build killedFigures array from the map
+    const killedFigures: { owner: string; figureType: string; count: number }[] = [];
+    for (const ownerId of Object.keys(killedMap)) {
+      for (const figType of Object.keys(killedMap[ownerId])) {
+        killedFigures.push({ owner: ownerId, figureType: figType, count: killedMap[ownerId][figType] });
+      }
+    }
+    battle.killedFigures = killedFigures;
+
+    // Imperial Poets: award VP for total figures that died during this battle
+    const battleCasualtyCount = killedFigures.reduce((sum, kf) => sum + kf.count, 0);
+    if (imperialPoetsBidder) {
+      const totalDeaths = battleDeathCount + battleCasualtyCount;
+      const poetsBidder = newState.players.find((p) => p.id === imperialPoetsBidder)!;
+      poetsBidder.victoryPoints += totalDeaths;
+      newState.log = [...newState.log, `${poetsBidder.name} gains ${totalDeaths} VP from Imperial Poets`];
+    }
+
+    // Remove killed figures from province (keep winner's figures, allied figures, daimyos, and fortresses)
     newState.provinces[battle.provinceId] = {
       ...finalProvince,
       figures: finalProvince.figures.filter(
-        (f) => f.owner === winnerId || f.type === 'daimyo' || f.type === 'fortress'
+        (f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'fortress'
       ),
     };
 
@@ -1538,11 +2074,27 @@ export function resolveNextBattle(state: GameState): GameState {
       const totalBid = Object.values(winnerBids).reduce((sum, v) => sum + v, 0);
       const losers = battle.participants.filter((pid) => pid !== winnerId);
       if (losers.length > 0 && totalBid > 0) {
+        // Deduct coins from winner first
+        winner.coins -= totalBid;
+        newState.log = [...newState.log, `${winner.name} gastó ${totalBid} monedas en la batalla`];
         const share = Math.floor(totalBid / losers.length);
-        losers.forEach((pid) => {
-          const loser = newState.players.find((p) => p.id === pid)!;
-          loser.coins += share;
-        });
+        const remainder = totalBid % losers.length;
+        if (share > 0) {
+          losers.forEach((pid) => {
+            const loser = newState.players.find((p) => p.id === pid)!;
+            loser.coins += share;
+            newState.log = [...newState.log, `${loser.name} recibe ${share} monedas del ganador`];
+          });
+        }
+        // Always show coin distribution popup to inform the winner of the distribution
+        newState.coinDistributionPending = {
+          battleProvinceId: battle.provinceId,
+          winnerId,
+          losers,
+          remainder,
+          distributed: share * losers.length,
+          sharePerLoser: share,
+        };
       }
     }
 
@@ -1554,6 +2106,9 @@ export function resolveNextBattle(state: GameState): GameState {
         const totalBid = Object.values(playerBids).reduce((sum, v) => sum + v, 0);
         const loser = newState.players.find((p) => p.id === pid)!;
         loser.coins = Math.max(0, loser.coins - totalBid);
+        if (totalBid > 0) {
+          newState.log = [...newState.log, `${loser.name} descarta ${totalBid} monedas`];
+        }
       }
     });
 
@@ -1588,9 +2143,12 @@ export function cleanupSeason(state: GameState): GameState {
     mandatesDeck: shuffleMandates(),
     drawnMandates: [],
     mandateChoicePhase: false,
+    lotoChoicePhase: false,
+    lotoDiscardedMandate: null,
     mandatesThisTurn: [],
     activeBattles: [],
     allianceProposals: [],
+    coinDistributionPending: null,
     politicsMandateCount: 0,
     trainMandateActive: false,
     trainResolutionOrder: [],
@@ -1689,6 +2247,15 @@ export function resolveWinter(state: GameState): GameState {
       }
     }
   });
+
+  // Sol clan power: bonus on end-game VP tiebreak
+  if (winnerId) {
+    const tiedPlayers = newState.players.filter((p) => p.victoryPoints === maxVP);
+    if (tiedPlayers.length > 1) {
+      const losers = tiedPlayers.filter((p) => p.id !== winnerId).map((p) => p.id);
+      applySolTiebreakBonus(newState, winnerId, losers);
+    }
+  }
 
   // Check for allied players sharing victory
   if (winnerId) {
@@ -1805,6 +2372,14 @@ export function moveForces(
       if (fromProvinceId === toProvinceId) return state;
     }
 
+    // Luna clan power: max 2 figures per province (excluding fortresses)
+    if (player.clanId === 'luna' && figure.type !== 'fortress') {
+      const lunaFiguresInDest = toProvince.figures.filter(
+        (f) => f.owner === playerId && f.type !== 'fortress'
+      ).length;
+      if (lunaFiguresInDest >= 2) return state;
+    }
+
     // Move the figure
     const movedFigures = [figure];
     const remainingFigures = fromProvince.figures.filter(f => f.id !== figureId);
@@ -1815,7 +2390,58 @@ export function moveForces(
     // Track figure as moved
     newState.marshalMovedFigures = [...state.marshalMovedFigures, figureId];
 
-    newState.log = [...newState.log, `${player.name} mueve ${figure.type} de ${fromProvince.name} a ${toProvince.name}`];
+    const figureDisplayName = figure.type === 'monster'
+      ? `monster(${player.seasonCards.find(c => c.cardType === 'monster')?.name || 'monster'})`
+      : figure.type;
+    newState.log = [...newState.log, `${player.name} mueve ${figureDisplayName} de ${fromProvince.name} a ${toProvince.name}`];
+
+    return newState;
+  }
+
+  // During Fujin kami resolution, enforce single-figure movement (like marshal) but without move tracking
+  if (state.kamiResolutionActive && state.fujinMovesRemaining > 0) {
+    // Only accept a single figureId at a time
+    if (figureIds.length !== 1) return state;
+
+    const figureId = figureIds[0];
+
+    // Find the figure
+    const figure = fromProvince.figures.find(f => f.id === figureId && f.owner === playerId);
+    if (!figure) return state;
+
+    // Reject fortress movement unless player is Tortuga clan
+    const player = state.players.find(p => p.id === playerId);
+    if (!player) return state;
+
+    if (figure.type === 'fortress' && player.clanId !== 'tortuga') return state;
+
+    // Adjacency check: skip for Libelula clan (can move anywhere)
+    if (player.clanId !== 'libelula') {
+      if (!isValidMove(fromProvinceId, toProvinceId)) return state;
+    } else {
+      // Libelula can move to any province except the same one
+      if (fromProvinceId === toProvinceId) return state;
+    }
+
+    // Luna clan power: max 2 figures per province (excluding fortresses)
+    if (player.clanId === 'luna' && figure.type !== 'fortress') {
+      const lunaFiguresInDest = toProvince.figures.filter(
+        (f) => f.owner === playerId && f.type !== 'fortress'
+      ).length;
+      if (lunaFiguresInDest >= 2) return state;
+    }
+
+    // Move the figure - no tracking (same figure can move twice)
+    const movedFigures = [figure];
+    const remainingFigures = fromProvince.figures.filter(f => f.id !== figureId);
+
+    newState.provinces[fromProvinceId] = { ...fromProvince, figures: remainingFigures };
+    newState.provinces[toProvinceId] = { ...toProvince, figures: [...toProvince.figures, ...movedFigures] };
+
+    const figureDisplayName = figure.type === 'monster'
+      ? `monster(${player.seasonCards.find(c => c.cardType === 'monster')?.name || 'monster'})`
+      : figure.type;
+    newState.log = [...newState.log, `${player.name} mueve ${figureDisplayName} de ${fromProvince.name} a ${toProvince.name} (Fujin)`];
 
     return newState;
   }
@@ -1839,7 +2465,7 @@ export function moveForces(
 
   const player = newState.players.find((p) => p.id === playerId);
   if (player) {
-    newState.log = [...newState.log, `${player.name} mueve ${figureIds.length} figura(s) de ${fromProvince.name} a ${toProvince.name}`];
+    newState.log = [...newState.log, `${player.name} mueve ${figureIds.length} figuras de ${fromProvince.name} a ${toProvince.name}`];
   }
 
   return newState;
@@ -1868,16 +2494,45 @@ export function getPlayerSeasonCardEffects(state: GameState, playerId: string): 
   return player.seasonCards;
 }
 
+/**
+ * Sol clan power: when Sol wins a tiebreak by honor, Sol gains 1 coin + 1 VP,
+ * and the tied losers lose 1 coin + 1 VP (if they have them).
+ */
+function applySolTiebreakBonus(state: GameState, winnerId: string, losers: string[]): void {
+  const winner = state.players.find((p) => p.id === winnerId);
+  if (!winner || winner.clanId !== 'sol') return;
+
+  winner.coins += 1;
+  winner.victoryPoints += 1;
+  for (const loserId of losers) {
+    const loser = state.players.find((p) => p.id === loserId);
+    if (loser) {
+      if (loser.coins > 0) loser.coins -= 1;
+      if (loser.victoryPoints > 0) loser.victoryPoints -= 1;
+    }
+  }
+  state.log = [...state.log, `${winner.name} (Sol) gana +1 Moneda +1 PV por empate y ganar en Honor a ${losers.map((id) => state.players.find((p) => p.id === id)?.name ?? id).join(', ')} que pierde -1 Moneda -1 PV`];
+}
+
 export function calculateForce(province: Province & { figures: Figure[] }, playerId: string, state: GameState): number {
   const playerFigures = province.figures.filter((f) => f.owner === playerId);
 
   const playerCards = getPlayerSeasonCardEffects(state, playerId);
   const cardIds = new Set(playerCards.map((c) => c.id));
 
+  const player = state.players.find((p) => p.id === playerId);
+  const isLuna = player?.clanId === 'luna';
+  const isTortuga = player?.clanId === 'tortuga';
+
   let totalForce = 0;
 
   for (const fig of playerFigures) {
-    let figForce = 1; // Base force for any figure
+    // Fortresses do NOT count as force for anyone except Tortuga (handled post-loop)
+    if (fig.type === 'fortress') {
+      continue;
+    }
+
+    let figForce = isLuna ? 2 : 1; // Luna base force is 2, others 1
 
     if (fig.type === 'daimyo') {
       if (cardIds.has('sp-path-of-the-lion')) {
@@ -1893,16 +2548,22 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
       // honorTrack[0] = best honor (index 0 = honor position 1)
       const highestHonorPlayerId = state.honorTrack[0];
       if (highestHonorPlayerId === playerId) {
-        figForce = 3; // Replace base force with 3
+        figForce = isLuna ? Math.max(3, figForce) : 3; // Replace base force with 3 (Luna keeps max)
       }
     }
 
     if (fig.type === 'bushi' && cardIds.has('au-way-of-the-katana') && state.currentPhase === 'war') {
       // All bushi have Force 2 during war phase
-      figForce = 2; // Replace base force with 2
+      figForce = isLuna ? Math.max(2, figForce) : 2; // Replace base force with 2 (Luna already has 2)
     }
 
     totalForce += figForce;
+  }
+
+  // Tortuga clan power: each fortress in the province counts as 1 force
+  if (isTortuga) {
+    const fortressCount = province.figures.filter((f) => f.owner === playerId && f.type === 'fortress').length;
+    totalForce += fortressCount;
   }
 
   return totalForce;
@@ -1912,20 +2573,29 @@ export function getHonorRank(state: GameState, playerId: string): number {
   return state.honorTrack.indexOf(playerId) + 1;
 }
 
+function syncHonorValues(state: GameState): void {
+  state.honorTrack.forEach((pid, i) => {
+    const p = state.players.find(pl => pl.id === pid);
+    if (p) p.honor = i + 1;
+  });
+}
+
 function gainHonor(state: GameState, playerId: string): void {
   const idx = state.honorTrack.indexOf(playerId);
   if (idx > 0) {
     // Move toward index 0 = better honor (lower index = higher honor)
     [state.honorTrack[idx], state.honorTrack[idx - 1]] = [state.honorTrack[idx - 1], state.honorTrack[idx]];
   }
+  syncHonorValues(state);
 }
 
-function loseHonor(state: GameState, playerId: string): void {
+export function loseHonor(state: GameState, playerId: string): void {
   const idx = state.honorTrack.indexOf(playerId);
   if (idx < state.honorTrack.length - 1) {
     // Move toward higher index = worse honor (lower index = higher honor)
     [state.honorTrack[idx], state.honorTrack[idx + 1]] = [state.honorTrack[idx + 1], state.honorTrack[idx]];
   }
+  syncHonorValues(state);
 }
 
 // ============================================================
@@ -1952,6 +2622,8 @@ export function advancePhase(state: GameState): GameState {
       newState.betrayMandateIssuerId = null;
       newState.drawnMandates = [];
       newState.mandateChoicePhase = false;
+      newState.lotoChoicePhase = false;
+      newState.lotoDiscardedMandate = null;
 
       // Determine the first player for mandate turns
       let firstPlayerId: string;
@@ -2020,7 +2692,7 @@ export function advancePlayer(state: GameState): GameState {
   }
 
   // Politics phase advancement
-  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], marshalMovedFigures: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, betrayMandateActive: false, betraySelectionsRemaining: 0, betraySelectedOwners: [], betrayMandateIssuerId: null, log: [...state.log] };
+  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], marshalMovedFigures: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, recruitUsedFortressProvinces: [], betrayMandateActive: false, betraySelectionsRemaining: 0, betraySelectedOwners: [], betrayMandateIssuerId: null, log: [...state.log] };
   newState.politicsMandateCount += 1;
 
   // Helper: advance to the next player in seating order (turnOrder)
@@ -2040,12 +2712,68 @@ export function advancePlayer(state: GameState): GameState {
 
   // Check if we need a kami turn
   if (isKamiTurn(newState.politicsMandateCount)) {
-    const kamiState = resolveKamiTurn(newState);
-    // After kami turn, check if politics phase is done
-    if (newState.politicsMandateCount >= newState.maxMandates) {
-      return advancePhase(kamiState);
+    // Instead of resolving all temples at once, compute temple results and enter step-by-step resolution
+    const sortedTemples = [...newState.temples].sort((a, b) => a.position - b.position);
+    const kamiResolutionTemples: KamiResolutionTemple[] = [];
+
+    for (const temple of sortedTemples) {
+      const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack, newState.players);
+      const kamiData = KAMI_DATA.find(k => k.type === temple.kamiType);
+
+      // Skip empty temples (no figures = no winner, no need to show popup)
+      if (!winnerId && forces.length === 0) {
+        newState.log = [...newState.log, `Shrine ${temple.position} (${kamiData?.name || temple.kamiType}) - no figures, skipped`];
+        continue;
+      }
+
+      // Determine reward text
+      let reward = '';
+      if (winnerId) {
+        reward = kamiData?.effect || '';
+      }
+
+      // Compute susanoo VP if applicable
+      let susanooVPGained: number | undefined;
+      if (temple.kamiType === 'susanoo' && winnerId) {
+        let fortressCount = 0;
+        Object.values(newState.provinces).forEach((province) => {
+          fortressCount += province.figures.filter(
+            (f) => f.owner === winnerId && f.type === 'fortress'
+          ).length;
+        });
+        susanooVPGained = fortressCount;
+      }
+
+      const templeIndex = newState.temples.findIndex(t => t.id === temple.id);
+      kamiResolutionTemples.push({
+        templeIndex,
+        kamiType: temple.kamiType,
+        winnerId,
+        reward,
+        forces,
+        ...(susanooVPGained !== undefined ? { susanooVPGained } : {}),
+      });
     }
-    return { ...kamiState, currentPlayerIndex: advanceToNextInSeating(referenceIdx) };
+
+    // If no temples have any figures, skip kami resolution entirely
+    if (kamiResolutionTemples.length === 0) {
+      newState.log = [...newState.log, 'Kami Turn - no temples with figures, skipping'];
+      // Continue with normal flow: check if politics done or advance to next player
+      if (newState.politicsMandateCount >= newState.maxMandates) {
+        return advancePhase(newState);
+      }
+      newState.currentPlayerIndex = advanceToNextInSeating(referenceIdx);
+      return newState;
+    }
+
+    // Set pending flag - store will show popup first, then activate resolution
+    newState.kamiPhasePopupPending = true;
+    newState.kamiResolutionTemples = kamiResolutionTemples;
+    newState.kamiResolutionIndex = 0;
+    newState.kamiResolutionStep = 'showing';
+    newState.kamiResolutionNextPlayerIndex = advanceToNextInSeating(referenceIdx);
+    newState.log = [...newState.log, '--- Kami Turn ---'];
+    return newState;
   }
 
   // Check if politics phase is done
@@ -2066,6 +2794,44 @@ export function advancePlayer(state: GameState): GameState {
  */
 export function advanceTeaPlayer(state: GameState): GameState {
   const newState: GameState = { ...state, log: [...state.log] };
+
+  // If teaTurnIndex is already >= players.length, we are in the "pending proposals" resolution phase.
+  // Do NOT increment teaTurnIndex further.
+  if (newState.teaTurnIndex >= newState.players.length) {
+    // Check if there are pending proposals whose targets need a turn to respond
+    if (newState.allianceProposals.length > 0) {
+      // Find targets of pending proposals who are still unallied and are not the current player
+      const currentPlayer = newState.players[newState.currentPlayerIndex];
+      // Remove any proposals TO the current player (they chose to pass/end their turn)
+      newState.allianceProposals = newState.allianceProposals.filter(
+        ap => ap.to !== currentPlayer?.id
+      );
+
+      // Find remaining pending targets
+      const pendingTargets = newState.allianceProposals
+        .map(ap => ap.to)
+        .filter(toId => {
+          const targetPlayer = newState.players.find(p => p.id === toId);
+          return targetPlayer && targetPlayer.allies.length === 0;
+        });
+
+      if (pendingTargets.length > 0) {
+        // Give the first pending target their turn to accept/reject
+        const targetId = pendingTargets[0];
+        const targetIdx = newState.players.findIndex(p => p.id === targetId);
+        if (targetIdx >= 0) {
+          newState.currentPlayerIndex = targetIdx;
+          return newState;
+        }
+      }
+    }
+
+    // No pending proposals remaining - advance to politics
+    newState.teaTurnIndex = 0;
+    return advancePhase(newState);
+  }
+
+  // Normal turn advancement: increment teaTurnIndex
   newState.teaTurnIndex += 1;
 
   // When all players have had a tea turn, check for pending proposals
@@ -2086,8 +2852,6 @@ export function advanceTeaPlayer(state: GameState): GameState {
         const targetIdx = newState.players.findIndex(p => p.id === targetId);
         if (targetIdx >= 0) {
           newState.currentPlayerIndex = targetIdx;
-          // Do not increment teaTurnIndex further - keep it at players.length
-          // so next advance will re-check
           return newState;
         }
       }
@@ -2098,8 +2862,13 @@ export function advanceTeaPlayer(state: GameState): GameState {
     return advancePhase(newState);
   }
 
-  // Move to next player
-  newState.currentPlayerIndex = (newState.currentPlayerIndex + 1) % newState.players.length;
+  // Move to next player following turnOrder
+  const currentPlayer = newState.players[newState.currentPlayerIndex];
+  const currentTurnOrderIdx = newState.turnOrder.indexOf(currentPlayer?.id ?? '');
+  const nextTurnOrderIdx = (currentTurnOrderIdx + 1) % newState.turnOrder.length;
+  const nextPlayerId = newState.turnOrder[nextTurnOrderIdx];
+  const nextPlayerIdx = newState.players.findIndex(p => p.id === nextPlayerId);
+  newState.currentPlayerIndex = nextPlayerIdx >= 0 ? nextPlayerIdx : (newState.currentPlayerIndex + 1) % newState.players.length;
   return newState;
 }
 
@@ -2199,7 +2968,10 @@ export function buildFortress(state: GameState, playerId: string, provinceId: st
 
   const player = state.players.find((p) => p.id === playerId);
   if (!player) return state;
-  if (player.coins < 3) return state;
+
+  // Bonsai clan power: fortress costs max 1 coin instead of 3
+  const fortressCost = player.clanId === 'bonsai' ? 1 : 3;
+  if (player.coins < fortressCost) return state;
   if (player.fortresses <= 0) return state;
 
   const province = state.provinces[provinceId];
@@ -2209,7 +2981,7 @@ export function buildFortress(state: GameState, playerId: string, provinceId: st
     ...state,
     players: state.players.map((p) => {
       if (p.id === playerId) {
-        return { ...p, coins: p.coins - 3, fortresses: p.fortresses - 1 };
+        return { ...p, coins: p.coins - fortressCost, fortresses: p.fortresses - 1 };
       }
       return { ...p };
     }),
@@ -2221,7 +2993,7 @@ export function buildFortress(state: GameState, playerId: string, provinceId: st
       },
     },
     marshalFortressBuiltBy: [...state.marshalFortressBuiltBy, playerId],
-    log: [...state.log, `${player.name} builds a fortress in ${province.name} (3 coins)`],
+    log: [...state.log, `${player.name} builds a fortress in ${province.name} (${fortressCost} coins)`],
   };
   return newState;
 }

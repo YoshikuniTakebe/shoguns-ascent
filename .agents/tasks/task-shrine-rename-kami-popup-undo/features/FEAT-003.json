@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Add undo system for mandate turns (marshal, recruit, betray). Store a snapshot of gameState when each player's mandate turn begins, add an undo button (circular arrow icon) to the ActionPanel, and restore the snapshot on click. The confirm/end-turn button finalizes (clears snapshot).",
+  "status": "completed",
+  "steps": [
+    "In src/components/Icons.tsx: Add a new UndoIcon component - a circular arrow (counterclockwise) SVG icon following the same IconProps pattern as other icons.",
+    "In src/store/gameStore.ts interface GameStore: Add 'undoMandateState: GameState | null' field. Add 'doUndoMandate: () => void' action. Add 'saveMandateSnapshot: () => void' helper (or inline).",
+    "In the store implementation (create<GameStore> initial values): Add undoMandateState: null.",
+    "In doChooseMandateTile and doLotoChooseActualMandate: After computing `ns`, if ns.marshalMandateActive || ns.recruitMandateActive || ns.betrayMandateActive is true, save a deep copy of `ns` (the state at the start of the mandate turn for the first player) as undoMandateState. Use JSON parse/stringify for deep clone.",
+    "When mandate player advances to next player (in doSkipMarshalTurn, doSkipRecruitTurn, doSkipBetrayTurn when the mandate is still active for the next player): Save a new snapshot of the current state as undoMandateState before the player starts their turn.",
+    "Implement doUndoMandate: Restore gameState from undoMandateState, reset moveMode/buildFortressMode/recruitMode/betrayMode/moveFrom/selectedFigures to their defaults, and keep undoMandateState as-is (so the player can undo again if they make more changes).",
+    "When mandate turn is finalized (doSkipMarshalTurn when marshalMandateActive becomes false, doSkipRecruitTurn when recruitMandateActive becomes false, doSkipBetrayTurn, doBetraySelectFigure when mandate ends): Clear undoMandateState to null.",
+    "In src/components/ActionPanel.tsx: Import UndoIcon from './Icons'. In the marshal-active, recruit-active, and betray-active sections, add an undo button before or next to the end-turn button. Style it as a small circular button with the UndoIcon. Only show it when undoMandateState is not null. Wire it to doUndoMandate from the store.",
+    "Add doUndoMandate to the destructured values from useGameStore at the top of ActionPanel."
+  ],
+  "acceptance_criteria": [
+    "UndoIcon component exists in Icons.tsx with a circular arrow design",
+    "undoMandateState field exists in the store interface and implementation",
+    "doUndoMandate action restores the snapshot state and resets UI modes",
+    "Undo button appears in marshal, recruit, and betray mandate sections",
+    "Undo button is only visible when undoMandateState is not null",
+    "End-turn/confirm actions clear undoMandateState when mandate ends",
+    "Project compiles with npx tsc --noEmit"
+  ],
+  "verification": [
+    "cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit",
+    "cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": "Successfully implemented the undo system for mandate turns. Added UndoIcon SVG component, undoMandateState field and doUndoMandate action in the store, snapshot saving/clearing logic in doChooseMandateTile, doLotoChooseActualMandate, doSkipMarshalTurn, doSkipRecruitTurn, doSkipBetrayTurn, doBetraySelectFigure, doRecruitPlaceFigure, and doRecruitPlaceTempleShinto. Added undo buttons in ActionPanel for marshal, recruit, and betray sections. Build and type-check pass cleanly. Post-review fix: added undoMandateState refresh in doBetraySelectFigure else branch (when betrayMandateActive remains true after player advance) so that subsequent players get a fresh snapshot instead of reverting to player 1's state."
+}

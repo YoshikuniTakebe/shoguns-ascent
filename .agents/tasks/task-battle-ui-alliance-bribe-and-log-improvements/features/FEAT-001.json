@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Battle sidebar: show total force instead of figure count, fix hostages modal display, and add season icons to header badge and log tabs",
+  "status": "completed",
+  "steps": [
+    "In src/components/BattlePanel.tsx, in the combatants sections (both hotseat bidding UI and online mode), replace `{figures.length} {t('battle.figures')}` with the total force calculated by importing and calling `calculateForce(province, pid, gameState)` from src/utils/gameLogic.ts. Display as 'Fuerza: X' or use the i18n key.",
+    "In src/components/Icons.tsx, create 4 new season icon SVG components: SpringIcon (cherry blossom), SummerIcon (sun), AutumnIcon (maple leaf), WinterIcon (snowflake). Each takes size and color props following the IconProps interface pattern.",
+    "In src/components/GameBoard.tsx, add the appropriate season icon before the season name text in the .season-indicator div. Import the new season icons and render the matching one based on gameState.currentSeason. Use size=16 and color matching the dark text color used for the season badge text.",
+    "In src/components/GameLog.tsx, update the log season tabs to: (1) use the season color as background/border matching the header badge colors (spring=#FFB7C5, summer=#FF6B35, autumn=#D4A574, winter=#A8C8E8), and (2) include the season icon before the season name text in each tab button. Import the season icons from Icons.tsx.",
+    "In src/components/HostagesModal.tsx, replace the display of the raw alphanumeric clan name with: the BushiIcon (crossed swords) colored by the hostage's clan color, plus a ClanShield component showing the clan seal. Remove the `hostage-figure-type` span that shows the raw type string and instead show the swords icon prominently with the clan shield beside it.",
+    "Add any needed i18n keys to both src/i18n/en.ts and src/i18n/es.ts (e.g., 'battle.force' for force display)."
+  ],
+  "acceptance_criteria": [
+    "BattlePanel combatants section shows total force (using calculateForce) instead of figure count",
+    "Four season SVG icons (spring/summer/autumn/winter) exist in Icons.tsx",
+    "GameBoard header season badge shows the correct season icon before the season name",
+    "GameLog season tabs have colored backgrounds matching header badge colors and include season icons",
+    "HostagesModal shows BushiIcon (swords) in clan color + ClanShield seal instead of raw alphanumeric ID",
+    "TypeScript compiles without errors (npx tsc --noEmit passes)"
+  ],
+  "verification": [
+    "Run `cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit` and confirm zero errors",
+    "Run `cd /projects/sandbox/shoguns-ascent && npx vite build` and confirm successful build"
+  ],
+  "blocked_reason": null,
+  "findings": "All changes compiled cleanly. calculateForce requires Province & { figures: Figure[] } which matches gameState.provinces[id] type. Season icons use existing IconProps pattern. GameLog ReactNode type already imported so no new import needed. HostagesModal simplified to always show BushiIcon (swords) since hostages are captured warriors."
+}

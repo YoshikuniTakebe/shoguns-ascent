@@ -1,0 +1,37 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Implement all UI improvements: randomizer button in setup, CLANES styling, tea ceremony flow changes, kami tile summaries, and player reserves icons",
+  "status": "completed",
+  "steps": [
+    "1. In src/components/MainMenu.tsx, add a 'Randomize' button in the hotseat setup panel (next to player list or near the start button) that shuffles clan assignments randomly among the active players. Use the existing `shuffle` utility from gameLogic.ts or implement inline Fisher-Yates on the clans array. The button should reassign clans[0..pc-1] from a shuffled subset of CLANS.",
+    "2. In src/i18n/en.ts and src/i18n/es.ts, change the 'menu.clans' translation: EN from 'Clans:' to 'CLANS', ES from 'Clanes:' to 'CLANES'. No colon, all uppercase.",
+    "3. In src/components/MainMenu.tsx, the menu-footer paragraph that displays t('menu.clans') currently renders as a plain <p> tag. Add a CSS class 'clans-title' to it and style it in src/App.css with a Japanese-style font (use Google Fonts 'Shippori Mincho' or similar - import via @import url in CSS), make it uppercase, larger font-size, and decorative (gold color, letter-spacing).",
+    "4. In src/components/ActionPanel.tsx tea phase section: remove the 'Romper Todas las Alianzas' button entirely (the btn-secondary break-btn onClick={doBreakAlliances} block around line 64-66).",
+    "5. In src/components/ActionPanel.tsx tea phase section: keep the existing teaDesc text ('Cada jugador toma un turno para proponer o aceptar alianzas.') but add below it a new line showing the active player's name in their clan color followed by 'propon una alianza' (ES) / 'propose an alliance' (EN). Add new translation keys 'actions.teaActivePlayer' with value '{name} propose an alliance' (EN) and '{name} propon una alianza' (ES). Render the player name in a <span> with style={{ color: clan.color }}.",
+    "6. In src/components/ActionPanel.tsx tea phase section: remove the <h5>{t('actions.proposeAlliance')}</h5> heading that appears above the clan alliance buttons (inside the alliance-options div).",
+    "7. In src/components/TemplePanel.tsx: the kami-slot-effect div currently shows the full baseEffect text. Add new short summary translation keys 'kami.X.summary' for each kami (7 total) in both en.ts and es.ts. Summaries should be very short (e.g. 'Moves to Honor #1', '+2 Moves', 'Summon 1 Bushi anywhere', 'Buy 1 Season Card', '+2 Ronin', 'VP = Fortresses on map', '+2 Coins'). Display the summary in the kami-slot-effect. Keep the full baseEffect text in the expanded modal (already works - modal shows baseEffect).",
+    "8. In src/components/Icons.tsx: export a MonsterIcon component (move it from the local definition in RegionDetailModal.tsx to Icons.tsx as an exported component following the same IconProps pattern as DaimyoIcon).",
+    "9. In src/components/PlayerPanel.tsx reserves section: add DaimyoIcon (showing 0 when hasDaimyo is false meaning daimyo is on board, 1 when hasDaimyo is true meaning in reserve) and MonsterIcon (showing player.monsters ?? 0). Import DaimyoIcon and the new MonsterIcon from Icons.tsx.",
+    "10. In src/types/game.ts Player interface: add 'monsters: number' field.",
+    "11. In src/utils/gameLogic.ts createInitialGameState: change initial fortresses from 2 to 4 (so after placing 1 on map, reserve = 3). Change initial bushi from 6 to 5 (since 1 is placed on the map, reserve should show 5 per user). Actually bushi starts at 6 and -1 placed = 5 displayed which matches. Keep bushi at 6. Add monsters: 0 to initial player state.",
+    "12. In src/components/PlayerPanel.tsx: change the fortress reserve count from the current formula (player.fortresses + map count = total) back to just player.fortresses (reserve only).",
+    "13. In src/components/RegionDetailModal.tsx: update MonsterIcon to import from Icons.tsx instead of defining it locally. Keep the local KamiIcon as-is since it is not needed elsewhere."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compiles without errors (npx tsc --noEmit passes)",
+    "MainMenu has a randomizer button that shuffles clan assignments",
+    "Menu footer shows 'CLANES' (ES) / 'CLANS' (EN) in a decorative Japanese font without colon",
+    "Tea ceremony phase does not show 'Romper Todas las Alianzas' button",
+    "Tea ceremony shows active player name in color with 'propon una alianza' text below the main description",
+    "No 'Proponer Alianza:' heading above clan buttons in tea phase",
+    "Kami tiles show short summaries; full text only in expanded modal",
+    "PlayerPanel reserves show Bushi, Shinto, Fortress (reserve only), Daimyo (0/1), Monster (0) icons with counts",
+    "Player type includes monsters field, initial state sets monsters: 0 and fortresses: 4"
+  ],
+  "verification": [
+    "Run `npx tsc --noEmit` in the project root and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": "All changes compile cleanly with npx tsc --noEmit. The doBreakAlliances import was also removed from ActionPanel since it is no longer used in the tea ceremony section. The active player text uses an IIFE pattern to get the clan color for the player name span. Review fixes applied: added 'actions.teaActivePlayerSuffix' key to eliminate the fragile replace/trim pattern, and added 'menu.randomize' i18n key to replace hardcoded English in the Randomize button."
+}
