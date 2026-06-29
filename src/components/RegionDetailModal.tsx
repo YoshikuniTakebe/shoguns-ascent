@@ -398,7 +398,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                   const MID_OFFSETS = [0, 10, 15, 10, 0];
                   const offset = MID_OFFSETS[index] || 0;
                   return (
-                    <div key={figure.id} style={{ transform: `translateY(${offset}px)` }}>
+                    <div key={figure.id} style={{ position: 'relative', top: `${offset}px` }}>
                       <DioramaFigure
                         figure={figure}
                         ownerColor={ownerColor}
@@ -420,7 +420,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                   const FRONT_OFFSETS = [0, 15, 15, 0];
                   const offset = FRONT_OFFSETS[index] || 0;
                   return (
-                    <div key={figure.id} style={{ transform: `translateY(${offset}px)` }}>
+                    <div key={figure.id} style={{ position: 'relative', top: `${offset}px` }}>
                       <DioramaFigure
                         figure={figure}
                         ownerColor={ownerColor}
