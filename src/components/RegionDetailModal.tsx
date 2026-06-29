@@ -360,50 +360,56 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
           </>
         ) : (
           <div className="region-diorama-stage">
-            {/* Layer 3 - Back (top): smallest, z-index 1 */}
-            <div className="region-diorama-layer region-diorama-layer-back" style={{ transform: 'scale(0.6)', zIndex: 1 }}>
-              {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
-                <DioramaFigure
-                  key={figure.id}
-                  figure={figure}
-                  ownerColor={ownerColor}
-                  ownerClanId={ownerClanId}
-                  ownerName={ownerName}
-                  iconSize={100}
-                  onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
-                />
-              ))}
-            </div>
+            {/* Layer 3 - Back (top): smallest, fixed 345px from bottom */}
+            {backFigures.length > 0 && (
+              <div className="region-diorama-layer region-diorama-layer-back" style={{ transform: 'scale(0.6)', zIndex: 1, bottom: '345px' }}>
+                {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
+                  <DioramaFigure
+                    key={figure.id}
+                    figure={figure}
+                    ownerColor={ownerColor}
+                    ownerClanId={ownerClanId}
+                    ownerName={ownerName}
+                    iconSize={100}
+                    onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
+                  />
+                ))}
+              </div>
+            )}
 
-            {/* Layer 2 - Middle: normal scale, z-index 2 */}
-            <div className="region-diorama-layer region-diorama-layer-mid" style={{ transform: 'scale(0.8)', zIndex: 2 }}>
-              {midFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
-                <DioramaFigure
-                  key={figure.id}
-                  figure={figure}
-                  ownerColor={ownerColor}
-                  ownerClanId={ownerClanId}
-                  ownerName={ownerName}
-                  iconSize={100}
-                  onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
-                />
-              ))}
-            </div>
+            {/* Layer 2 - Middle: normal scale, fixed 265px from bottom */}
+            {midFigures.length > 0 && (
+              <div className="region-diorama-layer region-diorama-layer-mid" style={{ transform: 'scale(0.8)', zIndex: 2, bottom: '265px' }}>
+                {midFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
+                  <DioramaFigure
+                    key={figure.id}
+                    figure={figure}
+                    ownerColor={ownerColor}
+                    ownerClanId={ownerClanId}
+                    ownerName={ownerName}
+                    iconSize={100}
+                    onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
+                  />
+                ))}
+              </div>
+            )}
 
-            {/* Layer 1 - Front (bottom): largest, z-index 3 */}
-            <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.0)', zIndex: 3 }}>
-              {frontFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
-                <DioramaFigure
-                  key={figure.id}
-                  figure={figure}
-                  ownerColor={ownerColor}
-                  ownerClanId={ownerClanId}
-                  ownerName={ownerName}
-                  iconSize={100}
-                  onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
-                />
-              ))}
-            </div>
+            {/* Layer 1 - Front (bottom): largest, fixed 170px from bottom */}
+            {frontFigures.length > 0 && (
+              <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.0)', zIndex: 3, bottom: '170px' }}>
+                {frontFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
+                  <DioramaFigure
+                    key={figure.id}
+                    figure={figure}
+                    ownerColor={ownerColor}
+                    ownerClanId={ownerClanId}
+                    ownerName={ownerName}
+                    iconSize={100}
+                    onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
