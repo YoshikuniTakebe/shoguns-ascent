@@ -361,7 +361,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
         ) : (
           <div className="region-diorama-stage">
             {/* Layer 3 - Back (top): smallest, z-index 1 */}
-            <div className="region-diorama-layer region-diorama-layer-back" style={{ transform: 'scale(0.8)', zIndex: 1 }}>
+            <div className="region-diorama-layer region-diorama-layer-back" style={{ transform: 'scale(0.6)', zIndex: 1 }}>
               {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
                 <DioramaFigure
                   key={figure.id}
@@ -376,7 +376,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
             </div>
 
             {/* Layer 2 - Middle: normal scale, z-index 2 */}
-            <div className="region-diorama-layer region-diorama-layer-mid" style={{ transform: 'scale(1.0)', zIndex: 2 }}>
+            <div className="region-diorama-layer region-diorama-layer-mid" style={{ transform: 'scale(0.8)', zIndex: 2 }}>
               {midFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
                 <DioramaFigure
                   key={figure.id}
@@ -391,7 +391,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
             </div>
 
             {/* Layer 1 - Front (bottom): largest, z-index 3 */}
-            <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.2)', zIndex: 3 }}>
+            <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.0)', zIndex: 3 }}>
               {frontFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
                 <DioramaFigure
                   key={figure.id}
