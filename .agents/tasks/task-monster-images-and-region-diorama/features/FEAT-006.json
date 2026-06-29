@@ -2,7 +2,7 @@
   "id": "FEAT-006",
   "type": "fix",
   "description": "CSS adjustments to region diorama: width 1300px, move rows up 50px more, add 50px vertical gap between rows, z-index above honor track.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Change .region-diorama-modal max-width from 1000px to 1300px and add width:1300px",
     "Change .region-diorama-stage margin-bottom from 50px to 100px (move rows up 50px more)",
@@ -20,5 +20,5 @@
     "Run `npx vite build` in /projects/sandbox/shoguns-ascent and confirm exit code 0 with no errors"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All 4 CSS adjustments applied: (1) width:1300px and max-width:1300px on .region-diorama-modal, (2) margin-bottom:100px on .region-diorama-stage, (3) gap:50px on .region-diorama-stage, (4) z-index:1200 on .region-diorama-backdrop. Vite build passes cleanly."
 }
