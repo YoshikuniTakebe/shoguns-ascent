@@ -1,0 +1,24 @@
+{
+  "project_type": "React + TypeScript + Vite board game (Rising Sun adaptation)",
+  "language": "TypeScript/React",
+  "build_system": "Vite with npm",
+  "test_framework": "No test framework configured",
+  "build_command": "npm run build",
+  "test_command": "npm run build",
+  "verification_instructions": "Run npm run build (tsc -b && vite build) and confirm no errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "No test framework. Verification is via TypeScript compilation and Vite build.",
+  "contribution_requirements": "Branch: fix/tea-ceremony-flow-and-ui-improvements",
+  "key_patterns": "Images are imported as ES modules (import imgName from '../img/filename.png'). Figures have a monsterCardId field linking to card IDs like 'sp-daikokuten'. The Figure type has type field (daimyo/bushi/shinto/fortress/monster/kami) and optional monsterCardId. CSS is in a single App.css file. Components use SVG icons from Icons.tsx for figure types. Clan colors come from CLANS constant.",
+  "relevant_files": [
+    "src/components/RegionDetailModal.tsx",
+    "src/components/Icons.tsx",
+    "src/components/RegionCard.tsx",
+    "src/components/ClanShields.tsx",
+    "src/types/game.ts",
+    "src/App.css",
+    "src/img/"
+  ],
+  "directory_structure": "src/components/ - React components, src/types/game.ts - type defs and constants, src/store/gameStore.ts - Zustand store, src/img/ - image assets, src/App.css - all styles"
+}

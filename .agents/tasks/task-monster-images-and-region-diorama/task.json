@@ -1,0 +1,14 @@
+{
+  "task_id": "task-monster-images-and-region-diorama",
+  "task_description": "Add monster card images and castle images to the game, and redesign the RegionDetailModal as a large diorama-style window with 3 depth layers showing figures at different sizes and depths.",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "skipped",
+    "docker_build": "skipped",
+    "summary": "Vite build passes cleanly. Review issues addressed: restored force totals/tooltips, added FortressIcon fallback, added responsive media query. No test framework in project."
+  }
+}

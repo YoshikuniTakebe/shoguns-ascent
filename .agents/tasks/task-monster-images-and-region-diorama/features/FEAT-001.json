@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Create the new large RegionDetailModal with 3 depth layers (diorama style) showing figure miniatures at different sizes/depths, using real images for monsters (mapped by monsterCardId) and castles (mapped by clan), while keeping SVG icons for bushi/daimyo/shinto that have no images yet.",
+  "status": "completed",
+  "steps": [
+    "Create a monster card image mapping utility. Create a file src/utils/figureImages.ts that exports: (1) a MONSTER_IMAGE_MAP object mapping monster card IDs to their image imports (e.g., 'sp-daikokuten' -> Daikokuten.png, 'sp-earth-dragon' -> 'Earth Dragon.png', etc.), (2) a CASTLE_IMAGE_MAP object mapping clan IDs to castle image imports (e.g., 'koi' -> castle_koi.png, 'sol' -> castle_sun.png, 'loto' -> castle_lotus.png, 'tortuga' -> castle_turtle.png, 'libelula' -> castle_dragonfly.png, 'zorro' -> castle_fox.png, 'bonsai' -> castle_bonsai.png, 'luna' -> castle_moon.png), (3) helper functions getMonsterImage(monsterCardId: string): string | null and getCastleImage(clanId: string): string | null. Use the same ES module import pattern as ClanShields.tsx.",
+    "Rewrite src/components/RegionDetailModal.tsx to display a large diorama-style window with 3 depth layers. The layout should be: a large container (80vw x 60vh or similar), with three horizontal rows stacked vertically representing depth. Layer 3 (back/top of window): smallest figures, most transparent - this is for Shinto priests (support units). Layer 2 (middle): medium size - this is for Fortress/Castle + Monsters. Layer 1 (front/bottom of window): largest, most prominent - this is for Bushi (warriors) + Daimyo (leaders). Each layer should use CSS perspective/scale to create depth illusion. For monsters, display the actual monster card image (using getMonsterImage with figure.monsterCardId). For fortresses, display the castle image for the owner's clan (using getCastleImage with the owner's clanId). For bushi/daimyo/shinto/kami, continue using the existing SVG icons from Icons.tsx but sized appropriately for their layer. Each figure should still show its owner's clan color (as a border or glow). Keep the province name title, close button, and owner grouping visible.",
+    "Add CSS styles in src/App.css for the new diorama region detail modal. Classes needed: .region-diorama-modal (large fullish window), .region-diorama-layer (each depth layer), .region-diorama-layer-back (smallest, opacity ~0.7, scale ~0.6), .region-diorama-layer-mid (medium, opacity ~0.85, scale ~0.8), .region-diorama-layer-front (largest, opacity 1, scale 1), .region-diorama-figure (individual figure container with image/icon), .region-diorama-figure img (sizing for actual images). Use z-index so front layer overlaps middle which overlaps back. The layers should feel like a theater stage with figures at different distances."
+  ],
+  "acceptance_criteria": [
+    "npm run build completes without TypeScript or Vite errors",
+    "The RegionDetailModal now renders as a large diorama window with 3 depth layers",
+    "Monster figures show their actual card image (e.g., Daikokuten.png for sp-daikokuten)",
+    "Fortress figures show the castle image corresponding to their owner's clan",
+    "Bushi, Daimyo, Shinto, and Kami figures use SVG icons sized per their layer",
+    "Figures in the back layer (shinto) appear smaller and more transparent than front layer (bushi/daimyo)",
+    "All 19 monster card IDs map to their correct image file",
+    "All 8 clan IDs map to their correct castle image file"
+  ],
+  "verification": [
+    "Run `npm run build` in /projects/sandbox/shoguns-ascent and confirm exit code 0 with no errors"
+  ],
+  "blocked_reason": null,
+  "findings": "Pre-existing TypeScript errors in BattleBiddingOverlay.tsx and BattlePanel.tsx (translation key type issues) cause tsc -b to fail with exit code 2 on both base and modified state. Vite build succeeds (npx vite build exits 0). Used Vite build as the verification method. Root-level duplicate monster PNG files were cleaned up (they belonged in src/img/ only). The old region-detail-* CSS classes remain in App.css but are no longer referenced by the component."
+}
