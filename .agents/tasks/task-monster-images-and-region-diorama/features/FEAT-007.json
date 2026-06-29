@@ -2,7 +2,7 @@
   "id": "FEAT-007",
   "type": "fix",
   "description": "Fix figure rows at fixed distances from the bottom of the window so they stay at consistent positions regardless of how many rows are populated.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Change .region-diorama-stage CSS from flex column to position:relative, remove gap/margin-bottom/justify-content",
     "Add position:absolute; left:0; right:0 to .region-diorama-layer",
@@ -20,5 +20,5 @@
     "Run `npx vite build` in /projects/sandbox/shoguns-ascent and confirm exit code 0 with no errors"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "Changed .region-diorama-stage from flex column layout to position:relative. Changed .region-diorama-layer to position:absolute with left:0;right:0. Added inline bottom values (170px front, 265px mid, 345px back) to each row in RegionDetailModal.tsx. Empty rows are conditionally rendered. Vite build passes cleanly."
 }
