@@ -1553,7 +1553,9 @@ function applyWarUpgrades(state: GameState): void {
   for (const player of state.players) {
     const warUpgradeCards = player.seasonCards.filter((c) => c.cardType === 'warUpgrade');
     for (const card of warUpgradeCards) {
-      switch (card.id) {
+      // Normalize card ID by stripping '-2' suffix for duplicate cards
+      const baseCardId = card.id.endsWith('-2') ? card.id.slice(0, -2) : card.id;
+      switch (baseCardId) {
         case 'sp-way-of-the-shogun': {
           // +3 coins
           player.coins += 3;
@@ -2279,7 +2281,9 @@ export function resolveWinter(state: GameState): GameState {
 }
 
 function scoreWinterUpgrade(gameState: GameState, player: Player, card: SeasonCard): number {
-  switch (card.id) {
+  // Normalize card ID by stripping '-2' suffix for duplicate cards
+  const baseCardId = card.id.endsWith('-2') ? card.id.slice(0, -2) : card.id;
+  switch (baseCardId) {
     case 'au-form-of-the-beast': {
       const monsters = player.seasonCards.filter((c) => c.cardType === 'monster');
       return monsters.length * 3;
@@ -2514,6 +2518,14 @@ function applySolTiebreakBonus(state: GameState, winnerId: string, losers: strin
   state.log = [...state.log, `${winner.name} (Sol) gana +1 Moneda +1 PV por empate y ganar en Honor a ${losers.map((id) => state.players.find((p) => p.id === id)?.name ?? id).join(', ')} que pierde -1 Moneda -1 PV`];
 }
 
+/**
+ * Helper to check if a player has a card by base ID, accounting for duplicate
+ * cards that have a '-2' suffix (e.g. 'su-path-of-might-2').
+ */
+function hasCard(cardIds: Set<string>, baseId: string): boolean {
+  return cardIds.has(baseId) || cardIds.has(baseId + '-2');
+}
+
 export function calculateForce(province: Province & { figures: Figure[] }, playerId: string, state: GameState): number {
   const playerFigures = province.figures.filter((f) => f.owner === playerId);
 
@@ -2523,6 +2535,11 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
   const player = state.players.find((p) => p.id === playerId);
   const isLuna = player?.clanId === 'luna';
   const isTortuga = player?.clanId === 'tortuga';
+
+  // Check if any Oni monster is present in this province (any owner)
+  const provinceHasOni = province.figures.some(
+    (f) => f.type === 'monster' && f.monsterCardId && f.monsterCardId.includes('oni-of-')
+  );
 
   let totalForce = 0;
 
@@ -2535,15 +2552,15 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
     let figForce = isLuna ? 2 : 1; // Luna base force is 2, others 1
 
     if (fig.type === 'daimyo') {
-      if (cardIds.has('sp-path-of-the-lion')) {
+      if (hasCard(cardIds, 'sp-path-of-the-lion')) {
         figForce += 1; // Daimyo +1 force
       }
-      if (cardIds.has('au-path-of-the-dragon')) {
+      if (hasCard(cardIds, 'au-path-of-the-dragon')) {
         figForce += 3; // Daimyo +3 force
       }
     }
 
-    if (fig.type === 'shinto' && cardIds.has('su-path-of-the-favored')) {
+    if (fig.type === 'shinto' && hasCard(cardIds, 'su-path-of-the-favored')) {
       // Shinto counts as Force 3 in provinces where owner has highest honor
       // honorTrack[0] = best honor (index 0 = honor position 1)
       const highestHonorPlayerId = state.honorTrack[0];
@@ -2552,9 +2569,15 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
       }
     }
 
-    if (fig.type === 'bushi' && cardIds.has('au-way-of-the-katana') && state.currentPhase === 'war') {
-      // All bushi have Force 2 during war phase
-      figForce = isLuna ? Math.max(2, figForce) : 2; // Replace base force with 2 (Luna already has 2)
+    if (fig.type === 'bushi') {
+      if (hasCard(cardIds, 'au-way-of-the-katana') && state.currentPhase === 'war') {
+        // All bushi have Force 2 during war phase
+        figForce = isLuna ? Math.max(2, figForce) : 2; // Replace base force with 2 (Luna already has 2)
+      }
+      if (hasCard(cardIds, 'su-path-of-might') && provinceHasOni) {
+        // Bushi in Province with any Oni have Force +1
+        figForce += 1;
+      }
     }
 
     totalForce += figForce;
