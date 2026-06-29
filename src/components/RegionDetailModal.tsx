@@ -422,7 +422,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
             {frontFigures.length > 0 && (
               <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.0)', zIndex: 3, bottom: '160px' }}>
                 {frontFigures.map(({ figure, ownerColor, ownerClanId, ownerName }, index) => {
-                  const FRONT_OFFSETS = [0, 30, 30, 0];
+                  const FRONT_OFFSETS = [-10, 25, 25, -10];
                   const offset = FRONT_OFFSETS[index] || 0;
                   return (
                     <div key={figure.id} style={{ position: 'relative', top: `${offset}px` }}>

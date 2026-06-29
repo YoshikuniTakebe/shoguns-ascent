@@ -68,7 +68,8 @@ export const ActionPanel = () => {
             const cpClan = CLANS.find(c => c.id === cp.clanId);
             return (
               <p className="phase-description" style={{ marginTop: 0 }}>
-                <span style={{ color: cpClan?.color, fontWeight: 'bold', fontSize: '1.3em' }}>{cp.name}</span>{' '}
+                <ClanShield clanId={cp.clanId} size={20} />
+                <span style={{ color: cpClan?.color, fontWeight: 'bold', fontSize: '1.3em', marginLeft: '4px' }}>{cp.name}</span>{' '}
                 {t('actions.teaActivePlayerSuffix')}
               </p>
             );

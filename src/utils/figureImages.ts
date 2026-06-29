@@ -45,6 +45,9 @@ import oniOfHateFigImg from '../img/Oni of Hate_fig.png';
 import oniOfSpiteFigImg from '../img/Oni of Spite_fig.png';
 import riverDragonFigImg from '../img/River Dragon_fig.png';
 import yureiFigImg from '../img/Yurei_fig.png';
+import kitsuneFigImg from '../img/Kitsune_fig.png';
+import oniOfPlaguesFigImg from '../img/Oni of Plagues_fig.png';
+import sunakakeBabaFigImg from '../img/Sunakake-Baba_fig.png';
 
 // Region background image imports
 import edoBg from '../img/Edo.png';
@@ -118,6 +121,9 @@ export const MONSTER_FIGURE_MAP: Record<string, string> = {
   'au-oni-of-spite': oniOfSpiteFigImg,
   'au-river-dragon': riverDragonFigImg,
   'su-yurei': yureiFigImg,
+  'au-kitsune': kitsuneFigImg,
+  'au-oni-of-plagues': oniOfPlaguesFigImg,
+  'su-sunakake-baba': sunakakeBabaFigImg,
 };
 
 /** Maps clan IDs to their castle image file */
