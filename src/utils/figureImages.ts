@@ -56,6 +56,8 @@ import oniOfPlaguesFigImg from '../img/Oni of Plagues_fig.png';
 import sunakakeBabaFigImg from '../img/Sunakake-Baba_fig.png';
 import ebisuFigImg from '../img/Ebisu_fig.png';
 import daikaijuFigImg from '../img/Daikiaju_fig.png';
+import bentenFigImg from '../img/Benten_fig.png';
+import sacredWarriorFigImg from '../img/Sacred Warrior_fig.png';
 
 // Region background image imports
 import edoBg from '../img/Edo.png';
@@ -138,6 +140,8 @@ export const MONSTER_FIGURE_MAP: Record<string, string> = {
   'su-sunakake-baba': sunakakeBabaFigImg,
   'au-ebisu': ebisuFigImg,
   'au-daikaiju': daikaijuFigImg,
+  'au-benten': bentenFigImg,
+  'au-sacred-warrior': sacredWarriorFigImg,
 };
 
 /** Maps clan IDs to their castle image file */
