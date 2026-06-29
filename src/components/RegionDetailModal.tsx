@@ -238,10 +238,11 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
   const midFigures: FigureEntry[] = [];
   const backFigures: FigureEntry[] = [];
 
+  const maxPerRow = 4;
   for (let i = 0; i < allFigures.length; i++) {
-    if (frontFigures.length < 5) {
+    if (frontFigures.length < maxPerRow) {
       frontFigures.push(allFigures[i]);
-    } else if (midFigures.length < 5) {
+    } else if (midFigures.length < maxPerRow) {
       midFigures.push(allFigures[i]);
     } else {
       backFigures.push(allFigures[i]);
@@ -352,7 +353,10 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
         )}
 
         {province.figures.length === 0 ? (
-          <p className="region-diorama-empty">{t('regionDetail.empty')}</p>
+          <>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: '18px', zIndex: 0 }} />
+            <p className="region-diorama-empty" style={{ position: 'relative', zIndex: 1 }}>{t('regionDetail.empty')}</p>
+          </>
         ) : (
           <div className="region-diorama-stage">
             {/* Layer 3 - Back (top): smallest, z-index 1 */}

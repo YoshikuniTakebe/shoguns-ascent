@@ -118,13 +118,13 @@
 .region-diorama-close:hover{color:var(--text-primary)}
 .region-diorama-title{text-align:center;font-size:1.5rem;font-weight:bold;letter-spacing:0.1em;margin:0;padding:1rem 2rem 0.5rem;flex-shrink:0;position:relative;z-index:5}
 .region-diorama-empty{text-align:center;color:var(--text-secondary);font-size:1rem;font-style:italic;padding:2rem 0}
-.region-diorama-stage{display:flex;flex-direction:column;flex:1;justify-content:flex-end;overflow:hidden;perspective:800px;position:relative}
+.region-diorama-stage{display:flex;flex-direction:column;flex:1;justify-content:flex-end;overflow:hidden;perspective:800px;position:relative;margin-bottom:40px}
 .region-diorama-layer{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:center;gap:0.75rem;padding:0.5rem 1rem;min-height:60px;position:relative}
 .region-diorama-layer-back{flex:1}
 .region-diorama-layer-mid{flex:1}
 .region-diorama-layer-front{flex:0 0 auto}
 .region-diorama-force-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0.75rem;padding:0.25rem 2rem 0.5rem;flex-shrink:0;position:relative;z-index:5}
-.region-diorama-force-item{display:flex;align-items:center;gap:0.35rem;padding:0.3rem 0.6rem;border:1.5px solid;border-radius:6px;background:rgba(0,0,0,0.3);font-size:0.8rem}
+.region-diorama-force-item{display:flex;align-items:center;gap:0.35rem;padding:0.3rem 0.6rem;border:3px solid;border-radius:6px;background:rgba(0,0,0,0.3);font-size:0.8rem}
 .region-diorama-force-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .region-diorama-force-name{color:var(--text-primary);font-weight:600}
 .region-diorama-force-value{color:var(--accent-gold);font-weight:bold;font-size:0.9rem}
