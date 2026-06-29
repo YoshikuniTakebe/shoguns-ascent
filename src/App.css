@@ -112,13 +112,13 @@
 .region-detail-figure:hover .region-detail-figure-icon{transform:scale(1.1);box-shadow:0 0 12px rgba(200,169,81,0.3)}
 .region-detail-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(15,15,25,0.95);border:1px solid var(--border-gold);border-radius:6px;padding:0.4rem 0.6rem;font-size:0.75rem;color:var(--text-primary);white-space:nowrap;z-index:1100;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.5);min-width:200px;max-width:400px;white-space:normal;text-align:center}
 
-.region-diorama-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out}
-.region-diorama-modal{position:relative;background:linear-gradient(180deg,#1a1a2e 0%,#16213e 40%,#0f3460 100%);border:2px solid var(--border-gold);border-radius:16px;padding:0;width:80vw;height:1024px;max-height:90vh;max-width:1000px;box-shadow:0 12px 48px rgba(0,0,0,0.7),inset 0 0 60px rgba(0,0,0,0.3);display:flex;flex-direction:column;overflow:visible;background-size:cover;background-position:center}
+.region-diorama-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);z-index:1200;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out}
+.region-diorama-modal{position:relative;background:linear-gradient(180deg,#1a1a2e 0%,#16213e 40%,#0f3460 100%);border:2px solid var(--border-gold);border-radius:16px;padding:0;width:1300px;height:1024px;max-height:90vh;max-width:1300px;box-shadow:0 12px 48px rgba(0,0,0,0.7),inset 0 0 60px rgba(0,0,0,0.3);display:flex;flex-direction:column;overflow:visible;background-size:cover;background-position:center}
 .region-diorama-close{position:absolute;top:0.75rem;right:1rem;background:none;border:none;color:var(--text-secondary);font-size:2rem;cursor:pointer;line-height:1;padding:0.25rem;border-radius:4px;transition:color 0.2s;z-index:10}
 .region-diorama-close:hover{color:var(--text-primary)}
 .region-diorama-title{text-align:center;font-size:1.5rem;font-weight:bold;letter-spacing:0.1em;margin:0;padding:1rem 2rem 0.5rem;flex-shrink:0;position:relative;z-index:5}
 .region-diorama-empty{text-align:center;color:var(--text-secondary);font-size:1rem;font-style:italic;padding:2rem 0}
-.region-diorama-stage{display:flex;flex-direction:column;flex:1;justify-content:flex-end;overflow:visible;perspective:800px;position:relative;margin-bottom:50px}
+.region-diorama-stage{display:flex;flex-direction:column;flex:1;justify-content:flex-end;overflow:visible;perspective:800px;position:relative;margin-bottom:100px;gap:50px}
 .region-diorama-layer{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-evenly;gap:0.75rem;padding:0.5rem 2.5rem;min-height:60px;position:relative;overflow:visible}
 .region-diorama-layer-back{flex:1}
 .region-diorama-layer-mid{flex:1}
