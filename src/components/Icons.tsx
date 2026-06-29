@@ -369,17 +369,11 @@ export const UndoIcon = ({ size = 24, color = 'currentColor', className }: IconP
   </svg>
 );
 
-/** Closed fist - used to represent Force/Strength */
+/** Shield with star - used to represent Force/Strength */
 export const FistIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
-  <svg
-    className={className}
-    width={size}
-    height={size}
-    viewBox="0 0 512 512"
-    fill={color}
-    stroke="none"
-  >
-    <path d="M288 32c-17.7 0-32 14.3-32 32v64h-16V56c0-17.7-14.3-32-32-32s-32 14.3-32 32v128h-16V80c0-17.7-14.3-32-32-32s-32 14.3-32 32v208c0 8.8-7.2 16-16 16s-16-7.2-16-16v-48c0-17.7-14.3-32-32-32s-32 14.3-32 32v80c0 106 86 192 192 192h32c106 0 192-86 192-192V160c0-17.7-14.3-32-32-32s-32 14.3-32 32v48h-16V64c0-17.7-14.3-32-32-32z"/>
+  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+    <path d="M12 2L3 7v5c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7l-9-5z" opacity="0.9"/>
+    <path d="M12 6l1.5 3.5H17l-3 2.5 1 3.5-3-2-3 2 1-3.5-3-2.5h3.5z" fill="#1a1a2e"/>
   </svg>
 );
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS } from '../types/game';
+import { CLANS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS, PROVINCE_COLORS } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, DaimyoIcon, MonsterIcon, FortressIcon, FistIcon } from './Icons';
@@ -319,9 +319,23 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
 
   return (
     <div className="region-diorama-backdrop" onClick={onClose}>
-      <div className="region-diorama-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="region-diorama-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={regionBg ? {
+          backgroundImage: `url(${regionBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : undefined}
+      >
         <button className="region-diorama-close" onClick={onClose}>&times;</button>
-        <h2 className="region-diorama-title">{province.name}</h2>
+        <h2
+          className="region-diorama-title"
+          style={{
+            color: PROVINCE_COLORS[regionId] || 'var(--accent-gold)',
+            textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px rgba(0,0,0,0.8)',
+          }}
+        >{province.name}</h2>
 
         {/* Force totals per player */}
         {forceByOwner.length > 0 && (
@@ -340,53 +354,39 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
         {province.figures.length === 0 ? (
           <p className="region-diorama-empty">{t('regionDetail.empty')}</p>
         ) : (
-          <div
-            className="region-diorama-stage"
-            style={regionBg ? {
-              backgroundImage: `url(${regionBg})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            } : undefined}
-          >
-            {/* Dark semi-transparent overlay for readability */}
-            {regionBg && <div className="region-diorama-bg-overlay" />}
-
+          <div className="region-diorama-stage">
             {/* Layer 3 - Back (top): smallest, z-index 1 */}
-            {backFigures.length > 0 && (
-              <div className="region-diorama-layer" style={{ transform: 'scale(0.8)', zIndex: 1 }}>
-                {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
-                  <DioramaFigure
-                    key={figure.id}
-                    figure={figure}
-                    ownerColor={ownerColor}
-                    ownerClanId={ownerClanId}
-                    ownerName={ownerName}
-                    iconSize={100}
-                    onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="region-diorama-layer region-diorama-layer-back" style={{ transform: 'scale(0.8)', zIndex: 1 }}>
+              {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
+                <DioramaFigure
+                  key={figure.id}
+                  figure={figure}
+                  ownerColor={ownerColor}
+                  ownerClanId={ownerClanId}
+                  ownerName={ownerName}
+                  iconSize={100}
+                  onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
+                />
+              ))}
+            </div>
 
             {/* Layer 2 - Middle: normal scale, z-index 2 */}
-            {midFigures.length > 0 && (
-              <div className="region-diorama-layer" style={{ transform: 'scale(1.0)', zIndex: 2 }}>
-                {midFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
-                  <DioramaFigure
-                    key={figure.id}
-                    figure={figure}
-                    ownerColor={ownerColor}
-                    ownerClanId={ownerClanId}
-                    ownerName={ownerName}
-                    iconSize={100}
-                    onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="region-diorama-layer region-diorama-layer-mid" style={{ transform: 'scale(1.0)', zIndex: 2 }}>
+              {midFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
+                <DioramaFigure
+                  key={figure.id}
+                  figure={figure}
+                  ownerColor={ownerColor}
+                  ownerClanId={ownerClanId}
+                  ownerName={ownerName}
+                  iconSize={100}
+                  onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
+                />
+              ))}
+            </div>
 
             {/* Layer 1 - Front (bottom): largest, z-index 3 */}
-            <div className="region-diorama-layer" style={{ transform: 'scale(1.2)', zIndex: 3 }}>
+            <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.2)', zIndex: 3 }}>
               {frontFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
                 <DioramaFigure
                   key={figure.id}
