@@ -123,9 +123,16 @@
 .region-diorama-layer-back{opacity:0.7;transform:scale(0.6);transform-origin:center top;z-index:1;flex-shrink:1}
 .region-diorama-layer-mid{opacity:0.85;transform:scale(0.8);transform-origin:center center;z-index:2;flex-shrink:1}
 .region-diorama-layer-front{opacity:1;transform:scale(1);transform-origin:center bottom;z-index:3;flex-shrink:1}
-.region-diorama-figure{display:flex;align-items:center;justify-content:center;padding:6px;border-radius:10px;border:2px solid;background:rgba(0,0,0,0.4);transition:transform 0.2s,box-shadow 0.2s}
+.region-diorama-force-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0.75rem;margin-bottom:0.75rem;flex-shrink:0}
+.region-diorama-force-item{display:flex;align-items:center;gap:0.35rem;padding:0.3rem 0.6rem;border:1.5px solid;border-radius:6px;background:rgba(0,0,0,0.3);font-size:0.8rem}
+.region-diorama-force-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.region-diorama-force-name{color:var(--text-primary);font-weight:600}
+.region-diorama-force-value{color:var(--accent-gold);font-weight:bold;font-size:0.9rem}
+.region-diorama-figure{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;border-radius:10px;border:2px solid;background:rgba(0,0,0,0.4);transition:transform 0.2s,box-shadow 0.2s;position:relative}
 .region-diorama-figure:hover{transform:scale(1.15)}
 .region-diorama-figure-img{display:block;border-radius:6px;object-fit:contain;max-width:100%}
+.region-diorama-owner-badge{display:block;font-size:0.55rem;font-weight:bold;color:#fff;padding:1px 4px;border-radius:3px;margin-top:3px;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0.9}
+@media(max-width:768px){.region-diorama-modal{width:95vw;height:70vh;padding:1rem}.region-diorama-title{font-size:1.1rem}.region-diorama-layer{gap:0.4rem;padding:0.3rem 0.5rem}.region-diorama-layer-back{transform:scale(0.5)}.region-diorama-layer-mid{transform:scale(0.65)}.region-diorama-layer-front{transform:scale(0.85)}.region-diorama-force-bar{gap:0.4rem}.region-diorama-force-item{padding:0.2rem 0.4rem;font-size:0.7rem}.region-diorama-owner-badge{font-size:0.5rem}}
 
 .region-card.recruit-target{border-color:#87CEEB;box-shadow:0 0 15px rgba(135,206,235,0.5);animation:pulse-recruit 1s infinite;cursor:pointer}
 .region-card.recruit-dimmed{opacity:0.4;pointer-events:none}
