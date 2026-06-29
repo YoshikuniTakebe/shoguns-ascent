@@ -349,7 +349,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
           className="region-diorama-title"
           style={{
             color: PROVINCE_COLORS[regionId] || 'var(--accent-gold)',
-            textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 8px rgba(0,0,0,0.8)',
+            textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 8px rgba(255,255,255,0.6)',
           }}
         >{province.name}</h2>
 
