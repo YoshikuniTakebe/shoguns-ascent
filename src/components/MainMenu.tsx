@@ -244,6 +244,9 @@ export const MainMenu = () => {
                         onClick={() => toggleKami(kami.type)}
                         title={kami.effect}
                       >
+                        {isSelected && (
+                          <span className="kami-select-order">{selectedKami.indexOf(kami.type) + 1}</span>
+                        )}
                         <span className="kami-select-name">{kami.name}</span>
                         <span className="kami-select-effect">{kami.effect}</span>
                       </button>
