@@ -38,6 +38,16 @@ import konekoFigImg from '../img/Koneko_fig.png';
 import nureOnnaFigImg from '../img/Nure-Onna_fig.png';
 import oniOfBloodFigImg from '../img/Oni of Blood_fig.png';
 
+// Region background image imports
+import edoBg from '../img/Edo.png';
+import hokkaidoBg from '../img/Hokkaido.png';
+import kansaiBg from '../img/Kansai.png';
+import kantoBg from '../img/Kanto.png';
+import nagatoBg from '../img/Nagato.png';
+import oshuBg from '../img/Oshu.png';
+import shikokuBg from '../img/Shikoku.png';
+import kyushuBg from '../img/Kyshu.png';
+
 // Castle image imports
 import castleKoiImg from '../img/castle_koi.png';
 import castleSunImg from '../img/castle_sun.png';
@@ -137,4 +147,21 @@ export function getMonsterFigureImage(monsterCardId: string): string | null {
 /** Get castle image by clan ID, or null if not found */
 export function getCastleImage(clanId: string): string | null {
   return CASTLE_IMAGE_MAP[clanId] || null;
+}
+
+/** Maps province IDs to their region background image */
+export const REGION_BG_MAP: Record<string, string> = {
+  hokkaido: hokkaidoBg,
+  oshu: oshuBg,
+  edo: edoBg,
+  kanto: kantoBg,
+  kansai: kansaiBg,
+  nagato: nagatoBg,
+  shikoku: shikokuBg,
+  kyushu: kyushuBg,
+};
+
+/** Get region background image by province ID, or null if not found */
+export function getRegionBackground(provinceId: string): string | null {
+  return REGION_BG_MAP[provinceId] || null;
 }

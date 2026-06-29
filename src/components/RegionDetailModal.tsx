@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, DaimyoIcon, MonsterIcon, FortressIcon, FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
-import { getMonsterFigureImage, getCastleImage } from '../utils/figureImages';
+import { getMonsterFigureImage, getCastleImage, getRegionBackground } from '../utils/figureImages';
 import { calculateForce } from '../utils/gameLogic';
 
 interface RegionDetailModalProps {
@@ -26,11 +27,11 @@ const KamiIcon = ({ size = 28, color = 'currentColor' }: { size?: number; color?
 );
 
 /** Get monster card info (name and effect) by monsterCardId */
-function getMonsterInfo(monsterCardId: string): { name: string; effect: string } | null {
+function getMonsterInfo(monsterCardId: string): { name: string; effect: string; force?: number } | null {
   const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
   const card = allCards.find(c => c.id === monsterCardId);
   if (card) {
-    return { name: card.name, effect: card.effect };
+    return { name: card.name, effect: card.effect, force: card.force };
   }
   return null;
 }
@@ -48,25 +49,34 @@ function getFigureTypeName(type: string): string {
   }
 }
 
-/**
- * Assigns a figure to a diorama layer based on its type.
- * Layer 3 (back): Shinto, Kami
- * Layer 2 (middle): Fortress, Monster
- * Layer 1 (front): Bushi, Daimyo
- */
-function getLayer(figure: Figure): 1 | 2 | 3 {
+/** Get individual force value for a figure */
+function getFigureForce(figure: Figure, ownerClanId: string): number {
   switch (figure.type) {
-    case 'shinto':
-    case 'kami':
-      return 3;
-    case 'fortress':
-    case 'monster':
-      return 2;
     case 'bushi':
-    case 'daimyo':
-    default:
       return 1;
+    case 'daimyo':
+      return 1;
+    case 'fortress':
+      // Tortuga clan fortress has force 1
+      return ownerClanId === 'tortuga' ? 1 : 0;
+    case 'monster':
+      if (figure.monsterCardId) {
+        const info = getMonsterInfo(figure.monsterCardId);
+        if (info && info.force !== undefined) {
+          return info.force;
+        }
+      }
+      return 1;
+    default:
+      return 0;
   }
+}
+
+interface FigureEntry {
+  figure: Figure;
+  ownerColor: string;
+  ownerClanId: string;
+  ownerName: string;
 }
 
 interface DioramaFigureProps {
@@ -75,9 +85,10 @@ interface DioramaFigureProps {
   ownerClanId: string;
   ownerName: string;
   iconSize: number;
+  onClick: () => void;
 }
 
-const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }: DioramaFigureProps) => {
+const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, onClick }: DioramaFigureProps) => {
   // Build tooltip text
   let tooltipText = `${getFigureTypeName(figure.type)} - ${ownerName}`;
   if (figure.type === 'monster' && figure.monsterCardId) {
@@ -92,7 +103,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
     const img = getMonsterFigureImage(figure.monsterCardId);
     if (img) {
       return (
-        <div className="region-diorama-figure" title={tooltipText}>
+        <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
           <img src={img} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
             <ClanShield clanId={ownerClanId} size={18} />
@@ -105,7 +116,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
     }
     // Fallback to MonsterIcon SVG when no image file exists for this monster
     return (
-      <div className="region-diorama-figure" title={tooltipText}>
+      <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
         <MonsterIcon size={iconSize} color={ownerColor} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
           <ClanShield clanId={ownerClanId} size={18} />
@@ -122,7 +133,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
     const img = getCastleImage(ownerClanId);
     if (img) {
       return (
-        <div className="region-diorama-figure" title={tooltipText}>
+        <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
           <img src={img} alt="Castle" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
             <ClanShield clanId={ownerClanId} size={18} />
@@ -135,7 +146,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
     }
     // Fallback to FortressIcon SVG if castle image not found
     return (
-      <div className="region-diorama-figure" title={tooltipText}>
+      <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
         <FortressIcon size={iconSize} color={ownerColor} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
           <ClanShield clanId={ownerClanId} size={18} />
@@ -164,7 +175,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
   };
 
   return (
-    <div className="region-diorama-figure" title={tooltipText}>
+    <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
       {renderIcon()}
       <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
         <ClanShield clanId={ownerClanId} size={18} />
@@ -176,14 +187,25 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
   );
 };
 
+interface ZoomedFigureInfo {
+  figure: Figure;
+  ownerColor: string;
+  ownerClanId: string;
+  ownerName: string;
+}
+
 export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps) => {
   const { gameState } = useGameStore();
   const t = useT();
+  const [zoomedFigure, setZoomedFigure] = useState<ZoomedFigureInfo | null>(null);
 
   if (!gameState) return null;
 
   const province = gameState.provinces[regionId];
   if (!province) return null;
+
+  // Get region background image
+  const regionBg = getRegionBackground(regionId);
 
   // Calculate force totals per player for the header
   const ownerIds = [...new Set(province.figures.map(f => f.owner))];
@@ -200,24 +222,100 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
     };
   });
 
-  // Separate figures into layers
-  const backFigures: { figure: Figure; ownerColor: string; ownerClanId: string; ownerName: string }[] = [];
-  const midFigures: { figure: Figure; ownerColor: string; ownerClanId: string; ownerName: string }[] = [];
-  const frontFigures: { figure: Figure; ownerColor: string; ownerClanId: string; ownerName: string }[] = [];
-
-  for (const fig of province.figures) {
+  // Distribute ALL figures equitably across 3 rows, starting from front, max 5 per row
+  const allFigures: FigureEntry[] = province.figures.map(fig => {
     const player = gameState.players.find(p => p.id === fig.owner);
     const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
-    const ownerColor = clan?.color || '#666';
-    const ownerClanId = clan?.id || '';
-    const ownerName = player?.name || 'Unknown';
+    return {
+      figure: fig,
+      ownerColor: clan?.color || '#666',
+      ownerClanId: clan?.id || '',
+      ownerName: player?.name || 'Unknown',
+    };
+  });
 
-    const layer = getLayer(fig);
-    const entry = { figure: fig, ownerColor, ownerClanId, ownerName };
-    if (layer === 3) backFigures.push(entry);
-    else if (layer === 2) midFigures.push(entry);
-    else frontFigures.push(entry);
+  const frontFigures: FigureEntry[] = [];
+  const midFigures: FigureEntry[] = [];
+  const backFigures: FigureEntry[] = [];
+
+  for (let i = 0; i < allFigures.length; i++) {
+    if (frontFigures.length < 5) {
+      frontFigures.push(allFigures[i]);
+    } else if (midFigures.length < 5) {
+      midFigures.push(allFigures[i]);
+    } else {
+      backFigures.push(allFigures[i]);
+    }
   }
+
+  // Render the zoomed figure overlay
+  const renderZoomOverlay = () => {
+    if (!zoomedFigure) return null;
+
+    const { figure, ownerColor, ownerClanId, ownerName } = zoomedFigure;
+    const figureForce = getFigureForce(figure, ownerClanId);
+
+    // Get monster power text if applicable
+    let monsterPowerText: string | null = null;
+    if (figure.type === 'monster' && figure.monsterCardId) {
+      const info = getMonsterInfo(figure.monsterCardId);
+      if (info) {
+        monsterPowerText = info.effect;
+      }
+    }
+
+    // Render the figure image/icon large
+    const renderLargeFigure = () => {
+      if (figure.type === 'monster' && figure.monsterCardId) {
+        const img = getMonsterFigureImage(figure.monsterCardId);
+        if (img) {
+          return <img src={img} alt="Monster" style={{ height: '60vh', objectFit: 'contain' }} />;
+        }
+        return <MonsterIcon size={200} color={ownerColor} />;
+      }
+      if (figure.type === 'fortress') {
+        const img = getCastleImage(ownerClanId);
+        if (img) {
+          return <img src={img} alt="Castle" style={{ height: '60vh', objectFit: 'contain' }} />;
+        }
+        return <FortressIcon size={200} color={ownerColor} />;
+      }
+      switch (figure.type) {
+        case 'bushi':
+          return <BushiIcon size={200} color={ownerColor} />;
+        case 'daimyo':
+          return <DaimyoIcon size={200} color={ownerColor} />;
+        case 'shinto':
+          return <ShintoIcon size={200} color={ownerColor} />;
+        case 'kami':
+          return <KamiIcon size={200} color={ownerColor} />;
+        default:
+          return <BushiIcon size={200} color={ownerColor} />;
+      }
+    };
+
+    return (
+      <div
+        className="figure-zoom-overlay"
+        onClick={() => setZoomedFigure(null)}
+      >
+        <div className="figure-zoom-content" onClick={(e) => e.stopPropagation()}>
+          <div className="figure-zoom-image">
+            {renderLargeFigure()}
+          </div>
+          {monsterPowerText && (
+            <div className="figure-zoom-power">{monsterPowerText}</div>
+          )}
+          <div className="figure-zoom-info">
+            <ClanShield clanId={ownerClanId} size={24} />
+            <span className="figure-zoom-player-name" style={{ color: ownerColor }}>{ownerName}</span>
+            <FistIcon size={18} color="var(--accent-gold)" />
+            <span className="figure-zoom-force">{figureForce}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="region-diorama-backdrop" onClick={onClose}>
@@ -242,37 +340,53 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
         {province.figures.length === 0 ? (
           <p className="region-diorama-empty">{t('regionDetail.empty')}</p>
         ) : (
-          <div className="region-diorama-stage">
-            {/* Layer 3 - Back (top of window): Shinto, Kami */}
-            <div className="region-diorama-layer region-diorama-layer-back">
-              {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
-                <DioramaFigure
-                  key={figure.id}
-                  figure={figure}
-                  ownerColor={ownerColor}
-                  ownerClanId={ownerClanId}
-                  ownerName={ownerName}
-                  iconSize={80}
-                />
-              ))}
-            </div>
+          <div
+            className="region-diorama-stage"
+            style={regionBg ? {
+              backgroundImage: `url(${regionBg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            } : undefined}
+          >
+            {/* Dark semi-transparent overlay for readability */}
+            {regionBg && <div className="region-diorama-bg-overlay" />}
 
-            {/* Layer 2 - Middle: Fortress, Monster */}
-            <div className="region-diorama-layer region-diorama-layer-mid">
-              {midFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
-                <DioramaFigure
-                  key={figure.id}
-                  figure={figure}
-                  ownerColor={ownerColor}
-                  ownerClanId={ownerClanId}
-                  ownerName={ownerName}
-                  iconSize={100}
-                />
-              ))}
-            </div>
+            {/* Layer 3 - Back (top): smallest, z-index 1 */}
+            {backFigures.length > 0 && (
+              <div className="region-diorama-layer" style={{ transform: 'scale(0.8)', zIndex: 1 }}>
+                {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
+                  <DioramaFigure
+                    key={figure.id}
+                    figure={figure}
+                    ownerColor={ownerColor}
+                    ownerClanId={ownerClanId}
+                    ownerName={ownerName}
+                    iconSize={100}
+                    onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
+                  />
+                ))}
+              </div>
+            )}
 
-            {/* Layer 1 - Front (bottom of window): Bushi, Daimyo */}
-            <div className="region-diorama-layer region-diorama-layer-front">
+            {/* Layer 2 - Middle: normal scale, z-index 2 */}
+            {midFigures.length > 0 && (
+              <div className="region-diorama-layer" style={{ transform: 'scale(1.0)', zIndex: 2 }}>
+                {midFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
+                  <DioramaFigure
+                    key={figure.id}
+                    figure={figure}
+                    ownerColor={ownerColor}
+                    ownerClanId={ownerClanId}
+                    ownerName={ownerName}
+                    iconSize={100}
+                    onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Layer 1 - Front (bottom): largest, z-index 3 */}
+            <div className="region-diorama-layer" style={{ transform: 'scale(1.2)', zIndex: 3 }}>
               {frontFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
                 <DioramaFigure
                   key={figure.id}
@@ -280,12 +394,16 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                   ownerColor={ownerColor}
                   ownerClanId={ownerClanId}
                   ownerName={ownerName}
-                  iconSize={120}
+                  iconSize={100}
+                  onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
                 />
               ))}
             </div>
           </div>
         )}
+
+        {/* Figure zoom overlay */}
+        {renderZoomOverlay()}
       </div>
     </div>
   );
