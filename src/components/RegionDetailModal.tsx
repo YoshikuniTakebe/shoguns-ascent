@@ -377,17 +377,22 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
             {/* Layer 3 - Back (top): smallest, fixed 345px from bottom */}
             {backFigures.length > 0 && (
               <div className="region-diorama-layer region-diorama-layer-back" style={{ transform: 'scale(0.6)', zIndex: 1, bottom: '345px' }}>
-                {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }) => (
-                  <DioramaFigure
-                    key={figure.id}
-                    figure={figure}
-                    ownerColor={ownerColor}
-                    ownerClanId={ownerClanId}
-                    ownerName={ownerName}
-                    iconSize={100}
-                    onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
-                  />
-                ))}
+                {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }, index) => {
+                  const BACK_OFFSETS = [20, 10, 0, 0, 10, 20];
+                  const offset = BACK_OFFSETS[index] || 0;
+                  return (
+                    <div key={figure.id} style={{ position: 'relative', top: `${offset}px` }}>
+                      <DioramaFigure
+                        figure={figure}
+                        ownerColor={ownerColor}
+                        ownerClanId={ownerClanId}
+                        ownerName={ownerName}
+                        iconSize={100}
+                        onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
 
