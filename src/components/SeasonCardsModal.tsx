@@ -6,6 +6,7 @@ import type { CardType, SeasonCard } from '../types/game';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { CoinIcon } from './Icons';
+import { getMonsterImage } from '../utils/figureImages';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
   monster: '#cd7f32',
@@ -208,9 +209,19 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                   pointerEvents: isInteractiveMode && ((!isRyujinMode && !playerConfirmed) || !affordable) ? 'none' : 'auto',
                 }}
               >
-                <div className="season-card-image-placeholder">
-                  <span className="season-card-image-icon">&#x1F3B4;</span>
-                </div>
+                {card.cardType === 'monster' && getMonsterImage(card.id) ? (
+                  <div className="season-card-image-placeholder">
+                    <img
+                      src={getMonsterImage(card.id)!}
+                      alt={card.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }}
+                    />
+                  </div>
+                ) : (
+                  <div className="season-card-image-placeholder">
+                    <span className="season-card-image-icon">&#x1F3B4;</span>
+                  </div>
+                )}
                 <div className="season-card-header">
                   <span className="season-card-name">{card.name}</span>
                   <span className="season-card-cost">

@@ -240,7 +240,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                   ownerColor={ownerColor}
                   ownerClanId={ownerClanId}
                   ownerName={ownerName}
-                  iconSize={28}
+                  iconSize={80}
                 />
               ))}
             </div>
@@ -254,7 +254,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                   ownerColor={ownerColor}
                   ownerClanId={ownerClanId}
                   ownerName={ownerName}
-                  iconSize={36}
+                  iconSize={100}
                 />
               ))}
             </div>
@@ -268,7 +268,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                   ownerColor={ownerColor}
                   ownerClanId={ownerClanId}
                   ownerName={ownerName}
-                  iconSize={44}
+                  iconSize={120}
                 />
               ))}
             </div>
