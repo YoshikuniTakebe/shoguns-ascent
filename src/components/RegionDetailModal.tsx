@@ -3,7 +3,8 @@ import { CLANS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, DaimyoIcon, MonsterIcon, FortressIcon } from './Icons';
-import { getMonsterImage, getCastleImage } from '../utils/figureImages';
+import { ClanShield } from './ClanShields';
+import { getMonsterFigureImage, getCastleImage } from '../utils/figureImages';
 import { calculateForce } from '../utils/gameLogic';
 
 interface RegionDetailModalProps {
@@ -88,20 +89,26 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
 
   // Monster with actual image
   if (figure.type === 'monster' && figure.monsterCardId) {
-    const img = getMonsterImage(figure.monsterCardId);
+    const img = getMonsterFigureImage(figure.monsterCardId);
     if (img) {
       return (
-        <div className="region-diorama-figure" style={{ borderColor: ownerColor, boxShadow: `0 0 8px ${ownerColor}` }} title={tooltipText}>
+        <div className="region-diorama-figure" title={tooltipText}>
           <img src={img} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
-          <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>{ownerName}</span>
+          <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
+            <ClanShield clanId={ownerClanId} size={12} />
+            {ownerName}
+          </span>
         </div>
       );
     }
     // Fallback to MonsterIcon SVG when no image file exists for this monster
     return (
-      <div className="region-diorama-figure" style={{ borderColor: ownerColor, boxShadow: `0 0 8px ${ownerColor}` }} title={tooltipText}>
+      <div className="region-diorama-figure" title={tooltipText}>
         <MonsterIcon size={iconSize} color={ownerColor} />
-        <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>{ownerName}</span>
+        <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
+          <ClanShield clanId={ownerClanId} size={12} />
+          {ownerName}
+        </span>
       </div>
     );
   }
@@ -111,17 +118,23 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
     const img = getCastleImage(ownerClanId);
     if (img) {
       return (
-        <div className="region-diorama-figure" style={{ borderColor: ownerColor, boxShadow: `0 0 8px ${ownerColor}` }} title={tooltipText}>
+        <div className="region-diorama-figure" title={tooltipText}>
           <img src={img} alt="Castle" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
-          <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>{ownerName}</span>
+          <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
+            <ClanShield clanId={ownerClanId} size={12} />
+            {ownerName}
+          </span>
         </div>
       );
     }
     // Fallback to FortressIcon SVG if castle image not found
     return (
-      <div className="region-diorama-figure" style={{ borderColor: ownerColor, boxShadow: `0 0 8px ${ownerColor}` }} title={tooltipText}>
+      <div className="region-diorama-figure" title={tooltipText}>
         <FortressIcon size={iconSize} color={ownerColor} />
-        <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>{ownerName}</span>
+        <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
+          <ClanShield clanId={ownerClanId} size={12} />
+          {ownerName}
+        </span>
       </div>
     );
   }
@@ -143,9 +156,12 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
   };
 
   return (
-    <div className="region-diorama-figure" style={{ borderColor: ownerColor, boxShadow: `0 0 8px ${ownerColor}` }} title={tooltipText}>
+    <div className="region-diorama-figure" title={tooltipText}>
       {renderIcon()}
-      <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>{ownerName}</span>
+      <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
+        <ClanShield clanId={ownerClanId} size={12} />
+        {ownerName}
+      </span>
     </div>
   );
 };
