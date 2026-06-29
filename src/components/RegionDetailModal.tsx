@@ -94,10 +94,12 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
       return (
         <div className="region-diorama-figure" title={tooltipText}>
           <img src={img} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
-          <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
-            <ClanShield clanId={ownerClanId} size={16} />
-            {ownerName}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
+            <ClanShield clanId={ownerClanId} size={18} />
+            <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
+              {ownerName}
+            </span>
+          </div>
         </div>
       );
     }
@@ -105,10 +107,12 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
     return (
       <div className="region-diorama-figure" title={tooltipText}>
         <MonsterIcon size={iconSize} color={ownerColor} />
-        <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
-          <ClanShield clanId={ownerClanId} size={16} />
-          {ownerName}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
+          <ClanShield clanId={ownerClanId} size={18} />
+          <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
+            {ownerName}
+          </span>
+        </div>
       </div>
     );
   }
@@ -120,10 +124,12 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
       return (
         <div className="region-diorama-figure" title={tooltipText}>
           <img src={img} alt="Castle" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
-          <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
-            <ClanShield clanId={ownerClanId} size={16} />
-            {ownerName}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
+            <ClanShield clanId={ownerClanId} size={18} />
+            <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
+              {ownerName}
+            </span>
+          </div>
         </div>
       );
     }
@@ -131,10 +137,12 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
     return (
       <div className="region-diorama-figure" title={tooltipText}>
         <FortressIcon size={iconSize} color={ownerColor} />
-        <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
-          <ClanShield clanId={ownerClanId} size={16} />
-          {ownerName}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
+          <ClanShield clanId={ownerClanId} size={18} />
+          <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
+            {ownerName}
+          </span>
+        </div>
       </div>
     );
   }
@@ -158,10 +166,12 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize }:
   return (
     <div className="region-diorama-figure" title={tooltipText}>
       {renderIcon()}
-      <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
-        <ClanShield clanId={ownerClanId} size={16} />
-        {ownerName}
-      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
+        <ClanShield clanId={ownerClanId} size={18} />
+        <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
+          {ownerName}
+        </span>
+      </div>
     </div>
   );
 };

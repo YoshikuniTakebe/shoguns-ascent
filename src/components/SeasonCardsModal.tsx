@@ -397,8 +397,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
         {/* Card zoom overlay */}
         {zoomedCard && (
           <div className="card-zoom-overlay" onClick={() => setZoomedCard(null)}>
-            <button className="card-zoom-close" onClick={(e) => { e.stopPropagation(); setZoomedCard(null); }}>&times;</button>
-            <div className="card-zoom-content" onClick={(e) => e.stopPropagation()}>
+            <div className="card-zoom-content">
               {zoomedCard.cardType === 'monster' && getMonsterImage(zoomedCard.id) ? (
                 <img src={getMonsterImage(zoomedCard.id)!} alt={zoomedCard.name} />
               ) : (
