@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Implement all 7 visual/UI improvements: region card transparency, figure icon borders, shinto icon borders, figure tooltips, harvest hex borders, sea route opacity, and kami text styling",
+  "status": "in_progress",
+  "steps": [
+    "CHANGE 1 - In src/App.css, find the .region-card background definition: `linear-gradient(145deg,rgba(212,184,150,0.75),rgba(196,168,130,0.75),rgba(245,235,220,0.75))`. Change all three alpha values from 0.75 to 0.05, making the parchment background barely visible. The region-card definition is on line 1 of App.css in the minified block.",
+    "CHANGE 2 - In src/App.css, add a new rule for `.figure-icon` with `filter: drop-shadow(1px 0 0 #333) drop-shadow(-1px 0 0 #333) drop-shadow(0 1px 0 #333) drop-shadow(0 -1px 0 #333)` and `display:inline-flex`. This creates a dark gray 1px outer border effect on the SVG figure icons in region cards.",
+    "CHANGE 3 - In src/components/TemplePanel.tsx around line 167, find the SVG torii icons for shinto figures in kami slots. They have `stroke=\"white\" strokeWidth=\"1\"`. Change `stroke=\"white\"` to `stroke=\"black\"` for a black outer border instead.",
+    "CHANGE 4 - In src/components/RegionCard.tsx, enhance the FigureIcon component to show a rich tooltip on hover (similar to .clan-tooltip in MainMenu). The tooltip should show: (a) troop name (Bushi/Daimyo/Shinto/Fortress/Monster name), (b) force value, (c) if monster: show the monster's power text. Use CSS :hover to show/hide. Need access to gameState for force calculations. Add a `.figure-tooltip` CSS class in App.css styled like .clan-tooltip (dark bg, gold border, rounded corners, positioned above the icon). For force values: bushi=1, shinto=1, daimyo=1, fortress=0, monster=card.force. For Luna clan figures multiply by 2. For daimyo check path-of-the-lion (+1) and path-of-the-dragon (+3). Reuse the getFigureForce pattern from RegionDetailModal.tsx.",
+    "CHANGE 5 - In src/App.css, find `.harvest-hex` which currently has `filter:drop-shadow(0 0 3px #c8a951) drop-shadow(0 0 1px #c8a951)`. Replace with `filter:drop-shadow(1px 0 0 #444) drop-shadow(-1px 0 0 #444) drop-shadow(0 1px 0 #444) drop-shadow(0 -1px 0 #444) drop-shadow(2px 0 0 #333) drop-shadow(-2px 0 0 #333) drop-shadow(0 2px 0 #333) drop-shadow(0 -2px 0 #333)` to simulate a 3px dark gray outer border instead of the gold glow.",
+    "CHANGE 6 - In src/components/GameBoard.tsx around line 370-380, find the sea route paths. The white border path has `stroke=\"#ffffff\"` strokeWidth=8. Change to `stroke=\"rgba(255,255,255,0.93)\"`. The blue path has `stroke=\"rgba(80,180,240,0.8)\"`. Change to `stroke=\"rgba(80,180,240,0.93)\"`. This sets 7% transparency (93% opaque).",
+    "CHANGE 7 - In src/App.css, find `.kami-slot-effect{font-size:0.65rem;...}`. Change `font-size:0.65rem` to `font-size:0.78rem` (increase by ~2px) and add `font-weight:bold` to make it stand out more."
+  ],
+  "acceptance_criteria": [
+    "npx vite build completes with no errors",
+    ".region-card background rgba values changed to 0.05 alpha",
+    ".figure-icon has drop-shadow filter for dark gray border",
+    "TemplePanel shinto SVG icons have stroke=black",
+    "FigureIcon in RegionCard shows tooltip with name, force, and power text on hover",
+    ".harvest-hex filter changed to dark gray drop-shadows instead of gold",
+    "Sea route strokes use 0.93 opacity",
+    ".kami-slot-effect has font-size:0.78rem and font-weight:bold"
+  ],
+  "verification": ["npx vite build"],
+  "blocked_reason": null,
+  "findings": ""
+}

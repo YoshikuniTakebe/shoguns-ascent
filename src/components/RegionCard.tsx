@@ -2,47 +2,166 @@ import type { CSSProperties } from 'react';
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS } from '../types/game';
-import type { Figure } from '../types/game';
+import type { Figure, GameState } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon } from './Icons';
+import { getPlayerSeasonCardEffects } from '../utils/gameLogic';
 
-const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
-  // SVG-based icons for bushi, shinto, fortress; Unicode for others
+/** Helper to check if a player has a card by base ID (accounts for '-2' suffix duplicates) */
+function hasDisplayCard(cardIds: Set<string>, baseId: string): boolean {
+  return cardIds.has(baseId) || cardIds.has(baseId + '-2');
+}
+
+/** Get force value for a figure (simplified from RegionDetailModal) */
+function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameState, regionId: string): number {
+  switch (figure.type) {
+    case 'bushi': {
+      const player = gameState.players.find(p => p.id === figure.owner);
+      const isLuna = ownerClanId === 'luna';
+      let figForce = isLuna ? 2 : 1;
+      if (player) {
+        const playerCards = getPlayerSeasonCardEffects(gameState, player.id);
+        const cardIds = new Set(playerCards.map(c => c.id));
+        if (hasDisplayCard(cardIds, 'au-way-of-the-katana') && gameState.currentPhase === 'war') {
+          figForce = isLuna ? Math.max(2, figForce) : 2;
+        }
+        const province = gameState.provinces[regionId];
+        if (province) {
+          const provinceHasOni = province.figures.some(
+            (f) => f.type === 'monster' && f.monsterCardId && f.monsterCardId.includes('oni-of-')
+          );
+          if (hasDisplayCard(cardIds, 'su-path-of-might') && provinceHasOni) {
+            figForce += 1;
+          }
+        }
+      }
+      return figForce;
+    }
+    case 'daimyo': {
+      const player = gameState.players.find(p => p.id === figure.owner);
+      const isLuna = ownerClanId === 'luna';
+      let figForce = isLuna ? 2 : 1;
+      if (player) {
+        const playerCards = getPlayerSeasonCardEffects(gameState, player.id);
+        const cardIds = new Set(playerCards.map(c => c.id));
+        if (hasDisplayCard(cardIds, 'sp-path-of-the-lion')) {
+          figForce += 1;
+        }
+        if (hasDisplayCard(cardIds, 'au-path-of-the-dragon')) {
+          figForce += 3;
+        }
+      }
+      return figForce;
+    }
+    case 'shinto': {
+      const player = gameState.players.find(p => p.id === figure.owner);
+      const isLuna = ownerClanId === 'luna';
+      let figForce = isLuna ? 2 : 1;
+      if (player) {
+        const playerCards = getPlayerSeasonCardEffects(gameState, player.id);
+        const cardIds = new Set(playerCards.map(c => c.id));
+        if (hasDisplayCard(cardIds, 'su-path-of-the-favored')) {
+          const highestHonorPlayerId = gameState.honorTrack[0];
+          if (highestHonorPlayerId === player.id) {
+            figForce = isLuna ? Math.max(3, figForce) : 3;
+          }
+        }
+      }
+      return figForce;
+    }
+    case 'fortress':
+      return ownerClanId === 'tortuga' ? 1 : 0;
+    case 'monster':
+      if (figure.monsterCardId) {
+        const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
+        const card = allCards.find(c => c.id === figure.monsterCardId);
+        if (card && card.force !== undefined) {
+          return card.force;
+        }
+      }
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+/** Get display name for a figure */
+function getFigureDisplayName(figure: Figure): string {
+  if (figure.type === 'monster' && figure.monsterCardId) {
+    const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
+    const card = allCards.find(c => c.id === figure.monsterCardId);
+    if (card) return card.name;
+    return 'Monster';
+  }
+  switch (figure.type) {
+    case 'bushi': return 'Bushi';
+    case 'daimyo': return 'Daimyo';
+    case 'shinto': return 'Shinto';
+    case 'fortress': return 'Fortress';
+    default: return figure.type;
+  }
+}
+
+/** Get monster power text */
+function getMonsterPowerText(figure: Figure): string | null {
+  if (figure.type !== 'monster' || !figure.monsterCardId) return null;
+  const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
+  const card = allCards.find(c => c.id === figure.monsterCardId);
+  return card?.effect || null;
+}
+
+const FigureIcon = ({ figure, color, gameState, regionId }: { figure: Figure; color: string; gameState: GameState; regionId: string }) => {
+  const ownerPlayer = gameState.players.find(p => p.id === figure.owner);
+  const ownerClanId = ownerPlayer ? ownerPlayer.clanId : '';
+  const force = getFigureForce(figure, ownerClanId, gameState, regionId);
+  const displayName = getFigureDisplayName(figure);
+  const monsterPower = getMonsterPowerText(figure);
+
+  const tooltipContent = (
+    <span className="figure-tooltip">
+      <span className="figure-tooltip-name">{displayName}</span>
+      <span className="figure-tooltip-force">Force: {force}</span>
+      {monsterPower && <span className="figure-tooltip-power">{monsterPower}</span>}
+    </span>
+  );
+
   if (figure.type === 'bushi') {
     return (
-      <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
+      <span className="figure-icon figure-icon-wrapper">
         <BushiIcon size={21} color={color} />
+        {tooltipContent}
       </span>
     );
   }
   if (figure.type === 'shinto') {
     return (
-      <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
+      <span className="figure-icon figure-icon-wrapper">
         <ShintoIcon size={21} color={color} />
+        {tooltipContent}
       </span>
     );
   }
   if (figure.type === 'fortress') {
     return (
-      <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
+      <span className="figure-icon figure-icon-wrapper">
         <FortressIcon size={21} color={color} />
+        {tooltipContent}
       </span>
     );
   }
   if (figure.type === 'daimyo') {
     return (
-      <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
+      <span className="figure-icon figure-icon-wrapper">
         <DaimyoIcon size={21} color={color} />
+        {tooltipContent}
       </span>
     );
   }
   if (figure.type === 'monster') {
-    const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
-    const monsterCard = figure.monsterCardId ? allCards.find(c => c.id === figure.monsterCardId) : null;
-    const monsterName = monsterCard?.name || 'Monster';
     return (
-      <span className="figure-icon" title={monsterName}>
+      <span className="figure-icon figure-icon-wrapper">
         <MonsterIcon size={21} color={color} />
+        {tooltipContent}
       </span>
     );
   }
@@ -52,8 +171,9 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
     kami: '\u2728',
   };
   return (
-    <span className="figure-icon" style={{ color }} title={`${figure.type} (${figure.owner})`}>
+    <span className="figure-icon figure-icon-wrapper" style={{ color }}>
       {icons[figure.type] || '\u25CF'}
+      {tooltipContent}
     </span>
   );
 };
@@ -346,7 +466,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
                     }}
                     className={`${isEnemy ? 'betray-target' : ''} ${isSelectedFigure ? 'marshal-selected' : ''}`}
                   >
-                    <FigureIcon figure={fig} color={ownerColor} />
+                    <FigureIcon figure={fig} color={ownerColor} gameState={gameState} regionId={regionId} />
                   </span>
                 );
               })}
