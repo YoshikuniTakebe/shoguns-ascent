@@ -27,14 +27,6 @@ const MANDATE_COLORS: Record<MandateType, string> = {
   betray: '#DC143C',    // Red / Rojo
 };
 
-const MANDATE_BG_COLORS: Record<MandateType, string> = {
-  train: 'rgba(139,69,19,0.15)',
-  recruit: 'rgba(135,206,235,0.15)',
-  harvest: 'rgba(46,139,87,0.15)',
-  marshal: 'rgba(128,128,128,0.15)',
-  betray: 'rgba(220,20,60,0.15)',
-};
-
 const MANDATE_IMAGES: Record<MandateType, string> = {
   train: TrainImg,
   recruit: RecruitImg,
@@ -43,7 +35,7 @@ const MANDATE_IMAGES: Record<MandateType, string> = {
   betray: BetrayImg,
 };
 
-/** Mandate tile image for each mandate type, using actual PNG images */
+/** Mandate tile image for each mandate type, using actual PNG images (small version for exhausted list) */
 function MandateIllustration({ type, size = 40 }: { type: MandateType; size?: number }) {
   return (
     <img
@@ -136,28 +128,18 @@ export const PoliticsTrack = () => {
             className="politics-track-slot filled hidden-mandate"
             style={{
               borderColor: '#4a3a6a',
-              backgroundColor: 'rgba(30, 20, 50, 0.85)',
+              backgroundImage: `url(${SecretLotusImg})`,
+              backgroundSize: 'contain',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
             }}
             title={`Mandato secreto - ${clan?.name || 'Loto'}`}
           >
-            <div className="slot-illustration hidden-illustration">
-              <img
-                src={SecretLotusImg}
-                alt="Mandato Secreto"
-                width={40}
-                height={40}
-                style={{ objectFit: 'contain' }}
-              />
-            </div>
-            <span className="slot-mandate-label" style={{ color: '#9b7fcf' }}>
-              Secreto
-            </span>
             {playerName && (
               <span className="slot-player-name" style={{ color: clanColor }}>
                 {playerName}
               </span>
             )}
-            <span className="slot-clan-dot" style={{ backgroundColor: clanColor }} />
           </div>
         );
       }
@@ -168,22 +150,18 @@ export const PoliticsTrack = () => {
           className="politics-track-slot filled"
           style={{
             borderColor: MANDATE_COLORS[mandate.type],
-            backgroundColor: MANDATE_BG_COLORS[mandate.type],
+            backgroundImage: `url(${MANDATE_IMAGES[mandate.type]})`,
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
           }}
           title={`${MANDATE_LABELS[mandate.type]} - ${clan?.name || 'Unknown'}`}
         >
-          <div className="slot-illustration">
-            <MandateIllustration type={mandate.type} size={40} />
-          </div>
-          <span className="slot-mandate-label" style={{ color: MANDATE_COLORS[mandate.type] }}>
-            {MANDATE_LABELS[mandate.type]}
-          </span>
           {playerName && (
             <span className="slot-player-name" style={{ color: clanColor }}>
               {playerName}
             </span>
           )}
-          <span className="slot-clan-dot" style={{ backgroundColor: clanColor }} />
         </div>
       );
     }
