@@ -277,8 +277,8 @@
 
 /* Region Diorama Layer Toggles */
 .region-diorama-layer-toggles{display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.3rem 1rem;flex-shrink:0;position:relative;z-index:5}
-.layer-toggle-btn{display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.7rem;background:rgba(0,0,0,0.4);border:1px solid rgba(200,169,81,0.3);border-radius:14px;color:var(--text-secondary);font-size:0.75rem;font-weight:500;cursor:pointer;transition:all 0.2s;user-select:none}
-.layer-toggle-btn:hover{border-color:var(--accent-gold);background:rgba(200,169,81,0.08)}
+.layer-toggle-btn{display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.7rem;background:rgba(0,0,0,0.6);border:2px solid rgba(200,169,81,0.5);border-radius:14px;color:var(--text-secondary);font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;user-select:none}
+.layer-toggle-btn:hover{border-color:var(--accent-gold);background:rgba(0,0,0,0.7)}
 .layer-toggle-btn.active{background:rgba(200,169,81,0.15);border-color:var(--accent-gold);color:var(--accent-gold)}
 .layer-toggle-indicator{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);transition:all 0.2s}
 .layer-toggle-btn.active .layer-toggle-indicator{background:var(--accent-gold);border-color:var(--accent-gold);box-shadow:0 0 4px rgba(200,169,81,0.6)}
