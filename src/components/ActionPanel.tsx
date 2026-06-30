@@ -100,7 +100,7 @@ export const ActionPanel = () => {
                 return (
                   <div key={pr.from} className="alliance-proposal">
                     <ClanShield clanId={fp?.clanId || ''} size={30} />
-                    <span>{t('actions.wantsAlliance', { name: '' })}<span style={{ color: CLANS.find(c => c.id === fp?.clanId)?.color, fontWeight: 'bold' }}>{fp?.name || ''}</span></span>
+                    <span>{t('actions.wantsAlliance', { name: '' })} <span style={{ color: CLANS.find(c => c.id === fp?.clanId)?.color, fontWeight: 'bold' }}>{fp?.name || ''}</span></span>
                     {pr.bribeAmount && pr.bribeAmount > 0 && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#DAA520' }}>
                         <CoinIcon size={16} color="#DAA520" />

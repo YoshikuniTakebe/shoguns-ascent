@@ -1688,8 +1688,8 @@ export function initiateWarPhase(state: GameState): GameState {
       continue;
     }
 
-    if (playerIds.length === 1) {
-      // Solo player wins token without battle
+    if (!newState.zorroPlacementActive && playerIds.length === 1) {
+      // Solo player wins token without battle (only resolve if Zorro is not placing)
       const winnerId = playerIds[0];
       const winner = newState.players.find((p) => p.id === winnerId);
       if (winner) {
@@ -1708,8 +1708,8 @@ export function initiateWarPhase(state: GameState): GameState {
       continue;
     }
 
-    // Check if all players are allied to each other (2 allied players)
-    if (playerIds.length === 2) {
+    if (!newState.zorroPlacementActive && playerIds.length === 2) {
+      // Check if all players are allied to each other (2 allied players)
       const p1 = newState.players.find((p) => p.id === playerIds[0]);
       const p2 = newState.players.find((p) => p.id === playerIds[1]);
       if (p1 && p2 && p1.allies.includes(p2.id)) {
@@ -1732,7 +1732,19 @@ export function initiateWarPhase(state: GameState): GameState {
       }
     }
 
-    // 2+ non-allied players - full battle
+    // When Zorro is placing, create all non-empty battles without resolving
+    if (newState.zorroPlacementActive && playerIds.length === 1) {
+      const battle: Battle = {
+        provinceId: slot.provinceId,
+        participants: [playerIds[0]],
+        warTacticBids: {},
+        resolved: false,
+      };
+      newState.activeBattles.push(battle);
+      continue;
+    }
+
+    // 2+ non-allied players - full battle (or deferred allied check when Zorro is placing)
     const battle: Battle = {
       provinceId: slot.provinceId,
       participants: playerIds.sort((a, b) => {
@@ -1757,6 +1769,81 @@ export function initiateWarPhase(state: GameState): GameState {
     }
     newState.log = [...newState.log, summary];
   }
+
+  return newState;
+}
+
+/**
+ * After Zorro finishes placing bushi, re-evaluate battles:
+ * - Award tokens for uncontested provinces (0 or 1 player)
+ * - Resolve allied battles (2 allied players, strongest wins)
+ * Must be called after Zorro placement is complete.
+ */
+export function resolveUncontestedBattles(state: GameState): GameState {
+  const newState: GameState = {
+    ...state,
+    players: state.players.map(p => ({ ...p, warProvinceTokens: [...p.warProvinceTokens] })),
+    activeBattles: [...state.activeBattles],
+    log: [...state.log],
+  };
+
+  const sortedSlots = [...newState.warProvinceSlots].sort((a, b) => a.number - b.number);
+
+  newState.activeBattles = newState.activeBattles.map(battle => {
+    // Skip already resolved/uncontested battles (e.g., empty provinces already handled)
+    if (battle.uncontested) return battle;
+    if (battle.winner) return battle;
+
+    const slot = sortedSlots.find(s => s.provinceId === battle.provinceId);
+    if (!slot) return battle;
+
+    const province = newState.provinces[battle.provinceId];
+    if (!province) return battle;
+
+    // Re-evaluate participants based on current figures in province
+    const currentPlayerIds = [...new Set(province.figures.map(f => f.owner))];
+
+    if (currentPlayerIds.length === 0) {
+      // Empty - discard token
+      newState.log = [...newState.log, `${province.name}: empty - war token discarded`];
+      return { ...battle, participants: [], uncontested: true };
+    }
+
+    if (currentPlayerIds.length === 1) {
+      // Solo player wins token
+      const winnerId = currentPlayerIds[0];
+      const winner = newState.players.find(p => p.id === winnerId);
+      if (winner) {
+        winner.warProvinceTokens = [...winner.warProvinceTokens, { season: slot.season, provinceId: slot.provinceId }];
+        newState.log = [...newState.log, `${winner.name} wins war token in ${province.name} (uncontested)`];
+      }
+      return { ...battle, participants: currentPlayerIds, winner: winnerId, uncontested: true };
+    }
+
+    if (currentPlayerIds.length === 2) {
+      const p1 = newState.players.find(p => p.id === currentPlayerIds[0]);
+      const p2 = newState.players.find(p => p.id === currentPlayerIds[1]);
+      if (p1 && p2 && p1.allies.includes(p2.id)) {
+        // Two allies - strongest wins
+        const force1 = calculateForce(province, p1.id, newState);
+        const force2 = calculateForce(province, p2.id, newState);
+        const winner = force1 >= force2 ? p1 : p2;
+        winner.warProvinceTokens = [...winner.warProvinceTokens, { season: slot.season, provinceId: slot.provinceId }];
+        newState.log = [...newState.log, `${winner.name} wins war token in ${province.name} (allied - no battle)`];
+        return { ...battle, participants: currentPlayerIds, winner: winner.id, uncontested: true };
+      }
+    }
+
+    // Otherwise it's a contested battle - update participants
+    return {
+      ...battle,
+      participants: currentPlayerIds.sort((a, b) => {
+        const aIdx = newState.turnOrder.indexOf(a);
+        const bIdx = newState.turnOrder.indexOf(b);
+        return aIdx - bIdx;
+      }),
+    };
+  });
 
   return newState;
 }

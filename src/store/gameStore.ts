@@ -33,6 +33,7 @@ import {
   skipBetrayTurn,
   advanceHarvestResolution,
   loseHonor,
+  resolveUncontestedBattles,
 } from '../utils/gameLogic';
 
 /**
@@ -1541,6 +1542,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
           }),
         };
       }
+      // Resolve uncontested battles now that Zorro has finished placing
+      updatedNs = resolveUncontestedBattles(updatedNs);
       const summary2 = computeWarUpgradeSummary(updatedNs);
       set({ gameState: updatedNs, warPhasePopupVisible: true, warPhaseUpgradeSummary: summary2, battleCurrentBiddingIndex: 0 });
     } else {
@@ -1580,6 +1583,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }),
       };
     }
+
+    // Resolve uncontested battles now that Zorro has finished placing
+    ns = resolveUncontestedBattles(ns);
 
     const summary3 = computeWarUpgradeSummary(ns);
     set({ gameState: ns, warPhasePopupVisible: true, warPhaseUpgradeSummary: summary3, battleCurrentBiddingIndex: 0 });

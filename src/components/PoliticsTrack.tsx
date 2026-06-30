@@ -4,6 +4,13 @@ import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
 import { SeasonCardsModal } from './SeasonCardsModal';
 
+import RecruitImg from '../img/Recruit.png';
+import TrainImg from '../img/Train.png';
+import HarvestImg from '../img/Harvest.png';
+import MarshalImg from '../img/Marshal.png';
+import BetrayImg from '../img/Betray.png';
+import SecretLotusImg from '../img/Secret_Lotus.png';
+
 const MANDATE_LABELS: Record<MandateType, string> = {
   train: 'Entrenamiento',
   recruit: 'Reclutar',
@@ -28,139 +35,25 @@ const MANDATE_BG_COLORS: Record<MandateType, string> = {
   betray: 'rgba(220,20,60,0.15)',
 };
 
-/** Feudal Japanese illustration SVG for each mandate type */
+const MANDATE_IMAGES: Record<MandateType, string> = {
+  train: TrainImg,
+  recruit: RecruitImg,
+  harvest: HarvestImg,
+  marshal: MarshalImg,
+  betray: BetrayImg,
+};
+
+/** Mandate tile image for each mandate type, using actual PNG images */
 function MandateIllustration({ type, size = 40 }: { type: MandateType; size?: number }) {
-  const color = MANDATE_COLORS[type];
-
-  switch (type) {
-    case 'train':
-      // Samurai training with katana - dojo scene
-      return (
-        <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
-          {/* Dojo floor */}
-          <rect x="8" y="50" width="48" height="4" rx="1" fill={color} opacity="0.3" />
-          {/* Samurai figure */}
-          <circle cx="32" cy="18" r="6" fill={color} opacity="0.8" />
-          {/* Body in stance */}
-          <path d="M32 24 L32 42 M26 32 L38 32 M32 42 L26 52 M32 42 L38 52" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
-          {/* Katana raised */}
-          <path d="M38 32 L48 14 L50 13" stroke={color} strokeWidth="2" strokeLinecap="round" />
-          <path d="M48 14 L50 13 L49 15" fill={color} />
-          {/* Training dummy */}
-          <path d="M14 28 L14 48 M10 28 L18 28" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-          <circle cx="14" cy="24" r="3" stroke={color} strokeWidth="1.5" fill="none" opacity="0.5" />
-          {/* Torii gate detail */}
-          <path d="M46 44 L46 52 M54 44 L54 52 M44 44 L56 44 M44 46 L56 46" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
-        </svg>
-      );
-
-    case 'recruit':
-      // Ashigaru soldiers gathering with banners
-      return (
-        <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
-          {/* Banner/Sashimono */}
-          <rect x="12" y="8" width="2" height="44" fill={color} opacity="0.7" />
-          <rect x="14" y="8" width="12" height="16" rx="1" fill={color} opacity="0.5" />
-          <path d="M16 12 L22 16 L16 20" fill="white" opacity="0.6" />
-          {/* First soldier */}
-          <circle cx="22" cy="32" r="4" fill={color} opacity="0.8" />
-          <path d="M22 36 L22 48 M18 40 L26 40 M22 48 L18 54 M22 48 L26 54" stroke={color} strokeWidth="2" strokeLinecap="round" />
-          {/* Yari (spear) */}
-          <path d="M18 40 L16 10" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-          <path d="M15 10 L16 6 L17 10" fill={color} opacity="0.6" />
-          {/* Second soldier */}
-          <circle cx="38" cy="34" r="4" fill={color} opacity="0.7" />
-          <path d="M38 38 L38 50 M34 42 L42 42 M38 50 L34 56 M38 50 L42 56" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.8" />
-          {/* Third soldier (background) */}
-          <circle cx="50" cy="36" r="3.5" fill={color} opacity="0.5" />
-          <path d="M50 39.5 L50 50 M47 43 L53 43" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-          {/* Mon emblem */}
-          <circle cx="50" cy="14" r="6" stroke={color} strokeWidth="1.5" fill="none" opacity="0.4" />
-          <circle cx="50" cy="14" r="3" stroke={color} strokeWidth="1" fill="none" opacity="0.4" />
-        </svg>
-      );
-
-    case 'harvest':
-      // Rice paddy harvest scene
-      return (
-        <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
-          {/* Rice paddies - terraced */}
-          <path d="M4 40 Q16 36 32 38 Q48 40 60 36" stroke={color} strokeWidth="1.5" fill="none" opacity="0.5" />
-          <path d="M4 46 Q16 42 32 44 Q48 46 60 42" stroke={color} strokeWidth="1.5" fill="none" opacity="0.4" />
-          <path d="M4 52 Q16 48 32 50 Q48 52 60 48" stroke={color} strokeWidth="1.5" fill="none" opacity="0.3" />
-          {/* Rice stalks */}
-          <path d="M20 38 L20 20 M18 22 L20 20 L22 22" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M16 24 L20 20 L24 24" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.7" />
-          <path d="M28 36 L28 18 M26 20 L28 18 L30 20" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M24 22 L28 18 L32 22" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.7" />
-          {/* Farmer figure */}
-          <circle cx="42" cy="26" r="4" fill={color} opacity="0.8" />
-          <path d="M42 30 L42 42 M38 34 L46 34 M42 42 L38 50 M42 42 L46 50" stroke={color} strokeWidth="2" strokeLinecap="round" />
-          {/* Kasa (hat) */}
-          <path d="M36 24 Q42 20 48 24" stroke={color} strokeWidth="2" strokeLinecap="round" />
-          {/* Sickle */}
-          <path d="M46 34 L52 30 Q54 28 52 26" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none" />
-          {/* Sun */}
-          <circle cx="10" cy="12" r="5" fill={color} opacity="0.3" />
-          <path d="M10 5 L10 3 M10 19 L10 21 M3 12 L1 12 M17 12 L19 12 M5 7 L3.5 5.5 M15 17 L16.5 18.5 M5 17 L3.5 18.5 M15 7 L16.5 5.5" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.3" />
-        </svg>
-      );
-
-    case 'marshal':
-      // Army on march - war banners and movement
-      return (
-        <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
-          {/* Path/road */}
-          <path d="M8 54 Q20 48 32 50 Q44 52 56 46" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.3" />
-          {/* Horse and rider */}
-          <ellipse cx="34" cy="38" rx="10" ry="6" fill={color} opacity="0.4" />
-          <path d="M28 38 L26 48 M30 38 L28 48 M38 38 L40 48 M40 38 L42 48" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-          {/* Rider */}
-          <circle cx="34" cy="26" r="4" fill={color} opacity="0.8" />
-          <path d="M34 30 L34 36" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
-          {/* Horse head */}
-          <path d="M24 36 L20 32 L22 28" stroke={color} strokeWidth="2" strokeLinecap="round" />
-          {/* War banner */}
-          <path d="M40 36 L40 10" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-          <rect x="41" y="10" width="10" height="14" rx="1" fill={color} opacity="0.5" />
-          <path d="M43 14 L49 17 L43 20" stroke="white" strokeWidth="1" fill="none" opacity="0.5" />
-          {/* Movement arrows */}
-          <path d="M8 28 L16 28 L14 26 M16 28 L14 30" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-          <path d="M8 34 L14 34 L12 32 M14 34 L12 36" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
-          {/* Dust clouds */}
-          <circle cx="48" cy="46" r="3" fill={color} opacity="0.15" />
-          <circle cx="52" cy="44" r="2" fill={color} opacity="0.1" />
-        </svg>
-      );
-
-    case 'betray':
-      // Ninja/betrayal - dagger and shadow
-      return (
-        <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
-          {/* Dark shadow figure */}
-          <path d="M24 16 Q28 12 32 16 Q36 12 40 16 L40 24 Q36 28 32 24 Q28 28 24 24 Z" fill={color} opacity="0.3" />
-          {/* Hooded figure */}
-          <path d="M28 20 Q32 14 36 20 L36 28 Q32 32 28 28 Z" fill={color} opacity="0.7" />
-          {/* Eyes only visible */}
-          <ellipse cx="30" cy="24" rx="1.5" ry="1" fill="white" opacity="0.9" />
-          <ellipse cx="34" cy="24" rx="1.5" ry="1" fill="white" opacity="0.9" />
-          {/* Body crouched */}
-          <path d="M32 32 L32 42 M28 36 L36 36" stroke={color} strokeWidth="2" strokeLinecap="round" />
-          <path d="M32 42 L26 50 M32 42 L38 50" stroke={color} strokeWidth="2" strokeLinecap="round" />
-          {/* Tanto (dagger) */}
-          <path d="M36 36 L48 28 L50 26" stroke={color} strokeWidth="2" strokeLinecap="round" />
-          <path d="M48 28 L52 26 L50 30" fill={color} opacity="0.8" />
-          {/* Blood drops */}
-          <circle cx="52" cy="32" r="1.5" fill={color} opacity="0.6" />
-          <circle cx="54" cy="36" r="1" fill={color} opacity="0.4" />
-          {/* Shuriken */}
-          <path d="M12 38 L16 36 L14 40 L18 38 L14 42 L12 38" fill={color} opacity="0.5" />
-          {/* Smoke/shadow effects */}
-          <path d="M8 48 Q16 44 24 48 Q16 52 8 48" fill={color} opacity="0.15" />
-          <path d="M40 50 Q48 46 56 50 Q48 54 40 50" fill={color} opacity="0.1" />
-        </svg>
-      );
-  }
+  return (
+    <img
+      src={MANDATE_IMAGES[type]}
+      alt={MANDATE_LABELS[type]}
+      width={size}
+      height={size}
+      style={{ objectFit: 'contain' }}
+    />
+  );
 }
 
 /**
@@ -248,10 +141,13 @@ export const PoliticsTrack = () => {
             title={`Mandato secreto - ${clan?.name || 'Loto'}`}
           >
             <div className="slot-illustration hidden-illustration">
-              <svg width={40} height={40} viewBox="0 0 64 64" fill="none">
-                <rect x="8" y="8" width="48" height="48" rx="6" fill="#1a1030" opacity="0.9" />
-                <text x="32" y="42" textAnchor="middle" fontSize="28" fill="#9b7fcf" opacity="0.9" fontFamily="serif">秘</text>
-              </svg>
+              <img
+                src={SecretLotusImg}
+                alt="Mandato Secreto"
+                width={40}
+                height={40}
+                style={{ objectFit: 'contain' }}
+              />
             </div>
             <span className="slot-mandate-label" style={{ color: '#9b7fcf' }}>
               Secreto
