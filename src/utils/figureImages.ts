@@ -27,6 +27,13 @@ import bentenImg from '../img/Benten.png';
 import daikaijuImg from '../img/Daikiaju.png';
 import ebisuImg from '../img/Ebisu.png';
 import sacredWarriorImg from '../img/Sacred Warrior.png';
+import kitsuneCImg from '../img/Kitsune.png';
+import oniOfHateCImg from '../img/Oni of Hate.png';
+import oniOfPlaguesCImg from '../img/Oni of Plagues.png';
+import oniOfSpiteCImg from '../img/Oni of Spite.png';
+import riverDragonCImg from '../img/River Dragon.png';
+import sunakakeBabaCImg from '../img/Sunakake-Baba.png';
+import yureiCImg from '../img/Yurei.png';
 
 // Monster figure image imports (for region diorama miniatures)
 import daikokutenFigImg from '../img/Daikokuten_fig.png';
@@ -104,6 +111,13 @@ export const MONSTER_IMAGE_MAP: Record<string, string> = {
   'au-daikaiju': daikaijuImg,
   'au-ebisu': ebisuImg,
   'au-sacred-warrior': sacredWarriorImg,
+  'au-kitsune': kitsuneCImg,
+  'au-oni-of-hate': oniOfHateCImg,
+  'au-oni-of-plagues': oniOfPlaguesCImg,
+  'au-oni-of-spite': oniOfSpiteCImg,
+  'au-river-dragon': riverDragonCImg,
+  'su-sunakake-baba': sunakakeBabaCImg,
+  'su-yurei': yureiCImg,
 };
 
 /**
