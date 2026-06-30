@@ -5,7 +5,7 @@ import type { Figure } from '../types/game';
 import { useT } from '../i18n';
 import { FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
-import { getMonsterFigureImage, getCastleImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
+import { getMonsterFigureImage, getCastleImage, getDaimyoImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
 import { calculateForce } from '../utils/gameLogic';
 
 interface RegionDetailModalProps {
@@ -163,8 +163,10 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     switch (figure.type) {
       case 'bushi':
         return <img src={TEMPLATE_FIGURE_IMG} alt="Bushi" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
-      case 'daimyo':
-        return <img src={TEMPLATE_FIGURE_IMG} alt="Daimyo" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
+      case 'daimyo': {
+        const daimyoImg = getDaimyoImage(ownerClanId);
+        return <img src={daimyoImg || TEMPLATE_FIGURE_IMG} alt="Daimyo" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
+      }
       case 'shinto':
         return <img src={TEMPLATE_FIGURE_IMG} alt="Shinto" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
       case 'kami':
@@ -302,8 +304,10 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
       switch (figure.type) {
         case 'bushi':
           return <img src={TEMPLATE_FIGURE_IMG} alt="Bushi" style={{ height: '60vh', objectFit: 'contain' }} />;
-        case 'daimyo':
-          return <img src={TEMPLATE_FIGURE_IMG} alt="Daimyo" style={{ height: '60vh', objectFit: 'contain' }} />;
+        case 'daimyo': {
+          const daimyoZoomImg = getDaimyoImage(ownerClanId);
+          return <img src={daimyoZoomImg || TEMPLATE_FIGURE_IMG} alt="Daimyo" style={{ height: '60vh', objectFit: 'contain' }} />;
+        }
         case 'shinto':
           return <img src={TEMPLATE_FIGURE_IMG} alt="Shinto" style={{ height: '60vh', objectFit: 'contain' }} />;
         case 'kami':

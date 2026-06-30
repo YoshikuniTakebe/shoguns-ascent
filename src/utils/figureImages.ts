@@ -158,6 +158,33 @@ export const MONSTER_FIGURE_MAP: Record<string, string> = {
   'au-sacred-warrior': sacredWarriorFigImg,
 };
 
+// Daimyo figure image imports (per clan)
+import daimyoKoiImg from '../img/Daimyo_koi_fig.png';
+import daimyoSunImg from '../img/Daimyo_sun_fig.png';
+import daimyoLotusImg from '../img/Daimyo_lotus_fig.png';
+import daimyoTurtleImg from '../img/Daimyo_turtle_fig.png';
+import daimyoDragonflyImg from '../img/Daimyo_dragonflie_fig.png';
+import daimyoFoxImg from '../img/Daimyo_fox_fig.png';
+import daimyoBonsaiImg from '../img/Daimyo_bonsai_fig.png';
+import daimyoMoonImg from '../img/Daimyo_moon_fig.png';
+
+/** Maps clan IDs to their daimyo figure image */
+export const DAIMYO_IMAGE_MAP: Record<string, string> = {
+  koi: daimyoKoiImg,
+  sol: daimyoSunImg,
+  loto: daimyoLotusImg,
+  tortuga: daimyoTurtleImg,
+  libelula: daimyoDragonflyImg,
+  zorro: daimyoFoxImg,
+  bonsai: daimyoBonsaiImg,
+  luna: daimyoMoonImg,
+};
+
+/** Get daimyo figure image by clan ID, or null if not found */
+export function getDaimyoImage(clanId: string): string | null {
+  return DAIMYO_IMAGE_MAP[clanId] || null;
+}
+
 /** Maps clan IDs to their castle image file */
 export const CASTLE_IMAGE_MAP: Record<string, string> = {
   koi: castleKoiImg,
