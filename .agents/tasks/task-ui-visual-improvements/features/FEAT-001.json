@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Implement all 7 visual/UI improvements: region card transparency, figure icon borders, shinto icon borders, figure tooltips, harvest hex borders, sea route opacity, and kami text styling",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "CHANGE 1 - In src/App.css, find the .region-card background definition: `linear-gradient(145deg,rgba(212,184,150,0.75),rgba(196,168,130,0.75),rgba(245,235,220,0.75))`. Change all three alpha values from 0.75 to 0.05, making the parchment background barely visible. The region-card definition is on line 1 of App.css in the minified block.",
     "CHANGE 2 - In src/App.css, add a new rule for `.figure-icon` with `filter: drop-shadow(1px 0 0 #333) drop-shadow(-1px 0 0 #333) drop-shadow(0 1px 0 #333) drop-shadow(0 -1px 0 #333)` and `display:inline-flex`. This creates a dark gray 1px outer border effect on the SVG figure icons in region cards.",
@@ -24,5 +24,5 @@
   ],
   "verification": ["npx vite build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 7 changes implemented and build passes. The figure tooltip uses a simplified version of getFigureForce from RegionDetailModal.tsx. The tooltip shows on hover using CSS visibility/opacity transitions. gameState and regionId are passed to FigureIcon from the parent RegionCard which already had access to both."
 }
