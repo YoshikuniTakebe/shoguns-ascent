@@ -31,7 +31,7 @@
 .season-cards-btn-text{font-size:0.55rem;font-weight:bold;letter-spacing:0.08em;text-transform:uppercase}
 
 .season-cards-modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:1200;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out}
-.season-cards-modal{position:relative;background:linear-gradient(145deg,#4a5d8a,#3a4d7a);border:1px solid var(--border-gold);border-radius:14px;padding:1.5rem;max-width:900px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,0.6)}
+.season-cards-modal{position:relative;background:linear-gradient(145deg,#6078aa,#5068a0);border:1px solid var(--border-gold);border-radius:14px;padding:1.5rem;max-width:900px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,0.6)}
 .season-cards-modal-close{position:absolute;top:0.6rem;right:0.9rem;background:none;border:none;color:var(--text-secondary);font-size:1.8rem;cursor:pointer;line-height:1;padding:0.25rem;border-radius:4px;transition:color 0.2s;z-index:1}
 .season-cards-modal-close:hover{color:var(--text-primary)}
 .season-cards-modal-title{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;text-align:center;color:var(--accent-gold);font-size:1.3rem;font-weight:bold;letter-spacing:0.08em;margin-bottom:1.25rem;text-shadow:0 0 10px rgba(200,169,81,0.3)}
@@ -279,6 +279,6 @@
 .region-diorama-layer-toggles{display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.3rem 1rem;flex-shrink:0;position:relative;z-index:5}
 .layer-toggle-btn{display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.7rem;background:rgba(0,0,0,0.6);border:2px solid rgba(200,169,81,0.5);border-radius:14px;color:var(--text-secondary);font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;user-select:none}
 .layer-toggle-btn:hover{border-color:var(--accent-gold);background:rgba(0,0,0,0.7)}
-.layer-toggle-btn.active{background:rgba(200,169,81,0.15);border-color:var(--accent-gold);color:var(--accent-gold)}
+.layer-toggle-btn.active{background:rgba(200,169,81,0.35);border-color:var(--accent-gold);color:var(--accent-gold);text-shadow:-1px -1px 0 rgba(0,0,0,0.8),1px -1px 0 rgba(0,0,0,0.8),-1px 1px 0 rgba(0,0,0,0.8),1px 1px 0 rgba(0,0,0,0.8)}
 .layer-toggle-indicator{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);transition:all 0.2s}
 .layer-toggle-btn.active .layer-toggle-indicator{background:var(--accent-gold);border-color:var(--accent-gold);box-shadow:0 0 4px rgba(200,169,81,0.6)}

@@ -100,7 +100,7 @@ export const ActionPanel = () => {
                 return (
                   <div key={pr.from} className="alliance-proposal">
                     <ClanShield clanId={fp?.clanId || ''} size={30} />
-                    <span>{t('actions.wantsAlliance', { name: fp?.name || '' })}</span>
+                    <span>{t('actions.wantsAlliance', { name: '' })}<span style={{ color: CLANS.find(c => c.id === fp?.clanId)?.color, fontWeight: 'bold' }}>{fp?.name || ''}</span></span>
                     {pr.bribeAmount && pr.bribeAmount > 0 && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#DAA520' }}>
                         <CoinIcon size={16} color="#DAA520" />
@@ -135,10 +135,12 @@ export const ActionPanel = () => {
                     <button
                       key={p.id}
                       className={`btn-alliance${isSelected ? ' selected' : ''}`}
-                      style={{ borderColor: clan.color, display: 'flex', alignItems: 'center' }}
+                      style={{ borderColor: clan.color, display: 'flex', alignItems: 'center', gap: '6px' }}
                       onClick={() => setSelectedAllianceTarget(isSelected ? null : p.id)}
                     >
-                      <span>{p.name} ({clan.name})</span>
+                      <ClanShield clanId={p.clanId} size={22} />
+                      <span style={{ color: clan.color, fontWeight: 'bold' }}>{p.name}</span>
+                      <span style={{ opacity: 0.7 }}>({clan.name})</span>
                       {proposalsToThisPlayer.length > 0 && (
                         <span style={{ marginLeft: 'auto', display: 'flex', gap: '2px', alignItems: 'center' }}>
                           {proposalsToThisPlayer.map(ap => {
