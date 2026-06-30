@@ -36,7 +36,7 @@ const MANDATE_IMAGES: Record<MandateType, string> = {
 };
 
 /** Mandate tile image for each mandate type, using actual PNG images (small version for exhausted list) */
-function MandateIllustration({ type, size = 40 }: { type: MandateType; size?: number }) {
+function MandateIllustration({ type, size = 52 }: { type: MandateType; size?: number }) {
   return (
     <img
       src={MANDATE_IMAGES[type]}
@@ -178,7 +178,7 @@ export const PoliticsTrack = () => {
 
   const renderKamiIcon = (key: string) => (
     <div key={key} className="politics-track-kami" title="Kami Turn">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
         {/* Torii gate - spiritual gateway */}
         <path
           d="M4 6h16M5 6c0-1 2-3 7-3s7 2 7 3"
@@ -209,7 +209,7 @@ export const PoliticsTrack = () => {
     <div className="politics-track">
       {/* Tea Ceremony icon */}
       <div className="politics-track-phase-icon tea" title="Tea Ceremony">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           {/* Japanese teapot (kyusu) silhouette */}
           <path
             d="M6 11c0-2 1.5-4 6-4s6 2 6 4v3c0 3-2 5-6 5s-6-2-6-5v-3z"
@@ -271,17 +271,17 @@ export const PoliticsTrack = () => {
       {renderKamiIcon('kami-3')}
 
       {/* Vertical red separator between Kami and War */}
-      <div style={{ margin: '0 0.5rem', display: 'flex', alignItems: 'center' }}>
-        <svg width="8" height="32" viewBox="0 0 8 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <line x1="4" y1="0" x2="4" y2="12" stroke="var(--accent-red)" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M4 12 L7 16 L4 20 L1 16 Z" fill="var(--accent-red)" opacity="0.85" />
-          <line x1="4" y1="20" x2="4" y2="32" stroke="var(--accent-red)" strokeWidth="1.5" strokeLinecap="round" />
+      <div style={{ margin: '0 0.65rem', display: 'flex', alignItems: 'center' }}>
+        <svg width="10" height="42" viewBox="0 0 10 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="5" y1="0" x2="5" y2="16" stroke="var(--accent-red)" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M5 16 L9 21 L5 26 L1 21 Z" fill="var(--accent-red)" opacity="0.85" />
+          <line x1="5" y1="26" x2="5" y2="42" stroke="var(--accent-red)" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </div>
 
       {/* War phase icon */}
       <div className="politics-track-phase-icon war" title="War Phase">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           {/* Crossed katanas */}
           <path
             d="M4 4l16 16"
@@ -317,7 +317,7 @@ export const PoliticsTrack = () => {
               style={{ color: MANDATE_COLORS[t], borderColor: MANDATE_COLORS[t] }}
               title={`${MANDATE_LABELS[t]} - agotada (jugada 2 veces)`}
             >
-              <MandateIllustration type={t} size={16} />
+              <MandateIllustration type={t} size={21} />
               <span className="exhausted-x">&times;</span>
             </span>
           ))}
