@@ -399,7 +399,7 @@ export const GameBoard = () => {
                       x2={midX}
                       y2={midY}
                       stroke={harvest.color}
-                      strokeWidth="3"
+                      strokeWidth="6"
                       strokeLinecap="round"
                     />
                   );
@@ -555,7 +555,7 @@ export const GameBoard = () => {
               <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem', textShadow: '-1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333', marginTop: '-8px' }}>
                 {t('game.turn', { name: popupPlayer.name })}
               </p>
-              <button className="monster-placement-btn" onClick={dismissTurnPopup} style={{ fontSize: '1.02rem', padding: '0.68rem 2.12rem', marginTop: '5px' }}>
+              <button className="monster-placement-btn" onClick={dismissTurnPopup} style={{ fontSize: '1.02rem', padding: '0.68rem 2.12rem', marginTop: '0px' }}>
                 {t('game.turnPopupAccept')}
               </button>
             </div>
