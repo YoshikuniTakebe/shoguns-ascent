@@ -19,6 +19,7 @@ import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnI
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
+import popupBgImg from '../img/popup_bg.png';
 
 const MAP_WIDTH = 1672;
 const MAP_HEIGHT = 941;
@@ -533,7 +534,19 @@ export const GameBoard = () => {
         const clanColor = CLANS.find(c => c.id === popupPlayer.clanId)?.color;
         return (
           <div className="monster-placement-popup" style={{ zIndex: 1200 }}>
-            <div className="monster-placement-popup-content" style={{ borderColor: clanColor }}>
+            <div className="monster-placement-popup-content" style={{
+              borderColor: clanColor,
+              backgroundImage: `url(${popupBgImg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              aspectRatio: '3/2',
+              width: '500px',
+              maxWidth: '90vw',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
               <ClanShield clanId={popupPlayer.clanId} size={48} />
               <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem' }}>
                 {t('game.turn', { name: popupPlayer.name })}
