@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Apply all UI adjustments: region card styling, figure icons, harvest hexagon positions, kami shinto icons, war token text, and Amaterasu translation",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/i18n/es.ts, change 'kami.amaterasu.summary': 'Honor #1' to 'kami.amaterasu.summary': 'Honor a la posicion 1'. Also in src/i18n/en.ts change the same key from 'Honor #1' to 'Honor a la posicion 1'.",
     "2. In src/App.css, find '.region-card{' and change 'transform:translate(-50%,0)' to 'transform:translate(-50%,-38px)'. Also update the :hover rule transform from 'translate(-50%,0) scale(1.05)' to 'translate(-50%,-38px) scale(1.05)'.",
@@ -32,5 +32,5 @@
   ],
   "verification": ["Run 'npx vite build' in /projects/sandbox/shoguns-ascent and confirm successful build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes applied successfully. npx vite build passes. No test framework to run. The user instruction says 'Honor a la posición 1' (with accent), which is what was implemented in both en.ts and es.ts."
 }
