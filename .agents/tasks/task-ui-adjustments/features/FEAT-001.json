@@ -1,36 +1,26 @@
 {
   "id": "FEAT-001",
-  "type": "feat",
-  "description": "Apply all UI adjustments: region card styling, figure icons, harvest hexagon positions, kami shinto icons, war token text, and Amaterasu translation",
+  "type": "fix",
+  "description": "Apply 5 UI adjustments: force badge text border color, harvest hex size/border, politics track slot hover z-index, turn popup button margin, and front layer figure positioning for 3 figures",
   "status": "completed",
   "steps": [
-    "1. In src/i18n/es.ts, change 'kami.amaterasu.summary': 'Honor #1' to 'kami.amaterasu.summary': 'Honor a la posicion 1'. Also in src/i18n/en.ts change the same key from 'Honor #1' to 'Honor a la posicion 1'.",
-    "2. In src/App.css, find '.region-card{' and change 'transform:translate(-50%,0)' to 'transform:translate(-50%,-38px)'. Also update the :hover rule transform from 'translate(-50%,0) scale(1.05)' to 'translate(-50%,-38px) scale(1.05)'.",
-    "3. In src/App.css, change the .region-card background from 'background:linear-gradient(145deg,#d4b896,#c4a882,#b89b72)' to a parchment color with gradient toward bone/ivory, 25% transparency, plus an SVG texture pattern as semi-transparent background. Use something like: background:url(\"data:image/svg+xml,...parchment-texture-SVG...\"),linear-gradient(145deg,rgba(212,184,150,0.75),rgba(196,168,130,0.75),rgba(245,235,220,0.75))",
-    "4. In src/App.css, change the .region-card border from 'border:2px solid var(--border-gold)' to 'border:3px solid rgba(218,195,130,0.8)' (light gold, 3px).",
-    "5. In src/App.css, change the .region-card padding from 'padding:0.5rem 0.75rem' to 'padding:0.5rem 0.35rem'.",
-    "6. In src/App.css, change '.region-forces{display:grid;grid-template-columns:repeat(5,20px);gap:3px;justify-content:center;margin-top:0.3rem}' to '.region-forces{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:0.3rem;max-width:calc(5 * 23px)}' so figures fill horizontally left-to-right, wrapping after 5 per row.",
-    "7. In src/App.css, find '.war-token{color:var(--accent-gold);font-weight:bold;font-size:0.75rem}' and add text-shadow for dark gray border outline: 'text-shadow:-1px -1px 0 #444,1px -1px 0 #444,-1px 1px 0 #444,1px 1px 0 #444'.",
-    "8. In src/components/RegionCard.tsx, change all FigureIcon size={14} to size={21} (50% bigger). The FigureIcon component renders BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon - change all size={14} occurrences to size={21}.",
-    "9. In src/components/GameBoard.tsx, update HARVEST_BADGE_META positions: kyushu x from 190 to 170, nagato x from 360 to 340, kansai x from 870 to 880, edo x from 970 to 960, kanto x from 1320 to 1335, oshu x from 1290 to 1305.",
-    "10. In src/App.css, find '.kami-slot-figures{position:absolute;bottom:4px;right:6px;display:flex;gap:4px}' and change bottom from 4px to 54px.",
-    "11. In src/components/TemplePanel.tsx, find the shinto torii SVG icons (the <svg> with width='24' height='24' inside kami-slot-figures) and add stroke='white' strokeWidth='1' to give them a white border/outline."
+    "In src/App.css, find `.region-diorama-force-name` rule (around line 145). Change the text-shadow outline color from #fff to #333. The current text-shadow is: `-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff,0 0 6px currentColor,0 0 12px currentColor`. Change each `#fff` to `#333`.",
+    "In src/App.css, find `.harvest-hex` rule (line 23). Change `width:66px;height:66px` to `width:76px;height:76px`. Also change the filter from `drop-shadow(3px 0 0 rgba(0,0,0,0.6)) drop-shadow(-3px 0 0 rgba(0,0,0,0.6)) drop-shadow(0 3px 0 rgba(0,0,0,0.6)) drop-shadow(0 -3px 0 rgba(0,0,0,0.6))` to `drop-shadow(3px 0 0 #4A2800) drop-shadow(-3px 0 0 #4A2800) drop-shadow(0 3px 0 #4A2800) drop-shadow(0 -3px 0 #4A2800)` to create a dark brown border effect.",
+    "In src/App.css, find `.politics-track-slot.filled:hover` rule (line 7). Change `z-index:20` to `z-index:1200` and add `position:relative` to the rule. The current rule is `{transform:scale(1.5);z-index:20;box-shadow:0 4px 20px rgba(0,0,0,0.5)}`. It should become `{transform:scale(1.5);z-index:1200;position:relative;box-shadow:0 4px 20px rgba(0,0,0,0.5)}`.",
+    "In src/components/GameBoard.tsx, find the button with `marginTop: '-6px'` (line 558). Change it to `marginTop: '-11px'`.",
+    "In src/components/RegionDetailModal.tsx, around lines 522-541, modify the front layer logic. When `frontFigures.length === 3`, use `FRONT_OFFSETS = [-10, 40, -10]` and apply `justifyContent: 'space-between'` with `paddingLeft: '10px'` and `paddingRight: '10px'` to the container div so fig 1 is leftmost, fig 3 is rightmost, and fig 2 is slightly lower (centered between positions 2 and 3). When length is 4 (or other), keep the existing behavior with FRONT_OFFSETS = [-10, 40, 40, -10]."
   ],
   "acceptance_criteria": [
-    "npx vite build completes successfully",
-    "Region cards are moved 38px up via transform:translate(-50%,-38px)",
-    "Region card has parchment texture background with 25% transparency and bone/ivory gradient",
-    "Region card border is light gold, 3px",
-    "Region card padding is 0.5rem 0.35rem",
-    "Region forces are displayed horizontally with flex-wrap, max 5 per row",
-    "War token text has dark gray text-shadow outline",
-    "Figure icons are size 21 (50% bigger than 14)",
-    "Harvest hexagons are moved: Kyushu -20x, Nagato -20x, Kansai +10x, Edo -10x, Kanto +15x, Oshu +15x",
-    "Kami shinto icons are 50px higher (bottom:54px)",
-    "Kami shinto SVG icons have white border/outline",
-    "Amaterasu summary text is 'Honor a la posicion 1' in both en.ts and es.ts"
+    "Build passes with `npx vite build` without errors",
+    "The .region-diorama-force-name text-shadow uses #333 instead of #fff",
+    "The .harvest-hex is 76x76 pixels with dark brown (#4A2800) border drop-shadows",
+    "The .politics-track-slot.filled:hover has z-index:1200 and position:relative",
+    "GameBoard.tsx turn popup button has marginTop '-11px'",
+    "RegionDetailModal.tsx front layer uses [-10, 40, -10] offsets and space-between layout when exactly 3 figures"
   ],
-  "verification": ["Run 'npx vite build' in /projects/sandbox/shoguns-ascent and confirm successful build"],
+  "verification": [
+    "npx vite build completes without errors"
+  ],
   "blocked_reason": null,
-  "findings": "All changes applied successfully. npx vite build passes. No test framework to run. The user instruction says 'Honor a la posición 1' (with accent), which is what was implemented in both en.ts and es.ts."
+  "findings": ""
 }

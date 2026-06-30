@@ -1,23 +1,20 @@
 {
-  "project_type": "React + TypeScript + Vite board game app",
-  "language": "TypeScript/TSX",
-  "build_system": "Vite with TypeScript",
-  "test_framework": "None (no test files found)",
+  "project_type": "React + TypeScript + Vite board game",
+  "language": "TypeScript/CSS",
+  "build_system": "Vite",
+  "test_framework": "none found",
   "build_command": "npx vite build",
-  "test_command": "none",
-  "verification_instructions": "Run 'npx vite build' from project root and confirm it builds successfully",
+  "test_command": "npx vite build",
+  "verification_instructions": "Run npx vite build and confirm it completes without errors",
   "snapshot_or_generated_files": null,
-  "setup_instructions": "npm install in /projects/sandbox/shoguns-ascent",
-  "environment_constraints": "Pre-existing tsc -b errors in BattleBiddingOverlay.tsx and BattlePanel.tsx unrelated to our changes. Use 'npx vite build' for verification.",
-  "contribution_requirements": "None documented",
-  "key_patterns": "CSS is in src/App.css as a single minified file. Components use className-based styling. i18n in src/i18n/es.ts and en.ts. Icons use SVG components from ./Icons with a size prop.",
+  "setup_instructions": "npm install (already done, node_modules present)",
+  "environment_constraints": "none",
+  "contribution_requirements": "none documented",
+  "key_patterns": "CSS is in a single minified App.css file. Inline styles in TSX components.",
   "relevant_files": [
     "src/App.css",
-    "src/components/RegionCard.tsx",
     "src/components/GameBoard.tsx",
-    "src/components/TemplePanel.tsx",
-    "src/i18n/es.ts",
-    "src/i18n/en.ts"
+    "src/components/RegionDetailModal.tsx"
   ],
-  "directory_structure": "src/ contains App.css (all styles), components/ (React components), i18n/ (en.ts, es.ts, index.ts), img/ (images), store/ (zustand), types/ (game types)"
+  "directory_structure": "src/ contains App.css (all styles) and components/ directory with game components"
 }

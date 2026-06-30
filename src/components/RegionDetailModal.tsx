@@ -522,9 +522,9 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
 
             {/* Layer 1 - Front (bottom): largest, fixed 160px from bottom */}
             {showFront && frontFigures.length > 0 && (
-              <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.0)', zIndex: 3, bottom: '160px' }}>
+              <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.0)', zIndex: 3, bottom: '160px', ...(frontFigures.length === 3 ? { justifyContent: 'space-between', paddingLeft: '10px', paddingRight: '10px' } : {}) }}>
                 {frontFigures.map(({ figure, ownerColor, ownerClanId, ownerName }, index) => {
-                  const FRONT_OFFSETS = [-10, 40, 40, -10];
+                  const FRONT_OFFSETS = frontFigures.length === 3 ? [-10, 40, -10] : [-10, 40, 40, -10];
                   const offset = FRONT_OFFSETS[index] || 0;
                   return (
                     <div key={figure.id} style={{ position: 'relative', top: `${offset}px` }}>

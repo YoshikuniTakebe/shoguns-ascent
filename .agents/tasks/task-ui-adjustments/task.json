@@ -1,6 +1,6 @@
 {
   "task_id": "task-ui-adjustments",
-  "task_description": "Apply UI adjustments to region cards, figure icons, harvest hexagons, kami shinto icons, war token text, and Amaterasu translation",
+  "task_description": "Apply 5 UI adjustments: force badge text border to dark grey, harvest hex bigger with brown border, politics tile hover above header, turn popup button 5px higher, front layer 3-figure layout",
   "status": "in_progress",
   "feature_order": ["FEAT-001"],
   "blocked_reason": null
