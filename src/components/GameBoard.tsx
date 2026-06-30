@@ -364,15 +364,24 @@ export const GameBoard = () => {
                     },
                   ];
                   return seaRoutePaths.map(route => (
-                    <path
-                      key={`sea-${route.from}-${route.to}`}
-                      d={route.path}
-                      fill="none"
-                      stroke="rgba(80,180,240,0.8)"
-                      strokeWidth="3.5"
-                      strokeDasharray="8,5"
-                      strokeLinecap="round"
-                    />
+                    <g key={`sea-${route.from}-${route.to}`}>
+                      <path
+                        d={route.path}
+                        fill="none"
+                        stroke="#ffffff"
+                        strokeWidth="8"
+                        strokeDasharray="8,5"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d={route.path}
+                        fill="none"
+                        stroke="rgba(80,180,240,0.8)"
+                        strokeWidth="5"
+                        strokeDasharray="8,5"
+                        strokeLinecap="round"
+                      />
+                    </g>
                   ));
                 })()}
                 {/* Harvest reward connecting lines */}
@@ -387,7 +396,7 @@ export const GameBoard = () => {
                       x2={regionPos.x}
                       y2={regionPos.y}
                       stroke={harvest.color}
-                      strokeWidth="1.5"
+                      strokeWidth="3"
                       strokeLinecap="round"
                     />
                   );

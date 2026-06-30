@@ -164,7 +164,7 @@ export const TemplePanel = () => {
                         className="kami-figure-dot"
                         title={player?.name || ''}
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill={figColor} stroke="none">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill={figColor} stroke="none">
                           <rect x="4" y="6" width="16" height="2" rx="1" />
                           <rect x="6" y="4" width="12" height="2" rx="0.5" opacity="0.7" />
                           <rect x="7" y="8" width="2" height="14" />

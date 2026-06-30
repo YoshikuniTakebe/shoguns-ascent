@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, PROVINCES_DATA, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS } from '../types/game';
+import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS } from '../types/game';
 import type { Figure } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon } from './Icons';
@@ -319,7 +319,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
       style={{ ...style, ...(hasTroopsForGlow ? { '--marshal-glow-color': marshalGlowColor } as React.CSSProperties : {}) }}
       onClick={handleClick}
     >
-      <div className="region-name">{province.name}</div>
+      <div className="region-name" style={{ color: PROVINCE_COLORS[regionId] || 'var(--accent-cream)', textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff' }}>{province.name}</div>
       {warSlot && <div className="war-token">{t('region.battle', { number: String(warSlot.number) })}</div>}
       <div className="region-forces">
         {Object.entries(figuresByOwner).map(([ownerId, figures]) => {
