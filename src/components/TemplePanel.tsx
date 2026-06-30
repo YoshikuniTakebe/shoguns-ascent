@@ -33,7 +33,7 @@ import ryujinImg from '../img/Ryujin.png';
 import susanooImg from '../img/Susanoo.png';
 import tsukuyomiImg from '../img/Tsukuyomi.png';
 
-import amaterasuTile from '../img/Amaterasu_title.png';
+import amaterasuTile from '../img/Amaterasu_tile.png';
 import fujinTile from '../img/Fujin_tile.png';
 import hachimanTile from '../img/Hachiman_tile.png';
 import raijinTile from '../img/Raijin_tile.png';
