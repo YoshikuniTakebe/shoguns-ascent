@@ -68,7 +68,7 @@ export const ActionPanel = () => {
             const cpClan = CLANS.find(c => c.id === cp.clanId);
             return (
               <p className="phase-description" style={{ marginTop: 0 }}>
-                <ClanShield clanId={cp.clanId} size={20} />
+                <ClanShield clanId={cp.clanId} size={40} />
                 <span style={{ color: cpClan?.color, fontWeight: 'bold', fontSize: '1.3em', marginLeft: '4px' }}>{cp.name}</span>{' '}
                 {t('actions.teaActivePlayerSuffix')}
               </p>
@@ -82,7 +82,7 @@ export const ActionPanel = () => {
                 const fp = gameState.players.find(p => p.id === pr.from);
                 return (
                   <div key={pr.from} className="alliance-proposal">
-                    <ClanShield clanId={fp?.clanId || ''} size={20} />
+                    <ClanShield clanId={fp?.clanId || ''} size={40} />
                     <span>{t('actions.wantsAlliance', { name: fp?.name || '' })}</span>
                     {pr.bribeAmount && pr.bribeAmount > 0 && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#DAA520' }}>
@@ -127,7 +127,7 @@ export const ActionPanel = () => {
                           {proposalsToThisPlayer.map(ap => {
                             const proposer = gameState.players.find(pl => pl.id === ap.from);
                             return proposer ? (
-                              <ClanShield key={ap.from} clanId={proposer.clanId} size={20} />
+                              <ClanShield key={ap.from} clanId={proposer.clanId} size={40} />
                             ) : null;
                           })}
                         </span>
@@ -236,7 +236,7 @@ export const ActionPanel = () => {
                   <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent-gold)' }}>{t('actions.mandateName.train')}</span>
                 </p>
                 <p style={{ margin: '4px 0' }}>
-                  <ClanShield clanId={cp?.clanId || ''} size={20} />
+                  <ClanShield clanId={cp?.clanId || ''} size={40} />
                   <span style={{ color: cpClan?.color || '#8B4513', fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
                 </p>
                 <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
@@ -260,7 +260,7 @@ export const ActionPanel = () => {
                   <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent-gold)' }}>{t('actions.mandateName.marshal')}</span>
                 </p>
                 <p style={{ margin: '4px 0' }}>
-                  <ClanShield clanId={cp?.clanId || ''} size={20} />
+                  <ClanShield clanId={cp?.clanId || ''} size={40} />
                   <span style={{ color: cpClan?.color || '#4CAF50', fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
                 </p>
                 <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
@@ -326,7 +326,7 @@ export const ActionPanel = () => {
                 <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent-gold)' }}>{t('actions.mandateName.recruit')}</span>
               </p>
               <p style={{ margin: '4px 0' }}>
-                <ClanShield clanId={cp?.clanId || ''} size={20} />
+                <ClanShield clanId={cp?.clanId || ''} size={40} />
                 <span style={{ color: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })(), fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
               </p>
               <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
@@ -423,7 +423,7 @@ export const ActionPanel = () => {
                   <span style={{ fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent-gold)' }}>{t('actions.mandateName.betray')}</span>
                 </p>
                 <p style={{ margin: '4px 0' }}>
-                  <ClanShield clanId={cp?.clanId || ''} size={20} />
+                  <ClanShield clanId={cp?.clanId || ''} size={40} />
                   <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
                 </p>
                 <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>

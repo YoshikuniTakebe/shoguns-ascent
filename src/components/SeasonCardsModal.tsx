@@ -5,7 +5,7 @@ import type { TranslationKey } from '../i18n';
 import type { CardType, SeasonCard } from '../types/game';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { CoinIcon } from './Icons';
+import { CoinIcon, SpringIcon, SummerIcon, AutumnIcon, SunIcon, MoonIcon } from './Icons';
 import { getMonsterImage } from '../utils/figureImages';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
@@ -48,6 +48,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   const [confirmCard, setConfirmCard] = useState<SeasonCard | null>(null);
   const [zoomedCard, setZoomedCard] = useState<SeasonCard | null>(null);
   const [playerConfirmed, setPlayerConfirmed] = useState(false);
+  const [lightMode, setLightMode] = useState(false);
   const lastTrainIndexRef = useRef<number>(-1);
 
   // Reset playerConfirmed when the train resolution index changes (new player's turn)
@@ -171,16 +172,46 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   // Show player turn indicator if in train mode and player hasn't confirmed yet (NOT for Ryujin)
   const showPlayerIndicator = isTrainMode && !isRyujinMode && !playerConfirmed;
 
+  const seasonColors: Record<string, string> = {
+    spring: '#FFB7C5',
+    summer: '#FFD700',
+    autumn: '#FF8C00',
+  };
+
+  const SeasonTitleIcon = () => {
+    const season = gameState.currentSeason;
+    const color = seasonColors[season] || '#ccc';
+    switch (season) {
+      case 'spring': return <SpringIcon size={34} color={color} />;
+      case 'summer': return <SummerIcon size={34} color={color} />;
+      case 'autumn': return <AutumnIcon size={34} color={color} />;
+      default: return null;
+    }
+  };
+
+  const seasonTitleColor = seasonColors[gameState.currentSeason] || 'var(--accent-gold)';
+
   return (
     <div className="season-cards-modal-backdrop" onClick={isRyujinMode ? undefined : onClose}>
-      <div className="season-cards-modal" onClick={(e) => e.stopPropagation()}>
+      <div className={`season-cards-modal${lightMode ? ' light-theme' : ''}`} onClick={(e) => e.stopPropagation()}>
         {!isRyujinMode && (
           <button className="season-cards-modal-close" onClick={onClose}>
             &times;
           </button>
         )}
+        {/* Light/Dark toggle */}
+        <div className="season-cards-theme-toggle" onClick={() => setLightMode(!lightMode)}>
+          <div className={`theme-toggle-track${lightMode ? ' light' : ''}`}>
+            <div className="theme-toggle-thumb">
+              {lightMode ? <SunIcon size={16} color="#f5a623" /> : <MoonIcon size={16} color="#c8d6e5" />}
+            </div>
+          </div>
+        </div>
         <h2 className="season-cards-modal-title">
-          {t('seasonCardsModal.titleSeason', { season: t(`season.${gameState.currentSeason}` as TranslationKey) })}
+          <SeasonTitleIcon />
+          <span style={{ color: seasonTitleColor }}>
+            {t('seasonCardsModal.titleSeason', { season: t(`season.${gameState.currentSeason}` as TranslationKey) })}
+          </span>
           {isInteractiveMode && (isRyujinMode ? ryujinPlayer : currentPlayer) && (() => {
             const player = isRyujinMode ? ryujinPlayer! : currentPlayer!;
             const playerClan = CLANS.find(c => c.id === player.clanId);

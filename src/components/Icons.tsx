@@ -429,3 +429,39 @@ export const RoninIcon = ({ size = 24, color = 'currentColor', className }: Icon
     <path d="M13 16 L15.5 21 L17 20.5 L14 16 Z" fill={color} />
   </svg>
 );
+
+/** Sun icon - used for light mode toggle */
+export const SunIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    stroke="none"
+  >
+    <circle cx="12" cy="12" r="5" />
+    <line x1="12" y1="1" x2="12" y2="4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="12" y1="20" x2="12" y2="23" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="4.22" y1="4.22" x2="6.34" y2="6.34" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="17.66" y1="17.66" x2="19.78" y2="19.78" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="1" y1="12" x2="4" y2="12" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="20" y1="12" x2="23" y2="12" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+/** Moon icon - used for dark mode toggle */
+export const MoonIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={color}
+    stroke="none"
+  >
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+  </svg>
+);
