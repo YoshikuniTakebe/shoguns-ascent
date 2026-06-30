@@ -439,7 +439,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
       style={{ ...style, ...(hasTroopsForGlow ? { '--marshal-glow-color': marshalGlowColor } as React.CSSProperties : {}) }}
       onClick={handleClick}
     >
-      <div className="region-name" style={{ color: PROVINCE_COLORS[regionId] || 'var(--accent-cream)', textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff' }}>{province.name}</div>
+      <div className="region-name" style={{ color: PROVINCE_COLORS[regionId] || 'var(--accent-cream)', textShadow: '-1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333' }}>{province.name}</div>
       {warSlot && <div className="war-token">{t('region.battle', { number: String(warSlot.number) })}</div>}
       <div className="region-forces">
         {Object.entries(figuresByOwner).map(([ownerId, figures]) => {
