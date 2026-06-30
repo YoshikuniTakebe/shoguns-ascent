@@ -133,7 +133,7 @@ export const TemplePanel = () => {
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 boxShadow: komainuPrayMode || isRecruitShintoTarget
-                  ? `0 0 16px rgba(255,215,0,0.7), 0 0 32px rgba(255,215,0,0.4), inset 0 0 20px ${palette.glow}`
+                  ? `0 0 8px rgba(255,215,0,0.3), 0 0 16px rgba(255,215,0,0.15)`
                   : `0 0 12px ${palette.glow}, inset 0 0 20px ${palette.glow}`,
                 cursor: komainuPrayMode || isRecruitShintoTarget ? 'pointer' : undefined,
               }}
