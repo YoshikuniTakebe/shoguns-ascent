@@ -33,6 +33,14 @@ import ryujinImg from '../img/Ryujin.png';
 import susanooImg from '../img/Susanoo.png';
 import tsukuyomiImg from '../img/Tsukuyomi.png';
 
+import amaterasuTile from '../img/Amaterasu_title.png';
+import fujinTile from '../img/Fujin_tile.png';
+import hachimanTile from '../img/Hachiman_tile.png';
+import raijinTile from '../img/Raijin_tile.png';
+import ryujinTile from '../img/Ryujin_tile.png';
+import susanooTile from '../img/Susanoo_tile.png';
+import tsukuyomiTile from '../img/Tsukuyomi_tile.png';
+
 const KAMI_PALETTES: Record<KamiType, { primary: string; secondary: string; glow: string }> = {
   amaterasu: { primary: '#FFD700', secondary: '#FFA500', glow: 'rgba(255,215,0,0.3)' },
   fujin: { primary: '#4ECDC4', secondary: '#2C7873', glow: 'rgba(78,205,196,0.3)' },
@@ -51,6 +59,16 @@ const KAMI_IMAGES: Record<KamiType, string> = {
   ryujin: ryujinImg,
   susanoo: susanooImg,
   tsukuyomi: tsukuyomiImg,
+};
+
+const KAMI_TILE_IMAGES: Record<KamiType, string> = {
+  amaterasu: amaterasuTile,
+  fujin: fujinTile,
+  hachiman: hachimanTile,
+  raijin: raijinTile,
+  ryujin: ryujinTile,
+  susanoo: susanooTile,
+  tsukuyomi: tsukuyomiTile,
 };
 
 export const TemplePanel = () => {
@@ -111,6 +129,9 @@ export const TemplePanel = () => {
               className={`kami-slot filled${komainuPrayMode ? ' komainu-target' : ''}${isRecruitShintoTarget ? ' recruit-target' : ''}`}
               style={{
                 borderColor: palette.primary,
+                backgroundImage: `url(${KAMI_TILE_IMAGES[temple.kamiType]})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
                 boxShadow: komainuPrayMode || isRecruitShintoTarget
                   ? `0 0 16px rgba(255,215,0,0.7), 0 0 32px rgba(255,215,0,0.4), inset 0 0 20px ${palette.glow}`
                   : `0 0 12px ${palette.glow}, inset 0 0 20px ${palette.glow}`,
@@ -128,22 +149,8 @@ export const TemplePanel = () => {
                 }
               }}
             >
-              <div className="kami-slot-illustration">
-                <img
-                  src={KAMI_IMAGES[temple.kamiType]}
-                  alt={kami?.name || temple.kamiType}
-                  width={64}
-                  height={64}
-                  style={{ borderRadius: '6px', objectFit: 'cover' }}
-                />
-              </div>
-              <div className="kami-slot-info">
-                <div className="kami-slot-name" style={{ color: palette.primary }}>
-                  {kami?.name || temple.kamiType}
-                </div>
-                <div className="kami-slot-effect">
-                  {kami ? t(KAMI_SUMMARY_KEYS[kami.type]) : ''}
-                </div>
+              <div className="kami-slot-effect">
+                {kami ? t(KAMI_SUMMARY_KEYS[kami.type]) : ''}
               </div>
               {temple.figures.length > 0 && (
                 <div className="kami-slot-figures">
