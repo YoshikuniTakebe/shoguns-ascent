@@ -4,7 +4,7 @@ import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
-import { BushiIcon, ShintoIcon, CoinIcon, UndoIcon } from './Icons';
+import { BushiIcon, ShintoIcon, CoinIcon, UndoIcon, SpringIcon, SummerIcon, AutumnIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 
 export const ActionPanel = () => {
@@ -38,6 +38,14 @@ export const ActionPanel = () => {
     betray: 'mandate.betray',
   };
 
+  const mandateColors: Record<string, string> = {
+    train: '#8B4513',
+    recruit: '#87CEEB',
+    harvest: '#2E8B57',
+    marshal: '#808080',
+    betray: '#DC143C',
+  };
+
   const pending = gameState.allianceProposals.filter(
     p => p.to === (gameState.mode === 'hotseat' ? cp?.id : localPlayerId) && !p.accepted
   );
@@ -47,17 +55,26 @@ export const ActionPanel = () => {
       <h3>{t('actions.title')}</h3>
 
       {/* Season Setup Phase */}
-      {gameState.currentPhase === 'seasonSetup' && (
-        <div className="phase-section">
-          <h4>{t('actions.seasonSetup')} - {t(`season.${gameState.currentSeason}` as TranslationKey)}</h4>
-          <p className="phase-description">{t('actions.seasonSetupDesc')}</p>
-          {isMyTurn && (
-            <button className="btn-primary advance-btn" onClick={doSetupSeason}>
-              {t('actions.beginSeason')}
-            </button>
-          )}
-        </div>
-      )}
+      {gameState.currentPhase === 'seasonSetup' && (() => {
+        const seasonColors: Record<string, string> = { spring: '#FFB7C5', summer: '#FFD700', autumn: '#FF8C00' };
+        const seasonColor = seasonColors[gameState.currentSeason] || '#ccc';
+        const SeasonIcon = gameState.currentSeason === 'spring' ? SpringIcon : gameState.currentSeason === 'summer' ? SummerIcon : AutumnIcon;
+        return (
+          <div className="phase-section">
+            <h4 style={{ marginBottom: '0.2rem' }}>{t('actions.seasonSetup')}</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.8rem' }}>
+              <SeasonIcon size={30} color={seasonColor} />
+              <span style={{ color: seasonColor, fontWeight: 'bold', fontSize: '1.2em' }}>{t(`season.${gameState.currentSeason}` as TranslationKey)}</span>
+            </div>
+            <p className="phase-description">{t('actions.seasonSetupDesc')}</p>
+            {isMyTurn && (
+              <button className="btn-primary advance-btn" onClick={doSetupSeason}>
+                {t('actions.beginSeason')}
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Tea Ceremony Phase */}
       {gameState.currentPhase === 'tea' && (
@@ -68,7 +85,7 @@ export const ActionPanel = () => {
             const cpClan = CLANS.find(c => c.id === cp.clanId);
             return (
               <p className="phase-description" style={{ marginTop: 0 }}>
-                <ClanShield clanId={cp.clanId} size={40} />
+                <ClanShield clanId={cp.clanId} size={30} />
                 <span style={{ color: cpClan?.color, fontWeight: 'bold', fontSize: '1.3em', marginLeft: '4px' }}>{cp.name}</span>{' '}
                 {t('actions.teaActivePlayerSuffix')}
               </p>
@@ -82,7 +99,7 @@ export const ActionPanel = () => {
                 const fp = gameState.players.find(p => p.id === pr.from);
                 return (
                   <div key={pr.from} className="alliance-proposal">
-                    <ClanShield clanId={fp?.clanId || ''} size={40} />
+                    <ClanShield clanId={fp?.clanId || ''} size={30} />
                     <span>{t('actions.wantsAlliance', { name: fp?.name || '' })}</span>
                     {pr.bribeAmount && pr.bribeAmount > 0 && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#DAA520' }}>
@@ -127,7 +144,7 @@ export const ActionPanel = () => {
                           {proposalsToThisPlayer.map(ap => {
                             const proposer = gameState.players.find(pl => pl.id === ap.from);
                             return proposer ? (
-                              <ClanShield key={ap.from} clanId={proposer.clanId} size={40} />
+                              <ClanShield key={ap.from} clanId={proposer.clanId} size={30} />
                             ) : null;
                           })}
                         </span>
@@ -474,7 +491,7 @@ export const ActionPanel = () => {
                   className={`btn-mandate mandate-${m}`}
                   onClick={() => doChooseMandateTile(m)}
                 >
-                  <span className="mandate-name">{m.toUpperCase()}</span>
+                  <span className="mandate-name" style={{ color: mandateColors[m] }}>{m.toUpperCase()}</span>
                   <span className="mandate-desc">{t(mandateDescKeys[m])}</span>
                 </button>
               ))}
@@ -490,7 +507,7 @@ export const ActionPanel = () => {
                   className={`btn-mandate mandate-${m}`}
                   onClick={() => doLotoChooseActualMandate(m)}
                 >
-                  <span className="mandate-name">{m.toUpperCase()}</span>
+                  <span className="mandate-name" style={{ color: mandateColors[m] }}>{m.toUpperCase()}</span>
                   <span className="mandate-desc">{t(mandateDescKeys[m])}</span>
                 </button>
               ))}

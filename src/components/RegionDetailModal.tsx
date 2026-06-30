@@ -198,6 +198,9 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
   const { gameState } = useGameStore();
   const t = useT();
   const [zoomedFigure, setZoomedFigure] = useState<ZoomedFigureInfo | null>(null);
+  const [showFront, setShowFront] = useState(true);
+  const [showMid, setShowMid] = useState(true);
+  const [showBack, setShowBack] = useState(true);
 
   if (!gameState) return null;
 
@@ -367,6 +370,33 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
           </div>
         )}
 
+        {/* Layer toggle switches */}
+        {province.figures.length > 0 && (
+          <div className="region-diorama-layer-toggles">
+            <button
+              className={`layer-toggle-btn${showFront ? ' active' : ''}`}
+              onClick={() => setShowFront(!showFront)}
+            >
+              <span className="layer-toggle-indicator" />
+              L&iacute;nea Frontal
+            </button>
+            <button
+              className={`layer-toggle-btn${showMid ? ' active' : ''}`}
+              onClick={() => setShowMid(!showMid)}
+            >
+              <span className="layer-toggle-indicator" />
+              L&iacute;nea Media
+            </button>
+            <button
+              className={`layer-toggle-btn${showBack ? ' active' : ''}`}
+              onClick={() => setShowBack(!showBack)}
+            >
+              <span className="layer-toggle-indicator" />
+              L&iacute;nea Trasera
+            </button>
+          </div>
+        )}
+
         {province.figures.length === 0 ? (
           <>
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: '18px', zIndex: 0 }} />
@@ -375,7 +405,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
         ) : (
           <div className="region-diorama-stage">
             {/* Layer 3 - Back (top): smallest, fixed 345px from bottom */}
-            {backFigures.length > 0 && (
+            {showBack && backFigures.length > 0 && (
               <div className="region-diorama-layer region-diorama-layer-back" style={{ transform: 'scale(0.6)', zIndex: 1, bottom: '345px' }}>
                 {backFigures.map(({ figure, ownerColor, ownerClanId, ownerName }, index) => {
                   const BACK_OFFSETS = [30, 20, 0, 0, 20, 30];
@@ -397,7 +427,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
             )}
 
             {/* Layer 2 - Middle: normal scale, fixed 255px from bottom */}
-            {midFigures.length > 0 && (
+            {showMid && midFigures.length > 0 && (
               <div className="region-diorama-layer region-diorama-layer-mid" style={{ transform: 'scale(0.8)', zIndex: 2, bottom: '255px', gap: '27px' }}>
                 {midFigures.map(({ figure, ownerColor, ownerClanId, ownerName }, index) => {
                   const MID_OFFSETS = [0, 10, 15, 10, 0];
@@ -419,7 +449,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
             )}
 
             {/* Layer 1 - Front (bottom): largest, fixed 160px from bottom */}
-            {frontFigures.length > 0 && (
+            {showFront && frontFigures.length > 0 && (
               <div className="region-diorama-layer region-diorama-layer-front" style={{ transform: 'scale(1.0)', zIndex: 3, bottom: '160px' }}>
                 {frontFigures.map(({ figure, ownerColor, ownerClanId, ownerName }, index) => {
                   const FRONT_OFFSETS = [-10, 40, 40, -10];
