@@ -549,11 +549,11 @@ export const GameBoard = () => {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <ClanShield clanId={popupPlayer.clanId} size={48} />
+              <ClanShield clanId={popupPlayer.clanId} size={192} />
               <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem' }}>
                 {t('game.turn', { name: popupPlayer.name })}
               </p>
-              <button className="monster-placement-btn" onClick={dismissTurnPopup}>
+              <button className="monster-placement-btn" onClick={dismissTurnPopup} style={{ fontSize: '1.2rem', padding: '0.8rem 2.5rem', marginTop: '15px' }}>
                 {t('game.turnPopupAccept')}
               </button>
             </div>
