@@ -202,7 +202,7 @@ export const en = {
   'kami.amaterasu.expansionEffect': 'Figures of highest-honor player in this Province cannot be killed by others.',
 
   // Kami Summaries (short)
-  'kami.amaterasu.summary': 'Honor #1',
+  'kami.amaterasu.summary': 'Honor a la posición 1',
   'kami.fujin.summary': '+2 Moves',
   'kami.raijin.summary': 'Summon 1 Bushi anywhere',
   'kami.ryujin.summary': 'Buy 1 Season Card',

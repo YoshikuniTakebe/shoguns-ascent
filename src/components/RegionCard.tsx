@@ -11,28 +11,28 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
   if (figure.type === 'bushi') {
     return (
       <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
-        <BushiIcon size={14} color={color} />
+        <BushiIcon size={21} color={color} />
       </span>
     );
   }
   if (figure.type === 'shinto') {
     return (
       <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
-        <ShintoIcon size={14} color={color} />
+        <ShintoIcon size={21} color={color} />
       </span>
     );
   }
   if (figure.type === 'fortress') {
     return (
       <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
-        <FortressIcon size={14} color={color} />
+        <FortressIcon size={21} color={color} />
       </span>
     );
   }
   if (figure.type === 'daimyo') {
     return (
       <span className="figure-icon" title={`${figure.type} (${figure.owner})`}>
-        <DaimyoIcon size={14} color={color} />
+        <DaimyoIcon size={21} color={color} />
       </span>
     );
   }
@@ -42,7 +42,7 @@ const FigureIcon = ({ figure, color }: { figure: Figure; color: string }) => {
     const monsterName = monsterCard?.name || 'Monster';
     return (
       <span className="figure-icon" title={monsterName}>
-        <MonsterIcon size={14} color={color} />
+        <MonsterIcon size={21} color={color} />
       </span>
     );
   }

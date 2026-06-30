@@ -223,7 +223,7 @@ export const es: Record<TranslationKey, string> = {
   'kami.amaterasu.expansionEffect': 'Las figuras del jugador con el Honor más alto en esta Provincia no pueden ser asesinadas por los otros jugadores.',
 
   // Kami Summaries (short)
-  'kami.amaterasu.summary': 'Honor #1',
+  'kami.amaterasu.summary': 'Honor a la posición 1',
   'kami.fujin.summary': '+2 Movimientos',
   'kami.raijin.summary': 'Invocar 1 Bushi en cualquier lugar',
   'kami.ryujin.summary': 'Comprar 1 Carta de Estacion',

@@ -37,13 +37,13 @@ const positions: Record<string, { x: number; y: number }> = {
 // Position and color metadata for harvest badge rendering on the map
 const HARVEST_BADGE_META: Record<string, { color: string; position: { x: number; y: number } }> = {
   hokkaido: { color: '#5BC0EB', position: { x: 1350, y: 180 } },
-  oshu: { color: '#9B8EC4', position: { x: 1290, y: 380 } },
-  kanto: { color: '#E63946', position: { x: 1320, y: 600 } },
-  edo: { color: '#2D8B4E', position: { x: 970, y: 540 } },
-  kansai: { color: '#F57C20', position: { x: 870, y: 630 } },
-  nagato: { color: '#8B5CF6', position: { x: 360, y: 550 } },
+  oshu: { color: '#9B8EC4', position: { x: 1305, y: 380 } },
+  kanto: { color: '#E63946', position: { x: 1335, y: 600 } },
+  edo: { color: '#2D8B4E', position: { x: 960, y: 540 } },
+  kansai: { color: '#F57C20', position: { x: 880, y: 630 } },
+  nagato: { color: '#8B5CF6', position: { x: 340, y: 550 } },
   shikoku: { color: '#8B6914', position: { x: 755, y: 850 } },
-  kyushu: { color: '#F5D020', position: { x: 190, y: 750 } },
+  kyushu: { color: '#F5D020', position: { x: 170, y: 750 } },
 };
 
 // Derive reward display data from PROVINCES_DATA (single source of truth)
