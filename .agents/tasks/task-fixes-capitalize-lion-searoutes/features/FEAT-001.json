@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Three fixes: (1) Capitalize kami/god names in log messages, (2) Debug and fix Path of the Lion force bonus not applying to daimyo, (3) Increase sea route dash spacing",
+  "status": "in_progress",
+  "steps": [
+    "TASK 1 - Capitalize kami names: In src/store/gameStore.ts, add a simple capitalize helper at the top of the file (or inline). Then apply capitalization at line 408 (Jinmenju log), line 784 (recruit log), and line 1092 (Komainu log) where temple.kamiType is used in log messages. Change e.g. `${temple.kamiType}` to use the capitalized version. The kamiType values are strings like 'amaterasu', 'fujin', etc.",
+    "TASK 2 - Path of the Lion fix: The code in calculateForce (src/utils/gameLogic.ts line ~2640) and getFigureForce (src/components/RegionDetailModal.tsx line ~89) both check hasCard/hasDisplayCard for 'sp-path-of-the-lion'. The logic LOOKS correct, but the user reports it does not work. Add console.log debugging in BOTH locations to output: (a) the player's seasonCards IDs array, (b) whether the Set contains 'sp-path-of-the-lion', (c) the computed figForce value. In calculateForce daimyo case, add: console.log('[calculateForce] daimyo owner:', playerId, 'cardIds:', [...cardIds], 'hasLion:', hasCard(cardIds, 'sp-path-of-the-lion'), 'figForce:', figForce). In getFigureForce daimyo case, add similar logging. ALSO look at potential issues: check if the problem is that getPlayerSeasonCardEffects is looking up the wrong player or returning empty array. Verify that the card object stored in seasonCards actually has id field as a string 'sp-path-of-the-lion'.",
+    "TASK 2 continued - After adding debugging, also check: Is there any code path where after a card is bought, the state is re-initialized or the players array is replaced without preserving seasonCards? Look for any state mutations that might clear cards. If no actual bug is found in the logic (which appears correct), the console.log will help the user identify the exact scenario where it fails.",
+    "TASK 3 - Sea routes dash spacing: In src/components/GameBoard.tsx, around lines 372 and 381, change strokeDasharray='8,5' to strokeDasharray='10,12' for BOTH the white border path and the blue path. This increases the gap between dashes significantly."
+  ],
+  "acceptance_criteria": [
+    "In src/store/gameStore.ts, all 3 log messages using temple.kamiType show the kami name with first letter capitalized (e.g., 'Amaterasu' instead of 'amaterasu')",
+    "In src/utils/gameLogic.ts calculateForce function, the daimyo case has console.log showing card IDs and lion detection status",
+    "In src/components/RegionDetailModal.tsx getFigureForce function, the daimyo case has console.log showing card IDs and lion detection status",
+    "In src/components/GameBoard.tsx, both sea route path elements use strokeDasharray='10,12' instead of '8,5'",
+    "npx tsc --noEmit passes with no errors",
+    "npx vite build succeeds"
+  ],
+  "verification": [
+    "Run npx tsc --noEmit to confirm TypeScript compilation succeeds",
+    "Run npx vite build to confirm production build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

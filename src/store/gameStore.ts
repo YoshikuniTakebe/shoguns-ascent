@@ -36,6 +36,8 @@ import {
   resolveUncontestedBattles,
 } from '../utils/gameLogic';
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 /**
  * Detects if the given state has transitioned to a war phase with unresolved battles.
  * Returns partial store state to set battleStepPhase if war is active, empty object otherwise.
@@ -405,7 +407,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       temples: updatedTemples,
       players: updatedPlayers,
       honorTrack: [...gameState.honorTrack],
-      log: [...gameState.log, `${player.name} places a shinto at ${temple.kamiType} shrine using Jinmenju (loses honor)`],
+      log: [...gameState.log, `${player.name} places a shinto at ${capitalize(temple.kamiType)} shrine using Jinmenju (loses honor)`],
     };
 
     // Lose honor
@@ -781,7 +783,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       temples: updatedTemples,
       players: updatedPlayers,
       recruitPlacementsRemaining: gameState.recruitPlacementsRemaining - 1,
-      log: [...gameState.log, `${player.name} places a shinto at ${temple.kamiType} shrine`],
+      log: [...gameState.log, `${player.name} places a shinto at ${capitalize(temple.kamiType)} shrine`],
     };
 
     // Do NOT auto-advance when placements reach 0 - player must press Terminar manually
@@ -1089,7 +1091,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     let ns: GameState = {
       ...gameState,
       temples: updatedTemples,
-      log: [...gameState.log, `Komainu placed as shinto at ${temple.kamiType} temple`],
+      log: [...gameState.log, `Komainu placed as shinto at ${capitalize(temple.kamiType)} temple`],
     };
 
     // If placing during Ryujin kami resolution, advance kami resolution instead of train

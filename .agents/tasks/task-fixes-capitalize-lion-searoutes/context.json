@@ -1,0 +1,23 @@
+{
+  "project_type": "React+TypeScript game (Zustand state management, Vite bundler)",
+  "language": "TypeScript/TSX",
+  "build_system": "Vite with TypeScript (tsc -b && vite build)",
+  "test_framework": "No test framework found",
+  "build_command": "npx vite build",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "Run npx tsc --noEmit to check type safety, then npx vite build to verify production build",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "node_modules already installed",
+  "environment_constraints": "No test suite available, validation is via TypeScript compiler and Vite build",
+  "contribution_requirements": "Work directly on main branch, commit all changes together",
+  "key_patterns": "Zustand store in src/store/gameStore.ts, game logic in src/utils/gameLogic.ts, UI components in src/components/. State is immutable (spread patterns). calculateForce in gameLogic.ts is the authoritative force calculation used by both RegionDetailModal and BattlePanel. getFigureForce in RegionDetailModal is a display-only per-figure force function.",
+  "relevant_files": [
+    "src/store/gameStore.ts",
+    "src/utils/gameLogic.ts",
+    "src/components/RegionDetailModal.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/types/game.ts"
+  ],
+  "directory_structure": "src/store/ (Zustand store), src/utils/ (game logic), src/components/ (React components), src/types/ (TypeScript types), src/i18n/ (internationalization)"
+}

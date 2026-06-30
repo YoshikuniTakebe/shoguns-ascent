@@ -93,6 +93,7 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
         if (hasDisplayCard(cardIds, 'au-path-of-the-dragon')) {
           figForce += 3;
         }
+        console.log('[getFigureForce] daimyo check:', { owner: figure.owner, cardIds: [...cardIds], hasLion: hasDisplayCard(cardIds, 'sp-path-of-the-lion'), figForce });
       }
 
       return figForce;

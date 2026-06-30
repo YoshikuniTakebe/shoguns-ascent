@@ -370,7 +370,7 @@ export const GameBoard = () => {
                         fill="none"
                         stroke="#ffffff"
                         strokeWidth="8"
-                        strokeDasharray="8,5"
+                        strokeDasharray="10,12"
                         strokeLinecap="round"
                       />
                       <path
@@ -378,7 +378,7 @@ export const GameBoard = () => {
                         fill="none"
                         stroke="rgba(80,180,240,0.8)"
                         strokeWidth="5"
-                        strokeDasharray="8,5"
+                        strokeDasharray="10,12"
                         strokeLinecap="round"
                       />
                     </g>

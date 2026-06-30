@@ -1,0 +1,7 @@
+{
+  "task_id": "task-fixes-capitalize-lion-searoutes",
+  "task_description": "Three fixes: capitalize kami names in log messages, debug/fix Path of the Lion card force bonus, increase sea route dash spacing",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

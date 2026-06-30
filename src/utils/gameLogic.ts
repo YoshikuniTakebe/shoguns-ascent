@@ -928,6 +928,8 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
     log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coins${isDiscounted ? ' (discounted)' : ''}`],
   };
 
+  console.log('[buySeasonCard]', { playerId, cardId, cardName: card.name, newSeasonCards: newState.players.find(p => p.id === playerId)?.seasonCards.map(c => c.id) });
+
   return newState;
 }
 
@@ -2645,6 +2647,7 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
       if (hasCard(cardIds, 'au-path-of-the-dragon')) {
         figForce += 3; // Daimyo +3 force
       }
+      console.log('[calculateForce] daimyo check:', { playerId, cardIds: [...cardIds], hasLion: hasCard(cardIds, 'sp-path-of-the-lion'), figForce });
     }
 
     if (fig.type === 'shinto' && hasCard(cardIds, 'su-path-of-the-favored')) {
