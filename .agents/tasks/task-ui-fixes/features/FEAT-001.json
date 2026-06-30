@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Six UI fixes: slider alignment, turn popup spacing, harvest hex width, region modal 3-figure margins, shinto icon glow, politics track overflow",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/components/ActionPanel.tsx around line 163: Add minWidth: '5.5em' to the <span> containing t('actions.bribeLabel') text (the first <span> inside each label). Do the same for the <span> containing t('actions.requestLabel'). This ensures both slider labels have equal width so sliders align.",
     "In src/components/GameBoard.tsx around line 555: Change marginTop: '-16px' to marginTop: '-20px' on the <p> element containing the turn popup text. This moves the text further from the accept button.",
@@ -24,5 +24,5 @@
     "Run npx vite build and confirm no TypeScript or build errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 6 UI changes applied successfully. Build passes with no errors. Added overflow:visible to .politics-track and position:relative;z-index:10 to .game-header for the stacking context fix."
 }
