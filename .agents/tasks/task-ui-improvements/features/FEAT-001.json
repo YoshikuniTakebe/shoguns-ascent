@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Implement 5 UI changes: figure tooltip clan-colored border, shinto container in kami slots, harvest line half-length + dark gold hex border, politics track mandate hover animation, and move Edo harvest hex 10px left.",
+  "status": "in_progress",
+  "steps": [
+    "CHANGE 1 - Figure tooltip border = clan color: In src/components/RegionCard.tsx, the FigureIcon component renders a <span className='figure-tooltip'> element. The `color` prop passed to FigureIcon is the clan color (ownerColor). Add an inline style to the .figure-tooltip span setting borderColor to the `color` prop value. The tooltip element is: <span className='figure-tooltip'>. Change it to <span className='figure-tooltip' style={{ borderColor: color }}>.",
+    "CHANGE 2 - Shinto container in kami track slots: In src/components/TemplePanel.tsx, around the section where temple.figures.length > 0 renders .kami-slot-figures, wrap the torii SVG icons in a container div that: (a) only renders when there are figures, (b) has semi-transparent background rgba(0,0,0,0.4), (c) has rounded corners (borderRadius: 6px), (d) has padding (padding: 3px 5px), (e) uses display:flex with gap:4px. Replace the current .kami-slot-figures div with this new styled container. Keep the existing position:absolute, bottom:54px, right:6px positioning but apply it to the new container.",
+    "CHANGE 3A - Harvest line half-length: In src/components/GameBoard.tsx, in the 'Harvest reward connecting lines' section (around line 370-385), calculate midX = (harvest.position.x + regionPos.x) / 2 and midY = (harvest.position.y + regionPos.y) / 2. Change x2={regionPos.x} to x2={midX} and y2={regionPos.y} to y2={midY}. Keep strokeWidth='3'.",
+    "CHANGE 3B - Harvest hex dark gold border: In src/App.css, find the .harvest-hex rule. It uses clip-path which clips borders. Replace the existing filter (drop-shadow with #444 and #333) with multiple drop-shadows using color #6B4E0A (very dark gold) to simulate a 3px border. Use: filter: drop-shadow(2px 0 0 #6B4E0A) drop-shadow(-2px 0 0 #6B4E0A) drop-shadow(0 2px 0 #6B4E0A) drop-shadow(0 -2px 0 #6B4E0A) drop-shadow(1px 1px 0 #6B4E0A) drop-shadow(-1px -1px 0 #6B4E0A) drop-shadow(1px -1px 0 #6B4E0A) drop-shadow(-1px 1px 0 #6B4E0A);",
+    "CHANGE 4 - Politics track mandate hover: In src/App.css, add a new CSS rule after the existing .politics-track-slot rules: .politics-track-slot.filled:hover{transform:scale(1.5);z-index:20;box-shadow:0 4px 20px rgba(0,0,0,0.5)}",
+    "CHANGE 5 - Move Edo harvest hex 10px left: In src/components/GameBoard.tsx, in the HARVEST_BADGE_META object, change edo position from x: 960 to x: 950."
+  ],
+  "acceptance_criteria": [
+    "npx vite build completes without errors",
+    "In RegionCard.tsx, figure-tooltip span has inline style with borderColor set to the color prop",
+    "In TemplePanel.tsx, shinto figures are wrapped in a container with rgba(0,0,0,0.4) background and rounded corners",
+    "In GameBoard.tsx, harvest connecting lines use midpoint coordinates for x2/y2",
+    "In App.css, .harvest-hex filter uses #6B4E0A drop-shadows",
+    "In App.css, .politics-track-slot.filled:hover rule exists with transform:scale(1.5)",
+    "In GameBoard.tsx, HARVEST_BADGE_META edo position x is 950"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

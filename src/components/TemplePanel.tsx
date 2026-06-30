@@ -153,7 +153,16 @@ export const TemplePanel = () => {
                 {kami ? t(KAMI_SUMMARY_KEYS[kami.type]) : ''}
               </div>
               {temple.figures.length > 0 && (
-                <div className="kami-slot-figures">
+                <div style={{
+                  position: 'absolute',
+                  bottom: '54px',
+                  right: '6px',
+                  display: 'flex',
+                  gap: '4px',
+                  background: 'rgba(0,0,0,0.4)',
+                  borderRadius: '6px',
+                  padding: '3px 5px',
+                }}>
                   {temple.figures.map((fig, i) => {
                     const player = gameState.players.find(pl => pl.id === fig.playerId);
                     const clan = player ? CLANS.find(c => c.id === player.clanId) : null;

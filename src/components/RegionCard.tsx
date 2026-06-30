@@ -118,7 +118,7 @@ const FigureIcon = ({ figure, color, gameState, regionId }: { figure: Figure; co
   const monsterPower = getMonsterPowerText(figure);
 
   const tooltipContent = (
-    <span className="figure-tooltip">
+    <span className="figure-tooltip" style={{ borderColor: color }}>
       <span className="figure-tooltip-name">{displayName}</span>
       <span className="figure-tooltip-force">Force: {force}</span>
       {monsterPower && <span className="figure-tooltip-power">{monsterPower}</span>}

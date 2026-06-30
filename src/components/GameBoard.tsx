@@ -40,7 +40,7 @@ const HARVEST_BADGE_META: Record<string, { color: string; position: { x: number;
   hokkaido: { color: '#5BC0EB', position: { x: 1350, y: 180 } },
   oshu: { color: '#9B8EC4', position: { x: 1305, y: 380 } },
   kanto: { color: '#E63946', position: { x: 1335, y: 600 } },
-  edo: { color: '#2D8B4E', position: { x: 960, y: 540 } },
+  edo: { color: '#2D8B4E', position: { x: 950, y: 540 } },
   kansai: { color: '#F57C20', position: { x: 880, y: 630 } },
   nagato: { color: '#8B5CF6', position: { x: 340, y: 550 } },
   shikoku: { color: '#8B6914', position: { x: 755, y: 850 } },
@@ -389,13 +389,15 @@ export const GameBoard = () => {
                 {Object.entries(HARVEST_REWARDS).map(([regionId, harvest]) => {
                   const regionPos = positions[regionId];
                   if (!regionPos) return null;
+                  const midX = (harvest.position.x + regionPos.x) / 2;
+                  const midY = (harvest.position.y + regionPos.y) / 2;
                   return (
                     <line
                       key={`harvest-line-${regionId}`}
                       x1={harvest.position.x}
                       y1={harvest.position.y}
-                      x2={regionPos.x}
-                      y2={regionPos.y}
+                      x2={midX}
+                      y2={midY}
                       stroke={harvest.color}
                       strokeWidth="3"
                       strokeLinecap="round"
