@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS, PROVINCE_COLORS } from '../types/game';
-import type { Figure } from '../types/game';
+import type { Figure, GameState } from '../types/game';
 import { useT } from '../i18n';
 import { FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { getMonsterFigureImage, getCastleImage, getDaimyoImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
-import { calculateForce } from '../utils/gameLogic';
+import { calculateForce, getPlayerSeasonCardEffects } from '../utils/gameLogic';
 
 interface RegionDetailModalProps {
   regionId: string;
@@ -50,12 +50,72 @@ function getFigureTypeName(type: string): string {
 }
 
 /** Get individual force value for a figure */
-function getFigureForce(figure: Figure, ownerClanId: string): number {
+function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameState, regionId: string): number {
   switch (figure.type) {
-    case 'bushi':
-      return 1;
-    case 'daimyo':
-      return 1;
+    case 'bushi': {
+      const player = gameState.players.find(p => p.id === figure.owner);
+      const isLuna = ownerClanId === 'luna';
+      let figForce = isLuna ? 2 : 1;
+
+      if (player) {
+        const playerCards = getPlayerSeasonCardEffects(gameState, player.id);
+        const cardIds = new Set(playerCards.map(c => c.id));
+
+        if (hasDisplayCard(cardIds, 'au-way-of-the-katana') && gameState.currentPhase === 'war') {
+          figForce = isLuna ? Math.max(2, figForce) : 2;
+        }
+
+        const province = gameState.provinces[regionId];
+        if (province) {
+          const provinceHasOni = province.figures.some(
+            (f) => f.type === 'monster' && f.monsterCardId && f.monsterCardId.includes('oni-of-')
+          );
+          if (hasDisplayCard(cardIds, 'su-path-of-might') && provinceHasOni) {
+            figForce += 1;
+          }
+        }
+      }
+
+      return figForce;
+    }
+    case 'daimyo': {
+      const player = gameState.players.find(p => p.id === figure.owner);
+      const isLuna = ownerClanId === 'luna';
+      let figForce = isLuna ? 2 : 1;
+
+      if (player) {
+        const playerCards = getPlayerSeasonCardEffects(gameState, player.id);
+        const cardIds = new Set(playerCards.map(c => c.id));
+
+        if (hasDisplayCard(cardIds, 'sp-path-of-the-lion')) {
+          figForce += 1;
+        }
+        if (hasDisplayCard(cardIds, 'au-path-of-the-dragon')) {
+          figForce += 3;
+        }
+      }
+
+      return figForce;
+    }
+    case 'shinto': {
+      const player = gameState.players.find(p => p.id === figure.owner);
+      const isLuna = ownerClanId === 'luna';
+      let figForce = isLuna ? 2 : 1;
+
+      if (player) {
+        const playerCards = getPlayerSeasonCardEffects(gameState, player.id);
+        const cardIds = new Set(playerCards.map(c => c.id));
+
+        if (hasDisplayCard(cardIds, 'su-path-of-the-favored')) {
+          const highestHonorPlayerId = gameState.honorTrack[0];
+          if (highestHonorPlayerId === player.id) {
+            figForce = isLuna ? Math.max(3, figForce) : 3;
+          }
+        }
+      }
+
+      return figForce;
+    }
     case 'fortress':
       // Tortuga clan fortress has force 1
       return ownerClanId === 'tortuga' ? 1 : 0;
@@ -70,6 +130,11 @@ function getFigureForce(figure: Figure, ownerClanId: string): number {
     default:
       return 0;
   }
+}
+
+/** Helper to check if a player has a card by base ID (accounts for '-2' suffix duplicates) */
+function hasDisplayCard(cardIds: Set<string>, baseId: string): boolean {
+  return cardIds.has(baseId) || cardIds.has(baseId + '-2');
 }
 
 interface FigureEntry {
@@ -274,7 +339,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
     if (!zoomedFigure) return null;
 
     const { figure, ownerColor, ownerClanId, ownerName } = zoomedFigure;
-    const figureForce = getFigureForce(figure, ownerClanId);
+    const figureForce = getFigureForce(figure, ownerClanId, gameState, regionId);
 
     // Get monster power text if applicable
     let monsterPowerText: string | null = null;
