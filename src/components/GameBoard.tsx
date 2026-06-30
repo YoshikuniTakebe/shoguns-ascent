@@ -552,7 +552,7 @@ export const GameBoard = () => {
               <div style={{ marginTop: '15px', filter: 'drop-shadow(0 0 20px rgba(0,0,0,0.7))' }}>
                 <ClanShield clanId={popupPlayer.clanId} size={173} />
               </div>
-              <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem', textShadow: '-1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333' }}>
+              <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem', textShadow: '-1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333', marginTop: '-8px' }}>
                 {t('game.turn', { name: popupPlayer.name })}
               </p>
               <button className="monster-placement-btn" onClick={dismissTurnPopup} style={{ fontSize: '1.02rem', padding: '0.68rem 2.12rem', marginTop: '5px' }}>
