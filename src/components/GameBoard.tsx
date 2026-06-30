@@ -549,7 +549,7 @@ export const GameBoard = () => {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <div style={{ marginTop: '15px', filter: 'drop-shadow(0 0 20px rgba(0,0,0,0.7))' }}>
+              <div style={{ marginTop: '15px', filter: 'drop-shadow(0 0 35px rgba(0,0,0,0.85))' }}>
                 <ClanShield clanId={popupPlayer.clanId} size={173} />
               </div>
               <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem', textShadow: '-1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333', marginTop: '-8px' }}>
