@@ -22,5 +22,5 @@
     "Run npx vite build to confirm production build succeeds"
   ],
   "blocked_reason": null,
-  "findings": "Code logic for Path of the Lion appears correct after thorough investigation. The card is correctly purchased (buySeasonCard adds to player.seasonCards), preserved through state transitions (cleanupSeason spreads seasonCards), and checked in both calculateForce and getFigureForce via hasCard/hasDisplayCard. Added console.log debugging at 3 points: (1) buySeasonCard confirms purchase, (2) calculateForce daimyo block shows card IDs and lion detection, (3) getFigureForce daimyo block shows same. The user should check browser console after buying the card and viewing a region with their daimyo to identify the runtime state."
+  "findings": "Code logic for Path of the Lion appears correct after thorough investigation. The card is correctly purchased (buySeasonCard adds to player.seasonCards), preserved through state transitions (cleanupSeason spreads seasonCards), and checked in both calculateForce and getFigureForce via hasCard/hasDisplayCard. Debug console.log statements at 3 points are now gated behind import.meta.env.DEV so they do not pollute production builds. Review issue addressed: all 3 console.logs wrapped in if (import.meta.env.DEV) blocks."
 }
