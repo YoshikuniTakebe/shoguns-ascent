@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Implement 5 UI changes: figure tooltip clan-colored border, shinto container in kami slots, harvest line half-length + dark gold hex border, politics track mandate hover animation, and move Edo harvest hex 10px left.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "CHANGE 1 - Figure tooltip border = clan color: In src/components/RegionCard.tsx, the FigureIcon component renders a <span className='figure-tooltip'> element. The `color` prop passed to FigureIcon is the clan color (ownerColor). Add an inline style to the .figure-tooltip span setting borderColor to the `color` prop value. The tooltip element is: <span className='figure-tooltip'>. Change it to <span className='figure-tooltip' style={{ borderColor: color }}>.",
     "CHANGE 2 - Shinto container in kami track slots: In src/components/TemplePanel.tsx, around the section where temple.figures.length > 0 renders .kami-slot-figures, wrap the torii SVG icons in a container div that: (a) only renders when there are figures, (b) has semi-transparent background rgba(0,0,0,0.4), (c) has rounded corners (borderRadius: 6px), (d) has padding (padding: 3px 5px), (e) uses display:flex with gap:4px. Replace the current .kami-slot-figures div with this new styled container. Keep the existing position:absolute, bottom:54px, right:6px positioning but apply it to the new container.",
@@ -24,5 +24,5 @@
     "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 5 changes implemented and build verified successfully. No test framework in project - verification is build-only."
 }
