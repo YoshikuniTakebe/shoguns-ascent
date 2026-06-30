@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Three fixes: (1) Capitalize kami/god names in log messages, (2) Debug and fix Path of the Lion force bonus not applying to daimyo, (3) Increase sea route dash spacing",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "TASK 1 - Capitalize kami names: In src/store/gameStore.ts, add a simple capitalize helper at the top of the file (or inline). Then apply capitalization at line 408 (Jinmenju log), line 784 (recruit log), and line 1092 (Komainu log) where temple.kamiType is used in log messages. Change e.g. `${temple.kamiType}` to use the capitalized version. The kamiType values are strings like 'amaterasu', 'fujin', etc.",
     "TASK 2 - Path of the Lion fix: The code in calculateForce (src/utils/gameLogic.ts line ~2640) and getFigureForce (src/components/RegionDetailModal.tsx line ~89) both check hasCard/hasDisplayCard for 'sp-path-of-the-lion'. The logic LOOKS correct, but the user reports it does not work. Add console.log debugging in BOTH locations to output: (a) the player's seasonCards IDs array, (b) whether the Set contains 'sp-path-of-the-lion', (c) the computed figForce value. In calculateForce daimyo case, add: console.log('[calculateForce] daimyo owner:', playerId, 'cardIds:', [...cardIds], 'hasLion:', hasCard(cardIds, 'sp-path-of-the-lion'), 'figForce:', figForce). In getFigureForce daimyo case, add similar logging. ALSO look at potential issues: check if the problem is that getPlayerSeasonCardEffects is looking up the wrong player or returning empty array. Verify that the card object stored in seasonCards actually has id field as a string 'sp-path-of-the-lion'.",
@@ -22,5 +22,5 @@
     "Run npx vite build to confirm production build succeeds"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Code logic for Path of the Lion appears correct after thorough investigation. The card is correctly purchased (buySeasonCard adds to player.seasonCards), preserved through state transitions (cleanupSeason spreads seasonCards), and checked in both calculateForce and getFigureForce via hasCard/hasDisplayCard. Added console.log debugging at 3 points: (1) buySeasonCard confirms purchase, (2) calculateForce daimyo block shows card IDs and lion detection, (3) getFigureForce daimyo block shows same. The user should check browser console after buying the card and viewing a region with their daimyo to identify the runtime state."
 }
