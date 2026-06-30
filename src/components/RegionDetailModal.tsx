@@ -527,7 +527,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                   const FRONT_OFFSETS = frontFigures.length === 3 ? [-10, 40, -10] : [-10, 40, 40, -10];
                   const offset = FRONT_OFFSETS[index] || 0;
                   return (
-                    <div key={figure.id} style={{ position: 'relative', top: `${offset}px` }}>
+                    <div key={figure.id} style={{ position: 'relative', top: `${offset}px`, ...(frontFigures.length === 3 && index === 0 ? { marginLeft: '135px' } : {}), ...(frontFigures.length === 3 && index === frontFigures.length - 1 ? { marginRight: '135px' } : {}) }}>
                       <DioramaFigure
                         figure={figure}
                         ownerColor={ownerColor}

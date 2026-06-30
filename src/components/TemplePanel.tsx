@@ -173,7 +173,7 @@ export const TemplePanel = () => {
                         className="kami-figure-dot"
                         title={player?.name || ''}
                       >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill={figColor} stroke="none" style={{ filter: 'drop-shadow(1px 1px 2px rgba(0,0,0,0.6))' }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill={figColor} stroke="none" style={{ filter: `drop-shadow(0 0 4px ${figColor}) drop-shadow(0 0 8px ${figColor})` }}>
                           <rect x="4" y="6" width="16" height="2" rx="1" />
                           <rect x="6" y="4" width="12" height="2" rx="0.5" opacity="0.7" />
                           <rect x="7" y="8" width="2" height="14" />

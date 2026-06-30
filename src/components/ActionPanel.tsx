@@ -162,7 +162,7 @@ export const ActionPanel = () => {
               {selectedAllianceTarget && cp && cp.coins > 0 && (
                 <div className="bribe-slider" style={{ marginBottom: '0.5rem' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85em' }}>
-                    <span>{t('actions.bribeLabel')}:</span>
+                    <span style={{ minWidth: '5.5em' }}>{t('actions.bribeLabel')}:</span>
                     <input
                       type="range"
                       min={0}
@@ -187,7 +187,7 @@ export const ActionPanel = () => {
                 return targetPlayer && targetPlayer.coins > 0 ? (
                   <div className="request-slider" style={{ marginBottom: '0.5rem' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85em' }}>
-                      <span>{t('actions.requestLabel')}:</span>
+                      <span style={{ minWidth: '5.5em' }}>{t('actions.requestLabel')}:</span>
                       <input
                         type="range"
                         min={0}
