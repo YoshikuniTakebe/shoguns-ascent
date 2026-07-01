@@ -309,7 +309,7 @@ export const es: Record<TranslationKey, string> = {
   'monster.selectTemple': 'Selecciona un santuario para el Shinto',
 
   // Player Cards Modal
-  'playerCards.title': '{name} ({clan}) - Cartas',
+  'playerCards.title': '{name} - Cartas',
   'playerCards.button': 'Cartas ({count})',
   'playerCards.empty': 'Sin cartas todavia.',
 

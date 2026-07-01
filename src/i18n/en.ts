@@ -307,7 +307,7 @@ export const en = {
   'monster.selectTemple': 'Select a shrine for the Shinto',
 
   // Player Cards Modal
-  'playerCards.title': '{name} ({clan}) - Cards',
+  'playerCards.title': '{name} - Cards',
   'playerCards.button': 'Cards ({count})',
   'playerCards.empty': 'No cards yet.',
 
