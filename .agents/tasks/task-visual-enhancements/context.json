@@ -1,0 +1,23 @@
+{
+  "project_type": "React + TypeScript + Vite game application (board game)",
+  "language": "TypeScript / TSX",
+  "build_system": "Vite with tsc type checking",
+  "test_framework": "None (no test files found)",
+  "build_command": "npm run build",
+  "test_command": null,
+  "verification_instructions": "Run `npm run build` and confirm it completes (exit code 0). Note: there are pre-existing TS errors in BattleBiddingOverlay.tsx and BattlePanel.tsx that are not related to our changes.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install in project root",
+  "environment_constraints": "No test suite available. Verification is limited to build passing.",
+  "contribution_requirements": "None documented",
+  "key_patterns": "CSS is in src/App.css (mostly one long line for minified section at top, then well-formatted sections for newer components). Components are in src/components/. Game types and constants (PROVINCE_COLORS, CLANS, etc.) in src/types/game.ts. Icon components in src/components/Icons.tsx.",
+  "relevant_files": [
+    "src/App.css",
+    "src/components/TemplePanel.tsx",
+    "src/components/RegionDetailModal.tsx",
+    "src/components/RegionCard.tsx",
+    "src/components/GameBoard.tsx",
+    "src/types/game.ts"
+  ],
+  "directory_structure": "Root: vite.config.ts, package.json, index.html. src/: App.css (all styles), components/ (React components), types/game.ts (constants), store/gameStore.ts (state), i18n/ (translations)"
+}

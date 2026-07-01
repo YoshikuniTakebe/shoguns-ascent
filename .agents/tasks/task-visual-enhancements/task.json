@@ -1,0 +1,14 @@
+{
+  "task_id": "task-visual-enhancements",
+  "task_description": "Apply visual enhancements to the Shogun's Ascent game UI: larger Shinto icons, white borders on diorama buttons and force name badges, province-colored region names with white outline, gold bold war token text, 5-per-line icon limit in region cards, top-anchored card growth, parchment card backgrounds, gold-bordered harvest hexagons, thicker harvest connecting lines, thicker sea routes with white border.",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "skipped",
+    "test_quality": "skipped",
+    "docker_build": "skipped",
+    "summary": "Build passes (exit code 0). Pre-existing TS errors in BattleBiddingOverlay.tsx and BattlePanel.tsx are unrelated to changes. No test suite exists in this project."
+  }
+}
