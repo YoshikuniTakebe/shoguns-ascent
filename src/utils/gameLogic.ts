@@ -2674,6 +2674,35 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
       }
     }
 
+    if (fig.type === 'monster' && fig.monsterCardId) {
+      if (fig.monsterCardId === 'sp-oni-of-skulls') {
+        const ownerIds = [...new Set(province.figures.map(f => f.owner))];
+        const ownerHonorIndex = state.honorTrack.indexOf(playerId);
+        const hasLowestHonor = ownerIds.every(id => {
+          const idx = state.honorTrack.indexOf(id);
+          return idx <= ownerHonorIndex;
+        });
+        figForce = hasLowestHonor ? 3 : 1;
+        if (isLuna) figForce = Math.max(figForce, 2);
+      } else if (fig.monsterCardId === 'su-oni-of-blood') {
+        const ownerIds = [...new Set(province.figures.map(f => f.owner))];
+        const ownerHonorIndex = state.honorTrack.indexOf(playerId);
+        const hasLowestHonor = ownerIds.every(id => {
+          const idx = state.honorTrack.indexOf(id);
+          return idx <= ownerHonorIndex;
+        });
+        figForce = hasLowestHonor ? 4 : 2;
+        if (isLuna) figForce = Math.max(figForce, 2);
+      } else {
+        // Other monsters with defined force always use their card force
+        const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
+        const monsterCard = allCards.find(c => c.id === fig.monsterCardId);
+        if (monsterCard && monsterCard.force !== undefined) {
+          figForce = isLuna ? Math.max(monsterCard.force, 2) : monsterCard.force;
+        }
+      }
+    }
+
     totalForce += figForce;
   }
 

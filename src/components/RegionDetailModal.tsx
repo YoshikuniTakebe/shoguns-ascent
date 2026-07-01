@@ -126,6 +126,23 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
       if (figure.monsterCardId) {
         const info = getMonsterInfo(figure.monsterCardId);
         if (info && info.force !== undefined) {
+          // Oni of Skulls and Oni of Blood have conditional force based on honor
+          if (figure.monsterCardId === 'sp-oni-of-skulls' || figure.monsterCardId === 'su-oni-of-blood') {
+            const province = gameState.provinces[regionId];
+            if (province) {
+              const ownerIds = [...new Set(province.figures.map(f => f.owner))];
+              const ownerHonorIndex = gameState.honorTrack.indexOf(figure.owner);
+              const hasLowestHonor = ownerIds.every(id => {
+                const idx = gameState.honorTrack.indexOf(id);
+                return idx <= ownerHonorIndex;
+              });
+              if (figure.monsterCardId === 'sp-oni-of-skulls') {
+                return hasLowestHonor ? 3 : 1;
+              } else {
+                return hasLowestHonor ? 4 : 2;
+              }
+            }
+          }
           return info.force;
         }
       }

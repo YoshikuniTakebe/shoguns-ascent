@@ -43,7 +43,7 @@
 .theme-toggle-track.light .theme-toggle-thumb{transform:translateX(22px);background:#fff}
 
 .season-cards-modal.light-theme{background:linear-gradient(145deg,#1e2d4d,#162240)}
-.season-cards-modal.light-theme .season-card{background:linear-gradient(135deg,#f5f0e0,#fffef8);color:#2c2c2c;border-color:rgba(100,80,40,0.25)}
+.season-cards-modal.light-theme .season-card{background:linear-gradient(135deg,#ebe3cc,#fffef8);color:#2c2c2c;border-color:rgba(100,80,40,0.25)}
 .season-cards-modal.light-theme .season-card-name{color:#2c2c2c}
 .season-cards-modal.light-theme .season-card-effect{color:#4a4a4a}
 .season-cards-modal.light-theme .season-card-cost{color:#8B6914}
