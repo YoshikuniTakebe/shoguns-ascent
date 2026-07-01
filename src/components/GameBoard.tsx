@@ -423,10 +423,10 @@ export const GameBoard = () => {
                       const key = `${i}-${j}`;
                       allIcons.push(
                         <span key={key} className="harvest-reward-item">
-                          {reward.type === 'vp' && <VPIcon size={20} color="#fff" />}
-                          {reward.type === 'coin' && <CoinIcon size={20} color="#fff" />}
-                          {reward.type === 'ronin' && <RoninIcon size={20} color="#fff" />}
-                          {reward.type === 'honor' && <HonorIcon size={20} color="#fff" />}
+                          {reward.type === 'vp' && <VPIcon size={27} color="#fff" />}
+                          {reward.type === 'coin' && <CoinIcon size={27} color="#fff" />}
+                          {reward.type === 'ronin' && <RoninIcon size={27} color="#fff" />}
+                          {reward.type === 'honor' && <HonorIcon size={27} color="#fff" />}
                         </span>
                       );
                     });
@@ -549,7 +549,7 @@ export const GameBoard = () => {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <div style={{ marginTop: '5px', filter: 'drop-shadow(0 0 35px rgba(0,0,0,0.85))' }}>
+              <div style={{ marginTop: '5px', filter: 'drop-shadow(rgba(7, 7, 2, 7.85) 0px 0px 15px)' }}>
                 <ClanShield clanId={popupPlayer.clanId} size={173} />
               </div>
               <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem', textShadow: '-1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333', marginTop: '-20px' }}>
