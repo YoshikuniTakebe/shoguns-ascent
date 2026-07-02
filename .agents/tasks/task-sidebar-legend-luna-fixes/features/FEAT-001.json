@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "CSS adjustments for sidebar left reserves, Legend button in header with icon tooltip, Luna no-placement popup fix, and dual-type monster reserve count fix",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/App.css, find the `.reserve-item` rule and change padding to `0.15rem 0.15rem` and font-size to `0.65rem`. Find the `.player-reserves` rule and change gap to `0rem`.",
     "2. In src/components/GameBoard.tsx, add a Legend button (round, 2px gold border, bold question mark '?' in the center) in the game-header, positioned to the right side BEFORE the mandate-counter div (Ronda: 1/3). On hover, show a vertical tooltip that lists ALL icons used in the game with their text names (Bushi, Shinto, Fortaleza, Daimyo, Monstruo, Moneda, PV, Honor, Ronin, Fuerza, Primavera, Verano, Otono, Invierno). The tooltip design must match the clan-tooltip styling from the home page (dark gradient background, gold border with gradient, rounded corners, shadow). Icons should all be the same size (around 20px, similar to map troop icons). Import all needed icons from ./Icons.",
@@ -26,5 +26,5 @@
     "Run `npx vite build` in the project root and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes build cleanly. The Luna no-placement fix was added to doBuySeasonCard for the non-Komainu else branch. The Komainu path already goes through confirmMonsterPlacement which has its own Luna check. The PlayerPanel computeReserveTotals function correctly computes dual-type monster bonuses (shinto from sp-komainu/su-hotei, daimyo from su-yurei/sp-fukurokuju) based on cards in reserve vs deployed. The no-placement popup now requires monsterPlacementCard to be truthy (added to conditional), which is always set in both code paths."
 }
