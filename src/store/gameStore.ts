@@ -901,15 +901,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         // No valid province: monster goes to reserve, show popup to inform player
         const updatedPlayers = gameState.players.map(p => {
           if (p.id !== monsterPlacementPlayerId) return p;
-          const updated = { ...p, monsters: p.monsters + 1 };
-          // Handle dual-type monsters
-          const cardId = get().monsterPlacementCard?.id;
-          if (cardId === 'sp-komainu' || cardId === 'su-hotei') {
-            updated.shinto = updated.shinto + 1;
-          } else if (cardId === 'su-yurei' || cardId === 'sp-fukurokuju') {
-            updated.hasDaimyo = true;
-          }
-          return updated;
+          return { ...p, monsters: p.monsters + 1 };
         });
         const ns: GameState = {
           ...gameState,

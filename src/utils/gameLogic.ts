@@ -1240,12 +1240,6 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
     figureOwner.shinto += 1;
   } else if (figure.type === 'monster') {
     figureOwner.monsters += 1;
-    // Handle dual-type monsters
-    if (figure.monsterCardId === 'sp-komainu' || figure.monsterCardId === 'su-hotei') {
-      figureOwner.shinto += 1;
-    } else if (figure.monsterCardId === 'su-yurei' || figure.monsterCardId === 'sp-fukurokuju') {
-      figureOwner.hasDaimyo = true;
-    }
   }
 
   // Decrement issuer's reserve
@@ -1975,12 +1969,6 @@ export function resolveNextBattle(state: GameState): GameState {
             bidder.hasDaimyo = true;
           } else if (fig.type === 'monster') {
             bidder.monsters += 1;
-            // Handle dual-type monsters
-            if (fig.monsterCardId === 'sp-komainu' || fig.monsterCardId === 'su-hotei') {
-              bidder.shinto += 1;
-            } else if (fig.monsterCardId === 'su-yurei' || fig.monsterCardId === 'sp-fukurokuju') {
-              bidder.hasDaimyo = true;
-            }
           }
         }
         const killedIds = ownFigures.map((f) => f.id);
@@ -2146,12 +2134,6 @@ export function resolveNextBattle(state: GameState): GameState {
         else if (fig.type === 'daimyo') loser.hasDaimyo = true;
         else if (fig.type === 'monster') {
           loser.monsters += 1;
-          // Handle dual-type monsters
-          if (fig.monsterCardId === 'sp-komainu' || fig.monsterCardId === 'su-hotei') {
-            loser.shinto += 1;
-          } else if (fig.monsterCardId === 'su-yurei' || fig.monsterCardId === 'sp-fukurokuju') {
-            loser.hasDaimyo = true;
-          }
         }
         // Track killed figures for display
         if (!killedMap[pid]) killedMap[pid] = {};
