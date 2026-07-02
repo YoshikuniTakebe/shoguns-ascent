@@ -351,7 +351,10 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 {currentPlayer.name}
               </p>
               <p style={{ margin: '0 0 20px', color: '#aaa', fontSize: '0.9em' }}>
-                {t('seasonCardsModal.playerCoins', { coins: String(currentPlayer.coins) })}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <CoinIcon size={18} color="#DAA520" />
+                  <span>{currentPlayer.coins}</span>
+                </span>
                 {isDiscounted && (
                   <span style={{ color: '#27ae60', marginLeft: '8px' }}>
                     {t('seasonCardsModal.discount')}

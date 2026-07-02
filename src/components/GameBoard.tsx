@@ -329,6 +329,11 @@ export const GameBoard = () => {
           >
             <HonorTrack />
             <AllianceDisplay />
+            {ruleViolationMessage && (
+              <div className="rule-violation-toast">
+                {ruleViolationMessage}
+              </div>
+            )}
             <div
               className="map-canvas"
               style={{ transform: `translate(${translateX}px, ${translateY}px)` }}
@@ -558,13 +563,6 @@ export const GameBoard = () => {
       {/* Region Detail Modal */}
       {selectedRegion && !moveMode && !recruitMode && !betrayMode && !monsterPlacementMode && !buildFortressMode && (
         <RegionDetailModal regionId={selectedRegion} onClose={() => selectRegion(null)} />
-      )}
-
-      {/* Rule Violation Toast */}
-      {ruleViolationMessage && (
-        <div className="rule-violation-toast">
-          {ruleViolationMessage}
-        </div>
       )}
 
       {/* Turn Popup (hotseat mandate transitions) */}

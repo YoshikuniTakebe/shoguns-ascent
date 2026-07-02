@@ -1,0 +1,23 @@
+{
+  "project_type": "React + TypeScript + Vite board game app",
+  "language": "TypeScript",
+  "build_system": "Vite via npx",
+  "test_framework": "None found - no test files",
+  "build_command": "npx vite build",
+  "test_command": "npx vite build",
+  "verification_instructions": "Run npx vite build and confirm zero errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "Dependencies pre-installed in node_modules",
+  "environment_constraints": "node_modules already present, no npm install needed",
+  "contribution_requirements": "Work directly on main branch, commit when done",
+  "key_patterns": "Single large App.css with all styles (minified sections). Components in src/components/. Game types in src/types/game.ts. RegionDetailModal has a getFigureForce helper that calculates individual figure force values - reuse this pattern for tooltips.",
+  "relevant_files": [
+    "src/App.css",
+    "src/components/RegionCard.tsx",
+    "src/components/TemplePanel.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/RegionDetailModal.tsx",
+    "src/types/game.ts"
+  ],
+  "directory_structure": "src/App.css (all styles), src/components/ (React components), src/types/game.ts (types and card data), src/utils/gameLogic.ts (game logic)"
+}

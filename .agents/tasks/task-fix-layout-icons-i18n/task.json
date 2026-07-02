@@ -1,7 +1,14 @@
 {
   "task_id": "task-fix-layout-icons-i18n",
   "task_description": "Fix recruit buttons layout overflow (CSS), fix region-forces icon wrapping to 3rd row prematurely (CSS), and translate all remaining English log messages to Spanish in gameLogic.ts and gameStore.ts",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001", "FEAT-002"],
-  "blocked_reason": null
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "npx vite build passes successfully. CSS fixes confirmed: flex-wrap:wrap in .recruit-buttons; max-width:calc(5*21px+4*3px) in .region-forces. All English log messages translated to Spanish with proper diacritics (ñ, ó, é, í, ú). Card effects in types/game.ts intentionally NOT translated per project requirements."
+  }
 }

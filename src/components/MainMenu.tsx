@@ -4,6 +4,7 @@ import { CLANS, DECK_GROUPS, CLAN_INCOME, KAMI_DATA } from '../types/game';
 import type { DeckConfig, DeckName, KamiType } from '../types/game';
 import type { TranslationKey } from '../i18n';
 import { ClanShield } from './ClanShields';
+import { HonorIcon, CoinIcon } from './Icons';
 import { useT } from '../i18n';
 import { shuffle } from '../utils/gameLogic';
 import titleImg from '../img/NoboruTaiyo.png';
@@ -325,8 +326,8 @@ export const MainMenu = () => {
               <ClanShield clanId={c.id} size={150} />
               <div className="clan-tooltip" style={{ borderColor: c.color }}>
                 <span className="clan-tooltip-name" style={{ color: c.color }}>{c.name}</span>
-                <span className="clan-tooltip-stat">Honor inicial: {c.initialHonor}</span>
-                <span className="clan-tooltip-stat">Ingresos: {CLAN_INCOME[c.id] ?? 0}</span>
+                <span className="clan-tooltip-stat" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><HonorIcon size={14} color={c.color} /> Honor inicial: {c.initialHonor}</span>
+                <span className="clan-tooltip-stat" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CoinIcon size={14} color={c.color} /> Ingresos: {CLAN_INCOME[c.id] ?? 0}</span>
                 <span className="clan-tooltip-power">Poder: {CLAN_POWERS[c.id] ?? ''}</span>
               </div>
             </div>

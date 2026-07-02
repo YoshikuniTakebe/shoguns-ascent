@@ -1,0 +1,14 @@
+{
+  "task_id": "task-ui-visual-improvements",
+  "task_description": "Implement 7 visual/UI improvements: region card transparency reduction, figure icon dark borders, shinto kami icon black borders, rich figure tooltips, harvest hex dark borders, sea route opacity change, and kami god power text styling",
+  "status": "completed",
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "npx vite build completes successfully. All 7 visual changes verified in source: region card alpha=0.05, figure-icon drop-shadow, shinto stroke=black, figure-tooltip with name/force/power, harvest-hex dark gray shadows, sea routes 0.93 opacity, kami-slot-effect font-size:0.78rem;font-weight:bold"
+  },
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

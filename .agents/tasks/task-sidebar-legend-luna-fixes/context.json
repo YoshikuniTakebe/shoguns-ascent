@@ -1,0 +1,24 @@
+{
+  "project_type": "React + TypeScript + Vite board game",
+  "language": "TypeScript/React",
+  "build_system": "Vite",
+  "test_framework": "none detected",
+  "build_command": "npx vite build",
+  "test_command": "npx vite build",
+  "verification_instructions": "Run npx vite build and check for zero errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install (if needed), npx vite build to validate",
+  "environment_constraints": "Standard web build environment",
+  "contribution_requirements": "none",
+  "key_patterns": "Zustand store (gameStore.ts), single CSS file (App.css minified on line 1), i18n with en.ts and es.ts (both must be updated for new keys), Icons defined in Icons.tsx",
+  "relevant_files": [
+    "src/App.css",
+    "src/components/GameBoard.tsx",
+    "src/components/PlayerPanel.tsx",
+    "src/store/gameStore.ts",
+    "src/components/Icons.tsx",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts"
+  ],
+  "directory_structure": "src/components/ (React components), src/store/ (Zustand store), src/i18n/ (translations), src/utils/ (game logic), src/types/ (TypeScript types)"
+}

@@ -1,0 +1,22 @@
+{
+  "project_type": "React + TypeScript + Vite board game",
+  "language": "TypeScript/React",
+  "build_system": "Vite",
+  "test_framework": "none found",
+  "build_command": "npx vite build",
+  "test_command": "npx vite build",
+  "verification_instructions": "Run npx vite build and confirm it succeeds with no errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "Standard web project, no Docker needed",
+  "contribution_requirements": "None specified",
+  "key_patterns": "Inline styles in JSX components, minified CSS in App.css, i18n with useT hook",
+  "relevant_files": [
+    "src/components/ActionPanel.tsx",
+    "src/components/GameBoard.tsx",
+    "src/App.css",
+    "src/components/RegionDetailModal.tsx",
+    "src/components/TemplePanel.tsx"
+  ],
+  "directory_structure": "src/components/ contains all React components, src/App.css contains all styles in minified single-line blocks"
+}

@@ -1,0 +1,21 @@
+{
+  "project_type": "React+TypeScript board game SPA with Vite",
+  "language": "TypeScript/React",
+  "build_system": "Vite with TypeScript compiler",
+  "test_framework": "None found",
+  "build_command": "npx vite build",
+  "test_command": "none",
+  "verification_instructions": "Run npx vite build and confirm it succeeds with no errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install && npx vite build",
+  "environment_constraints": "No test framework. Verification is build-only.",
+  "contribution_requirements": "Work directly on main branch, commit when done.",
+  "key_patterns": "Single CSS file (src/App.css) with minified styles. Components in src/components/. State managed by zustand in src/store/gameStore.ts. Clan colors accessed via CLANS array. Figure tooltip uses .figure-tooltip class with border: 1.5px solid var(--accent-gold).",
+  "relevant_files": [
+    "src/components/RegionCard.tsx",
+    "src/components/TemplePanel.tsx",
+    "src/components/GameBoard.tsx",
+    "src/App.css"
+  ],
+  "directory_structure": "Root: src/ with components/, store/, types/, img/, utils/, i18n/. All styling in src/App.css (single file, long lines). Build outputs to dist/."
+}

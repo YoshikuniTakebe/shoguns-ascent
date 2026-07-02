@@ -1,7 +1,14 @@
 {
   "task_id": "task-ui-adjustments",
   "task_description": "Apply 5 UI adjustments: force badge text border to dark grey, harvest hex bigger with brown border, politics tile hover above header, turn popup button 5px higher, front layer 3-figure layout",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001"],
-  "blocked_reason": null
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "skipped",
+    "docker_build": "skipped",
+    "summary": "npx vite build passes. All 5 CSS/TSX changes verified via grep: force-name uses #333, harvest-hex is 76x76 with #4A2800 shadows, politics-track z-index:1200 with position:relative, button marginTop -11px, front layer conditional 3-figure layout with space-between."
+  }
 }

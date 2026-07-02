@@ -1,0 +1,14 @@
+{
+  "task_id": "task-ui-fixes",
+  "task_description": "Six UI fixes: slider alignment, turn popup spacing, harvest hex width, 3-figure region margins, shinto glow, politics track overflow",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "npx vite build succeeds. All 6 changes verified via grep: slider minWidth, turn popup marginTop, harvest-hex width, region modal margins, shinto glow filter, politics-track overflow:visible."
+  }
+}

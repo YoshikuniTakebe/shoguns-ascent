@@ -1,0 +1,22 @@
+{
+  "project_type": "React + TypeScript board game SPA",
+  "language": "TypeScript/TSX",
+  "build_system": "Vite",
+  "test_framework": "None found (no test files)",
+  "build_command": "npx vite build",
+  "test_command": "npx vite build",
+  "verification_instructions": "Run `npx vite build` from /projects/sandbox/shoguns-ascent and confirm zero errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/shoguns-ascent && npm install",
+  "environment_constraints": "No test framework. Verification is build-only.",
+  "contribution_requirements": "N/A",
+  "key_patterns": "Single App.css file with minified CSS on long lines. Components in src/components/. Icons defined as SVG React components in Icons.tsx. Tooltips use hover pattern with ::after pseudo-element for arrows (see .figure-tooltip::after, .clan-tooltip::after). PoliticsTrack uses gameState.currentPhase and gameState.kamiResolutionActive for phase detection. Season colors: spring=#FFB7C5, summer=#FF6B35, autumn=#D4A574, winter=#A8C8E8.",
+  "relevant_files": [
+    "src/App.css",
+    "src/components/GameBoard.tsx",
+    "src/components/PoliticsTrack.tsx",
+    "src/components/Icons.tsx",
+    "src/components/RegionDetailModal.tsx"
+  ],
+  "directory_structure": "src/components/ - All React components. src/App.css - All styles (single file, minified lines). src/types/game.ts - Type definitions. src/store/gameStore.ts - Zustand store."
+}
