@@ -303,6 +303,8 @@ export const es: Record<TranslationKey, string> = {
   'monster.selectPlacement': 'Selecciona donde sacar {name}',
   'monster.accept': 'Aceptar',
   'monster.noPlacement': 'No tienes sitio donde sacarlo, ira directo a tu reserva',
+  'monster.noPlacementLine1': 'No puedes sacar a {name},',
+  'monster.noPlacementLine2': 'ira directo a tu reserva',
   'monster.komainuChoice': 'Komainu: Colocar en mapa o enviar a rezar a un santuario?',
   'monster.komainuMap': 'Colocar en mapa',
   'monster.komainuPray': 'Enviar a rezar',

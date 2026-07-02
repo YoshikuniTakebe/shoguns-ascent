@@ -610,6 +610,38 @@ export const useGameStore = create<GameStore>((set, get) => ({
           monsterPlacementMode: false,
         });
       } else {
+        // Luna clan: check if there's a valid province BEFORE showing placement popup
+        const placingPlayer = ns.players.find(p => p.id === apid);
+        if (placingPlayer && placingPlayer.clanId === 'luna') {
+          const hasValidProvince = Object.values(ns.provinces).some(province => {
+            const hasFortress = province.figures.some(f => f.owner === apid && f.type === 'fortress');
+            if (!hasFortress) return false;
+            const lunaFigures = province.figures.filter(f => f.owner === apid && f.type !== 'fortress').length;
+            return lunaFigures < 2;
+          });
+          if (!hasValidProvince) {
+            // No valid province: monster goes to reserve directly
+            const updatedPlayers = ns.players.map(p => {
+              if (p.id !== apid) return p;
+              return { ...p, monsters: p.monsters + 1 };
+            });
+            const nsUpdated: GameState = {
+              ...ns,
+              players: updatedPlayers,
+              log: [...ns.log, `Luna: no valid province for monster placement - ${boughtCard.name} stays in reserve`],
+            };
+            set({
+              gameState: nsUpdated,
+              monsterPlacementCard: boughtCard,
+              monsterPlacementPlayerId: apid,
+              monsterPlacementPopupVisible: false,
+              monsterNoPlacementPopupVisible: true,
+              monsterPlacementMode: false,
+              komainuChoiceVisible: false,
+            });
+            return;
+          }
+        }
         // Show popup asking where to place the monster
         set({
           gameState: ns,

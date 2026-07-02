@@ -15,7 +15,7 @@ import { PoliticsTrack } from './PoliticsTrack';
 import { RegionDetailModal } from './RegionDetailModal';
 import { HarvestPopup } from './HarvestPopup';
 import { KamiResolutionPopup } from './KamiResolutionPopup';
-import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, UndoIcon } from './Icons';
+import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, UndoIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
@@ -223,6 +223,25 @@ export const GameBoard = () => {
           </span>
           {gameState.mode === 'hotseat' && <span className="hotseat-label">{t('game.hotseat')}</span>}
           {!isMyTurn && gameState.mode === 'online' && <span className="waiting-label">{t('game.waiting')}</span>}
+        </div>
+        <div className="legend-button-wrapper">
+          <button className="legend-btn">?</button>
+          <div className="legend-tooltip">
+            <div className="legend-tooltip-row"><BushiIcon size={20} color="#fff" /><span>Bushi</span></div>
+            <div className="legend-tooltip-row"><ShintoIcon size={20} color="#fff" /><span>Shinto</span></div>
+            <div className="legend-tooltip-row"><FortressIcon size={20} color="#fff" /><span>Fortaleza</span></div>
+            <div className="legend-tooltip-row"><DaimyoIcon size={20} color="#fff" /><span>Daimyo</span></div>
+            <div className="legend-tooltip-row"><MonsterIcon size={20} color="#fff" /><span>Monstruo</span></div>
+            <div className="legend-tooltip-row"><CoinIcon size={20} color="#fff" /><span>Moneda</span></div>
+            <div className="legend-tooltip-row"><VPIcon size={20} color="#fff" /><span>PV</span></div>
+            <div className="legend-tooltip-row"><HonorIcon size={20} color="#fff" /><span>Honor</span></div>
+            <div className="legend-tooltip-row"><RoninIcon size={20} color="#fff" /><span>Ronin</span></div>
+            <div className="legend-tooltip-row"><FistIcon size={20} color="#fff" /><span>Fuerza</span></div>
+            <div className="legend-tooltip-row"><SpringIcon size={20} color="#fff" /><span>Primavera</span></div>
+            <div className="legend-tooltip-row"><SummerIcon size={20} color="#fff" /><span>Verano</span></div>
+            <div className="legend-tooltip-row"><AutumnIcon size={20} color="#fff" /><span>Otono</span></div>
+            <div className="legend-tooltip-row"><WinterIcon size={20} color="#fff" /><span>Invierno</span></div>
+          </div>
         </div>
         <div className="mandate-counter">
           {t('game.round')} {gameState.round}/{gameState.maxRounds}
@@ -494,10 +513,11 @@ export const GameBoard = () => {
       )}
 
       {/* Monster No Placement Popup (Luna - no valid province) */}
-      {monsterNoPlacementPopupVisible && (
+      {monsterNoPlacementPopupVisible && monsterPlacementCard && (
         <div className="monster-placement-popup">
           <div className="monster-placement-popup-content">
-            <p>{t('monster.noPlacement')}</p>
+            <p>{t('monster.noPlacementLine1', { name: monsterPlacementCard.name })}</p>
+            <p>{t('monster.noPlacementLine2')}</p>
             <button className="monster-placement-btn" onClick={dismissMonsterNoPlacement}>
               {t('monster.accept')}
             </button>
