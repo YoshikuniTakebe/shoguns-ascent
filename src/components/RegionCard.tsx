@@ -83,7 +83,8 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
         const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
         const card = allCards.find(c => c.id === figure.monsterCardId);
         if (card && card.force !== undefined) {
-          return card.force;
+          const isLuna = ownerClanId === 'luna';
+          return isLuna ? Math.max(card.force, 2) : card.force;
         }
       }
       return 1;
@@ -109,13 +110,7 @@ function getFigureDisplayName(figure: Figure): string {
   }
 }
 
-/** Get monster power text */
-function getMonsterPowerText(figure: Figure): string | null {
-  if (figure.type !== 'monster' || !figure.monsterCardId) return null;
-  const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
-  const card = allCards.find(c => c.id === figure.monsterCardId);
-  return card?.effect || null;
-}
+
 
 const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure: Figure; color: string; gameState: GameState; regionId: string }) => {
   const t = useT();
