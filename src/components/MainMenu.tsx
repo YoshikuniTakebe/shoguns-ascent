@@ -6,6 +6,7 @@ import type { TranslationKey } from '../i18n';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 import { shuffle } from '../utils/gameLogic';
+import titleImg from '../img/NoboruTaiyo.png';
 
 const CLAN_POWERS: Record<string, string> = {
   koi: 'Monedas como Ronin. Al inicio de Guerra cambia Ronin por Monedas. En Contratar Ronin, sus Monedas suman Fuerza.',
@@ -81,7 +82,7 @@ export const MainMenu = () => {
       </div>
 
       <div className="menu-header">
-        <h1 className="game-title">{t('menu.title')}</h1>
+        <img src={titleImg} alt="Noboru Taiyo" style={{ maxWidth: '600px', width: '100%', height: 'auto', objectFit: 'contain' }} />
         <p className="game-subtitle">{t('menu.subtitle')}</p>
       </div>
 
