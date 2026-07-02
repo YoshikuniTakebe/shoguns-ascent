@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix all four UI/logic issues: tooltip clipping, coin icon alignment, Daikokuten force logic, and force icon rendering",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "STEP 1 - Fix tooltip clipping: In src/App.css (line 1, minified), find the .region-card rule and remove 'contain:layout style paint' from it. The rule currently ends with ';contain:layout style paint}'. Remove that property so the closing is just '}' after the previous property (text-align:center). This allows .figure-tooltip (position:absolute, z-index:100) to overflow outside the region card container.",
     "STEP 2 - Fix CoinIcon alignment in SeasonCardsModal.tsx: (a) Line 244: The CoinIcon size={24} needs vertical alignment. Wrap it in a span with style={{display:'inline-flex', verticalAlign:'middle'}}. (b) Line 323: In the buy button, the CoinIcon size={16} needs alignment. Wrap it in a span with style={{display:'inline-flex', verticalAlign:'middle'}}.",
@@ -31,5 +31,5 @@
     "Grep for sp-daikokuten in gameLogic.ts and confirm the conditional logic exists"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 9 steps completed successfully. Build passes with npx vite build. The getMonsterPowerText function in RegionCard.tsx is now unused but left in place (dead code) since removing it was not part of the task scope."
 }
