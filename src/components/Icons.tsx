@@ -213,8 +213,8 @@ export const HostageIcon = ({ size = 24, color = 'currentColor', className }: Ic
   </svg>
 );
 
-/** Oni mask - used for Monster units */
-export const MonsterIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+/** Oni mask simplified - used for Monster units (simplified version) */
+export const MonsterIconSimple = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
     {/* Horns */}
     <path d="M6 8 L4 3 L8 7 Z" />
@@ -230,8 +230,8 @@ export const MonsterIcon = ({ size = 24, color = 'currentColor', className }: Ic
   </svg>
 );
 
-/** Oni mask detailed (512x512) - used for Monster units (detailed version) */
-export const MonsterIconDetailed = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+/** Oni mask (512x512) - used for Monster units */
+export const MonsterIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
     width={size}
@@ -350,8 +350,8 @@ export const SummerIcon = ({ size = 24, color = 'currentColor', className }: Ico
   </svg>
 );
 
-/** Maple leaf - used for Autumn season */
-export const AutumnIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+/** Maple leaf simplified - used for Autumn season (simplified version) */
+export const AutumnIconSimple = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
     {/* Simplified 5-pointed maple leaf */}
     <path d="M12 2 L13.5 7 L18 5 L15 9 L20 10 L15.5 12 L19 16 L14 14.5 L13 19 L12 22 L11 19 L10 14.5 L5 16 L8.5 12 L4 10 L9 9 L6 5 L10.5 7 Z" />
@@ -360,8 +360,8 @@ export const AutumnIcon = ({ size = 24, color = 'currentColor', className }: Ico
   </svg>
 );
 
-/** Maple leaf detailed (680x680 viewBox) - used for Autumn season (detailed version) */
-export const AutumnIconDetailed = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+/** Maple leaf detailed (680x680 viewBox) - used for Autumn season */
+export const AutumnIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
     width={size}

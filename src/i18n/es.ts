@@ -238,7 +238,7 @@ export const es: Record<TranslationKey, string> = {
   'kami.tsukuyomi.expansionEffect': 'Antes de resolver la Guerra en esta Provincia, todos los jugadores con Fuerza en ella ganan 4 Monedas.',
 
   // Deck Names
-  'deck.archway': 'Tori',
+  'deck.archway': 'Torii',
   'deck.tower': 'Torre',
   'deck.teapot': 'Tetera',
   'deck.horseman': 'Jinete',
