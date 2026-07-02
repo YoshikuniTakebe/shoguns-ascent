@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix monster reserve tracking: increment player.monsters when monsters go to reserve (Luna no-space case, battle kills, seppuku, betray, hostage). Also handle dual-type monsters (sp-komainu counts as monster+shinto, su-yurei and sp-fukurokuju count as monster+daimyo, su-hotei counts as monster+shinto) so that when they are in reserve they increase BOTH the monster count AND their secondary type count. Show a 'no space' popup for Luna when no province is available instead of the generic placement popup. Update PlayerPanel sidebar to show 'X/Y' format (in reserve / total owned).",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/store/gameStore.ts, in the `confirmMonsterPlacement` function (around line 893-930), when Luna has no valid province and monster goes to reserve: (a) increment `player.monsters += 1` on the player in the new state, (b) check if the monster is a dual-type (sp-komainu or su-hotei -> also increment player.shinto; su-yurei or sp-fukurokuju -> also set player.hasDaimyo = true if not already), (c) instead of immediately advancing the train resolution, show a new popup state `monsterNoPlacementPopupVisible: true` with the existing `monsterPlacementCard` info so the user sees a message like 'No tienes sitio donde sacarlo, ira directo a tu reserva'. Add a new store state field `monsterNoPlacementPopupVisible: boolean` and a dismiss action `dismissMonsterNoPlacement` that then advances the train resolution as the current code does.",
     "2. In src/store/gameStore.ts, add the new state field `monsterNoPlacementPopupVisible: boolean` (default false) and the action `dismissMonsterNoPlacement: () => void` to the store interface (around line 186-199). Implement `dismissMonsterNoPlacement` which does what the current no-valid-province code does AFTER showing the popup (advance train, clear monster state, etc.).",
@@ -25,5 +25,5 @@
     "Run `npx vite build` in /projects/sandbox/shoguns-ascent and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly. No test framework available - validated via npx vite build. The dual-type monster handling for shinto monsters (komainu/hotei) increments shinto reserve count, while daimyo monsters (yurei/fukurokuju) set hasDaimyo=true. The PlayerPanel X/Y display dynamically computes totals by counting figures on map, in temples, and in reserve. PoliticsTrack was also updated to close the season cards modal when the new no-placement popup is shown."
 }
