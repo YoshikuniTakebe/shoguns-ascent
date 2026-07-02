@@ -110,7 +110,7 @@ function getMonsterPowerText(figure: Figure): string | null {
   return card?.effect || null;
 }
 
-const FigureIcon = ({ figure, color, gameState, regionId }: { figure: Figure; color: string; gameState: GameState; regionId: string }) => {
+const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure: Figure; color: string; gameState: GameState; regionId: string }) => {
   const ownerPlayer = gameState.players.find(p => p.id === figure.owner);
   const ownerClanId = ownerPlayer ? ownerPlayer.clanId : '';
   const force = getFigureForce(figure, ownerClanId, gameState, regionId);
@@ -176,10 +176,22 @@ const FigureIcon = ({ figure, color, gameState, regionId }: { figure: Figure; co
       {tooltipContent}
     </span>
   );
-};
+});
 
-export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSProperties }) => {
-  const { gameState, selectedRegion, selectRegion, moveMode, moveFrom, doMoveForces, localPlayerId, setMoveFrom, selectedFigures, setSelectedFigures, buildFortressMode, doBuildFortress, recruitMode, doRecruitPlaceFigure, betrayMode, doBetraySelectFigure, monsterPlacementMode, monsterPlacementPlayerId, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, jinmenjuSummonActive, doJinmenjuPlace } = useGameStore();
+export const RegionCard = React.memo(({ regionId, style }: { regionId: string; style: CSSProperties }) => {
+  // Use individual selectors to avoid re-renders from unrelated state changes
+  const gameState = useGameStore(s => s.gameState);
+  const selectedRegion = useGameStore(s => s.selectedRegion);
+  const moveMode = useGameStore(s => s.moveMode);
+  const moveFrom = useGameStore(s => s.moveFrom);
+  const localPlayerId = useGameStore(s => s.localPlayerId);
+  const selectedFigures = useGameStore(s => s.selectedFigures);
+  const buildFortressMode = useGameStore(s => s.buildFortressMode);
+  const recruitMode = useGameStore(s => s.recruitMode);
+  const betrayMode = useGameStore(s => s.betrayMode);
+  const monsterPlacementMode = useGameStore(s => s.monsterPlacementMode);
+  const monsterPlacementPlayerId = useGameStore(s => s.monsterPlacementPlayerId);
+  const jinmenjuSummonActive = useGameStore(s => s.jinmenjuSummonActive);
   const t = useT();
   if (!gameState) return null;
 
@@ -293,6 +305,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   }
 
   const handleClick = () => {
+    const { selectRegion, doMoveForces, setMoveFrom, setSelectedFigures, doBuildFortress, doRecruitPlaceFigure, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, doJinmenjuPlace } = useGameStore.getState();
     // Zorro placement: click province to place bushi
     if (gameState.zorroPlacementActive && isZorroTarget) {
       doZorroPlaceBushi(regionId);
@@ -351,6 +364,7 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
   };
 
   const handleFigureClick = (figureId: string, e: React.MouseEvent) => {
+    const { doBetraySelectFigure, setSelectedFigures } = useGameStore.getState();
     if (betrayMode) {
       e.stopPropagation();
       doBetraySelectFigure(figureId, regionId);
@@ -477,4 +491,4 @@ export const RegionCard = ({ regionId, style }: { regionId: string; style: CSSPr
       </div>
     </div>
   );
-};
+});

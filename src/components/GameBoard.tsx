@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
+import { useState, useCallback, useRef, useEffect, type ReactNode, type CSSProperties } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCES_DATA, type DeckName } from '../types/game';
 import { RegionCard } from './RegionCard';
@@ -71,6 +71,12 @@ const HARVEST_REWARDS: Record<string, { rewards: { type: 'vp' | 'coin' | 'ronin'
 );
 
 const DRAG_DEAD_ZONE = 5;
+
+/** Precomputed position styles for RegionCard (avoids creating new objects on every render) */
+const REGION_CARD_STYLES: Record<string, CSSProperties> = Object.fromEntries(
+  Object.entries(positions).map(([id, p]) => [id, { left: `${p.x}px`, top: `${p.y}px` }])
+);
+const DEFAULT_REGION_STYLE: CSSProperties = { left: '600px', top: '450px' };
 
 /** Compute initial centered pan offset for a given container size */
 function computeInitialPan(containerWidth: number, containerHeight: number) {
@@ -440,12 +446,11 @@ export const GameBoard = () => {
               </svg>
               <div className="regions-overlay">
                 {PROVINCES_DATA.map(r => {
-                  const p = positions[r.id] || { x: 600, y: 450 };
                   return (
                     <RegionCard
                       key={r.id}
                       regionId={r.id}
-                      style={{ left: `${p.x}px`, top: `${p.y}px` }}
+                      style={REGION_CARD_STYLES[r.id] || DEFAULT_REGION_STYLE}
                     />
                   );
                 })}
