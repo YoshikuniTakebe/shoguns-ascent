@@ -1,7 +1,7 @@
 {
   "task_id": "task-i18n-season-card-effects",
   "task_description": "Internationalize season card effect texts and names so they display in Spanish (or the active language) instead of hardcoded English",
-  "status": "in_progress",
-  "feature_order": ["FEAT-001"],
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002"],
   "blocked_reason": null
 }
