@@ -25,5 +25,5 @@
     "Run `npx vite build` in /projects/sandbox/shoguns-ascent and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": "Build passes cleanly. No test framework available - validated via npx vite build. The dual-type monster handling for shinto monsters (komainu/hotei) increments shinto reserve count, while daimyo monsters (yurei/fukurokuju) set hasDaimyo=true. The PlayerPanel X/Y display dynamically computes totals by counting figures on map, in temples, and in reserve. PoliticsTrack was also updated to close the season cards modal when the new no-placement popup is shown."
+  "findings": "Build passes cleanly. No test framework available - validated via npx vite build. Fixed double-counting bug: removed dual-type monster increments (shinto += 1 / hasDaimyo = true) from gameStore.ts confirmMonsterPlacement and gameLogic.ts (betray, seppuku, battle resolution). The PlayerPanel computeReserveTotals already computes dual-type contribution dynamically by checking which monster cards are in reserve vs deployed, so the store/gameLogic should only track monsters += 1. This prevents inflating player.shinto (which is used for recruitment checks) and player.hasDaimyo (which represents the actual daimyo figure)."
 }
