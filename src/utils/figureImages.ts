@@ -158,6 +158,60 @@ export const MONSTER_FIGURE_MAP: Record<string, string> = {
   'au-sacred-warrior': sacredWarriorFigImg,
 };
 
+// Bushi figure image imports (per clan)
+import bushiKoiImg from '../img/Bushi_koi_fig.png';
+import bushiSunImg from '../img/Bushi_sun_fig.png';
+import bushiLotusImg from '../img/Bushi_lotus_fig.png';
+import bushiTurtleImg from '../img/Bushi_turtle_fig.png';
+import bushiDragonflyImg from '../img/Bushi_dragonfly_fig.png';
+import bushiFoxImg from '../img/Bushi_fox_fig.png';
+import bushiBonsaiImg from '../img/Bushi_bonsai_fig.png';
+import bushiMoonImg from '../img/Bushi_moon_fig.png';
+
+// Shinto figure image imports (per clan)
+import shintoKoiImg from '../img/Shinto_koi_fig.png';
+import shintoSunImg from '../img/Shinto_sun_fig.png';
+import shintoLotusImg from '../img/Shinto_lotus_fig.png';
+import shintoTurtleImg from '../img/Shinto_turtle_fig.png';
+import shintoDragonflyImg from '../img/Shinto_dragonfly_fig.png';
+import shintoFoxImg from '../img/Shinto_fox_fig.png';
+import shintoBonsaiImg from '../img/Shinto_bonsai_fig.png';
+import shintoMoonImg from '../img/Shinto_moon_fig.png';
+
+/** Maps clan IDs to their bushi figure image */
+export const BUSHI_IMAGE_MAP: Record<string, string> = {
+  koi: bushiKoiImg,
+  sol: bushiSunImg,
+  loto: bushiLotusImg,
+  tortuga: bushiTurtleImg,
+  libelula: bushiDragonflyImg,
+  zorro: bushiFoxImg,
+  bonsai: bushiBonsaiImg,
+  luna: bushiMoonImg,
+};
+
+/** Get bushi figure image by clan ID, or null if not found */
+export function getBushiImage(clanId: string): string | null {
+  return BUSHI_IMAGE_MAP[clanId] || null;
+}
+
+/** Maps clan IDs to their shinto figure image */
+export const SHINTO_IMAGE_MAP: Record<string, string> = {
+  koi: shintoKoiImg,
+  sol: shintoSunImg,
+  loto: shintoLotusImg,
+  tortuga: shintoTurtleImg,
+  libelula: shintoDragonflyImg,
+  zorro: shintoFoxImg,
+  bonsai: shintoBonsaiImg,
+  luna: shintoMoonImg,
+};
+
+/** Get shinto figure image by clan ID, or null if not found */
+export function getShintoImage(clanId: string): string | null {
+  return SHINTO_IMAGE_MAP[clanId] || null;
+}
+
 // Daimyo figure image imports (per clan)
 import daimyoKoiImg from '../img/Daimyo_koi_fig.png';
 import daimyoSunImg from '../img/Daimyo_sun_fig.png';

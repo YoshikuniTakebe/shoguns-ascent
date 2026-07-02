@@ -5,7 +5,7 @@ import type { Figure, GameState } from '../types/game';
 import { useT } from '../i18n';
 import { FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
-import { getMonsterFigureImage, getCastleImage, getDaimyoImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
+import { getMonsterFigureImage, getCastleImage, getDaimyoImage, getBushiImage, getShintoImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
 import { calculateForce, getPlayerSeasonCardEffects } from '../utils/gameLogic';
 
 interface RegionDetailModalProps {
@@ -247,13 +247,13 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
   const renderIcon = () => {
     switch (figure.type) {
       case 'bushi':
-        return <img src={TEMPLATE_FIGURE_IMG} alt="Bushi" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
+        return <img src={getBushiImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Bushi" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
       case 'daimyo': {
         const daimyoImg = getDaimyoImage(ownerClanId);
         return <img src={daimyoImg || TEMPLATE_FIGURE_IMG} alt="Daimyo" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
       }
       case 'shinto':
-        return <img src={TEMPLATE_FIGURE_IMG} alt="Shinto" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
+        return <img src={getShintoImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Shinto" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
       case 'kami':
         return <KamiIcon size={iconSize} color={ownerColor} />;
       default:
@@ -388,13 +388,13 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
       }
       switch (figure.type) {
         case 'bushi':
-          return <img src={TEMPLATE_FIGURE_IMG} alt="Bushi" style={{ height: '60vh', objectFit: 'contain' }} />;
+          return <img src={getBushiImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Bushi" style={{ height: '60vh', objectFit: 'contain' }} />;
         case 'daimyo': {
           const daimyoZoomImg = getDaimyoImage(ownerClanId);
           return <img src={daimyoZoomImg || TEMPLATE_FIGURE_IMG} alt="Daimyo" style={{ height: '60vh', objectFit: 'contain' }} />;
         }
         case 'shinto':
-          return <img src={TEMPLATE_FIGURE_IMG} alt="Shinto" style={{ height: '60vh', objectFit: 'contain' }} />;
+          return <img src={getShintoImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Shinto" style={{ height: '60vh', objectFit: 'contain' }} />;
         case 'kami':
           return <KamiIcon size={200} color={ownerColor} />;
         default:
