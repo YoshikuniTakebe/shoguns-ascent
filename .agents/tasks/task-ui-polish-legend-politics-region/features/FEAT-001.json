@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "UI polish: legend tooltip arrow + font increase, autumn maple leaf icon, season colors in legend, ClanShield drop-shadow in region modal, politics track phase diamond glow + tooltips",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/App.css, add a ::before pseudo-element to .legend-tooltip that creates an upward-pointing arrow (triangle pointing up at the top of the tooltip, since the tooltip appears below the button). Use the same pattern as .figure-tooltip::after and .clan-tooltip::after but pointing UP. The arrow should be at top:-16px with border-bottom-color matching the tooltip background (rgba(15,15,25,0.97)).",
     "2. In src/App.css, increase .legend-tooltip-row span font-size from 0.75rem to 0.85rem (increase by 1 unit).",
@@ -30,5 +30,5 @@
     "cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 9 steps implemented successfully. Build passes. The politics-phase-wrapper class was used to wrap tea/kami/war elements with hover tooltips. The active class approach uses gameState.currentPhase for tea/war and gameState.kamiResolutionActive for kami diamonds."
 }
