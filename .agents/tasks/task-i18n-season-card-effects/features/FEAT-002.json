@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix missing diacritics in Spanish card.name.* and card.effect.* translations, and optionally improve RegionDetailModal getMonsterInfo pattern.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Step 1: Fix all missing diacritics in card.name.* and card.effect.* entries in src/i18n/es.ts",
     "Step 2: Optionally improve RegionDetailModal.tsx getMonsterInfo to accept t as parameter",
@@ -16,5 +16,5 @@
     "Run `npm run build` and confirm exit code 0"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "Fixed all diacritics in card.name.* and card.effect.* Spanish translations. Pre-existing TypeScript errors in BattleBiddingOverlay.tsx and BattlePanel.tsx remain (same as before this change). Vite build succeeds. The RegionDetailModal.tsx getMonsterInfo pattern was not changed as it works correctly in its current form."
 }
