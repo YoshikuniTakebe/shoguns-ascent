@@ -312,10 +312,12 @@ export const AutumnIcon = ({ size = 24, color = 'currentColor', className }: Ico
     fill={color}
     stroke="none"
   >
-    {/* Palmate maple leaf with 5 pointed lobes */}
-    <path d="M12 2 L13 5 L15.5 3.5 L14.5 6.5 L17.5 5.5 L15.5 8 L19 7.5 L16 10 L20 11 L16.5 12 L19 14.5 L15 13.5 L15.5 16 L13 14 L12 17 L11 14 L8.5 16 L9 13.5 L5 14.5 L7.5 12 L4 11 L8 10 L5 7.5 L8.5 8 L6.5 5.5 L9.5 6.5 L8.5 3.5 L11 5 Z" />
+    {/* Classic 5-lobe momiji maple leaf with deep indentations */}
+    <path d="M12 1.5 L12.8 4.5 L14.5 3 L14 5.5 L16.5 4.5 L15.5 7 L18 6.5 L16.5 8.5 L19.5 8.5 L17 10.5 L20 11 L17 12.5 L19.5 14 L16.5 14 L17.5 16.5 L14.5 15 L14 17 L12 15 L10 17 L9.5 15 L6.5 16.5 L7.5 14 L4.5 14 L7 12.5 L4 11 L7 10.5 L4.5 8.5 L7.5 8.5 L6 6.5 L8.5 7 L7.5 4.5 L10 5.5 L9.5 3 L11.2 4.5 Z" />
     {/* Stem */}
-    <path d="M12 17 L12 22" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M12 15 L12.5 19 L12 22" stroke={color} strokeWidth="1.2" strokeLinecap="round" fill="none" />
+    {/* Leaf veins */}
+    <path d="M12 12 L12 6 M12 12 L8 7.5 M12 12 L16 7.5 M12 12 L7 12 M12 12 L17 12" stroke={color} strokeWidth="0.4" strokeLinecap="round" opacity="0.3" fill="none" />
   </svg>
 );
 

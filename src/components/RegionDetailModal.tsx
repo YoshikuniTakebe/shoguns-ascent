@@ -190,7 +190,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
       return (
         <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
           <img src={img} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }}>
             <ClanShield clanId={ownerClanId} size={36} />
             <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
               {ownerName}
@@ -203,7 +203,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     return (
       <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
         <img src={TEMPLATE_FIGURE_IMG} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }}>
           <ClanShield clanId={ownerClanId} size={36} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
             {ownerName}
@@ -220,7 +220,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
       return (
         <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
           <img src={img} alt="Castle" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }}>
             <ClanShield clanId={ownerClanId} size={36} />
             <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
               {ownerName}
@@ -233,7 +233,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     return (
       <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
         <img src={TEMPLATE_FIGURE_IMG} alt="Fortress" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }}>
           <ClanShield clanId={ownerClanId} size={36} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
             {ownerName}
@@ -264,7 +264,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
   return (
     <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
       {renderIcon()}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' }}>
         <ClanShield clanId={ownerClanId} size={36} />
         <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
           {ownerName}

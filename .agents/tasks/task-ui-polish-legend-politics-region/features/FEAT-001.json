@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "UI polish: legend tooltip arrow + font increase, autumn maple leaf icon, season colors in legend, ClanShield drop-shadow in region modal, politics track phase diamond glow + tooltips",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/App.css, add a ::before pseudo-element to .legend-tooltip that creates an upward-pointing arrow (triangle pointing up at the top of the tooltip, since the tooltip appears below the button). Use the same pattern as .figure-tooltip::after and .clan-tooltip::after but pointing UP. The arrow should be at top:-16px with border-bottom-color matching the tooltip background (rgba(15,15,25,0.97)).",
+    "2. In src/App.css, increase .legend-tooltip-row span font-size from 0.75rem to 0.85rem (increase by 1 unit).",
+    "3. In src/components/Icons.tsx, replace the AutumnIcon SVG content with a more recognizable maple leaf shape (momiji style). Use a proper maple leaf SVG path with 5-7 pointed lobes and a stem.",
+    "4. In src/components/GameBoard.tsx, update the season legend rows to use season-specific colors instead of #fff. Change SpringIcon color to '#FFB7C5', SummerIcon color to '#FF6B35', AutumnIcon color to '#D4A574', WinterIcon color to '#A8C8E8'. Also color the text span of each season row with the same color using inline style.",
+    "5. In src/components/RegionDetailModal.tsx, add a CSS filter drop-shadow to the ClanShield elements inside DioramaFigure. Wrap or style the div containing ClanShield to have filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)).",
+    "6. In src/components/PoliticsTrack.tsx, add conditional CSS class 'active' to the tea ceremony diamond (politics-track-phase-icon.tea) when gameState.currentPhase === 'tea', to the kami diamonds (politics-track-kami) when gameState.kamiResolutionActive === true, and to the war diamond (politics-track-phase-icon.war) when gameState.currentPhase === 'war'.",
+    "7. In src/App.css, add styles for .politics-track-phase-icon.tea.active and .politics-track-phase-icon.war.active and .politics-track-kami.active that add a glow effect similar to the current mandate slot pulse (border-color highlight, box-shadow glow, animation:pulse-gold 1.5s infinite).",
+    "8. In src/components/PoliticsTrack.tsx, add tooltip functionality to the tea ceremony, kami, and war phase diamonds. Use a wrapper div with hover-based tooltip (same pattern as figure-tooltip) showing 'Ceremonia del Te' for tea, 'Turno Kami' for kami, and 'Fase de Batallas' for war. The tooltip should appear above the diamond.",
+    "9. In src/App.css, add CSS for .politics-phase-tooltip (or similar class) with the same styling as .figure-tooltip (positioned above, with ::after arrow pointing down)."
+  ],
+  "acceptance_criteria": [
+    "Legend tooltip has an upward-pointing arrow at the top (::before pseudo-element)",
+    "Legend tooltip text is 0.85rem font-size",
+    "AutumnIcon renders a recognizable maple leaf SVG",
+    "Season icons and text in legend tooltip use their respective season colors",
+    "ClanShield in RegionDetailModal DioramaFigure has a visible drop-shadow",
+    "Tea ceremony diamond glows/pulses when currentPhase === 'tea'",
+    "Kami diamonds glow/pulse when kamiResolutionActive === true",
+    "War diamond glows/pulses when currentPhase === 'war'",
+    "Tea, Kami, War diamonds each show a tooltip on hover with descriptive text",
+    "Build passes with zero errors: npx vite build"
+  ],
+  "verification": [
+    "cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
