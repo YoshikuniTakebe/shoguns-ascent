@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Six UI tweaks to the Shogun's Ascent board game app: clan tooltip icons, card translations, tooltip arrow, rule violation toast position, diorama shadow, and coin icon in season card picker.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "CHANGE 1 - In src/components/MainMenu.tsx: Import HonorIcon and CoinIcon from './Icons'. In the clan tooltip section (around line 217-218), add <HonorIcon size={14} color={c.color} /> before the honor number text and <CoinIcon size={14} color={c.color} /> before the income number text. The current lines are: `<span className=\"clan-tooltip-stat\">Honor inicial: {c.initialHonor}</span>` and `<span className=\"clan-tooltip-stat\">Ingresos: {CLAN_INCOME[c.id] ?? 0}</span>`. Wrap the icon+text in an inline-flex span with alignItems center and a small gap.",
     "CHANGE 2 - In src/types/game.ts: Translate ALL `effect` field values in the SPRING_CARDS, SUMMER_CARDS, and AUTUMN_CARDS arrays from English to Spanish.",
@@ -24,5 +24,5 @@
     "Run `npx vite build` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 6 changes implemented successfully. RegionDetailModal had 5 occurrences of the drop-shadow (not 6 as stated in briefing). Build passes cleanly."
 }
