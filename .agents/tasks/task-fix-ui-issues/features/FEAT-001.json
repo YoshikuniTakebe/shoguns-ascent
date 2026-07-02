@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix all four UI/logic issues: tooltip clipping, coin icon alignment, Daikokuten force logic, and force icon rendering",
+  "status": "in_progress",
+  "steps": [
+    "STEP 1 - Fix tooltip clipping: In src/App.css (line 1, minified), find the .region-card rule and remove 'contain:layout style paint' from it. The rule currently ends with ';contain:layout style paint}'. Remove that property so the closing is just '}' after the previous property (text-align:center). This allows .figure-tooltip (position:absolute, z-index:100) to overflow outside the region card container.",
+    "STEP 2 - Fix CoinIcon alignment in SeasonCardsModal.tsx: (a) Line 244: The CoinIcon size={24} needs vertical alignment. Wrap it in a span with style={{display:'inline-flex', verticalAlign:'middle'}}. (b) Line 323: In the buy button, the CoinIcon size={16} needs alignment. Wrap it in a span with style={{display:'inline-flex', verticalAlign:'middle'}}.",
+    "STEP 3 - Fix Daikokuten force in game.ts: In src/types/game.ts line 336, change 'force: 8' to 'force: 1' for the sp-daikokuten card definition.",
+    "STEP 4 - Fix Daikokuten force logic in calculateForce (src/utils/gameLogic.ts): In the monster section of calculateForce (around line 2700), add a specific check for sp-daikokuten BEFORE the generic else branch. The code currently has: 'su-oni-of-blood' check, then '} else {' generic block. Insert between them: '} else if (fig.monsterCardId === \"sp-daikokuten\") { figForce = (state.currentPhase === \"politics\" && state.harvestMandateActive) ? 8 : 1; if (isLuna) figForce = Math.max(figForce, 2); }' This ensures Daikokuten only has force 8 during harvest resolution.",
+    "STEP 5 - Fix Daikokuten force in RegionCard.tsx getFigureForce: In the 'monster' case of getFigureForce function (around line 77-84), before looking up card.force from SPRING_CARDS etc., add a special case: if (figure.monsterCardId === 'sp-daikokuten') { const isLuna = ownerClanId === 'luna'; const base = (gameState.currentPhase === 'politics' && gameState.harvestMandateActive) ? 8 : 1; return isLuna ? Math.max(base, 2) : base; }",
+    "STEP 6 - Fix {force} icon not rendering in RegionCard.tsx tooltip: The getMonsterPowerText function returns card?.effect (raw English text). Change it to use the translation system and renderCardEffect. Import renderCardEffect and the translation helpers (useT, getCardEffectKey). In the FigureIcon component, call renderCardEffect on the translated text for monsterPower display: change {monsterPower && <span className=\"figure-tooltip-power\">{monsterPower}</span>} to use renderCardEffect(t(getCardEffectKey(figure.monsterCardId))).",
+    "STEP 7 - Fix {force} icon not rendering in RegionDetailModal.tsx: In the figure-zoom-power div (line 416), the monsterPowerText is rendered as plain text. Import renderCardEffect and wrap: change {monsterPowerText} to {renderCardEffect(monsterPowerText)}. Also in the tooltipText string (line 183) where it concatenates info.effect - this is a plain tooltip attribute so leave it, but the figure-zoom-power display needs renderCardEffect.",
+    "STEP 8 - Fix Daikokuten force display in RegionDetailModal.tsx: The RegionDetailModal also has a getFigureForce function that looks up card force. Find it and add the sp-daikokuten special case similar to step 5.",
+    "STEP 9 - Fix force display in SeasonCardsModal and SeasonCardsMarket: The card listing shows card.force value (line 314 in SeasonCardsModal: {card.force}). Since we changed Daikokuten's force to 1, the card will show '1' in the force badge. The user wants to show Force 1 normally and Force 8 during harvest. For the card listing display, this is fine - just show '1' as the static force since the card text already explains the harvest bonus. In SeasonCardsMarket.tsx line 74 which shows 'Force: {card.force}', same thing applies."
+  ],
+  "acceptance_criteria": [
+    "Running npx vite build succeeds without errors",
+    "The .region-card CSS rule no longer contains 'contain:layout style paint'",
+    "CoinIcon in SeasonCardsModal buy button and header has vertical alignment styling",
+    "Daikokuten card in game.ts has force: 1 instead of force: 8",
+    "calculateForce in gameLogic.ts returns 8 for Daikokuten only when currentPhase is politics AND harvestMandateActive is true, otherwise returns 1",
+    "getFigureForce in RegionCard.tsx has the same conditional logic for sp-daikokuten",
+    "Monster effect text in RegionCard tooltip and RegionDetailModal uses renderCardEffect to render {force} tokens as icons",
+    "RegionDetailModal getFigureForce also has the sp-daikokuten conditional logic"
+  ],
+  "verification": [
+    "Run 'npx vite build' in /projects/sandbox/shoguns-ascent and confirm it succeeds",
+    "Grep for 'contain:layout style paint' in App.css and confirm it's gone from .region-card",
+    "Grep for sp-daikokuten in game.ts and confirm force: 1",
+    "Grep for sp-daikokuten in gameLogic.ts and confirm the conditional logic exists"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

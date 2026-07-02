@@ -6,6 +6,8 @@ import type { Figure, GameState } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon } from './Icons';
 import { getPlayerSeasonCardEffects } from '../utils/gameLogic';
+import { renderCardEffect } from '../utils/renderCardEffect';
+import { getCardEffectKey } from '../utils/cardTranslations';
 
 /** Helper to check if a player has a card by base ID (accounts for '-2' suffix duplicates) */
 function hasDisplayCard(cardIds: Set<string>, baseId: string): boolean {
@@ -73,6 +75,11 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
       return ownerClanId === 'tortuga' ? 1 : 0;
     case 'monster':
       if (figure.monsterCardId) {
+        if (figure.monsterCardId === 'sp-daikokuten') {
+          const isLuna = ownerClanId === 'luna';
+          const base = (gameState.currentPhase === 'politics' && gameState.harvestMandateActive) ? 8 : 1;
+          return isLuna ? Math.max(base, 2) : base;
+        }
         const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
         const card = allCards.find(c => c.id === figure.monsterCardId);
         if (card && card.force !== undefined) {
@@ -111,17 +118,20 @@ function getMonsterPowerText(figure: Figure): string | null {
 }
 
 const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure: Figure; color: string; gameState: GameState; regionId: string }) => {
+  const t = useT();
   const ownerPlayer = gameState.players.find(p => p.id === figure.owner);
   const ownerClanId = ownerPlayer ? ownerPlayer.clanId : '';
   const force = getFigureForce(figure, ownerClanId, gameState, regionId);
   const displayName = getFigureDisplayName(figure);
-  const monsterPower = getMonsterPowerText(figure);
+  const monsterPower = figure.type === 'monster' && figure.monsterCardId
+    ? t(getCardEffectKey(figure.monsterCardId))
+    : null;
 
   const tooltipContent = (
     <span className="figure-tooltip" style={{ borderColor: color }}>
       <span className="figure-tooltip-name">{displayName}</span>
       <span className="figure-tooltip-force">Force: {force}</span>
-      {monsterPower && <span className="figure-tooltip-power">{monsterPower}</span>}
+      {monsterPower && <span className="figure-tooltip-power">{renderCardEffect(monsterPower)}</span>}
     </span>
   );
 

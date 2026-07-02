@@ -241,7 +241,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
               <span style={{ fontSize: '1em', marginLeft: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <ClanShield clanId={player.clanId} size={32} />
                 <span style={{ color: playerClan?.color || '#ccc', fontWeight: 'bold' }}>{player.name}</span>
-                <CoinIcon size={24} />
+                <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}><CoinIcon size={24} /></span>
                 <span>{player.coins}</span>
                 {isDiscounted && (
                   <span style={{ color: '#27ae60', marginLeft: '6px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
@@ -320,7 +320,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                     style={{ marginTop: '6px', width: '100%', padding: '4px 8px', fontSize: '0.85em' }}
                     onClick={(e) => { e.stopPropagation(); handleBuyClick(card); }}
                   >
-                    {t('seasonCardsModal.buyButton')} ({effectiveCost} <CoinIcon size={16} color="#c8a951" strokeWidth="2.5" />)
+                    {t('seasonCardsModal.buyButton')} ({effectiveCost} <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}><CoinIcon size={16} color="#c8a951" strokeWidth="2.5" /></span>)
                   </button>
                 )}
               </div>

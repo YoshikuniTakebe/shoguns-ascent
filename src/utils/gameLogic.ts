@@ -2701,6 +2701,9 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
         });
         figForce = hasLowestHonor ? 4 : 2;
         if (isLuna) figForce = Math.max(figForce, 2);
+      } else if (fig.monsterCardId === 'sp-daikokuten') {
+        figForce = (state.currentPhase === 'politics' && state.harvestMandateActive) ? 8 : 1;
+        if (isLuna) figForce = Math.max(figForce, 2);
       } else {
         // Other monsters with defined force always use their card force
         const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];

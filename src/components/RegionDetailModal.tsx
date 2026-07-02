@@ -8,6 +8,7 @@ import { ClanShield } from './ClanShields';
 import { getMonsterFigureImage, getCastleImage, getDaimyoImage, getBushiImage, getShintoImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
 import { calculateForce, getPlayerSeasonCardEffects } from '../utils/gameLogic';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
+import { renderCardEffect } from '../utils/renderCardEffect';
 
 interface RegionDetailModalProps {
   regionId: string;
@@ -125,6 +126,11 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
       return ownerClanId === 'tortuga' ? 1 : 0;
     case 'monster':
       if (figure.monsterCardId) {
+        if (figure.monsterCardId === 'sp-daikokuten') {
+          const isLuna = ownerClanId === 'luna';
+          const base = (gameState.currentPhase === 'politics' && gameState.harvestMandateActive) ? 8 : 1;
+          return isLuna ? Math.max(base, 2) : base;
+        }
         const info = getMonsterInfo(figure.monsterCardId);
         if (info && info.force !== undefined) {
           // Oni of Skulls and Oni of Blood have conditional force based on honor
@@ -413,7 +419,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
             {renderLargeFigure()}
           </div>
           {monsterPowerText && (
-            <div className="figure-zoom-power">{monsterPowerText}</div>
+            <div className="figure-zoom-power">{renderCardEffect(monsterPowerText)}</div>
           )}
           <div className="figure-zoom-info">
             <ClanShield clanId={ownerClanId} size={24} />

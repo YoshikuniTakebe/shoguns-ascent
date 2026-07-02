@@ -333,7 +333,7 @@ export const SPRING_CARDS: SeasonCard[] = [
   { id: 'sp-benevolence-2', name: 'Benevolence', cost: 1, season: 'spring', group: 'Archway', cardType: 'virtue', effect: 'When you spend Coins, you may give one to another player. If you do, gain Honor and 2 VP.' },
   { id: 'sp-courage', name: 'Courage', cost: 3, season: 'spring', group: 'Horseman', cardType: 'virtue', effect: 'Gain 2 VP each time you win a War symbol.' },
   { id: 'sp-courage-2', name: 'Courage', cost: 3, season: 'spring', group: 'Horseman', cardType: 'virtue', effect: 'Gain 2 VP each time you win a War symbol.' },
-  { id: 'sp-daikokuten', name: 'Daikokuten', cost: 1, season: 'spring', group: 'Dynasty Invasion', cardType: 'monster', effect: 'Force 8 during Harvest Mandate.', force: 8 },
+  { id: 'sp-daikokuten', name: 'Daikokuten', cost: 1, season: 'spring', group: 'Dynasty Invasion', cardType: 'monster', effect: 'Force 8 during Harvest Mandate.', force: 1 },
   { id: 'sp-dignity', name: 'Dignity', cost: 1, season: 'spring', group: 'Ship', cardType: 'virtue', effect: 'Each time you Summon a Monster, gain 2 VP.' },
   { id: 'sp-dignity-2', name: 'Dignity', cost: 1, season: 'spring', group: 'Ship', cardType: 'virtue', effect: 'Each time you Summon a Monster, gain 2 VP.' },
   { id: 'sp-earth-dragon', name: 'Earth Dragon', cost: 3, season: 'spring', group: 'Monster Pack', cardType: 'monster', effect: 'At start of Battle, may Move 1 figure of each other player out of this Province.', force: 3 },
