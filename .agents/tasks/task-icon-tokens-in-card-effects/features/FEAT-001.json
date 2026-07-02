@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Create a renderCardEffect utility that parses icon tokens ({vp}, {coin}, {honor}, {bushi}, {shinto}) in translation strings and returns React elements with inline SVG icons. Update all card effect translations in both en.ts and es.ts to use token syntax. Update all rendering components (SeasonCardsModal, SeasonCardsMarket, PlayerCardsModal) to use the new renderer. Fix Piedad card text specifically and rename deck.archway from 'Arco' to 'Tori' in es.ts.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create src/utils/renderCardEffect.tsx - a utility that takes a translated string and parses tokens like {vp}3, {coin}2, {honor}1, {bushi}, {shinto}. For each token, replace with the corresponding icon component (VPIcon, CoinIcon, HonorIcon, BushiIcon, ShintoIcon from src/components/Icons.tsx) rendered inline at a small size (e.g. 14-16px) followed by the number if present. Return an array of React elements (ReactNode[]). Use a regex like /\\{(vp|coin|honor|bushi|shinto)\\}(\\d*)/g to find tokens.",
     "Update src/i18n/es.ts: Change 'card.effect.sp-piety' to 'Si ganas una Ficha de Provincia en Guerra con un Shinto, ganas {honor}1 y {vp}3.'",
@@ -28,5 +28,5 @@
     "npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing build errors in BattleBiddingOverlay.tsx and BattlePanel.tsx with tsc -b (strict build mode) but not with tsc --noEmit. These are unrelated to this feature. The project's documented verification (npx tsc --noEmit) passes cleanly."
 }
