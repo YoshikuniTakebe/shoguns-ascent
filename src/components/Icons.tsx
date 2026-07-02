@@ -547,3 +547,31 @@ export const MoonIcon = ({ size = 24, color = 'currentColor', className }: IconP
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
   </svg>
 );
+
+/** Two hands shaking - used for Trade button */
+export const HandshakeIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* Left hand */}
+    <path d="M2 11l4-2 3 1 3-2" />
+    {/* Right hand */}
+    <path d="M22 11l-4-2-3 1-3-2" />
+    {/* Handshake clasp */}
+    <path d="M9 10l1.5 1.5L12 10l1.5 1.5L15 10" />
+    {/* Left arm */}
+    <path d="M2 11v3l4 2" />
+    {/* Right arm */}
+    <path d="M22 11v3l-4 2" />
+    {/* Connection at bottom */}
+    <path d="M6 16l3-1h6l3 1" />
+  </svg>
+);

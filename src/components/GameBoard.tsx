@@ -15,6 +15,8 @@ import { PoliticsTrack } from './PoliticsTrack';
 import { RegionDetailModal } from './RegionDetailModal';
 import { HarvestPopup } from './HarvestPopup';
 import { KamiResolutionPopup } from './KamiResolutionPopup';
+import { TradeModal } from './TradeModal';
+import { TradeOfferPopup } from './TradeOfferPopup';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, UndoIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
@@ -755,6 +757,12 @@ export const GameBoard = () => {
           </div>
         </div>
       )}
+
+      {/* Trade Modal */}
+      <TradeModal />
+
+      {/* Trade Offer Popup */}
+      <TradeOfferPopup />
 
     </div>
   );

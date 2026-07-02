@@ -249,6 +249,7 @@ export function createInitialGameState(
     zorroPlacementsRemaining: 0,
     lastMandateIssuerId: null,
     gameOver: false,
+    tradeOffers: [],
     log: ['Juego iniciado! Estación: Primavera'],
     logHistory: {},
     hostId,

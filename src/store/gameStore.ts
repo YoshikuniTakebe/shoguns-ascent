@@ -285,6 +285,13 @@ interface GameStore {
   doJinmenjuPlaceTemple: (templeId: string) => void;
   doJinmenjuCancel: () => void;
 
+  // Trade
+  tradeModalOpen: boolean;
+  setTradeModalOpen: (open: boolean) => void;
+  doSendTrade: (toPlayerId: string, offerCoins: number, offerRonin: number, requestCoins: number, requestRonin: number) => void;
+  doAcceptTrade: (offerId: string) => void;
+  doRejectTrade: (offerId: string) => void;
+
   // Online
   connectWebSocket: (url: string) => void;
   sendAction: (action: unknown) => void;
@@ -320,6 +327,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   komainuPrayPlayerId: null,
   turnPopupPlayer: null,
   jinmenjuSummonActive: false,
+  tradeModalOpen: false,
   ruleViolationMessage: null,
   setRuleViolationMessage: (msg) => set({ ruleViolationMessage: msg }),
   doJinmenjuActivate: () => {
@@ -435,6 +443,71 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   doJinmenjuCancel: () => {
     set({ jinmenjuSummonActive: false });
+  },
+
+  // --- Trade System ---
+  setTradeModalOpen: (open) => set({ tradeModalOpen: open }),
+  doSendTrade: (toPlayerId, offerCoins, offerRonin, requestCoins, requestRonin) => {
+    const { gameState } = get();
+    if (!gameState) return;
+    const cp = gameState.players[gameState.currentPlayerIndex];
+    if (!cp) return;
+    // Validate sender has enough resources
+    if (cp.coins < offerCoins || cp.ronin < offerRonin) return;
+    // At least something must be offered or requested
+    if (offerCoins === 0 && offerRonin === 0 && requestCoins === 0 && requestRonin === 0) return;
+    const tradeOffer = {
+      id: Math.random().toString(36).substring(2, 10),
+      fromPlayerId: cp.id,
+      toPlayerId,
+      offerCoins,
+      offerRonin,
+      requestCoins,
+      requestRonin,
+      status: 'pending' as const,
+    };
+    const ns = { ...gameState, tradeOffers: [...gameState.tradeOffers, tradeOffer] };
+    set({ gameState: ns, tradeModalOpen: false });
+  },
+  doAcceptTrade: (offerId) => {
+    const { gameState } = get();
+    if (!gameState) return;
+    const offer = gameState.tradeOffers.find(o => o.id === offerId);
+    if (!offer || offer.status !== 'pending') return;
+    const sender = gameState.players.find(p => p.id === offer.fromPlayerId);
+    const recipient = gameState.players.find(p => p.id === offer.toPlayerId);
+    if (!sender || !recipient) return;
+    // Validate resources
+    if (sender.coins < offer.offerCoins || sender.ronin < offer.offerRonin) {
+      // Sender no longer has enough - remove the offer
+      const ns = { ...gameState, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
+      set({ gameState: ns });
+      return;
+    }
+    if (recipient.coins < offer.requestCoins || recipient.ronin < offer.requestRonin) {
+      // Recipient does not have enough to fulfill request - remove the offer
+      const ns = { ...gameState, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
+      set({ gameState: ns });
+      return;
+    }
+    // Transfer resources
+    const updatedPlayers = gameState.players.map(p => {
+      if (p.id === offer.fromPlayerId) {
+        return { ...p, coins: p.coins - offer.offerCoins + offer.requestCoins, ronin: p.ronin - offer.offerRonin + offer.requestRonin };
+      }
+      if (p.id === offer.toPlayerId) {
+        return { ...p, coins: p.coins + offer.offerCoins - offer.requestCoins, ronin: p.ronin + offer.offerRonin - offer.requestRonin };
+      }
+      return p;
+    });
+    const ns = { ...gameState, players: updatedPlayers, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
+    set({ gameState: ns });
+  },
+  doRejectTrade: (offerId) => {
+    const { gameState } = get();
+    if (!gameState) return;
+    const ns = { ...gameState, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
+    set({ gameState: ns });
   },
   undoMandateState: null,
   doUndoMandate: () => {

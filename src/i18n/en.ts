@@ -569,6 +569,22 @@ export const en = {
   'card.effect.au-way-of-the-keiri': 'At start of War Phase - Kill up to 2 opponent {bushi}/{shinto} in Daimyo Province, gain {vp}3 each.',
   'card.effect.au-way-of-the-moneylender': 'At start of War Phase - Gain {coin}5.',
   'card.effect.au-way-of-the-snake': 'After each Kami Turn is resolved, may perform a Betray Mandate.',
+  // Trade system
+  'trade.button': 'Trade',
+  'trade.title': 'Trade Deal',
+  'trade.offerCoins': 'Offer Coins',
+  'trade.offerRonin': 'Offer Ronin',
+  'trade.requestCoins': 'Request Coins',
+  'trade.requestRonin': 'Request Ronin',
+  'trade.selectPlayer': 'Select Player',
+  'trade.send': 'Send Trade',
+  'trade.incoming': 'Incoming Trade',
+  'trade.from': 'From',
+  'trade.offers': 'Offers',
+  'trade.requests': 'Requests',
+  'trade.accept': 'Accept',
+  'trade.reject': 'Reject',
+  'trade.nonBinding': 'Non-binding deal',
 } as const;
 
 export type TranslationKey = keyof typeof en;

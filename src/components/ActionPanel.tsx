@@ -4,7 +4,7 @@ import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
-import { BushiIcon, ShintoIcon, CoinIcon, UndoIcon, SpringIcon, SummerIcon, AutumnIcon } from './Icons';
+import { BushiIcon, ShintoIcon, CoinIcon, UndoIcon, SpringIcon, SummerIcon, AutumnIcon, HandshakeIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 
 export const ActionPanel = () => {
@@ -19,6 +19,7 @@ export const ActionPanel = () => {
     doResolveWinter,
     undoMandateState, doUndoMandate,
     jinmenjuSummonActive, doJinmenjuActivate, doJinmenjuCancel,
+    setTradeModalOpen,
   } = useGameStore();
   const t = useT();
 
@@ -245,6 +246,16 @@ export const ActionPanel = () => {
         <div className="politics-phase">
           <h4>{t('actions.politics', { current: gameState.politicsMandateCount + 1, total: gameState.maxMandates })}</h4>
           <p className="phase-description">{t('actions.politicsDesc')}</p>
+
+          {/* Trade button */}
+          <button
+            className="btn-secondary trade-btn"
+            onClick={() => setTradeModalOpen(true)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', marginBottom: '0.7rem', padding: '0.5rem', borderColor: '#c8a951' }}
+          >
+            <HandshakeIcon size={22} color="#c8a951" />
+            <span style={{ fontWeight: 'bold', color: '#c8a951', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('trade.button')}</span>
+          </button>
 
           {/* Train mandate active - show skip option */}
           {gameState.trainMandateActive && (() => {

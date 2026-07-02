@@ -153,6 +153,17 @@ export interface KamiResolutionTemple {
   susanooVPGained?: number;
 }
 
+export interface TradeOffer {
+  id: string;
+  fromPlayerId: string;
+  toPlayerId: string;
+  offerCoins: number;
+  offerRonin: number;
+  requestCoins: number;
+  requestRonin: number;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
 export interface GameState {
   id: string;
   mode: 'online' | 'hotseat';
@@ -224,6 +235,7 @@ export interface GameState {
   kamiPhasePopupPending?: boolean;
   gameOver: boolean;
   winner?: string;
+  tradeOffers: TradeOffer[];
   coinDistributionPending?: {
     battleProvinceId: string;
     winnerId: string;

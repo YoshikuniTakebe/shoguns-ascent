@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Implement the Trade (TRATO) system: a button in the right sidebar during politics phase that opens a trade modal with coin/ronin sliders, player selector, and send/accept/reject mechanics",
+  "status": "in_progress",
+  "steps": [
+    "1. Add new types to src/types/game.ts: Add a TradeOffer interface with fields: { id: string; fromPlayerId: string; toPlayerId: string; offerCoins: number; offerRonin: number; requestCoins: number; requestRonin: number; status: 'pending' | 'accepted' | 'rejected' }. Add tradeOffers: TradeOffer[] to the GameState interface (initialize as empty array).",
+    "2. Add i18n keys to both src/i18n/en.ts and src/i18n/es.ts for the trade system: 'trade.button': 'Trade'/'Trato', 'trade.title': 'Trade Deal'/'Trato', 'trade.offerCoins': 'Offer Coins'/'Ofrecer Monedas', 'trade.offerRonin': 'Offer Ronin'/'Ofrecer Ronins', 'trade.requestCoins': 'Request Coins'/'Pedir Monedas', 'trade.requestRonin': 'Request Ronin'/'Pedir Ronins', 'trade.selectPlayer': 'Select Player'/'Seleccionar Jugador', 'trade.send': 'Send Trade'/'Enviar Trato', 'trade.incoming': 'Incoming Trade'/'Trato Entrante', 'trade.from': 'From'/'De', 'trade.offers': 'Offers'/'Ofrece', 'trade.requests': 'Requests'/'Pide', 'trade.accept': 'Accept'/'Aceptar', 'trade.reject': 'Reject'/'Rechazar', 'trade.nonBinding': 'Non-binding deal'/'Trato no vinculante'.",
+    "3. Add game logic functions in src/utils/gameLogic.ts (or inline in the store): (a) sendTradeOffer(state, fromPlayerId, toPlayerId, offerCoins, offerRonin, requestCoins, requestRonin) - validates the sender has enough coins/ronin for the offer, creates a TradeOffer with status 'pending' and adds to state.tradeOffers; (b) acceptTradeOffer(state, offerId) - finds the offer, transfers offerCoins and offerRonin from sender to recipient, transfers requestCoins and requestRonin from recipient to sender (if they have enough), marks status 'accepted', removes from array; (c) rejectTradeOffer(state, offerId) - marks status 'rejected', removes from array.",
+    "4. Add store actions in src/store/gameStore.ts: doSendTrade(toPlayerId, offerCoins, offerRonin, requestCoins, requestRonin), doAcceptTrade(offerId), doRejectTrade(offerId). These call the logic functions and update gameState. Also add a tradeModalOpen: boolean state and setTradeModalOpen action.",
+    "5. Create src/components/TradeModal.tsx: A modal component that shows when tradeModalOpen is true. It displays: (a) A large CoinIcon at the top-left of the left column, with two sliders below: one for 'offer coins' (max = current player's coins) and one for 'request coins'. (b) A large RoninIcon at the top-right of the right column, with two sliders below: one for 'offer ronin' (max = current player's ronin) and one for 'request ronin'. (c) Below sliders: a player selector showing other players with their clan shield, name in clan color. (d) A 'Send Trade / Enviar Trato' button at the bottom. (e) The modal has a close button. Style it similar to existing modals (dark background, gold border, etc.).",
+    "6. Create src/components/TradeOfferPopup.tsx: A popup that shows when the current player has pending trade offers addressed to them. Shows who sent it (clan shield + name), what they offer (coins/ronin with icons), what they request (coins/ronin with icons), and Accept/Reject buttons. Style similar to the alliance proposal display.",
+    "7. In src/components/ActionPanel.tsx (or a sibling component rendered in the right panel): During politics phase, add a 'TRATO' button with a handshake icon (two hands shaking - create an SVG inline or add a HandshakeIcon to Icons.tsx). When clicked, it opens the trade modal via setTradeModalOpen(true). Also render any pending trade offers for the current player as TradeOfferPopup.",
+    "8. In src/components/GameBoard.tsx: Import and render <TradeModal /> and <TradeOfferPopup /> at the appropriate location (after other modals). The TradeOfferPopup should show during politics phase when the current player has pending offers.",
+    "9. Initialize tradeOffers as [] in the createInitialGameState function in src/utils/gameLogic.ts."
+  ],
+  "acceptance_criteria": [
+    "A 'TRATO' button with handshake icon appears in the right sidebar during politics phase only",
+    "Clicking the button opens a modal with coin sliders (offer/request) on one side and ronin sliders (offer/request) on the other",
+    "A player selector shows all other players with their clan shield and colored name",
+    "Clicking 'Enviar Trato' creates a trade offer that appears to the target player",
+    "Target player sees a popup with the offer details and Accept/Reject buttons",
+    "Accepting transfers the offered coins/ronin to the recipient and the requested coins/ronin back to the sender",
+    "Rejecting dismisses the offer with no transfer",
+    "Trade button only visible during politics phase",
+    "Build passes with npm run build"
+  ],
+  "verification": [
+    "npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
