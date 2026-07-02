@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "UI fixes: Kyushu harvest hex position, card text icon styling, Tea ceremony accent, season cards modal legend button visibility, and discount text alignment",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/GameBoard.tsx, find the HARVEST_BADGE_META entry for 'kyushu' which currently has position { x: 170, y: 750 }. Change x from 170 to 160 (move 10px to the left).",
     "2. In src/utils/renderCardEffect.tsx, modify the rendering so that: (a) bushi and shinto icons get color '#c8a951' (gold) instead of undefined/currentColor - update COLOR_MAP to add entries 'bushi': '#c8a951' and 'shinto': '#c8a951'; (b) When an icon token has a numeric amount (the {amount} span), style it with fontWeight: 'bold' and color: '#c8a951' (gold) to make numbers accompanying icons stand out.",
@@ -22,5 +22,5 @@
     "npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing TS errors in BattleBiddingOverlay.tsx and BattlePanel.tsx cause tsc exit code 2 (not 0 as context.json stated), but vite build succeeds. Both discount display spans in SeasonCardsModal already had inline-flex and alignItems: center, so no change needed there."
 }
