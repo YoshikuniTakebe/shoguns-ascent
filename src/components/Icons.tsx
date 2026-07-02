@@ -215,6 +215,23 @@ export const HostageIcon = ({ size = 24, color = 'currentColor', className }: Ic
 
 /** Oni mask - used for Monster units */
 export const MonsterIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+    {/* Horns */}
+    <path d="M6 8 L4 3 L8 7 Z" />
+    <path d="M18 8 L20 3 L16 7 Z" />
+    {/* Face */}
+    <ellipse cx="12" cy="14" rx="7" ry="8" />
+    {/* Eyes */}
+    <ellipse cx="9" cy="12" rx="2" ry="1.2" fill="rgba(0,0,0,0.3)" />
+    <ellipse cx="15" cy="12" rx="2" ry="1.2" fill="rgba(0,0,0,0.3)" />
+    {/* Fangs */}
+    <path d="M9 17 L10 20 L11 17" fill="white" />
+    <path d="M13 17 L14 20 L15 17" fill="white" />
+  </svg>
+);
+
+/** Oni mask detailed (512x512) - used for Monster units (detailed version) */
+export const MonsterIconDetailed = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
     width={size}
@@ -335,6 +352,16 @@ export const SummerIcon = ({ size = 24, color = 'currentColor', className }: Ico
 
 /** Maple leaf - used for Autumn season */
 export const AutumnIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+    {/* Simplified 5-pointed maple leaf */}
+    <path d="M12 2 L13.5 7 L18 5 L15 9 L20 10 L15.5 12 L19 16 L14 14.5 L13 19 L12 22 L11 19 L10 14.5 L5 16 L8.5 12 L4 10 L9 9 L6 5 L10.5 7 Z" />
+    {/* Stem */}
+    <rect x="11.5" y="19" width="1" height="3" rx="0.5" />
+  </svg>
+);
+
+/** Maple leaf detailed (680x680 viewBox) - used for Autumn season (detailed version) */
+export const AutumnIconDetailed = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
     width={size}

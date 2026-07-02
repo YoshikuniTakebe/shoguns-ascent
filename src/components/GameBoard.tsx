@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, PROVINCES_DATA } from '../types/game';
+import { CLANS, PROVINCES_DATA, type DeckName } from '../types/game';
 import { RegionCard } from './RegionCard';
 import { PlayerPanel } from './PlayerPanel';
 import { ActionPanel } from './ActionPanel';
@@ -20,6 +20,15 @@ import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import popupBgImg from '../img/popup_bg.png';
+
+const DECK_NAME_KEYS: Record<DeckName, TranslationKey> = {
+  Archway: 'deck.archway',
+  Tower: 'deck.tower',
+  Teapot: 'deck.teapot',
+  Horseman: 'deck.horseman',
+  Ship: 'deck.ship',
+  Mountain: 'deck.mountain',
+};
 
 const MAP_WIDTH = 1672;
 const MAP_HEIGHT = 941;
@@ -212,7 +221,7 @@ export const GameBoard = () => {
                 <rect x="6" y="4" width="14" height="18" rx="2" opacity="0.7"/>
                 <rect x="8" y="6" width="14" height="18" rx="2"/>
               </svg>
-              <span className="deck-indicator-text">{gameState.activeDeckGroup}</span>
+              <span className="deck-indicator-text">{t(DECK_NAME_KEYS[gameState.activeDeckGroup] || gameState.activeDeckGroup as any)}</span>
             </div>
           )}
         </div>
