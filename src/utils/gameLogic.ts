@@ -1957,6 +1957,8 @@ export function resolveNextBattle(state: GameState): GameState {
     switch (tactic.id) {
       case 'seppuku': {
         // Kill own figures for VP and Honor
+        // Monsters are intentionally included in seppuku - they die and return to reserve
+        // just like bushi/daimyo, granting VP and honor per monster killed.
         const ownFigures = currentProvFigures.figures.filter(
           (f) => f.owner === highestBidder && (f.type === 'bushi' || f.type === 'daimyo' || f.type === 'monster')
         );

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { Player, GameState } from '../types/game';
@@ -11,6 +11,8 @@ import { useT } from '../i18n';
 
 // Dual-type monster card IDs
 const SHINTO_MONSTER_IDS = ['sp-komainu', 'su-hotei'];
+// Note: Fukurokuju card text says "Counts as Daimyo and Fortress" but only daimyo tracking
+// is implemented per user spec. The fortress aspect is deliberately omitted.
 const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
 
 function computeReserveTotals(player: Player, gameState: GameState) {
@@ -19,25 +21,25 @@ function computeReserveTotals(player: Player, gameState: GameState) {
   // Gather all figures in temples owned by this player
   const allTempleFigures = gameState.temples.flatMap(t => t.figures.filter(f => f.playerId === player.id));
 
-  // Determine which monster cards are deployed (have a figure on map or temple)
+  // Determine which monster cards are deployed on the map (have a figure with monsterCardId)
   const deployedMonsterCardIds = new Set<string>();
   allMapFigures.forEach(f => { if (f.type === 'monster' && f.monsterCardId) deployedMonsterCardIds.add(f.monsterCardId); });
-  // Check temples for shinto-type monsters (komainu placed at temple)
-  allTempleFigures.forEach(f => {
-    // Temple figures don't carry monsterCardId directly, but a monster at temple would have been tracked via the figure
-    // Actually, temple figures are { playerId, figureId } - we need to check map figures aren't the source
-  });
 
   // Monster cards owned by the player
   const monsterCards = player.seasonCards.filter(c => c.cardType === 'monster');
   const totalMonsters = monsterCards.length;
 
-  // Monsters in reserve = those with no figure deployed on map
-  // Note: player.monsters tracks the numeric reserve count
+  // Monsters in reserve = authoritative count from player state
   const monstersInReserve = player.monsters;
 
-  // Determine which specific monster cards are in reserve (not deployed)
-  const monsterCardsInReserve = monsterCards.filter(c => !deployedMonsterCardIds.has(c.id));
+  // Determine which specific monster cards are in reserve (not deployed on map)
+  const notOnMap = monsterCards.filter(c => !deployedMonsterCardIds.has(c.id));
+
+  // Among notOnMap cards, some may be at temples (only Komainu can be at a temple).
+  // If notOnMap count exceeds player.monsters (authoritative reserve count), the difference
+  // must be at temples. The only monster that can be at a temple is Komainu (sp-komainu).
+  const komainuAtTemple = notOnMap.length > player.monsters && notOnMap.some(c => c.id === 'sp-komainu');
+  const monsterCardsInReserve = komainuAtTemple ? notOnMap.filter(c => c.id !== 'sp-komainu') : notOnMap;
 
   // Dual-type bonus counts for secondary types (only when monster is in reserve)
   const shintoMonstersInReserve = monsterCardsInReserve.filter(c => SHINTO_MONSTER_IDS.includes(c.id)).length;
@@ -80,7 +82,7 @@ function computeReserveTotals(player: Player, gameState: GameState) {
 
 const PlayerReserves = ({ player, gameState }: { player: Player; gameState: GameState }) => {
   const clan = CLANS.find(c => c.id === player.clanId)!;
-  const totals = useMemo(() => computeReserveTotals(player, gameState), [player, gameState]);
+  const totals = computeReserveTotals(player, gameState);
 
   return (
     <>
