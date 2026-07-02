@@ -251,7 +251,7 @@ export const PoliticsTrack = () => {
             <path d="M14 4c0-1.5 1-2.5 1-3.5" stroke="var(--accent-cream)" strokeWidth="0.8" opacity="0.5" strokeLinecap="round" />
           </svg>
         </div>
-        <span className="politics-phase-tooltip politics-phase-tooltip-tea" style={{ left: '150%' }}>Ceremonia del Te</span>
+        <span className="politics-phase-tooltip politics-phase-tooltip-tea" style={{ left: '150%' }}>Ceremonia del Té</span>
       </div>
 
       {/* First 3 mandate slots */}

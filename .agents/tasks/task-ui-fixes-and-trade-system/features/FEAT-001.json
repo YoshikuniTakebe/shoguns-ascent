@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "UI fixes: Kyushu harvest hex position, card text icon styling, Tea ceremony accent, season cards modal legend button visibility, and discount text alignment",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/components/GameBoard.tsx, find the HARVEST_BADGE_META entry for 'kyushu' which currently has position { x: 170, y: 750 }. Change x from 170 to 160 (move 10px to the left).",
+    "2. In src/utils/renderCardEffect.tsx, modify the rendering so that: (a) bushi and shinto icons get color '#c8a951' (gold) instead of undefined/currentColor - update COLOR_MAP to add entries 'bushi': '#c8a951' and 'shinto': '#c8a951'; (b) When an icon token has a numeric amount (the {amount} span), style it with fontWeight: 'bold' and color: '#c8a951' (gold) to make numbers accompanying icons stand out.",
+    "3. In src/components/PoliticsTrack.tsx, find the tooltip text 'Ceremonia del Te' (around line 254) and change it to 'Ceremonia del Te\\u0301' or simply 'Ceremonia del T\\u00E9' (with accent on the e).",
+    "4. In src/components/SeasonCardsModal.tsx, the legend button has className='legend-btn' inside a div with style={{ position: 'absolute', top: '0.6rem', left: '0.9rem', zIndex: 1 }}. The zIndex of 1 is too low - the close button has zIndex:1 too and the modal title/content can overlay it. Change zIndex to 10 or higher to ensure it's always visible above modal content.",
+    "5. In src/components/SeasonCardsModal.tsx, the discount text display in the title area shows '(descuento -<CoinIcon/>)' inline. The issue is the alignment of the coin icon and discount number in the card cost display. In the season-card-cost span inside each card, when showing discounted price, ensure the elements have proper flex alignment. Also check the modal title's discount span - add verticalAlign: 'middle' and display: 'inline-flex' with alignItems: 'center' to the parent span if not already present."
+  ],
+  "acceptance_criteria": [
+    "Kyushu harvest hex position x is 160 (moved 10px left from 170)",
+    "Bushi and shinto icons in card effect text render in gold (#c8a951)",
+    "Numbers accompanying icons in card effect text are bold and gold",
+    "PoliticsTrack tooltip shows 'Ceremonia del Te' with accent (Te with tilde)",
+    "Legend '?' button in SeasonCardsModal is visible above other content",
+    "Build passes with npm run build"
+  ],
+  "verification": [
+    "npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

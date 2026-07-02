@@ -202,7 +202,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
           </button>
         )}
         {/* Legend button */}
-        <div className="legend-button-wrapper" style={{ position: 'absolute', top: '0.6rem', left: '0.9rem', zIndex: 1 }}>
+        <div className="legend-button-wrapper" style={{ position: 'absolute', top: '0.6rem', left: '0.9rem', zIndex: 10 }}>
           <button className="legend-btn">?</button>
           <div className="legend-tooltip">
             <div className="legend-tooltip-row"><BushiIcon size={20} color="#fff" /><span>{t('legend.bushi')}</span></div>

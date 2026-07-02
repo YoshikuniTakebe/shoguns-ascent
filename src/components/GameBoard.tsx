@@ -53,7 +53,7 @@ const HARVEST_BADGE_META: Record<string, { color: string; position: { x: number;
   kansai: { color: '#F57C20', position: { x: 885, y: 630 } },
   nagato: { color: '#8B5CF6', position: { x: 340, y: 550 } },
   shikoku: { color: '#8B6914', position: { x: 755, y: 850 } },
-  kyushu: { color: '#F5D020', position: { x: 170, y: 750 } },
+  kyushu: { color: '#F5D020', position: { x: 160, y: 750 } },
 };
 
 // Derive reward display data from PROVINCES_DATA (single source of truth)

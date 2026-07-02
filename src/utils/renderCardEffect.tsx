@@ -15,6 +15,8 @@ const COLOR_MAP: Record<string, string> = {
   vp: '#e94560',
   force: '#3498db',
   coin: '#c8a951',
+  bushi: '#c8a951',
+  shinto: '#c8a951',
 };
 
 const TOKEN_REGEX = /\{(vp|coin|honor|bushi|shinto|force)\}([+]?\d*)/g;
@@ -47,7 +49,7 @@ export function renderCardEffect(text: string): ReactNode[] {
       result.push(
         <span key={`icon-${matchStart}`} style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', gap: '1px' }}>
           <IconComponent size={14} color={iconColor} />
-          {amount && <span>{amount}</span>}
+          {amount && <span style={{ fontWeight: 'bold', color: '#c8a951' }}>{amount}</span>}
         </span>
       );
     }
