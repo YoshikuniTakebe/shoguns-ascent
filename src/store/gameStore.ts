@@ -376,7 +376,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       provinces: updatedProvinces,
       players: updatedPlayers,
       honorTrack: [...gameState.honorTrack],
-      log: [...gameState.log, `${player.name} summons a ${recruitFigureType} at ${jinmenjuProvince.name} using Jinmenju (loses honor)`],
+      log: [...gameState.log, `${player.name} invoca un ${recruitFigureType} en ${jinmenjuProvince.name} usando Jinmenju (pierde honor)`],
     };
 
     // Lose honor
@@ -425,7 +425,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       temples: updatedTemples,
       players: updatedPlayers,
       honorTrack: [...gameState.honorTrack],
-      log: [...gameState.log, `${player.name} places a shinto at ${capitalize(temple.kamiType)} shrine using Jinmenju (loses honor)`],
+      log: [...gameState.log, `${player.name} coloca un shinto en santuario de ${capitalize(temple.kamiType)} usando Jinmenju (pierde honor)`],
     };
 
     // Lose honor
@@ -635,7 +635,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             const nsUpdated: GameState = {
               ...ns,
               players: updatedPlayers,
-              log: [...ns.log, `Luna: no valid province for monster placement - ${boughtCard.name} stays in reserve`],
+              log: [...ns.log, `Luna: no hay provincia valida para colocar monstruo - ${boughtCard.name} se queda en reserva`],
             };
             set({
               gameState: nsUpdated,
@@ -827,7 +827,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       temples: updatedTemples,
       players: updatedPlayers,
       recruitPlacementsRemaining: gameState.recruitPlacementsRemaining - 1,
-      log: [...gameState.log, `${player.name} places a shinto at ${capitalize(temple.kamiType)} shrine`],
+      log: [...gameState.log, `${player.name} coloca un shinto en santuario de ${capitalize(temple.kamiType)}`],
     };
 
     // Do NOT auto-advance when placements reach 0 - player must press Terminar manually
@@ -936,7 +936,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const ns: GameState = {
           ...gameState,
           players: updatedPlayers,
-          log: [...gameState.log, `Luna: no valid province for monster placement - monster stays in reserve`],
+          log: [...gameState.log, `Luna: no hay provincia valida para colocar monstruo - el monstruo se queda en reserva`],
         };
         set({
           gameState: ns,
@@ -983,7 +983,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     let ns: GameState = {
       ...gameState,
       provinces: updatedProvinces,
-      log: [...gameState.log, `${monsterPlacementCard.name} placed in ${province.name}`],
+      log: [...gameState.log, `${monsterPlacementCard.name} colocado en ${province.name}`],
     };
 
     // If placing during Ryujin kami resolution, advance kami resolution instead of train
@@ -1051,7 +1051,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Enter komainu pray mode: close popup, show temple selection
     const ns: GameState = {
       ...gameState,
-      log: [...gameState.log, `${monsterPlacementCard.name} sent to worship at a temple`],
+      log: [...gameState.log, `${monsterPlacementCard.name} enviado a rezar a un santuario`],
     };
 
     set({
@@ -1104,7 +1104,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     let ns: GameState = {
       ...gameState,
       temples: updatedTemples,
-      log: [...gameState.log, `Komainu placed as shinto at ${capitalize(temple.kamiType)} temple`],
+      log: [...gameState.log, `Komainu colocado como shinto en santuario de ${capitalize(temple.kamiType)}`],
     };
 
     // If placing during Ryujin kami resolution, advance kami resolution instead of train
@@ -1413,7 +1413,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       players: updatedPlayers,
       raijinPlacementActive: false,
       raijinPlacementDone: true,
-      log: [...gameState.log, `${player.name} summons a Bushi to ${province.name} (Raijin)`],
+      log: [...gameState.log, `${player.name} invoca un Bushi en ${province.name} (Raijin)`],
     };
 
     // Do NOT advance kami resolution yet - wait for player to confirm
@@ -1499,7 +1499,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     let ns: GameState = {
       ...gameState,
       ryujinBuyActive: false,
-      log: [...gameState.log, 'Ryujin reward skipped'],
+      log: [...gameState.log, 'Recompensa de Ryujin saltada'],
     };
 
     ns = advanceKamiResolution(ns);

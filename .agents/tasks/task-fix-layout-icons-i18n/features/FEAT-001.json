@@ -1,0 +1,18 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix two CSS layout issues: recruit buttons overflow and region-forces icon row wrapping",
+  "status": "completed",
+  "steps": [
+    "In src/App.css, find the rule `.recruit-buttons{display:flex;gap:0.5rem;margin-top:0.5rem;margin-bottom:0.5rem}` and add `flex-wrap:wrap` so the Shinto button wraps instead of overflowing. The result should be: `.recruit-buttons{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;margin-bottom:0.5rem}`",
+    "In src/App.css, find the rule `.region-forces{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:0.3rem;max-width:calc(5 * 23px)}`. The issue: icons are 21px and gap is 3px, so 5 icons per row need 5*21 + 4*3 = 117px but current max-width is 5*23=115px which is too narrow, causing the 5th icon to wrap prematurely. Fix by changing `max-width:calc(5 * 23px)` to `max-width:calc(5 * 24px)` which gives 120px (enough for 5 icons + 4 gaps = 117px with a tiny margin)."
+  ],
+  "acceptance_criteria": [
+    "The .recruit-buttons CSS rule includes flex-wrap:wrap",
+    "The .region-forces CSS rule has max-width:calc(5 * 24px) instead of calc(5 * 23px)",
+    "npx vite build succeeds without errors"
+  ],
+  "verification": ["npx vite build"],
+  "blocked_reason": null,
+  "findings": "Both CSS replacements applied cleanly. Build succeeds. Commit: 671a0fb"
+}

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-fix-layout-icons-i18n",
+  "task_description": "Fix recruit buttons layout overflow (CSS), fix region-forces icon wrapping to 3rd row prematurely (CSS), and translate all remaining English log messages to Spanish in gameLogic.ts and gameStore.ts",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

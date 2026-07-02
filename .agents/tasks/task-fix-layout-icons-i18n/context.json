@@ -1,0 +1,25 @@
+{
+  "project_type": "React + TypeScript SPA (board game)",
+  "language": "TypeScript",
+  "build_system": "Vite",
+  "test_framework": "None detected",
+  "build_command": "npx vite build",
+  "test_command": "npx vite build",
+  "verification_instructions": "Run npx vite build and confirm it compiles without errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "Dependencies already installed in node_modules",
+  "environment_constraints": "No tests - verification is via successful build only",
+  "contribution_requirements": "None",
+  "key_patterns": "i18n system: en.ts defines TranslationKey type, es.ts must match all keys. Log messages in gameLogic.ts and gameStore.ts are hardcoded strings (not using the i18n system). CSS is minified in a single line in App.css.",
+  "relevant_files": [
+    "src/App.css",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/i18n/index.ts",
+    "src/store/gameStore.ts",
+    "src/utils/gameLogic.ts",
+    "src/components/ActionPanel.tsx",
+    "src/components/RegionCard.tsx"
+  ],
+  "directory_structure": "src/components/ has all React components, src/store/ has zustand store, src/utils/ has game logic, src/i18n/ has translations, src/types/ has TypeScript types"
+}

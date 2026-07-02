@@ -249,7 +249,7 @@ export function createInitialGameState(
     zorroPlacementsRemaining: 0,
     lastMandateIssuerId: null,
     gameOver: false,
-    log: ['Game started! Season: Spring'],
+    log: ['Juego iniciado! Estacion: Primavera'],
     logHistory: {},
     hostId,
   };
@@ -289,7 +289,7 @@ export function setupSeason(state: GameState, season: Season): GameState {
     currentPlayerIndex: firstPlayerIdx >= 0 ? firstPlayerIdx : 0,
     teaTurnIndex: 0,
     logHistory: archivedHistory,
-    log: [`Season Setup: ${season.charAt(0).toUpperCase() + season.slice(1)}`],
+    log: [`Preparacion de Estacion: ${({ spring: 'Primavera', summer: 'Verano', autumn: 'Otono', winter: 'Invierno' } as Record<string, string>)[season] || season}`],
   };
 
   // Place war province tokens (numPlayers + 2) on random provinces
@@ -325,7 +325,7 @@ export function setupSeason(state: GameState, season: Season): GameState {
   // Break all alliances for tea ceremony
   newState = breakAllAlliances(newState);
 
-  newState.log = [...newState.log, `War province tokens placed on ${selectedProvinces.length} provinces`, 'Tea Ceremony Phase begins'];
+  newState.log = [...newState.log, `Fichas de guerra colocadas en ${selectedProvinces.length} provincias`, 'Comienza la Fase de Ceremonia del Te'];
 
   return newState;
 }
@@ -358,7 +358,7 @@ function returnHostages(state: GameState): GameState {
       Object.entries(hostagesByOwner).forEach(([ownerId, count]) => {
         const targetPlayer = newState.players.find((p) => p.id === ownerId);
         const targetName = targetPlayer ? targetPlayer.name : ownerId;
-        newState.log = [...newState.log, `${player.name} returns ${count} hostage(s) to ${targetName}, gains ${count} coin(s)`];
+        newState.log = [...newState.log, `${player.name} devuelve ${count} rehen(es) a ${targetName}, gana ${count} moneda(s)`];
       });
       player.hostages = [];
     }
@@ -375,7 +375,7 @@ export function breakAllAlliances(state: GameState): GameState {
     ...state,
     players: state.players.map((p) => ({ ...p, allies: [] })),
     allianceProposals: [],
-    log: [...state.log, 'All alliances broken for Tea Ceremony'],
+    log: [...state.log, 'Todas las alianzas rotas para la Ceremonia del Te'],
   };
   return newState;
 }
@@ -509,7 +509,7 @@ export function acceptAlliance(state: GameState, fromId: string, toId: string): 
   newState.allianceProposals = newState.allianceProposals.filter(
     (ap) => ap.from !== fromId && ap.to !== fromId && ap.from !== toId && ap.to !== toId
   );
-  newState.log = [...newState.log, `${from.name} and ${to.name} form an alliance!`];
+  newState.log = [...newState.log, `${from.name} y ${to.name} forman una alianza!`];
   return newState;
 }
 
@@ -529,7 +529,7 @@ export function drawMandateTiles(state: GameState): GameState {
   // If deck is too small, reshuffle
   if (newState.mandatesDeck.length < 4) {
     newState.mandatesDeck = shuffleMandates();
-    newState.log = [...newState.log, 'Mandate deck reshuffled'];
+    newState.log = [...newState.log, 'Mazo de mandatos barajado'];
   }
 
   // Draw 4 political order tiles
@@ -602,7 +602,7 @@ export function executeMandate(state: GameState, mandate: MandateType, playerId:
   const player = newState.players.find((p) => p.id === playerId);
   if (!player) return state;
 
-  newState.log = [...newState.log, `${player.name} issues ${mandate.toUpperCase()} mandate`];
+  newState.log = [...newState.log, `${player.name} emite mandato ${mandate.toUpperCase()}`];
 
   switch (mandate) {
     case 'recruit':
@@ -656,7 +656,7 @@ function executeRecruit(state: GameState, issuerId: string): GameState {
     recruitMandateIssuerId: issuerId,
     recruitPlacementsRemaining: 0,
     recruitUsedFortressProvinces: [],
-    log: [...state.log, `Recruit mandate issued by ${issuer?.name ?? 'Player'} - all players may summon figures at their fortresses in resolution order. Issuer and ally get +1 bonus placement.`],
+    log: [...state.log, `Mandato de Reclutar emitido por ${issuer?.name ?? 'Jugador'} - todos los jugadores pueden invocar figuras en sus fortalezas. Emisor y aliado obtienen +1 colocacion extra.`],
   };
 
   // Use advanceRecruitResolution to set up the first player (auto-skips if 0 placements)
@@ -747,7 +747,7 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
     recruitUsedFortressProvinces: (figureType === 'bushi' || figureType === 'monster')
       ? [...state.recruitUsedFortressProvinces, provinceId]
       : [...state.recruitUsedFortressProvinces],
-    log: [...state.log, `${player.name} summons a ${figureType} in ${province.name}`],
+    log: [...state.log, `${player.name} invoca un ${figureType} en ${province.name}`],
   };
 
   // Place figure
@@ -795,7 +795,7 @@ function advanceRecruitResolution(state: GameState): GameState {
       recruitMandateIssuerId: null,
       recruitPlacementsRemaining: 0,
       recruitUsedFortressProvinces: [],
-      log: [...state.log, 'Recruit mandate resolved'],
+      log: [...state.log, 'Mandato de Reclutar resuelto'],
     };
   }
   // Set currentPlayerIndex to the next player in resolution order and calculate their placements
@@ -808,7 +808,7 @@ function advanceRecruitResolution(state: GameState): GameState {
     const skippedState: GameState = {
       ...state,
       recruitResolutionIndex: state.recruitResolutionIndex + 1,
-      log: [...state.log, `${state.players[nextPlayerIdx]?.name ?? 'Player'} has no placements available - skipped`],
+      log: [...state.log, `${state.players[nextPlayerIdx]?.name ?? 'Jugador'} no tiene colocaciones disponibles - saltado`],
     };
     return advanceRecruitResolution(skippedState);
   }
@@ -833,7 +833,7 @@ function executeMarshal(state: GameState, issuerId: string): GameState {
     marshalMandateIssuerId: issuerId,
     marshalFortressBuiltBy: [],
     marshalMovedFigures: [],
-    log: [...state.log, `Marshal mandate issued by ${issuer?.name ?? 'Player'} - all players may move figures in resolution order. Issuer and ally may also build a fortress (3 coins).`],
+    log: [...state.log, `Mandato de Movilizar emitido por ${issuer?.name ?? 'Jugador'} - todos los jugadores pueden mover figuras. Emisor y aliado pueden construir una fortaleza (3 monedas).`],
   };
   // Set currentPlayerIndex to the first player in resolution order
   const firstPlayerId = resolutionOrder[0];
@@ -860,7 +860,7 @@ function executeTrain(state: GameState, issuerId: string): GameState {
     trainResolutionOrder: resolutionOrder,
     trainResolutionIndex: 0,
     trainMandateIssuerId: issuerId,
-    log: [...state.log, 'Train mandate issued - all players may buy 1 season card from the market in resolution order. Issuer and ally get -1 cost discount.'],
+    log: [...state.log, 'Mandato de Entrenar emitido - todos los jugadores pueden comprar 1 carta de estacion del mercado. Emisor y aliado obtienen descuento de -1.'],
   };
   // Set currentPlayerIndex to the issuer (first in resolution order)
   const firstPlayerId = resolutionOrder[0];
@@ -925,7 +925,7 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
       return { ...p };
     }),
     seasonCardsDeck: state.seasonCardsDeck.filter((c) => c.id !== cardId),
-    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coins${isDiscounted ? ' (discounted)' : ''}`],
+    log: [...state.log, `${player.name} compra ${card.name} por ${effectiveCost} monedas${isDiscounted ? ' (con descuento)' : ''}`],
   };
 
   if (import.meta.env.DEV) {
@@ -977,7 +977,7 @@ export function ryujinBuyCard(state: GameState, playerId: string, cardId: string
       return { ...p };
     }),
     seasonCardsDeck: state.seasonCardsDeck.filter((c) => c.id !== cardId),
-    log: [...state.log, `${player.name} buys ${card.name} for ${effectiveCost} coins (Ryujin)`],
+    log: [...state.log, `${player.name} compra ${card.name} por ${effectiveCost} monedas (Ryujin)`],
   };
 
   return newState;
@@ -1142,7 +1142,7 @@ function executeBetray(state: GameState, issuerId: string): GameState {
     }
     issuer.allies = [];
     loseHonor(newState, issuerId);
-    newState.log = [...newState.log, `${issuer.name} breaks their alliance and loses honor`];
+    newState.log = [...newState.log, `${issuer.name} rompe su alianza y pierde honor`];
   }
 
   // Set up interactive betray state - only the issuer acts
@@ -1254,7 +1254,7 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
   newState.betraySelectedOwners.push(figure.owner);
   newState.betraySelectionsRemaining -= 1;
 
-  newState.log = [...newState.log, `${issuer.name} replaces ${figureOwner.name}'s ${figure.type} in ${province.name}`];
+  newState.log = [...newState.log, `${issuer.name} reemplaza ${figure.type} de ${figureOwner.name} en ${province.name}`];
 
   // If no selections remaining, finalize
   if (newState.betraySelectionsRemaining <= 0) {
@@ -1271,7 +1271,7 @@ function finalizeBetray(state: GameState): GameState {
     betraySelectionsRemaining: 0,
     betraySelectedOwners: [],
     betrayMandateIssuerId: null,
-    log: [...state.log, 'Betray mandate resolved'],
+    log: [...state.log, 'Mandato de Traicionar resuelto'],
   };
   return newState;
 }
@@ -1309,14 +1309,14 @@ export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerI
           const p = newState.players.find(pl => pl.id === pid);
           if (p) p.honor = idx + 1;
         });
-        newState.log = [...newState.log, `${player.name} moves to top of Honor Track (Amaterasu)`];
+        newState.log = [...newState.log, `${player.name} sube a la cima del Track de Honor (Amaterasu)`];
       }
       break;
     }
     case 'hachiman': {
       // Grant +2 ronin tokens
       player.ronin += 2;
-      newState.log = [...newState.log, `${player.name} gains 2 Ronin tokens (Hachiman)`];
+      newState.log = [...newState.log, `${player.name} obtiene 2 fichas de Ronin (Hachiman)`];
       break;
     }
     case 'susanoo': {
@@ -1328,13 +1328,13 @@ export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerI
         ).length;
       });
       player.victoryPoints += fortressCount;
-      newState.log = [...newState.log, `${player.name} gains ${fortressCount} VP from Fortresses (Susanoo)`];
+      newState.log = [...newState.log, `${player.name} obtiene ${fortressCount} PV por Fortalezas (Susanoo)`];
       break;
     }
     case 'tsukuyomi': {
       // Grant +2 coins
       player.coins += 2;
-      newState.log = [...newState.log, `${player.name} gains 2 Coins (Tsukuyomi)`];
+      newState.log = [...newState.log, `${player.name} obtiene 2 Monedas (Tsukuyomi)`];
       break;
     }
     case 'fujin': {
@@ -1401,7 +1401,7 @@ export function resolveKamiTurn(state: GameState): GameState {
     players: state.players.map((p) => ({ ...p })),
     temples: state.temples.map((t) => ({ ...t, figures: [...t.figures] })),
     honorTrack: [...state.honorTrack],
-    log: [...state.log, '--- Kami Turn ---'],
+    log: [...state.log, '--- Turno Kami ---'],
   };
 
   // For each temple (left to right by position)
@@ -1412,7 +1412,7 @@ export function resolveKamiTurn(state: GameState): GameState {
     const kamiInfo = KAMI_DATA.find((k) => k.type === temple.kamiType);
 
     if (forces.length === 0) {
-      newState.log = [...newState.log, `Shrine ${temple.position} (${kamiInfo?.name || temple.kamiType}) - no figures, skipped`];
+      newState.log = [...newState.log, `Santuario ${temple.position} (${kamiInfo?.name || temple.kamiType}) - sin figuras, saltado`];
       continue;
     }
 
@@ -1429,7 +1429,7 @@ export function resolveKamiTurn(state: GameState): GameState {
     if (winnerId) {
       const winner = newState.players.find((p) => p.id === winnerId);
       if (winner && kamiInfo) {
-        newState.log = [...newState.log, `Shrine ${temple.position}: ${winner.name} wins ${kamiInfo.name} (force: ${forces.find(f => f.playerId === winnerId)?.count || 0})`];
+        newState.log = [...newState.log, `Santuario ${temple.position}: ${winner.name} gana ${kamiInfo.name} (fuerza: ${forces.find(f => f.playerId === winnerId)?.count || 0})`];
         // Apply the kami ability
         newState = resolveKamiAbility(newState, temple.kamiType, winnerId);
       }
@@ -1462,7 +1462,7 @@ export function resolveCurrentKamiReward(state: GameState): GameState {
       ...state,
       kamiResolutionStep: 'interactive',
       fujinMovesRemaining: 2,
-      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} may perform up to 2 Movements (Fujin)`],
+      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} puede realizar hasta 2 Movimientos (Fujin)`],
     };
   }
   if (kamiType === 'raijin') {
@@ -1472,13 +1472,13 @@ export function resolveCurrentKamiReward(state: GameState): GameState {
         ...state,
         kamiResolutionStep: 'interactive',
         raijinPlacementActive: true,
-        log: [...state.log, `${player.name} may Summon 1 Bushi to any Province (Raijin)`],
+        log: [...state.log, `${player.name} puede Invocar 1 Bushi en cualquier Provincia (Raijin)`],
       };
     }
     // No bushi in reserve - treat as auto (skip)
     return {
       ...state,
-      log: [...state.log, `${player?.name || ''} has no Bushi in reserve (Raijin - no effect)`],
+      log: [...state.log, `${player?.name || ''} no tiene Bushi en reserva (Raijin - sin efecto)`],
     };
   }
   if (kamiType === 'ryujin') {
@@ -1486,7 +1486,7 @@ export function resolveCurrentKamiReward(state: GameState): GameState {
       ...state,
       kamiResolutionStep: 'interactive',
       ryujinBuyActive: true,
-      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} may acquire a Season Card (Ryujin)`],
+      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} puede adquirir una Carta de Estacion (Ryujin)`],
     };
   }
 
@@ -1527,7 +1527,7 @@ export function advanceKamiResolution(state: GameState): GameState {
       raijinPlacementActive: false,
       ryujinBuyActive: false,
     };
-    newState.log = [...newState.log, '--- End Kami Turn ---'];
+    newState.log = [...newState.log, '--- Fin Turno Kami ---'];
 
     // Check if politics phase is done
     if (newState.politicsMandateCount >= newState.maxMandates) {
@@ -1564,7 +1564,7 @@ function applyWarUpgrades(state: GameState): void {
         case 'sp-way-of-the-shogun': {
           // +3 coins
           player.coins += 3;
-          state.log = [...state.log, `${player.name} gains 3 Coins (Way of the Shogun)`];
+          state.log = [...state.log, `${player.name} obtiene 3 Monedas (Way of the Shogun)`];
           break;
         }
         case 'sp-way-of-the-righteous': {
@@ -1578,7 +1578,7 @@ function applyWarUpgrades(state: GameState): void {
               player.coins += 1;
             }
           }
-          state.log = [...state.log, `${player.name} takes coins from less honorable players (Way of the Righteous)`];
+          state.log = [...state.log, `${player.name} toma monedas de jugadores con menor honor (Way of the Righteous)`];
           break;
         }
         case 'su-way-of-bushido': {
@@ -1586,40 +1586,40 @@ function applyWarUpgrades(state: GameState): void {
           const virtueCount = player.seasonCards.filter((c) => c.cardType === 'virtue').length;
           player.coins += 2;
           player.victoryPoints += 2 * virtueCount;
-          state.log = [...state.log, `${player.name} gains 2 Coins and ${2 * virtueCount} VP (Way of Bushido, ${virtueCount} virtues)`];
+          state.log = [...state.log, `${player.name} obtiene 2 Monedas y ${2 * virtueCount} PV (Way of Bushido, ${virtueCount} virtudes)`];
           break;
         }
         case 'su-way-of-the-ronin': {
           // +2 ronin
           player.ronin += 2;
-          state.log = [...state.log, `${player.name} gains 2 Ronin (Way of the Ronin)`];
+          state.log = [...state.log, `${player.name} obtiene 2 Ronin (Way of the Ronin)`];
           break;
         }
         case 'au-way-of-the-moneylender': {
           // +5 coins
           player.coins += 5;
-          state.log = [...state.log, `${player.name} gains 5 Coins (Way of the Moneylender)`];
+          state.log = [...state.log, `${player.name} obtiene 5 Monedas (Way of the Moneylender)`];
           break;
         }
         case 'su-way-of-naginata':
         case 'au-way-of-naginata': {
           // Movement is UI-driven, log only
-          state.log = [...state.log, `${player.name} may perform Naginata movement (Way of Naginata)`];
+          state.log = [...state.log, `${player.name} puede realizar movimiento Naginata (Way of Naginata)`];
           break;
         }
         case 'su-way-of-the-ashigaru': {
           // Province selection is UI-driven, log only
-          state.log = [...state.log, `${player.name} may place Ashigaru (Way of the Ashigaru)`];
+          state.log = [...state.log, `${player.name} puede colocar Ashigaru (Way of the Ashigaru)`];
           break;
         }
         case 'au-way-of-the-katana': {
           // Bushi force 2 during war is handled in calculateForce
-          state.log = [...state.log, `${player.name}'s Bushi have Force 2 during War (Way of the Katana)`];
+          state.log = [...state.log, `${player.name} los Bushi tienen Fuerza 2 durante la Guerra (Way of the Katana)`];
           break;
         }
         case 'au-way-of-the-keiri': {
           // Kill up to 2 figures is UI-driven, log only
-          state.log = [...state.log, `${player.name} may kill up to 2 enemy figures (Way of the Keiri)`];
+          state.log = [...state.log, `${player.name} puede eliminar hasta 2 figuras enemigas (Way of the Keiri)`];
           break;
         }
       }
@@ -1633,7 +1633,7 @@ export function initiateWarPhase(state: GameState): GameState {
     currentPhase: 'war' as const,
     activeBattles: [],
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], seasonCards: [...p.seasonCards] })),
-    log: [...state.log, '=== War Phase begins ==='],
+    log: [...state.log, '=== Comienza la Fase de Guerra ==='],
   };
 
   // Koi clan power: swap all ronin for coins at the start of war
@@ -1689,7 +1689,7 @@ export function initiateWarPhase(state: GameState): GameState {
         uncontested: true,
       };
       newState.activeBattles.push(battle);
-      newState.log = [...newState.log, `${province.name}: empty - war token discarded`];
+      newState.log = [...newState.log, `${province.name}: vacia - ficha de guerra descartada`];
       continue;
     }
 
@@ -1708,7 +1708,7 @@ export function initiateWarPhase(state: GameState): GameState {
           uncontested: true,
         };
         newState.activeBattles.push(battle);
-        newState.log = [...newState.log, `${winner.name} wins war token in ${province.name} (uncontested)`];
+        newState.log = [...newState.log, `${winner.name} gana ficha de guerra en ${province.name} (sin oposicion)`];
       }
       continue;
     }
@@ -1732,7 +1732,7 @@ export function initiateWarPhase(state: GameState): GameState {
           uncontested: true,
         };
         newState.activeBattles.push(battle);
-        newState.log = [...newState.log, `${winner.name} wins war token in ${province.name} (allied - no battle)`];
+        newState.log = [...newState.log, `${winner.name} gana ficha de guerra en ${province.name} (aliados - sin batalla)`];
         continue;
       }
     }
@@ -1768,9 +1768,9 @@ export function initiateWarPhase(state: GameState): GameState {
   if (activeBattles.length > 0) {
     const contestedCount = activeBattles.filter(b => !b.uncontested).length;
     const uncontestedCount = activeBattles.length - contestedCount;
-    let summary = `${activeBattles.length} battles to resolve`;
+    let summary = `${activeBattles.length} batallas por resolver`;
     if (contestedCount > 0 && uncontestedCount > 0) {
-      summary += ` (${contestedCount} contested, ${uncontestedCount} uncontested)`;
+      summary += ` (${contestedCount} disputadas, ${uncontestedCount} sin oposicion)`;
     }
     newState.log = [...newState.log, summary];
   }
@@ -1810,7 +1810,7 @@ export function resolveUncontestedBattles(state: GameState): GameState {
 
     if (currentPlayerIds.length === 0) {
       // Empty - discard token
-      newState.log = [...newState.log, `${province.name}: empty - war token discarded`];
+      newState.log = [...newState.log, `${province.name}: vacia - ficha de guerra descartada`];
       return { ...battle, participants: [], uncontested: true };
     }
 
@@ -1820,7 +1820,7 @@ export function resolveUncontestedBattles(state: GameState): GameState {
       const winner = newState.players.find(p => p.id === winnerId);
       if (winner) {
         winner.warProvinceTokens = [...winner.warProvinceTokens, { season: slot.season, provinceId: slot.provinceId }];
-        newState.log = [...newState.log, `${winner.name} wins war token in ${province.name} (uncontested)`];
+        newState.log = [...newState.log, `${winner.name} gana ficha de guerra en ${province.name} (sin oposicion)`];
       }
       return { ...battle, participants: currentPlayerIds, winner: winnerId, uncontested: true };
     }
@@ -1834,7 +1834,7 @@ export function resolveUncontestedBattles(state: GameState): GameState {
         const force2 = calculateForce(province, p2.id, newState);
         const winner = force1 >= force2 ? p1 : p2;
         winner.warProvinceTokens = [...winner.warProvinceTokens, { season: slot.season, provinceId: slot.provinceId }];
-        newState.log = [...newState.log, `${winner.name} wins war token in ${province.name} (allied - no battle)`];
+        newState.log = [...newState.log, `${winner.name} gana ficha de guerra en ${province.name} (aliados - sin batalla)`];
         return { ...battle, participants: currentPlayerIds, winner: winner.id, uncontested: true };
       }
     }
@@ -1983,7 +1983,7 @@ export function resolveNextBattle(state: GameState): GameState {
         }
         battleDeathCount += killCount;
         const seppukuHonorPos = getHonorRank(newState, highestBidder);
-        newState.log = [...newState.log, `${bidder.name} commits Seppuku: kills ${killCount} figures for ${killCount} VP and ${killCount} Honor now ${bidder.victoryPoints} PV and position ${seppukuHonorPos} at Honor`];
+        newState.log = [...newState.log, `${bidder.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV y ${killCount} Honor ahora ${bidder.victoryPoints} PV y posicion ${seppukuHonorPos} en Honor`];
         break;
       }
       case 'take-hostage': {
@@ -2006,7 +2006,7 @@ export function resolveNextBattle(state: GameState): GameState {
             else if (enemyFigure.type === 'shinto') victim.shinto += 1;
           }
           battleDeathCount += 1;
-          newState.log = [...newState.log, `${bidder.name} takes a hostage from ${victim?.name}`];
+          newState.log = [...newState.log, `${bidder.name} toma un rehen de ${victim?.name}`];
         }
         break;
       }
@@ -2019,7 +2019,7 @@ export function resolveNextBattle(state: GameState): GameState {
           const remainingCoins = bidder.coins - totalBidByBidder;
           roninForce += Math.max(0, remainingCoins);
         }
-        newState.log = [...newState.log, `${bidder.name} hires ronin: +${roninForce} force`];
+        newState.log = [...newState.log, `${bidder.name} contrata ronin: +${roninForce} fuerza`];
         break;
       }
       case 'imperial-poets': {
@@ -2158,7 +2158,7 @@ export function resolveNextBattle(state: GameState): GameState {
       const totalDeaths = battleDeathCount + battleCasualtyCount;
       const poetsBidder = newState.players.find((p) => p.id === imperialPoetsBidder)!;
       poetsBidder.victoryPoints += totalDeaths;
-      newState.log = [...newState.log, `${poetsBidder.name} gains ${totalDeaths} VP from Imperial Poets`];
+      newState.log = [...newState.log, `${poetsBidder.name} obtiene ${totalDeaths} PV de Poetas Imperiales`];
     }
 
     // Remove killed figures from province (keep winner's figures, allied figures, daimyos, and fortresses)
@@ -2213,7 +2213,7 @@ export function resolveNextBattle(state: GameState): GameState {
       }
     });
 
-    newState.log = [...newState.log, `${winner.name} wins the battle in ${finalProvince.name}!`];
+    newState.log = [...newState.log, `${winner.name} gana la batalla en ${finalProvince.name}!`];
   }
 
   battle.resolved = true;
@@ -2256,7 +2256,7 @@ export function cleanupSeason(state: GameState): GameState {
     trainResolutionIndex: 0,
     trainMandateIssuerId: null,
     teaTurnIndex: 0,
-    log: [...state.log, 'Cleanup: Ronin and coins discarded, Shinto returned from temples'],
+    log: [...state.log, 'Limpieza: Ronin y monedas descartados, Shinto devueltos de los santuarios'],
   };
 
   // Return all Shinto from temples to reserves
@@ -2278,7 +2278,7 @@ export function resolveWinter(state: GameState): GameState {
     currentPhase: 'winter' as const,
     currentSeason: 'winter' as const,
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages], seasonCards: [...p.seasonCards] })),
-    log: [...state.log, 'Winter - Final Scoring'],
+    log: [...state.log, 'Invierno - Puntuacion Final'],
   };
 
   // Return hostages (+1 coin each)
@@ -2296,7 +2296,7 @@ export function resolveWinter(state: GameState): GameState {
         const vp = scoreWinterUpgrade(newState, player, card);
         player.victoryPoints += vp;
         if (vp > 0) {
-          newState.log = [...newState.log, `${player.name} scores ${vp} VP from ${card.name}`];
+          newState.log = [...newState.log, `${player.name} anota ${vp} PV de ${card.name}`];
         }
       }
     });
@@ -2314,7 +2314,7 @@ export function resolveWinter(state: GameState): GameState {
     });
     if (tokenVP > 0) {
       player.victoryPoints += tokenVP;
-      newState.log = [...newState.log, `${player.name} scores ${tokenVP} VP from war province tokens`];
+      newState.log = [...newState.log, `${player.name} anota ${tokenVP} PV de fichas de provincia de guerra`];
     }
   });
 
@@ -2329,7 +2329,7 @@ export function resolveWinter(state: GameState): GameState {
 
     if (setVP > 0) {
       player.victoryPoints += setVP;
-      newState.log = [...newState.log, `${player.name} scores ${setVP} VP from province token set (${count} unique)`];
+      newState.log = [...newState.log, `${player.name} anota ${setVP} PV por set de fichas de provincia (${count} unicas)`];
     }
   });
 
@@ -2364,12 +2364,12 @@ export function resolveWinter(state: GameState): GameState {
     if (winner.allies.length > 0) {
       const ally = newState.players.find((p) => p.id === winner.allies[0]);
       if (ally && ally.victoryPoints === maxVP) {
-        newState.log = [...newState.log, `${winner.name} and ${ally.name} share victory with ${maxVP} VP!`];
+        newState.log = [...newState.log, `${winner.name} y ${ally.name} comparten la victoria con ${maxVP} PV!`];
       } else {
-        newState.log = [...newState.log, `${winner.name} wins with ${maxVP} VP!`];
+        newState.log = [...newState.log, `${winner.name} gana con ${maxVP} PV!`];
       }
     } else {
-      newState.log = [...newState.log, `${winner.name} wins with ${maxVP} VP!`];
+      newState.log = [...newState.log, `${winner.name} gana con ${maxVP} PV!`];
     }
   }
 
@@ -2798,7 +2798,7 @@ export function advancePhase(state: GameState): GameState {
       newState.currentPlayerIndex = firstPlayerIdx >= 0 ? firstPlayerIdx : 0;
 
       const firstPlayer = newState.players[newState.currentPlayerIndex];
-      newState.log = [...newState.log, `Politics Phase begins - ${firstPlayer?.name ?? 'Player'} takes the first mandate turn`];
+      newState.log = [...newState.log, `Comienza la Fase de Politica - ${firstPlayer?.name ?? 'Jugador'} toma el primer turno de mandato`];
       break;
     }
     case 'politics':
@@ -2806,12 +2806,12 @@ export function advancePhase(state: GameState): GameState {
       // If no battles were created, auto-advance to cleanup
       if (newState.activeBattles.filter(b => !b.resolved).length === 0) {
         newState.currentPhase = 'cleanup';
-        newState.log = [...newState.log, 'No battles to resolve - moving to Cleanup'];
+        newState.log = [...newState.log, 'No hay batallas por resolver - pasando a Limpieza'];
       }
       break;
     case 'war': {
       newState.currentPhase = 'cleanup';
-      newState.log = [...newState.log, 'Cleanup Phase begins'];
+      newState.log = [...newState.log, 'Comienza la Fase de Limpieza'];
       break;
     }
     case 'cleanup': {
@@ -2876,7 +2876,7 @@ export function advancePlayer(state: GameState): GameState {
 
       // Skip empty temples (no figures = no winner, no need to show popup)
       if (!winnerId && forces.length === 0) {
-        newState.log = [...newState.log, `Shrine ${temple.position} (${kamiData?.name || temple.kamiType}) - no figures, skipped`];
+        newState.log = [...newState.log, `Santuario ${temple.position} (${kamiData?.name || temple.kamiType}) - sin figuras, saltado`];
         continue;
       }
 
@@ -2911,7 +2911,7 @@ export function advancePlayer(state: GameState): GameState {
 
     // If no temples have any figures, skip kami resolution entirely
     if (kamiResolutionTemples.length === 0) {
-      newState.log = [...newState.log, 'Kami Turn - no temples with figures, skipping'];
+      newState.log = [...newState.log, 'Turno Kami - ningun santuario con figuras, saltando'];
       // Continue with normal flow: check if politics done or advance to next player
       if (newState.politicsMandateCount >= newState.maxMandates) {
         return advancePhase(newState);
@@ -3037,7 +3037,7 @@ export function skipTrainPurchase(state: GameState): GameState {
   const newState: GameState = {
     ...state,
     trainResolutionIndex: state.trainResolutionIndex + 1,
-    log: [...state.log, `${currentPlayer?.name ?? 'Player'} skips card purchase`],
+    log: [...state.log, `${currentPlayer?.name ?? 'Jugador'} no compra carta`],
   };
   return advanceTrainResolution(newState);
 }
@@ -3079,7 +3079,7 @@ export function skipMarshalTurn(state: GameState): GameState {
     ...state,
     marshalResolutionIndex: state.marshalResolutionIndex + 1,
     marshalMovedFigures: [],
-    log: [...state.log, `${currentPlayer?.name ?? 'Player'} ends their marshal turn`],
+    log: [...state.log, `${currentPlayer?.name ?? 'Jugador'} termina su turno de movilizar`],
   };
   return advanceMarshalResolution(newState);
 }
@@ -3147,7 +3147,7 @@ export function buildFortress(state: GameState, playerId: string, provinceId: st
       },
     },
     marshalFortressBuiltBy: [...state.marshalFortressBuiltBy, playerId],
-    log: [...state.log, `${player.name} builds a fortress in ${province.name} (${fortressCost} coins)`],
+    log: [...state.log, `${player.name} construye una fortaleza en ${province.name} (${fortressCost} monedas)`],
   };
   return newState;
 }
