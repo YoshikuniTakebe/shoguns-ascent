@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Implement five UI improvements: force icon change, coin alignment, legend button in modal, backdrop blur, and Sol clan glow on map figures",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/SeasonCardsModal.tsx: Replace the force display section (lines ~287-291) - change CrossedSwordsIcon to FistIcon with size=18, color '#3498db'. Remove the translation text 'seasonCardsModal.force' and instead just show: [FistIcon] [card.force number]. Update the import to add FistIcon (keep CrossedSwordsIcon import for future use). Also import all legend icons: BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, VPIcon, HonorIcon, RoninIcon, FistIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon.",
     "2. In src/components/PlayerCardsModal.tsx: Same force icon change - replace CrossedSwordsIcon with FistIcon (size=18, color '#3498db'), remove the translation text, just show icon + number. Import FistIcon. Keep CrossedSwordsIcon in the import for future use. Also import all legend icons.",
@@ -27,5 +27,5 @@
     "Run `npm run build` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing TS errors in BattleBiddingOverlay.tsx and BattlePanel.tsx cause tsc -b to fail (exit code 2) even on main without any changes. The vite build itself succeeds (exit code 0). CrossedSwordsIcon was removed from imports (not kept) because noUnusedLocals:true in tsconfig causes build failure for unused imports."
 }
