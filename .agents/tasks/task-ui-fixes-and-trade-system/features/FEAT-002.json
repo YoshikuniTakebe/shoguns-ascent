@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Figure size adjustments in the RegionDetailModal diorama view - apply per-figure size overrides for specific monster/daimyo/bushi figures",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/components/RegionDetailModal.tsx, add a FIGURE_SIZE_OVERRIDES constant that maps specific figure identifiers to scale multipliers. The figure identifiers should be based on monsterCardId for monsters and on figureType+clanId for clan figures. The overrides are: 'sp-jorogumo': 0.85 (-15%), 'daimyo-tortuga': 1.20 (+20%), 'bushi-loto': 0.85 (-15%), 'daimyo-loto': 0.90 (-10%), 'sp-oni-of-skulls': 1.25 (+25%), 'daimyo-koi': 1.10 (+10%), 'sp-earth-dragon': 1.20 (+20%), 'daimyo-luna': 1.15 (+15%), 'bushi-luna': 0.95 (-5%), 'daimyo-libelula': 1.10 (+10%).",
+    "2. Create a helper function getSizeOverride(figure: Figure, ownerClanId: string): number that returns the scale multiplier. For monsters, look up figure.monsterCardId in FIGURE_SIZE_OVERRIDES. For bushi/daimyo, look up `${figure.type}-${ownerClanId}`. Default to 1.0 if no override found.",
+    "3. In the DioramaFigure component, use the getSizeOverride function to compute a scale and apply it to the img style height. Currently images use `height: iconSize * 2.2`. Multiply the result by the size override: `height: iconSize * 2.2 * sizeOverride`. Pass the figure and ownerClanId to the function.",
+    "4. Similarly update the zoomed figure view (renderLargeFigure/renderZoomOverlay) to apply the same scale override to the '60vh' height. Use a CSS calc or a numeric style like `maxHeight: '60vh'` with a transform: `scale(${sizeOverride})` on the image container."
+  ],
+  "acceptance_criteria": [
+    "Jorogumo figure renders at 85% of default size in diorama",
+    "Daimyo Tortuga renders at 120% of default size",
+    "Bushi Loto renders at 85% of default size",
+    "Daimyo Loto renders at 90% of default size",
+    "Oni of Skulls renders at 125% of default size",
+    "Daimyo Koi renders at 110% of default size",
+    "Earth Dragon renders at 120% of default size",
+    "Daimyo Luna renders at 115% of default size",
+    "Bushi Luna renders at 95% of default size",
+    "Daimyo Libelula renders at 110% of default size",
+    "Build passes with npm run build"
+  ],
+  "verification": [
+    "npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

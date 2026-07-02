@@ -10,6 +10,29 @@ import { calculateForce, getPlayerSeasonCardEffects } from '../utils/gameLogic';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
 
+/** Per-figure size overrides for diorama display. Keys are monsterCardId for monsters, or 'type-clanId' for clan figures. */
+const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
+  'sp-jorogumo': 0.85,
+  'daimyo-tortuga': 1.20,
+  'bushi-loto': 0.85,
+  'daimyo-loto': 0.90,
+  'sp-oni-of-skulls': 1.25,
+  'daimyo-koi': 1.10,
+  'sp-earth-dragon': 1.20,
+  'daimyo-luna': 1.15,
+  'bushi-luna': 0.95,
+  'daimyo-libelula': 1.10,
+};
+
+/** Get the size scale override for a figure. Returns 1.0 if no override is defined. */
+function getSizeOverride(figure: Figure, ownerClanId: string): number {
+  if (figure.type === 'monster' && figure.monsterCardId) {
+    return FIGURE_SIZE_OVERRIDES[figure.monsterCardId] ?? 1.0;
+  }
+  const key = `${figure.type}-${ownerClanId}`;
+  return FIGURE_SIZE_OVERRIDES[key] ?? 1.0;
+}
+
 interface RegionDetailModalProps {
   regionId: string;
   onClose: () => void;
@@ -181,6 +204,9 @@ interface DioramaFigureProps {
 }
 
 const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, onClick }: DioramaFigureProps) => {
+  const sizeOverride = getSizeOverride(figure, ownerClanId);
+  const figureHeight = iconSize * 2.2 * sizeOverride;
+
   // Build tooltip text
   let tooltipText = `${getFigureTypeName(figure.type)} - ${ownerName}`;
   if (figure.type === 'monster' && figure.monsterCardId) {
@@ -196,7 +222,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     if (img) {
       return (
         <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
-          <img src={img} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
+          <img src={img} alt="Monster" className="region-diorama-figure-img" style={{ height: figureHeight }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7))' }}>
             <ClanShield clanId={ownerClanId} size={36} />
             <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
@@ -209,7 +235,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     // Fallback to template figure image when no specific image file exists for this monster
     return (
       <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
-        <img src={TEMPLATE_FIGURE_IMG} alt="Monster" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
+        <img src={TEMPLATE_FIGURE_IMG} alt="Monster" className="region-diorama-figure-img" style={{ height: figureHeight }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7))' }}>
           <ClanShield clanId={ownerClanId} size={36} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
@@ -226,7 +252,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     if (img) {
       return (
         <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
-          <img src={img} alt="Castle" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
+          <img src={img} alt="Castle" className="region-diorama-figure-img" style={{ height: figureHeight }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7))' }}>
             <ClanShield clanId={ownerClanId} size={36} />
             <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
@@ -239,7 +265,7 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     // Fallback to template figure image if castle image not found
     return (
       <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
-        <img src={TEMPLATE_FIGURE_IMG} alt="Fortress" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />
+        <img src={TEMPLATE_FIGURE_IMG} alt="Fortress" className="region-diorama-figure-img" style={{ height: figureHeight }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7))' }}>
           <ClanShield clanId={ownerClanId} size={36} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
@@ -254,17 +280,17 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
   const renderIcon = () => {
     switch (figure.type) {
       case 'bushi':
-        return <img src={getBushiImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Bushi" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
+        return <img src={getBushiImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Bushi" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
       case 'daimyo': {
         const daimyoImg = getDaimyoImage(ownerClanId);
-        return <img src={daimyoImg || TEMPLATE_FIGURE_IMG} alt="Daimyo" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
+        return <img src={daimyoImg || TEMPLATE_FIGURE_IMG} alt="Daimyo" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
       }
       case 'shinto':
-        return <img src={getShintoImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Shinto" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
+        return <img src={getShintoImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Shinto" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
       case 'kami':
         return <KamiIcon size={iconSize} color={ownerColor} />;
       default:
-        return <img src={TEMPLATE_FIGURE_IMG} alt="Figure" className="region-diorama-figure-img" style={{ height: iconSize * 2.2 }} />;
+        return <img src={TEMPLATE_FIGURE_IMG} alt="Figure" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
     }
   };
 
@@ -379,33 +405,36 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
 
     // Render the figure image/icon large
     const renderLargeFigure = () => {
+      const zoomScale = getSizeOverride(figure, ownerClanId);
+      const zoomStyle = { height: '60vh' as const, objectFit: 'contain' as const, transform: `scale(${zoomScale})` };
+
       if (figure.type === 'monster' && figure.monsterCardId) {
         const img = getMonsterFigureImage(figure.monsterCardId);
         if (img) {
-          return <img src={img} alt="Monster" style={{ height: '60vh', objectFit: 'contain' }} />;
+          return <img src={img} alt="Monster" style={zoomStyle} />;
         }
-        return <img src={TEMPLATE_FIGURE_IMG} alt="Monster" style={{ height: '60vh', objectFit: 'contain' }} />;
+        return <img src={TEMPLATE_FIGURE_IMG} alt="Monster" style={zoomStyle} />;
       }
       if (figure.type === 'fortress') {
         const img = getCastleImage(ownerClanId);
         if (img) {
-          return <img src={img} alt="Castle" style={{ height: '60vh', objectFit: 'contain' }} />;
+          return <img src={img} alt="Castle" style={zoomStyle} />;
         }
-        return <img src={TEMPLATE_FIGURE_IMG} alt="Fortress" style={{ height: '60vh', objectFit: 'contain' }} />;
+        return <img src={TEMPLATE_FIGURE_IMG} alt="Fortress" style={zoomStyle} />;
       }
       switch (figure.type) {
         case 'bushi':
-          return <img src={getBushiImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Bushi" style={{ height: '60vh', objectFit: 'contain' }} />;
+          return <img src={getBushiImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Bushi" style={zoomStyle} />;
         case 'daimyo': {
           const daimyoZoomImg = getDaimyoImage(ownerClanId);
-          return <img src={daimyoZoomImg || TEMPLATE_FIGURE_IMG} alt="Daimyo" style={{ height: '60vh', objectFit: 'contain' }} />;
+          return <img src={daimyoZoomImg || TEMPLATE_FIGURE_IMG} alt="Daimyo" style={zoomStyle} />;
         }
         case 'shinto':
-          return <img src={getShintoImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Shinto" style={{ height: '60vh', objectFit: 'contain' }} />;
+          return <img src={getShintoImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Shinto" style={zoomStyle} />;
         case 'kami':
           return <KamiIcon size={200} color={ownerColor} />;
         default:
-          return <img src={TEMPLATE_FIGURE_IMG} alt="Figure" style={{ height: '60vh', objectFit: 'contain' }} />;
+          return <img src={TEMPLATE_FIGURE_IMG} alt="Figure" style={zoomStyle} />;
       }
     };
 
