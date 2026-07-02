@@ -1,0 +1,7 @@
+{
+  "task_id": "task-monster-reserve-tracking",
+  "task_description": "Fix monster reserve tracking and display: show a 'no space' popup for Luna clan, properly track monsters returning to reserve (from battles/seppuku/betray), handle dual-type monsters counting toward secondary types, and update the sidebar to show X/Y (in reserve / total owned) format.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

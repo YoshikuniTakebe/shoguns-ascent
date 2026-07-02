@@ -1238,8 +1238,15 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
     figureOwner.bushi += 1;
   } else if (figure.type === 'shinto') {
     figureOwner.shinto += 1;
+  } else if (figure.type === 'monster') {
+    figureOwner.monsters += 1;
+    // Handle dual-type monsters
+    if (figure.monsterCardId === 'sp-komainu' || figure.monsterCardId === 'su-hotei') {
+      figureOwner.shinto += 1;
+    } else if (figure.monsterCardId === 'su-yurei' || figure.monsterCardId === 'sp-fukurokuju') {
+      figureOwner.hasDaimyo = true;
+    }
   }
-  // Monsters return to reserve implicitly (the card stays in seasonCards, just no figure on map)
 
   // Decrement issuer's reserve
   if (figure.type === 'bushi') {
@@ -1957,7 +1964,7 @@ export function resolveNextBattle(state: GameState): GameState {
       case 'seppuku': {
         // Kill own figures for VP and Honor
         const ownFigures = currentProvFigures.figures.filter(
-          (f) => f.owner === highestBidder && (f.type === 'bushi' || f.type === 'daimyo')
+          (f) => f.owner === highestBidder && (f.type === 'bushi' || f.type === 'daimyo' || f.type === 'monster')
         );
         const killCount = ownFigures.length;
         for (const fig of ownFigures) {
@@ -1966,6 +1973,14 @@ export function resolveNextBattle(state: GameState): GameState {
             bidder.bushi += 1;
           } else if (fig.type === 'daimyo') {
             bidder.hasDaimyo = true;
+          } else if (fig.type === 'monster') {
+            bidder.monsters += 1;
+            // Handle dual-type monsters
+            if (fig.monsterCardId === 'sp-komainu' || fig.monsterCardId === 'su-hotei') {
+              bidder.shinto += 1;
+            } else if (fig.monsterCardId === 'su-yurei' || fig.monsterCardId === 'sp-fukurokuju') {
+              bidder.hasDaimyo = true;
+            }
           }
         }
         const killedIds = ownFigures.map((f) => f.id);
@@ -2129,6 +2144,15 @@ export function resolveNextBattle(state: GameState): GameState {
         if (fig.type === 'bushi') loser.bushi += 1;
         else if (fig.type === 'shinto') loser.shinto += 1;
         else if (fig.type === 'daimyo') loser.hasDaimyo = true;
+        else if (fig.type === 'monster') {
+          loser.monsters += 1;
+          // Handle dual-type monsters
+          if (fig.monsterCardId === 'sp-komainu' || fig.monsterCardId === 'su-hotei') {
+            loser.shinto += 1;
+          } else if (fig.monsterCardId === 'su-yurei' || fig.monsterCardId === 'sp-fukurokuju') {
+            loser.hasDaimyo = true;
+          }
+        }
         // Track killed figures for display
         if (!killedMap[pid]) killedMap[pid] = {};
         killedMap[pid][fig.type] = (killedMap[pid][fig.type] || 0) + 1;

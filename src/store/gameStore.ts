@@ -198,6 +198,10 @@ interface GameStore {
   doKomainuPlaceAtTemple: (templeId: string) => void;
   cancelMonsterPlacement: () => void;
 
+  // Monster no placement popup (Luna - no valid province)
+  monsterNoPlacementPopupVisible: boolean;
+  dismissMonsterNoPlacement: () => void;
+
   // Kami
   doResolveKami: () => void;
   doAcknowledgeKamiReward: () => void;
@@ -297,6 +301,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   monsterPlacementCard: null,
   monsterPlacementPlayerId: null,
   monsterPlacementPopupVisible: false,
+  monsterNoPlacementPopupVisible: false,
   komainuChoiceVisible: false,
   komainuPrayMode: false,
   komainuPrayPlayerId: null,
@@ -893,43 +898,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
 
       if (!hasValidProvince) {
-        // No valid province: monster stays in reserve, skip placement and advance train
-        let ns: GameState = {
+        // No valid province: monster goes to reserve, show popup to inform player
+        const updatedPlayers = gameState.players.map(p => {
+          if (p.id !== monsterPlacementPlayerId) return p;
+          const updated = { ...p, monsters: p.monsters + 1 };
+          // Handle dual-type monsters
+          const cardId = get().monsterPlacementCard?.id;
+          if (cardId === 'sp-komainu' || cardId === 'su-hotei') {
+            updated.shinto = updated.shinto + 1;
+          } else if (cardId === 'su-yurei' || cardId === 'sp-fukurokuju') {
+            updated.hasDaimyo = true;
+          }
+          return updated;
+        });
+        const ns: GameState = {
           ...gameState,
+          players: updatedPlayers,
           log: [...gameState.log, `Luna: no valid province for monster placement - monster stays in reserve`],
-          trainResolutionIndex: gameState.trainResolutionIndex + 1,
         };
-        ns = advanceTrainResolution(ns);
-
-        if (!ns.trainMandateActive) {
-          ns = advancePlayer(ns);
-          const warPopup = detectWarTransitionWithPopup(ns);
-          const kamiPopup = detectKamiPopupPending(ns);
-          set({
-            gameState: ns,
-            showTrainModal: false,
-            monsterPlacementMode: false,
-            monsterPlacementCard: null,
-            monsterPlacementPlayerId: null,
-            monsterPlacementPopupVisible: false,
-            komainuChoiceVisible: false,
-            ...warPopup,
-            ...kamiPopup,
-            ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' && !ns.kamiResolutionActive && !ns.kamiPhasePopupPending && Object.keys(warPopup).length === 0
-              ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null }
-              : {}),
-          });
-        } else {
-          set({
-            gameState: ns,
-            showTrainModal: true,
-            monsterPlacementMode: false,
-            monsterPlacementCard: null,
-            monsterPlacementPlayerId: null,
-            monsterPlacementPopupVisible: false,
-            komainuChoiceVisible: false,
-          });
-        }
+        set({
+          gameState: ns,
+          monsterPlacementPopupVisible: false,
+          monsterNoPlacementPopupVisible: true,
+        });
         return;
       }
     }
@@ -1176,6 +1167,50 @@ export const useGameStore = create<GameStore>((set, get) => ({
         monsterPlacementCard: null,
         monsterPlacementPlayerId: null,
         monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+    }
+  },
+
+  dismissMonsterNoPlacement: () => {
+    const { gameState } = get();
+    if (!gameState) return;
+
+    // Advance train resolution after showing the popup
+    let ns: GameState = {
+      ...gameState,
+      trainResolutionIndex: gameState.trainResolutionIndex + 1,
+    };
+    ns = advanceTrainResolution(ns);
+
+    if (!ns.trainMandateActive) {
+      ns = advancePlayer(ns);
+      const warPopup = detectWarTransitionWithPopup(ns);
+      const kamiPopup = detectKamiPopupPending(ns);
+      set({
+        gameState: ns,
+        showTrainModal: false,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        monsterNoPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+        ...warPopup,
+        ...kamiPopup,
+        ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' && !ns.kamiResolutionActive && !ns.kamiPhasePopupPending && Object.keys(warPopup).length === 0
+          ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null }
+          : {}),
+      });
+    } else {
+      set({
+        gameState: ns,
+        showTrainModal: true,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        monsterNoPlacementPopupVisible: false,
         komainuChoiceVisible: false,
       });
     }

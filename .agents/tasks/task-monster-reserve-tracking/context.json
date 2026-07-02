@@ -1,0 +1,24 @@
+{
+  "project_type": "React + TypeScript board game SPA using Vite and Zustand for state management",
+  "language": "TypeScript/React",
+  "build_system": "Vite (via npx vite build)",
+  "test_framework": "No formal test framework found - validation via build only",
+  "build_command": "npx vite build",
+  "test_command": "npx vite build",
+  "verification_instructions": "Run `npx vite build` and confirm it compiles without TypeScript errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install (node_modules already present)",
+  "environment_constraints": "No test runner available, just TypeScript build validation",
+  "contribution_requirements": "None explicitly documented",
+  "key_patterns": "Zustand store in src/store/gameStore.ts with get/set pattern. Game logic pure functions in src/utils/gameLogic.ts. i18n via src/i18n/en.ts and src/i18n/es.ts with TranslationKey type. Monster card IDs: sp-komainu (shinto+monster), su-yurei (daimyo+monster), sp-fukurokuju (daimyo+monster), su-hotei (shinto+monster). Player reserves: bushi(number), shinto(number), fortresses(number), hasDaimyo(boolean), monsters(number). Initial values: bushi=6, shinto=3, fortresses=4, hasDaimyo=false, monsters=0. After deployment: bushi=5, shinto=3, fortresses=3.",
+  "relevant_files": [
+    "src/store/gameStore.ts",
+    "src/utils/gameLogic.ts",
+    "src/components/PlayerPanel.tsx",
+    "src/components/GameBoard.tsx",
+    "src/types/game.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts"
+  ],
+  "directory_structure": "src/store/ (Zustand store), src/utils/ (game logic), src/components/ (React components), src/types/ (TypeScript types), src/i18n/ (translations)"
+}

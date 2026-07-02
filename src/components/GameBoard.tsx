@@ -88,7 +88,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek } = useGameStore();
   const t = useT();
 
   const [translateX, setTranslateX] = useState(0);
@@ -487,6 +487,18 @@ export const GameBoard = () => {
           <div className="monster-placement-popup-content">
             <p>{t('monster.selectPlacement', { name: monsterPlacementCard.name })}</p>
             <button className="monster-placement-btn" onClick={confirmMonsterPlacement}>
+              {t('monster.accept')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Monster No Placement Popup (Luna - no valid province) */}
+      {monsterNoPlacementPopupVisible && (
+        <div className="monster-placement-popup">
+          <div className="monster-placement-popup-content">
+            <p>{t('monster.noPlacement')}</p>
+            <button className="monster-placement-btn" onClick={dismissMonsterNoPlacement}>
               {t('monster.accept')}
             </button>
           </div>

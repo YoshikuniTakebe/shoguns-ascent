@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix monster reserve tracking: increment player.monsters when monsters go to reserve (Luna no-space case, battle kills, seppuku, betray, hostage). Also handle dual-type monsters (sp-komainu counts as monster+shinto, su-yurei and sp-fukurokuju count as monster+daimyo, su-hotei counts as monster+shinto) so that when they are in reserve they increase BOTH the monster count AND their secondary type count. Show a 'no space' popup for Luna when no province is available instead of the generic placement popup. Update PlayerPanel sidebar to show 'X/Y' format (in reserve / total owned).",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/store/gameStore.ts, in the `confirmMonsterPlacement` function (around line 893-930), when Luna has no valid province and monster goes to reserve: (a) increment `player.monsters += 1` on the player in the new state, (b) check if the monster is a dual-type (sp-komainu or su-hotei -> also increment player.shinto; su-yurei or sp-fukurokuju -> also set player.hasDaimyo = true if not already), (c) instead of immediately advancing the train resolution, show a new popup state `monsterNoPlacementPopupVisible: true` with the existing `monsterPlacementCard` info so the user sees a message like 'No tienes sitio donde sacarlo, ira directo a tu reserva'. Add a new store state field `monsterNoPlacementPopupVisible: boolean` and a dismiss action `dismissMonsterNoPlacement` that then advances the train resolution as the current code does.",
+    "2. In src/store/gameStore.ts, add the new state field `monsterNoPlacementPopupVisible: boolean` (default false) and the action `dismissMonsterNoPlacement: () => void` to the store interface (around line 186-199). Implement `dismissMonsterNoPlacement` which does what the current no-valid-province code does AFTER showing the popup (advance train, clear monster state, etc.).",
+    "3. In src/components/GameBoard.tsx, add rendering for the new `monsterNoPlacementPopupVisible` popup. Use the same `monster-placement-popup` and `monster-placement-popup-content` CSS classes. Show text from i18n key 'monster.noPlacement'. Include a button with i18n key 'monster.accept' that calls `dismissMonsterNoPlacement`. Add `monsterNoPlacementPopupVisible` and `dismissMonsterNoPlacement` to the destructured store values.",
+    "4. In src/i18n/en.ts and src/i18n/es.ts, add the new translation key 'monster.noPlacement' with text 'No room to place it, it will go directly to your reserve' (en) / 'No tienes sitio donde sacarlo, ira directo a tu reserva' (es).",
+    "5. In src/utils/gameLogic.ts, fix battle resolution (around line 2125-2135) to properly increment `player.monsters += 1` when a monster figure is killed. Also handle dual-type: if the killed figure's monsterCardId is 'sp-komainu' or 'su-hotei', also increment loser.shinto += 1; if 'su-yurei' or 'sp-fukurokuju', also set loser.hasDaimyo = true.",
+    "6. In src/utils/gameLogic.ts, fix seppuku resolution (around line 1957-1983) to also handle monsters if they are ever included (currently only bushi/daimyo are filtered). Also check the betray figure return (around line 1237-1242) where the comment says 'Monsters return to reserve implicitly' - add explicit `figureOwner.monsters += 1` there plus dual-type handling.",
+    "7. In src/components/PlayerPanel.tsx, change the reserve display format from just showing the reserve count to showing 'X/Y' where X = in reserve and Y = total owned. For each type: (a) Bushi total = count on map + count in reserve (player.bushi). Display: `{player.bushi}/{bushiOnMap + player.bushi}`. (b) Shinto total = count on map + in temples + player.shinto + dual-type monsters in reserve (sp-komainu, su-hotei). Display: `{effectiveReserve}/{total}`. (c) Fortresses total = on map + player.fortresses. Display: `{player.fortresses}/{fortressesOnMap + player.fortresses}`. (d) Daimyo: 0 or 1 in reserve (player.hasDaimyo) / total = 1 + daimyo-type monsters in reserve (su-yurei, sp-fukurokuju). (e) Monsters: player.monsters / total monster cards owned. The dual-type contribution to secondary types must be computed by checking which monster cards the player owns that are in reserve (i.e., the card is in seasonCards but no figure with that monsterCardId is on the map or temples).",
+    "8. Ensure `npx vite build` compiles without errors."
+  ],
+  "acceptance_criteria": [
+    "When Luna clan buys a monster but has no valid province, a popup appears with the message 'No tienes sitio donde sacarlo, ira directo a tu reserva' instead of the generic placement popup",
+    "After dismissing the no-placement popup, the monster count in the player's reserve (sidebar) shows 1",
+    "When a monster is killed in battle, the player's monster reserve count increases by 1",
+    "When a dual-type monster (Komainu/Hotei=shinto, Yurei/Fukurokuju=daimyo) is in reserve, it also counts toward the secondary type's reserve number",
+    "The sidebar shows reserve counts in 'X/Y' format where X = in reserve and Y = total owned",
+    "Build compiles without TypeScript errors"
+  ],
+  "verification": [
+    "Run `npx vite build` in /projects/sandbox/shoguns-ascent and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

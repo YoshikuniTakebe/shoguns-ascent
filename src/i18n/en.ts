@@ -300,6 +300,7 @@ export const en = {
   // Monster Placement
   'monster.selectPlacement': 'Select where to place {name}',
   'monster.accept': 'Accept',
+  'monster.noPlacement': 'No room to place it, it will go directly to your reserve',
   'monster.komainuChoice': 'Komainu: Place on map or send to worship at a shrine?',
   'monster.komainuMap': 'Place on map',
   'monster.komainuPray': 'Send to worship',

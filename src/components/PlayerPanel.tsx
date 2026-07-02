@@ -1,13 +1,112 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
-import type { Player } from '../types/game';
+import type { Player, GameState } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { BushiIcon, CoinIcon, HonorIcon, VPIcon, RoninIcon, ShintoIcon, FortressIcon, WarTokenIcon, HostageIcon, DaimyoIcon, MonsterIcon } from './Icons';
 import { PlayerCardsModal } from './PlayerCardsModal';
 import { WarTokensModal } from './WarTokensModal';
 import { HostagesModal } from './HostagesModal';
 import { useT } from '../i18n';
+
+// Dual-type monster card IDs
+const SHINTO_MONSTER_IDS = ['sp-komainu', 'su-hotei'];
+const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
+
+function computeReserveTotals(player: Player, gameState: GameState) {
+  // Gather all figures on the map owned by this player
+  const allMapFigures = Object.values(gameState.provinces).flatMap(p => p.figures.filter(f => f.owner === player.id));
+  // Gather all figures in temples owned by this player
+  const allTempleFigures = gameState.temples.flatMap(t => t.figures.filter(f => f.playerId === player.id));
+
+  // Determine which monster cards are deployed (have a figure on map or temple)
+  const deployedMonsterCardIds = new Set<string>();
+  allMapFigures.forEach(f => { if (f.type === 'monster' && f.monsterCardId) deployedMonsterCardIds.add(f.monsterCardId); });
+  // Check temples for shinto-type monsters (komainu placed at temple)
+  allTempleFigures.forEach(f => {
+    // Temple figures don't carry monsterCardId directly, but a monster at temple would have been tracked via the figure
+    // Actually, temple figures are { playerId, figureId } - we need to check map figures aren't the source
+  });
+
+  // Monster cards owned by the player
+  const monsterCards = player.seasonCards.filter(c => c.cardType === 'monster');
+  const totalMonsters = monsterCards.length;
+
+  // Monsters in reserve = those with no figure deployed on map
+  // Note: player.monsters tracks the numeric reserve count
+  const monstersInReserve = player.monsters;
+
+  // Determine which specific monster cards are in reserve (not deployed)
+  const monsterCardsInReserve = monsterCards.filter(c => !deployedMonsterCardIds.has(c.id));
+
+  // Dual-type bonus counts for secondary types (only when monster is in reserve)
+  const shintoMonstersInReserve = monsterCardsInReserve.filter(c => SHINTO_MONSTER_IDS.includes(c.id)).length;
+  const daimyoMonstersInReserve = monsterCardsInReserve.filter(c => DAIMYO_MONSTER_IDS.includes(c.id)).length;
+
+  // Bushi
+  const bushiOnMap = allMapFigures.filter(f => f.type === 'bushi').length;
+  const bushiReserve = player.bushi;
+  const bushiTotal = bushiOnMap + bushiReserve;
+
+  // Shinto
+  const shintoOnMap = allMapFigures.filter(f => f.type === 'shinto').length;
+  const shintoInTemples = allTempleFigures.length;
+  const shintoReserve = player.shinto;
+  const shintoTotal = shintoOnMap + shintoInTemples + shintoReserve;
+  // Effective shinto reserve includes dual-type monsters in reserve
+  const effectiveShintoReserve = shintoReserve + shintoMonstersInReserve;
+  const effectiveShintoTotal = shintoTotal + shintoMonstersInReserve;
+
+  // Fortresses
+  const fortressesOnMap = allMapFigures.filter(f => f.type === 'fortress').length;
+  const fortressesReserve = player.fortresses;
+  const fortressesTotal = fortressesOnMap + fortressesReserve;
+
+  // Daimyo
+  const daimyoReserve = player.hasDaimyo ? 1 : 0;
+  const daimyoTotal = 1; // Always has 1 daimyo
+  // Effective daimyo reserve includes dual-type monsters in reserve
+  const effectiveDaimyoReserve = daimyoReserve + daimyoMonstersInReserve;
+  const effectiveDaimyoTotal = daimyoTotal + daimyoMonstersInReserve;
+
+  return {
+    bushi: { reserve: bushiReserve, total: bushiTotal },
+    shinto: { reserve: effectiveShintoReserve, total: effectiveShintoTotal },
+    fortresses: { reserve: fortressesReserve, total: fortressesTotal },
+    daimyo: { reserve: effectiveDaimyoReserve, total: effectiveDaimyoTotal },
+    monsters: { reserve: monstersInReserve, total: totalMonsters },
+  };
+}
+
+const PlayerReserves = ({ player, gameState }: { player: Player; gameState: GameState }) => {
+  const clan = CLANS.find(c => c.id === player.clanId)!;
+  const totals = useMemo(() => computeReserveTotals(player, gameState), [player, gameState]);
+
+  return (
+    <>
+      <span className="reserve-item" title="Bushi">
+        <BushiIcon size={18} color={clan.color} className="reserve-icon" />
+        <span className="reserve-count">{totals.bushi.reserve}/{totals.bushi.total}</span>
+      </span>
+      <span className="reserve-item" title="Shinto">
+        <ShintoIcon size={18} color={clan.color} className="reserve-icon" />
+        <span className="reserve-count">{totals.shinto.reserve}/{totals.shinto.total}</span>
+      </span>
+      <span className="reserve-item" title="Fortaleza">
+        <FortressIcon size={18} color={clan.color} className="reserve-icon" />
+        <span className="reserve-count">{totals.fortresses.reserve}/{totals.fortresses.total}</span>
+      </span>
+      <span className="reserve-item" title="Daimyo">
+        <DaimyoIcon size={18} color={clan.color} className="reserve-icon" />
+        <span className="reserve-count">{totals.daimyo.reserve}/{totals.daimyo.total}</span>
+      </span>
+      <span className="reserve-item" title="Monstruo">
+        <MonsterIcon size={18} color={clan.color} className="reserve-icon" />
+        <span className="reserve-count">{totals.monsters.reserve}/{totals.monsters.total}</span>
+      </span>
+    </>
+  );
+};
 
 export const PlayerPanel = () => {
   const { gameState, localPlayerId, warPhasePopupVisible } = useGameStore();
@@ -60,26 +159,7 @@ export const PlayerPanel = () => {
                 </div>
               </div>
               <div className="player-reserves">
-                <span className="reserve-item" title="Bushi">
-                  <BushiIcon size={18} color={clan.color} className="reserve-icon" />
-                  <span className="reserve-count">{player.bushi}</span>
-                </span>
-                <span className="reserve-item" title="Shinto">
-                  <ShintoIcon size={18} color={clan.color} className="reserve-icon" />
-                  <span className="reserve-count">{player.shinto}</span>
-                </span>
-                <span className="reserve-item" title="Fortaleza">
-                  <FortressIcon size={18} color={clan.color} className="reserve-icon" />
-                  <span className="reserve-count">{player.fortresses}</span>
-                </span>
-                <span className="reserve-item" title="Daimyo">
-                  <DaimyoIcon size={18} color={clan.color} className="reserve-icon" />
-                  <span className="reserve-count">{player.hasDaimyo ? 1 : 0}</span>
-                </span>
-                <span className="reserve-item" title="Monstruo">
-                  <MonsterIcon size={18} color={clan.color} className="reserve-icon" />
-                  <span className="reserve-count">{player.monsters ?? 0}</span>
-                </span>
+                <PlayerReserves player={player} gameState={gameState} />
               </div>
               <div className="player-extras">
                 {player.warProvinceTokens.length > 0 && (
