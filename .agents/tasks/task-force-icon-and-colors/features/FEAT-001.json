@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Add force token support to renderCardEffect, add CrossedSwordsIcon to Icons.tsx, apply icon colors, replace coin Unicode characters with CoinIcon SVG, and update i18n strings with {force} tokens",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/Icons.tsx, create a new CrossedSwordsIcon component (the crossed swords &#x2694; character represented as an SVG with two crossing swords and a horizontal line). This preserves the existing visual from SeasonCardsModal/PlayerCardsModal for future use.",
     "2. In src/utils/renderCardEffect.tsx: (a) Add FistIcon import from Icons.tsx. (b) Add 'force' to the ICON_MAP mapping to FistIcon. (c) Update TOKEN_REGEX to include 'force': /\\{(vp|coin|honor|bushi|shinto|force)\\}(\\d*)/g. (d) Add a COLOR_MAP object that maps token names to colors: honor -> '#9b59b6' (purple), vp -> '#e94560' (red), force -> '#3498db' (blue), coin -> '#c8a951' (gold). bushi and shinto should NOT have explicit colors (use currentColor). (e) When rendering the IconComponent, pass the color from COLOR_MAP if it exists for that token.",
@@ -26,5 +26,5 @@
     "Run `npm run build` in /projects/sandbox/shoguns-ascent and confirm exit code 0 with no errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing TypeScript errors in BattleBiddingOverlay.tsx and BattlePanel.tsx (TranslationKey type mismatches) exist on base state - not caused by this feature. Vite build succeeds (exit 0). Added strokeWidth prop to IconProps interface and CoinIcon component to support thicker stroke in modals."
 }
