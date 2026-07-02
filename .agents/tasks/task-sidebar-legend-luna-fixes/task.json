@@ -1,0 +1,14 @@
+{
+  "task_id": "task-sidebar-legend-luna-fixes",
+  "task_description": "CSS adjustments for sidebar reserves, add Legend tooltip button in game header, fix Luna no-placement popup logic, fix dual-type monster reserve counts, update no-placement popup text",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "npx vite build succeeds with zero errors. Review fixes committed in 6d17065: legend i18n, dual-type monster total fix, Luna helper extraction."
+  }
+}
