@@ -1,0 +1,26 @@
+{
+  "project_type": "React + TypeScript + Vite board game app",
+  "language": "TypeScript/React",
+  "build_system": "Vite via npx",
+  "test_framework": "None detected",
+  "build_command": "npx vite build",
+  "test_command": "N/A",
+  "verification_instructions": "Run npx vite build and verify 0 errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "node_modules already present",
+  "environment_constraints": "No test runner. Validation is build-only.",
+  "contribution_requirements": "N/A",
+  "key_patterns": "Icons are exported from src/components/Icons.tsx (HonorIcon, CoinIcon, etc). CSS is in a single minified src/App.css. i18n translations in src/i18n/en.ts and src/i18n/es.ts.",
+  "relevant_files": [
+    "src/components/MainMenu.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/RegionDetailModal.tsx",
+    "src/components/SeasonCardsModal.tsx",
+    "src/components/Icons.tsx",
+    "src/App.css",
+    "src/i18n/es.ts",
+    "src/i18n/en.ts",
+    "src/types/game.ts"
+  ],
+  "directory_structure": "src/components/ has all React components, src/types/game.ts has game data, src/i18n/ has translations, src/App.css has all styles (minified)."
+}

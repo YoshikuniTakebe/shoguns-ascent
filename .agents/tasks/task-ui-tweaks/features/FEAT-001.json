@@ -1,28 +1,28 @@
 {
   "id": "FEAT-001",
-  "type": "feat",
-  "description": "Six UI tweaks to the Shogun's Ascent board game app: clan tooltip icons, card translations, tooltip arrow, rule violation toast position, diorama shadow, and coin icon in season card picker.",
+  "type": "fix",
+  "description": "Revert card effect translations back to English per user requirement 'Las cartas siguen en ingles'. All other UI tweaks (tooltip icons, arrow shift, toast centering, shadows, coin icon) remain.",
   "status": "completed",
   "steps": [
-    "CHANGE 1 - In src/components/MainMenu.tsx: Import HonorIcon and CoinIcon from './Icons'. In the clan tooltip section (around line 217-218), add <HonorIcon size={14} color={c.color} /> before the honor number text and <CoinIcon size={14} color={c.color} /> before the income number text. The current lines are: `<span className=\"clan-tooltip-stat\">Honor inicial: {c.initialHonor}</span>` and `<span className=\"clan-tooltip-stat\">Ingresos: {CLAN_INCOME[c.id] ?? 0}</span>`. Wrap the icon+text in an inline-flex span with alignItems center and a small gap.",
-    "CHANGE 2 - In src/types/game.ts: Translate ALL `effect` field values in the SPRING_CARDS, SUMMER_CARDS, and AUTUMN_CARDS arrays from English to Spanish.",
-    "CHANGE 3 - In src/App.css: Find the rule `.politics-phase-tooltip-tea::after{left:25%}` and change it to `.politics-phase-tooltip-tea::after{left:calc(25% - 6px)}`.",
-    "CHANGE 4 - In src/App.css: Change the `.rule-violation-toast` style from `position:fixed;top:20px;left:50%;transform:translateX(-50%)` to position it centered in the map viewport area. Since the map is the center panel, change to: `position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)`. Then in src/components/GameBoard.tsx, move the rule-violation-toast div to be INSIDE the map-container div (so that position:absolute is relative to map-container which already has position:relative).",
-    "CHANGE 5 - In src/components/RegionDetailModal.tsx: All the DioramaFigure wrapper divs that contain a ClanShield have `filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))'`. Make the shadow more visible by changing to `filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7))'` on all occurrences (there are 6 of them).",
-    "CHANGE 6 - In src/components/SeasonCardsModal.tsx: In the player indicator overlay (showPlayerIndicator section around line 353), replace the text `{t('seasonCardsModal.playerCoins', { coins: String(currentPlayer.coins) })}` with an inline-flex span containing <CoinIcon size={18} color='#DAA520' /> followed by the coins number. CoinIcon is already imported in SeasonCardsModal.tsx. Also in the title bar section (around line 221-223) where it shows player coins, the CoinIcon+number is already present - no change needed there."
+    "CHANGE 1 - In src/components/MainMenu.tsx: Import HonorIcon and CoinIcon from './Icons'. Added icons before honor and income numbers in clan tooltips.",
+    "CHANGE 2 - In src/types/game.ts: Reverted ALL effect field values in SPRING_CARDS, SUMMER_CARDS, and AUTUMN_CARDS arrays back to original English.",
+    "CHANGE 3 - In src/App.css: Changed .politics-phase-tooltip-tea::after{left:25%} to left:calc(25% - 6px).",
+    "CHANGE 4 - Changed .rule-violation-toast to position:absolute centered in map-container, and moved the JSX inside the map-container div in GameBoard.tsx.",
+    "CHANGE 5 - In src/components/RegionDetailModal.tsx: Replaced all 5 occurrences of drop-shadow with stronger double shadow.",
+    "CHANGE 6 - In src/components/SeasonCardsModal.tsx: Replaced t('seasonCardsModal.playerCoins') with CoinIcon + number display."
   ],
   "acceptance_criteria": [
-    "npx vite build completes with 0 errors",
-    "MainMenu.tsx clan tooltips show HonorIcon before honor number and CoinIcon before income number",
-    "All SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS effect strings in game.ts are in Spanish",
-    "The CSS rule for .politics-phase-tooltip-tea::after uses left:calc(25% - 6px)",
-    "The rule-violation-toast is positioned centered within the map-container element",
-    "RegionDetailModal ClanShield drop-shadow is stronger (0.9 opacity, double shadow)",
-    "SeasonCardsModal player indicator shows CoinIcon instead of 'Monedas:' text"
+    "npx vite build completes with 0 errors - PASSED",
+    "MainMenu.tsx clan tooltips show HonorIcon before honor number and CoinIcon before income number - VERIFIED",
+    "All SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS effect strings in game.ts are in English - VERIFIED",
+    "The CSS rule for .politics-phase-tooltip-tea::after uses left:calc(25% - 6px) - VERIFIED",
+    "The rule-violation-toast is positioned centered within the map-container element - VERIFIED",
+    "RegionDetailModal ClanShield drop-shadow is stronger (0.9 opacity, double shadow) - VERIFIED",
+    "SeasonCardsModal player indicator shows CoinIcon instead of 'Monedas:' text - VERIFIED"
   ],
   "verification": [
-    "Run `npx vite build` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
+    "npx vite build - exit code 0"
   ],
   "blocked_reason": null,
-  "findings": "All 6 changes implemented successfully. RegionDetailModal had 5 occurrences of the drop-shadow (not 6 as stated in briefing). Build passes cleanly."
+  "findings": "Reverted card effect translations from Spanish back to English. Used git checkout 832c7ac -- src/types/game.ts to restore the original file. Build passes successfully."
 }

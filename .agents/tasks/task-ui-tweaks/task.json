@@ -1,0 +1,14 @@
+{
+  "task_id": "task-ui-tweaks",
+  "task_description": "Six UI tweaks: clan tooltip icons, card effect translations to Spanish, tooltip arrow position, rule violation toast centered on map, diorama shadow visibility, and coin icon in season card picker.",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "skipped",
+    "docker_build": "skipped",
+    "summary": "npx vite build completed successfully with 0 errors. All 6 UI changes verified in source."
+  }
+}
