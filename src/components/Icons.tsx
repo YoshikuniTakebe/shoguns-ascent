@@ -213,8 +213,39 @@ export const HostageIcon = ({ size = 24, color = 'currentColor', className }: Ic
   </svg>
 );
 
-/** Oni demon head with horns, fierce eyes, and fangs - used for Monster units */
+/** Oni mask - used for Monster units */
 export const MonsterIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 512 512"
+    fill="none"
+    stroke="none"
+  >
+    {/* Oni mask silhouette in clan color */}
+    <path fill={color} d="M256 486 C235 486 221 470 206 454 C178 447 164 425 160 396 C138 384 124 363 122 338 C100 336 86 315 86 292 C86 270 95 249 108 232 C84 204 73 167 82 130 C89 101 111 77 123 51 C132 31 134 18 134 18 C156 43 174 79 172 116 C171 146 158 172 146 196 C171 178 195 166 222 161 C229 151 241 146 256 146 C271 146 283 151 290 161 C317 166 341 178 366 196 C354 172 341 146 340 116 C338 79 356 43 378 18 C378 18 380 31 389 51 C401 77 423 101 430 130 C439 167 428 204 404 232 C417 249 426 270 426 292 C426 315 412 336 390 338 C388 363 374 384 352 396 C348 425 334 447 306 454 C291 470 277 486 256 486 Z M256 197 C238 219 226 246 222 278 C237 267 249 258 256 235 C263 258 275 267 290 278 C286 246 274 219 256 197 Z"/>
+    {/* White eyes */}
+    <path fill="#ffffff" d="M147 292 C169 270 210 268 234 287 C213 306 174 313 145 304 C139 302 140 297 147 292 Z"/>
+    <path fill="#ffffff" d="M365 292 C343 270 302 268 278 287 C299 306 338 313 367 304 C373 302 372 297 365 292 Z"/>
+    {/* White fangs */}
+    <path fill="#ffffff" d="M160 353 C134 379 122 398 116 421 C151 411 170 390 179 362 Z"/>
+    <path fill="#ffffff" d="M352 353 C378 379 390 398 396 421 C361 411 342 390 333 362 Z"/>
+    {/* White upper teeth */}
+    <path fill="#ffffff" d="M190 385 L205 425 L219 383 Z"/>
+    <path fill="#ffffff" d="M222 381 L237 432 L251 379 Z"/>
+    <path fill="#ffffff" d="M261 379 L275 432 L290 381 Z"/>
+    <path fill="#ffffff" d="M293 383 L307 425 L322 385 Z"/>
+    {/* White lower teeth */}
+    <path fill="#ffffff" d="M197 443 L210 405 L223 444 Z"/>
+    <path fill="#ffffff" d="M228 450 L241 400 L254 452 Z"/>
+    <path fill="#ffffff" d="M258 452 L271 400 L284 450 Z"/>
+    <path fill="#ffffff" d="M289 444 L302 405 L315 443 Z"/>
+  </svg>
+);
+
+/** Oni demon head with horns, fierce eyes, and fangs - used for Monster units (legacy) */
+export const MonsterIconOld = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
     width={size}

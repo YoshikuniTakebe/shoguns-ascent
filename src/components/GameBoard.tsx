@@ -417,8 +417,8 @@ export const GameBoard = () => {
                       y1={harvest.position.y}
                       x2={midX}
                       y2={midY}
-                      stroke={harvest.color}
-                      strokeWidth="6"
+                      stroke="#ffffff"
+                      strokeWidth="8"
                       strokeLinecap="round"
                     />
                   );
