@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Figure size adjustments in the RegionDetailModal diorama view - apply per-figure size overrides for specific monster/daimyo/bushi figures",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/RegionDetailModal.tsx, add a FIGURE_SIZE_OVERRIDES constant that maps specific figure identifiers to scale multipliers. The figure identifiers should be based on monsterCardId for monsters and on figureType+clanId for clan figures. The overrides are: 'sp-jorogumo': 0.85 (-15%), 'daimyo-tortuga': 1.20 (+20%), 'bushi-loto': 0.85 (-15%), 'daimyo-loto': 0.90 (-10%), 'sp-oni-of-skulls': 1.25 (+25%), 'daimyo-koi': 1.10 (+10%), 'sp-earth-dragon': 1.20 (+20%), 'daimyo-luna': 1.15 (+15%), 'bushi-luna': 0.95 (-5%), 'daimyo-libelula': 1.10 (+10%).",
     "2. Create a helper function getSizeOverride(figure: Figure, ownerClanId: string): number that returns the scale multiplier. For monsters, look up figure.monsterCardId in FIGURE_SIZE_OVERRIDES. For bushi/daimyo, look up `${figure.type}-${ownerClanId}`. Default to 1.0 if no override found.",
@@ -26,5 +26,5 @@
     "npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes (exit 0) with only pre-existing TS errors in BattlePanel.tsx and BattleBiddingOverlay.tsx. Used transform scale for zoomed view and direct height multiplication for diorama view."
 }
