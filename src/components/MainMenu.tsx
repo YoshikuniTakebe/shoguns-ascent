@@ -60,6 +60,15 @@ export const MainMenu = () => {
     Mountain: 'deck.mountain',
   };
 
+  const DECK_ICONS: Record<DeckName, string> = {
+    Archway: '⛩️',
+    Tower: '🏯',
+    Teapot: '🍵',
+    Horseman: '🐴',
+    Ship: '⛵',
+    Mountain: '⛰️',
+  };
+
   const getDeckConfig = (): DeckConfig => ({
     chosenDeck,
     extraMonsters,
@@ -189,7 +198,7 @@ export const MainMenu = () => {
                     className={`deck-group-btn${chosenDeck === g ? ' active' : ''}`}
                     onClick={() => setChosenDeck(g)}
                   >
-                    {t(DECK_NAME_KEYS[g])}
+                    {DECK_ICONS[g]} {t(DECK_NAME_KEYS[g])}
                   </button>
                 ))}
               </div>

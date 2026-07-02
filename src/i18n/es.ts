@@ -243,7 +243,7 @@ export const es: Record<TranslationKey, string> = {
   'deck.teapot': 'Tetera',
   'deck.horseman': 'Jinete',
   'deck.ship': 'Barco',
-  'deck.mountain': 'Montana',
+  'deck.mountain': 'Montaña',
   'deck.core': 'Base',
   'deck.dynastyInvasion': 'Invasion Dinastica',
   'deck.monsterPack': 'Pack de Monstruos',
