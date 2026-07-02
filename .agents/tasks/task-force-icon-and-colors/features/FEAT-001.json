@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add force token support to renderCardEffect, add CrossedSwordsIcon to Icons.tsx, apply icon colors, replace coin Unicode characters with CoinIcon SVG, and update i18n strings with {force} tokens",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/components/Icons.tsx, create a new CrossedSwordsIcon component (the crossed swords &#x2694; character represented as an SVG with two crossing swords and a horizontal line). This preserves the existing visual from SeasonCardsModal/PlayerCardsModal for future use.",
+    "2. In src/utils/renderCardEffect.tsx: (a) Add FistIcon import from Icons.tsx. (b) Add 'force' to the ICON_MAP mapping to FistIcon. (c) Update TOKEN_REGEX to include 'force': /\\{(vp|coin|honor|bushi|shinto|force)\\}(\\d*)/g. (d) Add a COLOR_MAP object that maps token names to colors: honor -> '#9b59b6' (purple), vp -> '#e94560' (red), force -> '#3498db' (blue), coin -> '#c8a951' (gold). bushi and shinto should NOT have explicit colors (use currentColor). (e) When rendering the IconComponent, pass the color from COLOR_MAP if it exists for that token.",
+    "3. In src/i18n/en.ts, replace 'Force N' / 'Force +N' text patterns in card effects with '{force}N' / '{force}+N' tokens. Cards to update: sp-daikokuten ('Force 8' -> '{force}8'), sp-oni-of-skulls ('Force 3' -> '{force}3'), sp-path-of-the-lion ('Force +1' -> '{force}+1'), su-bishamon ('Force 4' -> '{force}4'), su-oni-of-blood ('Force 2, or Force 4' -> '{force}2, or {force}4'), su-nure-onna ('Force 2.' -> '{force}2.'), su-path-of-might ('Force +1' -> '{force}+1'), su-path-of-the-favored ('Force 3' -> '{force}3'), su-yurei ('Force 2' -> '{force}2'), au-river-dragon ('Force 5' -> '{force}5'), au-sacred-warrior ('Force +1' -> '{force}+1'), au-path-of-the-dragon ('Force +3' -> '{force}+3'), au-way-of-the-katana ('Force 2' -> '{force}2').",
+    "4. In src/i18n/es.ts, replace 'Fuerza N' / 'Fuerza +N' text patterns in card effects with '{force}N' / '{force}+N' tokens. Cards to update: sp-daikokuten ('Fuerza 8' -> '{force}8'), sp-oni-of-skulls ('Fuerza 3' -> '{force}3'), sp-path-of-the-lion ('Fuerza +1' -> '{force}+1'), su-bishamon ('Fuerza 4' -> '{force}4'), su-oni-of-blood ('Fuerza 2, o Fuerza 4' -> '{force}2, o {force}4'), su-nure-onna ('Fuerza 2.' -> '{force}2.'), su-path-of-might ('Fuerza +1' -> '{force}+1'), su-path-of-the-favored ('Fuerza 3' -> '{force}3'), su-yurei ('Fuerza 2' -> '{force}2'), au-river-dragon ('Fuerza 5' -> '{force}5'), au-sacred-warrior ('Fuerza +1' -> '{force}+1'), au-path-of-the-dragon ('Fuerza +3' -> '{force}+3'), au-way-of-the-katana ('Fuerza 2' -> '{force}2').",
+    "5. In src/components/SeasonCardsModal.tsx: (a) Replace the coin Unicode &#x26C1; in the season-card-coin span (line ~264) with <CoinIcon size={16} color='#c8a951' /> and apply strokeWidth='2.5' (thicker stroke, slightly larger). Import CoinIcon from Icons.tsx. (b) Also replace the &#x26C1; in the buy button text (line ~299) with the same CoinIcon. (c) Replace the &#x2694; crossed swords icon (line ~289) with the new CrossedSwordsIcon component (size 14, color inherited). Import CrossedSwordsIcon.",
+    "6. In src/components/PlayerCardsModal.tsx: (a) Replace the &#x26C1; coin character (line ~83) with <CoinIcon size={16} color='#c8a951' /> with thicker stroke. Import CoinIcon from Icons.tsx. (b) Replace the &#x2694; crossed swords (line ~96) with CrossedSwordsIcon. Import CrossedSwordsIcon.",
+    "7. Verify the TOKEN_REGEX handles the '+' in force values like '{force}+1'. The regex (\\d*) will NOT capture the '+1' naturally. Update the regex capture group to (\\+?\\d*) or adjust the approach so the '+' and digits after {force} are captured and displayed as text alongside the icon. The pattern should be: /\\{(vp|coin|honor|bushi|shinto|force)\\}([+]?\\d*)/g"
+  ],
+  "acceptance_criteria": [
+    "npm run build succeeds with no TypeScript errors",
+    "renderCardEffect.tsx recognizes {force} token and renders FistIcon with blue (#3498db) color",
+    "renderCardEffect.tsx renders honor icon with purple (#9b59b6), vp icon with red (#e94560), coin icon with gold (#c8a951)",
+    "bushi and shinto icons remain with currentColor (no explicit color)",
+    "en.ts and es.ts card effect strings contain {force}N tokens instead of 'Force N'/'Fuerza N'",
+    "CrossedSwordsIcon component exists in Icons.tsx representing crossed swords with horizontal line",
+    "SeasonCardsModal and PlayerCardsModal use CoinIcon SVG (size 16, color #c8a951, thicker stroke) instead of &#x26C1;",
+    "SeasonCardsModal and PlayerCardsModal use CrossedSwordsIcon instead of &#x2694;"
+  ],
+  "verification": [
+    "Run `npm run build` in /projects/sandbox/shoguns-ascent and confirm exit code 0 with no errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

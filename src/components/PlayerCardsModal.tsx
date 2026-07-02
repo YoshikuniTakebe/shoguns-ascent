@@ -4,7 +4,7 @@ import type { TranslationKey } from '../i18n';
 import type { CardType, Player, SeasonCard } from '../types/game';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { SunIcon, MoonIcon } from './Icons';
+import { SunIcon, MoonIcon, CoinIcon, CrossedSwordsIcon } from './Icons';
 import { getMonsterImage } from '../utils/figureImages';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
@@ -80,7 +80,7 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
                 <div className="season-card-header">
                   <span className="season-card-name">{t(getCardNameKey(card.id))}</span>
                   <span className="season-card-cost">
-                    <span className="season-card-coin">&#x26C1;</span>
+                    <span className="season-card-coin"><CoinIcon size={16} color="#c8a951" strokeWidth="2.5" /></span>
                     {card.cost}
                   </span>
                 </div>
@@ -93,7 +93,7 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
                 <p className="season-card-effect">{renderCardEffect(t(getCardEffectKey(card.id)))}</p>
                 {card.force !== undefined && (
                   <div className="season-card-force">
-                    <span className="season-card-force-icon">&#x2694;</span>
+                    <span className="season-card-force-icon"><CrossedSwordsIcon size={14} /></span>
                     {t('seasonCardsModal.force', { value: String(card.force) })}
                   </div>
                 )}

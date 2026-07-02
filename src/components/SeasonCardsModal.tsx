@@ -5,7 +5,7 @@ import type { TranslationKey } from '../i18n';
 import type { CardType, SeasonCard } from '../types/game';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { CoinIcon, SpringIcon, SummerIcon, AutumnIcon, SunIcon, MoonIcon } from './Icons';
+import { CoinIcon, SpringIcon, SummerIcon, AutumnIcon, SunIcon, MoonIcon, CrossedSwordsIcon } from './Icons';
 import { getMonsterImage } from '../utils/figureImages';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
@@ -261,7 +261,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 <div className="season-card-header">
                   <span className="season-card-name">{t(getCardNameKey(card.id))}</span>
                   <span className="season-card-cost">
-                    <span className="season-card-coin">&#x26C1;</span>
+                    <span className="season-card-coin"><CoinIcon size={16} color="#c8a951" strokeWidth="2.5" /></span>
                     {isInteractiveMode && effectiveCost < card.cost ? (
                       <>
                         <span style={{ textDecoration: 'line-through', opacity: 0.5, marginRight: '4px' }}>{card.cost}</span>
@@ -286,7 +286,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 <p className="season-card-effect">{renderCardEffect(t(getCardEffectKey(card.id)))}</p>
                 {card.force !== undefined && (
                   <div className="season-card-force">
-                    <span className="season-card-force-icon">&#x2694;</span>
+                    <span className="season-card-force-icon"><CrossedSwordsIcon size={14} /></span>
                     {t('seasonCardsModal.force', { value: String(card.force) })}
                   </div>
                 )}
@@ -296,7 +296,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                     style={{ marginTop: '6px', width: '100%', padding: '4px 8px', fontSize: '0.85em' }}
                     onClick={(e) => { e.stopPropagation(); handleBuyClick(card); }}
                   >
-                    {t('seasonCardsModal.buyButton')} ({effectiveCost} &#x26C1;)
+                    {t('seasonCardsModal.buyButton')} ({effectiveCost} <CoinIcon size={16} color="#c8a951" strokeWidth="2.5" />)
                   </button>
                 )}
               </div>

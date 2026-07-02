@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { BushiIcon, CoinIcon, HonorIcon, VPIcon, ShintoIcon } from '../components/Icons';
+import { BushiIcon, CoinIcon, HonorIcon, VPIcon, ShintoIcon, FistIcon } from '../components/Icons';
 
 const ICON_MAP: Record<string, typeof VPIcon> = {
   vp: VPIcon,
@@ -7,12 +7,20 @@ const ICON_MAP: Record<string, typeof VPIcon> = {
   honor: HonorIcon,
   bushi: BushiIcon,
   shinto: ShintoIcon,
+  force: FistIcon,
 };
 
-const TOKEN_REGEX = /\{(vp|coin|honor|bushi|shinto)\}(\d*)/g;
+const COLOR_MAP: Record<string, string> = {
+  honor: '#9b59b6',
+  vp: '#e94560',
+  force: '#3498db',
+  coin: '#c8a951',
+};
+
+const TOKEN_REGEX = /\{(vp|coin|honor|bushi|shinto|force)\}([+]?\d*)/g;
 
 /**
- * Parses a translated card effect string containing icon tokens like {vp}3, {coin}2, {honor}, etc.
+ * Parses a translated card effect string containing icon tokens like {vp}3, {coin}2, {honor}, {force}+1, etc.
  * Returns an array of React nodes with inline SVG icons replacing the tokens.
  */
 export function renderCardEffect(text: string): ReactNode[] {
@@ -35,9 +43,10 @@ export function renderCardEffect(text: string): ReactNode[] {
     // Add the icon component
     const IconComponent = ICON_MAP[iconName];
     if (IconComponent) {
+      const iconColor = COLOR_MAP[iconName] || undefined;
       result.push(
         <span key={`icon-${matchStart}`} style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', gap: '1px' }}>
-          <IconComponent size={14} />
+          <IconComponent size={14} color={iconColor} />
           {amount && <span>{amount}</span>}
         </span>
       );

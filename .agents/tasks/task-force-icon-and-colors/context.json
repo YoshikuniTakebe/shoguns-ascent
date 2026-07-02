@@ -1,0 +1,24 @@
+{
+  "project_type": "React + TypeScript + Vite board game app with Zustand state management",
+  "language": "TypeScript/React",
+  "build_system": "Vite with tsc type-checking",
+  "test_framework": "No test framework detected",
+  "build_command": "npm run build",
+  "test_command": "npm run build",
+  "verification_instructions": "Run npm run build and confirm no TypeScript errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "node_modules already present, no test runner available",
+  "contribution_requirements": "Commit directly to main branch",
+  "key_patterns": "Icons defined as SVG React components in Icons.tsx with size/color/className props. Card effect text uses {token}N patterns (e.g. {vp}3) parsed by renderCardEffect.tsx. i18n has en.ts and es.ts with card effect strings.",
+  "relevant_files": [
+    "src/components/Icons.tsx",
+    "src/utils/renderCardEffect.tsx",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/components/SeasonCardsModal.tsx",
+    "src/components/PlayerCardsModal.tsx",
+    "src/components/SeasonCardsMarket.tsx"
+  ],
+  "directory_structure": "src/components/ (React components), src/utils/ (utilities like renderCardEffect), src/i18n/ (en.ts, es.ts translations), src/types/ (TypeScript types)"
+}

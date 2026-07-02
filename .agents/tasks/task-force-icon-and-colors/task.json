@@ -1,0 +1,7 @@
+{
+  "task_id": "task-force-icon-and-colors",
+  "task_description": "Add force icon token to card effect text rendering, apply colors to icons (honor purple, vp red, force blue, coin gold), preserve crossed swords icon as a component, and replace Unicode coin characters with CoinIcon SVG in card modals",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

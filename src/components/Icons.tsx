@@ -7,6 +7,7 @@ interface IconProps {
   size?: number;
   color?: string;
   className?: string;
+  strokeWidth?: string;
 }
 
 /** Two crossed katanas - used for Bushi forces */
@@ -34,7 +35,7 @@ export const BushiIcon = ({ size = 24, color = 'currentColor', className }: Icon
 );
 
 /** Round coin with square hole in center - traditional Japanese mon */
-export const CoinIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+export const CoinIcon = ({ size = 24, color = 'currentColor', className, strokeWidth = '1.5' }: IconProps) => (
   <svg
     className={className}
     width={size}
@@ -42,7 +43,7 @@ export const CoinIcon = ({ size = 24, color = 'currentColor', className }: IconP
     viewBox="0 0 24 24"
     fill="none"
     stroke={color}
-    strokeWidth="1.5"
+    strokeWidth={strokeWidth}
   >
     <circle cx="12" cy="12" r="9" />
     <rect x="9.5" y="9.5" width="5" height="5" />
@@ -504,6 +505,32 @@ export const SunIcon = ({ size = 24, color = 'currentColor', className }: IconPr
     <line x1="20" y1="12" x2="23" y2="12" stroke={color} strokeWidth="2" strokeLinecap="round" />
     <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" stroke={color} strokeWidth="2" strokeLinecap="round" />
     <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+/** Two crossed swords with horizontal line - preserved from &#x2694; visual */
+export const CrossedSwordsIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* Left sword blade */}
+    <line x1="5" y1="20" x2="19" y2="4" />
+    {/* Right sword blade */}
+    <line x1="19" y1="20" x2="5" y2="4" />
+    {/* Left sword guard */}
+    <line x1="6.5" y1="16" x2="9.5" y2="16" />
+    {/* Right sword guard */}
+    <line x1="14.5" y1="16" x2="17.5" y2="16" />
+    {/* Horizontal line through center */}
+    <line x1="3" y1="12" x2="21" y2="12" strokeWidth="1.5" />
   </svg>
 );
 
