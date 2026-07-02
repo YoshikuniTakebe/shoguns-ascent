@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Implement the Trade (TRATO) system: a button in the right sidebar during politics phase that opens a trade modal with coin/ronin sliders, player selector, and send/accept/reject mechanics",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Add new types to src/types/game.ts: Add a TradeOffer interface with fields: { id: string; fromPlayerId: string; toPlayerId: string; offerCoins: number; offerRonin: number; requestCoins: number; requestRonin: number; status: 'pending' | 'accepted' | 'rejected' }. Add tradeOffers: TradeOffer[] to the GameState interface (initialize as empty array).",
     "2. Add i18n keys to both src/i18n/en.ts and src/i18n/es.ts for the trade system: 'trade.button': 'Trade'/'Trato', 'trade.title': 'Trade Deal'/'Trato', 'trade.offerCoins': 'Offer Coins'/'Ofrecer Monedas', 'trade.offerRonin': 'Offer Ronin'/'Ofrecer Ronins', 'trade.requestCoins': 'Request Coins'/'Pedir Monedas', 'trade.requestRonin': 'Request Ronin'/'Pedir Ronins', 'trade.selectPlayer': 'Select Player'/'Seleccionar Jugador', 'trade.send': 'Send Trade'/'Enviar Trato', 'trade.incoming': 'Incoming Trade'/'Trato Entrante', 'trade.from': 'From'/'De', 'trade.offers': 'Offers'/'Ofrece', 'trade.requests': 'Requests'/'Pide', 'trade.accept': 'Accept'/'Aceptar', 'trade.reject': 'Reject'/'Rechazar', 'trade.nonBinding': 'Non-binding deal'/'Trato no vinculante'.",
@@ -29,5 +29,5 @@
     "npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes via vite build (exit 0). Pre-existing TS errors in BattleBiddingOverlay.tsx and BattlePanel.tsx cause tsc exit 2 but do not block the vite build. Trade system fully implemented with modal, popup, store actions, types, i18n, and CSS."
 }
