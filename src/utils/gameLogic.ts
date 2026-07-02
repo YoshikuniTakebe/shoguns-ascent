@@ -249,7 +249,7 @@ export function createInitialGameState(
     zorroPlacementsRemaining: 0,
     lastMandateIssuerId: null,
     gameOver: false,
-    log: ['Juego iniciado! Estacion: Primavera'],
+    log: ['Juego iniciado! Estación: Primavera'],
     logHistory: {},
     hostId,
   };
@@ -289,7 +289,7 @@ export function setupSeason(state: GameState, season: Season): GameState {
     currentPlayerIndex: firstPlayerIdx >= 0 ? firstPlayerIdx : 0,
     teaTurnIndex: 0,
     logHistory: archivedHistory,
-    log: [`Preparacion de Estacion: ${({ spring: 'Primavera', summer: 'Verano', autumn: 'Otono', winter: 'Invierno' } as Record<string, string>)[season] || season}`],
+    log: [`Preparación de Estación: ${({ spring: 'Primavera', summer: 'Verano', autumn: 'Otoño', winter: 'Invierno' } as Record<string, string>)[season] || season}`],
   };
 
   // Place war province tokens (numPlayers + 2) on random provinces
@@ -325,7 +325,7 @@ export function setupSeason(state: GameState, season: Season): GameState {
   // Break all alliances for tea ceremony
   newState = breakAllAlliances(newState);
 
-  newState.log = [...newState.log, `Fichas de guerra colocadas en ${selectedProvinces.length} provincias`, 'Comienza la Fase de Ceremonia del Te'];
+  newState.log = [...newState.log, `Fichas de guerra colocadas en ${selectedProvinces.length} provincias`, 'Comienza la Fase de Ceremonia del Té'];
 
   return newState;
 }
@@ -358,7 +358,7 @@ function returnHostages(state: GameState): GameState {
       Object.entries(hostagesByOwner).forEach(([ownerId, count]) => {
         const targetPlayer = newState.players.find((p) => p.id === ownerId);
         const targetName = targetPlayer ? targetPlayer.name : ownerId;
-        newState.log = [...newState.log, `${player.name} devuelve ${count} rehen(es) a ${targetName}, gana ${count} moneda(s)`];
+        newState.log = [...newState.log, `${player.name} devuelve ${count} rehén(es) a ${targetName}, gana ${count} moneda(s)`];
       });
       player.hostages = [];
     }
@@ -375,7 +375,7 @@ export function breakAllAlliances(state: GameState): GameState {
     ...state,
     players: state.players.map((p) => ({ ...p, allies: [] })),
     allianceProposals: [],
-    log: [...state.log, 'Todas las alianzas rotas para la Ceremonia del Te'],
+    log: [...state.log, 'Todas las alianzas rotas para la Ceremonia del Té'],
   };
   return newState;
 }
@@ -656,7 +656,7 @@ function executeRecruit(state: GameState, issuerId: string): GameState {
     recruitMandateIssuerId: issuerId,
     recruitPlacementsRemaining: 0,
     recruitUsedFortressProvinces: [],
-    log: [...state.log, `Mandato de Reclutar emitido por ${issuer?.name ?? 'Jugador'} - todos los jugadores pueden invocar figuras en sus fortalezas. Emisor y aliado obtienen +1 colocacion extra.`],
+    log: [...state.log, `Mandato de Reclutar emitido por ${issuer?.name ?? 'Jugador'} - todos los jugadores pueden invocar figuras en sus fortalezas. Emisor y aliado obtienen +1 colocación extra.`],
   };
 
   // Use advanceRecruitResolution to set up the first player (auto-skips if 0 placements)
@@ -860,7 +860,7 @@ function executeTrain(state: GameState, issuerId: string): GameState {
     trainResolutionOrder: resolutionOrder,
     trainResolutionIndex: 0,
     trainMandateIssuerId: issuerId,
-    log: [...state.log, 'Mandato de Entrenar emitido - todos los jugadores pueden comprar 1 carta de estacion del mercado. Emisor y aliado obtienen descuento de -1.'],
+    log: [...state.log, 'Mandato de Entrenar emitido - todos los jugadores pueden comprar 1 carta de estación del mercado. Emisor y aliado obtienen descuento de -1.'],
   };
   // Set currentPlayerIndex to the issuer (first in resolution order)
   const firstPlayerId = resolutionOrder[0];
@@ -1486,7 +1486,7 @@ export function resolveCurrentKamiReward(state: GameState): GameState {
       ...state,
       kamiResolutionStep: 'interactive',
       ryujinBuyActive: true,
-      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} puede adquirir una Carta de Estacion (Ryujin)`],
+      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} puede adquirir una Carta de Estación (Ryujin)`],
     };
   }
 
@@ -1708,7 +1708,7 @@ export function initiateWarPhase(state: GameState): GameState {
           uncontested: true,
         };
         newState.activeBattles.push(battle);
-        newState.log = [...newState.log, `${winner.name} gana ficha de guerra en ${province.name} (sin oposicion)`];
+        newState.log = [...newState.log, `${winner.name} gana ficha de guerra en ${province.name} (sin oposición)`];
       }
       continue;
     }
@@ -1770,7 +1770,7 @@ export function initiateWarPhase(state: GameState): GameState {
     const uncontestedCount = activeBattles.length - contestedCount;
     let summary = `${activeBattles.length} batallas por resolver`;
     if (contestedCount > 0 && uncontestedCount > 0) {
-      summary += ` (${contestedCount} disputadas, ${uncontestedCount} sin oposicion)`;
+      summary += ` (${contestedCount} disputadas, ${uncontestedCount} sin oposición)`;
     }
     newState.log = [...newState.log, summary];
   }
@@ -1820,7 +1820,7 @@ export function resolveUncontestedBattles(state: GameState): GameState {
       const winner = newState.players.find(p => p.id === winnerId);
       if (winner) {
         winner.warProvinceTokens = [...winner.warProvinceTokens, { season: slot.season, provinceId: slot.provinceId }];
-        newState.log = [...newState.log, `${winner.name} gana ficha de guerra en ${province.name} (sin oposicion)`];
+        newState.log = [...newState.log, `${winner.name} gana ficha de guerra en ${province.name} (sin oposición)`];
       }
       return { ...battle, participants: currentPlayerIds, winner: winnerId, uncontested: true };
     }
@@ -1983,7 +1983,7 @@ export function resolveNextBattle(state: GameState): GameState {
         }
         battleDeathCount += killCount;
         const seppukuHonorPos = getHonorRank(newState, highestBidder);
-        newState.log = [...newState.log, `${bidder.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV y ${killCount} Honor ahora ${bidder.victoryPoints} PV y posicion ${seppukuHonorPos} en Honor`];
+        newState.log = [...newState.log, `${bidder.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV y ${killCount} Honor ahora ${bidder.victoryPoints} PV y posición ${seppukuHonorPos} en Honor`];
         break;
       }
       case 'take-hostage': {
@@ -2006,7 +2006,7 @@ export function resolveNextBattle(state: GameState): GameState {
             else if (enemyFigure.type === 'shinto') victim.shinto += 1;
           }
           battleDeathCount += 1;
-          newState.log = [...newState.log, `${bidder.name} toma un rehen de ${victim?.name}`];
+          newState.log = [...newState.log, `${bidder.name} toma un rehén de ${victim?.name}`];
         }
         break;
       }
@@ -2278,7 +2278,7 @@ export function resolveWinter(state: GameState): GameState {
     currentPhase: 'winter' as const,
     currentSeason: 'winter' as const,
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages], seasonCards: [...p.seasonCards] })),
-    log: [...state.log, 'Invierno - Puntuacion Final'],
+    log: [...state.log, 'Invierno - Puntuación Final'],
   };
 
   // Return hostages (+1 coin each)
@@ -2798,7 +2798,7 @@ export function advancePhase(state: GameState): GameState {
       newState.currentPlayerIndex = firstPlayerIdx >= 0 ? firstPlayerIdx : 0;
 
       const firstPlayer = newState.players[newState.currentPlayerIndex];
-      newState.log = [...newState.log, `Comienza la Fase de Politica - ${firstPlayer?.name ?? 'Jugador'} toma el primer turno de mandato`];
+      newState.log = [...newState.log, `Comienza la Fase de Política - ${firstPlayer?.name ?? 'Jugador'} toma el primer turno de mandato`];
       break;
     }
     case 'politics':
@@ -2911,7 +2911,7 @@ export function advancePlayer(state: GameState): GameState {
 
     // If no temples have any figures, skip kami resolution entirely
     if (kamiResolutionTemples.length === 0) {
-      newState.log = [...newState.log, 'Turno Kami - ningun santuario con figuras, saltando'];
+      newState.log = [...newState.log, 'Turno Kami - ningún santuario con figuras, saltando'];
       // Continue with normal flow: check if politics done or advance to next player
       if (newState.politicsMandateCount >= newState.maxMandates) {
         return advancePhase(newState);
@@ -2926,7 +2926,7 @@ export function advancePlayer(state: GameState): GameState {
     newState.kamiResolutionIndex = 0;
     newState.kamiResolutionStep = 'showing';
     newState.kamiResolutionNextPlayerIndex = advanceToNextInSeating(referenceIdx);
-    newState.log = [...newState.log, '--- Kami Turn ---'];
+    newState.log = [...newState.log, '--- Turno Kami ---'];
     return newState;
   }
 
