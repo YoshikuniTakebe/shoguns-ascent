@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Add translation keys for all season card effects and names to the i18n system, and update components to use translated text instead of raw English strings.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Step 1: Add translation keys for all season card effects to src/i18n/en.ts. Use format 'card.effect.<card-id>' (without the -2 suffix for duplicates, since they have identical text). For example: 'card.effect.sp-benevolence': 'When you spend Coins, you may give one to another player. If you do, gain Honor and 2 VP.' There are 105 unique card IDs (excluding -2 duplicates). The English values should be the exact current effect text from game.ts.",
     "Step 2: Add corresponding Spanish translations for all season card effects to src/i18n/es.ts using the same keys. Translate the English effect text to Spanish game terminology (PV for VP, Monedas for Coins, Fuerza for Force, Invocar for Summon, etc.) following the existing translation style in es.ts.",
@@ -25,5 +25,5 @@
     "Run `npm run build` and confirm exit code 0 with no TypeScript errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "85 unique season card IDs (not 105 as estimated in briefing). Build passes with exit code 0. Pre-existing tsc warnings about vite/client and node type definitions are not related to this change."
 }
