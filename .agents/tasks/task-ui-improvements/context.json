@@ -1,21 +1,23 @@
 {
-  "project_type": "React+TypeScript board game SPA with Vite",
+  "project_type": "React + TypeScript + Vite board game app with Zustand state management",
   "language": "TypeScript/React",
-  "build_system": "Vite with TypeScript compiler",
-  "test_framework": "None found",
-  "build_command": "npx vite build",
-  "test_command": "none",
-  "verification_instructions": "Run npx vite build and confirm it succeeds with no errors",
+  "build_system": "Vite with tsc -b for type checking (pre-existing TS errors in BattlePanel.tsx do not block build)",
+  "test_framework": "No test framework configured",
+  "build_command": "npm run build",
+  "test_command": null,
+  "verification_instructions": "Run npm run build and verify exit code 0 and dist/ directory is populated",
   "snapshot_or_generated_files": null,
-  "setup_instructions": "npm install && npx vite build",
-  "environment_constraints": "No test framework. Verification is build-only.",
-  "contribution_requirements": "Work directly on main branch, commit when done.",
-  "key_patterns": "Single CSS file (src/App.css) with minified styles. Components in src/components/. State managed by zustand in src/store/gameStore.ts. Clan colors accessed via CLANS array. Figure tooltip uses .figure-tooltip class with border: 1.5px solid var(--accent-gold).",
+  "setup_instructions": "npm install (already done, node_modules exists)",
+  "environment_constraints": "No test runner available. Verification is build-only.",
+  "contribution_requirements": "Commit directly to main branch",
+  "key_patterns": "All CSS is in src/App.css (minified single-line styles). Icons are SVG components in src/components/Icons.tsx. Translation keys are in i18n files. Season cards modal and player cards modal share the same CSS classes (season-card-*). Legend tooltip uses .legend-button-wrapper/.legend-tooltip/.legend-tooltip-row classes already defined in CSS.",
   "relevant_files": [
+    "src/components/SeasonCardsModal.tsx",
+    "src/components/PlayerCardsModal.tsx",
     "src/components/RegionCard.tsx",
-    "src/components/TemplePanel.tsx",
+    "src/components/Icons.tsx",
     "src/components/GameBoard.tsx",
     "src/App.css"
   ],
-  "directory_structure": "Root: src/ with components/, store/, types/, img/, utils/, i18n/. All styling in src/App.css (single file, long lines). Build outputs to dist/."
+  "directory_structure": "src/components/ has all React components. src/App.css has all styles. src/types/ has type definitions. src/i18n/ has translations."
 }

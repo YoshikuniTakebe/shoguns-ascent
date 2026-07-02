@@ -1,28 +1,31 @@
 {
   "id": "FEAT-001",
   "type": "feat",
-  "description": "Implement 5 UI changes: figure tooltip clan-colored border, shinto container in kami slots, harvest line half-length + dark gold hex border, politics track mandate hover animation, and move Edo harvest hex 10px left.",
-  "status": "completed",
+  "description": "Implement five UI improvements: force icon change, coin alignment, legend button in modal, backdrop blur, and Sol clan glow on map figures",
+  "status": "in_progress",
   "steps": [
-    "CHANGE 1 - Figure tooltip border = clan color: In src/components/RegionCard.tsx, the FigureIcon component renders a <span className='figure-tooltip'> element. The `color` prop passed to FigureIcon is the clan color (ownerColor). Add an inline style to the .figure-tooltip span setting borderColor to the `color` prop value. The tooltip element is: <span className='figure-tooltip'>. Change it to <span className='figure-tooltip' style={{ borderColor: color }}>.",
-    "CHANGE 2 - Shinto container in kami track slots: In src/components/TemplePanel.tsx, around the section where temple.figures.length > 0 renders .kami-slot-figures, wrap the torii SVG icons in a container div that: (a) only renders when there are figures, (b) has semi-transparent background rgba(0,0,0,0.4), (c) has rounded corners (borderRadius: 6px), (d) has padding (padding: 3px 5px), (e) uses display:flex with gap:4px. Replace the current .kami-slot-figures div with this new styled container. Keep the existing position:absolute, bottom:54px, right:6px positioning but apply it to the new container.",
-    "CHANGE 3A - Harvest line half-length: In src/components/GameBoard.tsx, in the 'Harvest reward connecting lines' section (around line 370-385), calculate midX = (harvest.position.x + regionPos.x) / 2 and midY = (harvest.position.y + regionPos.y) / 2. Change x2={regionPos.x} to x2={midX} and y2={regionPos.y} to y2={midY}. Keep strokeWidth='3'.",
-    "CHANGE 3B - Harvest hex dark gold border: In src/App.css, find the .harvest-hex rule. It uses clip-path which clips borders. Replace the existing filter (drop-shadow with #444 and #333) with multiple drop-shadows using color #6B4E0A (very dark gold) to simulate a 3px border. Use: filter: drop-shadow(2px 0 0 #6B4E0A) drop-shadow(-2px 0 0 #6B4E0A) drop-shadow(0 2px 0 #6B4E0A) drop-shadow(0 -2px 0 #6B4E0A) drop-shadow(1px 1px 0 #6B4E0A) drop-shadow(-1px -1px 0 #6B4E0A) drop-shadow(1px -1px 0 #6B4E0A) drop-shadow(-1px 1px 0 #6B4E0A);",
-    "CHANGE 4 - Politics track mandate hover: In src/App.css, add a new CSS rule after the existing .politics-track-slot rules: .politics-track-slot.filled:hover{transform:scale(1.5);z-index:20;box-shadow:0 4px 20px rgba(0,0,0,0.5)}",
-    "CHANGE 5 - Move Edo harvest hex 10px left: In src/components/GameBoard.tsx, in the HARVEST_BADGE_META object, change edo position from x: 960 to x: 950."
+    "1. In src/components/SeasonCardsModal.tsx: Replace the force display section (lines ~287-291) - change CrossedSwordsIcon to FistIcon with size=18, color '#3498db'. Remove the translation text 'seasonCardsModal.force' and instead just show: [FistIcon] [card.force number]. Update the import to add FistIcon (keep CrossedSwordsIcon import for future use). Also import all legend icons: BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, VPIcon, HonorIcon, RoninIcon, FistIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon.",
+    "2. In src/components/PlayerCardsModal.tsx: Same force icon change - replace CrossedSwordsIcon with FistIcon (size=18, color '#3498db'), remove the translation text, just show icon + number. Import FistIcon. Keep CrossedSwordsIcon in the import for future use. Also import all legend icons.",
+    "3. Fix coin alignment in src/App.css: Find the line with `.season-card-coin{font-size:0.9rem;color:var(--accent-gold)}` and change it to `.season-card-coin{font-size:0.9rem;color:var(--accent-gold);display:inline-flex;align-items:center}`",
+    "4. Add legend '?' button in SeasonCardsModal.tsx: Place a .legend-button-wrapper div inside the modal, near the close button area (right side of the modal header or near the theme toggle). It should use the exact same structure as in GameBoard.tsx lines 243-256: a button with class 'legend-btn' showing '?', and a div with class 'legend-tooltip' containing .legend-tooltip-row elements with all 14 icons and their translation keys (legend.bushi, legend.shinto, legend.fortress, legend.daimyo, legend.monster, legend.coin, legend.vp, legend.honor, legend.ronin, legend.force, legend.spring, legend.summer, legend.autumn, legend.winter).",
+    "5. Add legend '?' button in PlayerCardsModal.tsx with the same structure as step 4.",
+    "6. Add backdrop blur to the season cards modal in src/App.css: Find the `.season-cards-modal-backdrop` rule and add `backdrop-filter:blur(4px)` to it.",
+    "7. Add Sol clan golden glow animation in src/App.css: Add `.figure-icon-sol{animation:solGlow 2.5s ease-in-out infinite}` and `@keyframes solGlow{0%,100%{filter:drop-shadow(0 0 2px rgba(255,215,0,0.6))}50%{filter:drop-shadow(0 0 6px rgba(255,215,0,0.9)) drop-shadow(0 0 10px rgba(255,215,0,0.4))}}`",
+    "8. In src/components/RegionCard.tsx: In the FigureIcon component, add the 'figure-icon-sol' class conditionally when ownerClanId === 'sol'. Change each `<span className=\"figure-icon figure-icon-wrapper\">` to include the sol class: `<span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>`. The ownerClanId variable is already computed at the top of the FigureIcon component."
   ],
   "acceptance_criteria": [
-    "npx vite build completes without errors",
-    "In RegionCard.tsx, figure-tooltip span has inline style with borderColor set to the color prop",
-    "In TemplePanel.tsx, shinto figures are wrapped in a container with rgba(0,0,0,0.4) background and rounded corners",
-    "In GameBoard.tsx, harvest connecting lines use midpoint coordinates for x2/y2",
-    "In App.css, .harvest-hex filter uses #6B4E0A drop-shadows",
-    "In App.css, .politics-track-slot.filled:hover rule exists with transform:scale(1.5)",
-    "In GameBoard.tsx, HARVEST_BADGE_META edo position x is 950"
+    "Force section in SeasonCardsModal shows FistIcon (size 18, blue #3498db) followed by the number only, no text",
+    "Force section in PlayerCardsModal shows FistIcon (size 18, blue #3498db) followed by the number only, no text",
+    "CrossedSwordsIcon remains in Icons.tsx (not deleted)",
+    "Coin icon and number are vertically aligned in card cost section",
+    "Legend '?' button appears in both SeasonCardsModal and PlayerCardsModal with all 14 icon rows",
+    "The season-cards-modal-backdrop has backdrop-filter:blur(4px)",
+    "Sol clan figures on the map have an animated golden glow (solGlow keyframes)",
+    "npm run build succeeds with exit code 0"
   ],
   "verification": [
-    "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
+    "Run `npm run build` in /projects/sandbox/shoguns-ascent and confirm exit code 0"
   ],
   "blocked_reason": null,
-  "findings": "All 5 changes implemented and build verified successfully. No test framework in project - verification is build-only."
+  "findings": ""
 }

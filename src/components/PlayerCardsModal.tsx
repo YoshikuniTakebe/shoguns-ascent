@@ -4,7 +4,7 @@ import type { TranslationKey } from '../i18n';
 import type { CardType, Player, SeasonCard } from '../types/game';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { SunIcon, MoonIcon, CoinIcon, CrossedSwordsIcon } from './Icons';
+import { SunIcon, MoonIcon, CoinIcon, FistIcon, BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, VPIcon, HonorIcon, RoninIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon } from './Icons';
 import { getMonsterImage } from '../utils/figureImages';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
@@ -42,6 +42,26 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
         <button className="season-cards-modal-close" onClick={onClose}>
           &times;
         </button>
+        {/* Legend button */}
+        <div className="legend-button-wrapper" style={{ position: 'absolute', top: '0.6rem', left: '0.9rem', zIndex: 1 }}>
+          <button className="legend-btn">?</button>
+          <div className="legend-tooltip">
+            <div className="legend-tooltip-row"><BushiIcon size={20} color="#fff" /><span>{t('legend.bushi')}</span></div>
+            <div className="legend-tooltip-row"><ShintoIcon size={20} color="#fff" /><span>{t('legend.shinto')}</span></div>
+            <div className="legend-tooltip-row"><FortressIcon size={20} color="#fff" /><span>{t('legend.fortress')}</span></div>
+            <div className="legend-tooltip-row"><DaimyoIcon size={20} color="#fff" /><span>{t('legend.daimyo')}</span></div>
+            <div className="legend-tooltip-row"><MonsterIcon size={20} color="#fff" /><span>{t('legend.monster')}</span></div>
+            <div className="legend-tooltip-row"><CoinIcon size={20} color="#fff" /><span>{t('legend.coin')}</span></div>
+            <div className="legend-tooltip-row"><VPIcon size={20} color="#fff" /><span>{t('legend.vp')}</span></div>
+            <div className="legend-tooltip-row"><HonorIcon size={20} color="#fff" /><span>{t('legend.honor')}</span></div>
+            <div className="legend-tooltip-row"><RoninIcon size={20} color="#fff" /><span>{t('legend.ronin')}</span></div>
+            <div className="legend-tooltip-row"><FistIcon size={20} color="#fff" /><span>{t('legend.force')}</span></div>
+            <div className="legend-tooltip-row"><SpringIcon size={20} color="#FFB7C5" /><span style={{ color: '#FFB7C5' }}>{t('legend.spring')}</span></div>
+            <div className="legend-tooltip-row"><SummerIcon size={20} color="#FF6B35" /><span style={{ color: '#FF6B35' }}>{t('legend.summer')}</span></div>
+            <div className="legend-tooltip-row"><AutumnIcon size={20} color="#D4A574" /><span style={{ color: '#D4A574' }}>{t('legend.autumn')}</span></div>
+            <div className="legend-tooltip-row"><WinterIcon size={20} color="#A8C8E8" /><span style={{ color: '#A8C8E8' }}>{t('legend.winter')}</span></div>
+          </div>
+        </div>
         <div className="season-cards-theme-toggle" onClick={() => setLightMode(!lightMode)}>
           <div className={`theme-toggle-track${lightMode ? ' light' : ''}`}>
             <div className="theme-toggle-thumb">
@@ -93,8 +113,8 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
                 <p className="season-card-effect">{renderCardEffect(t(getCardEffectKey(card.id)))}</p>
                 {card.force !== undefined && (
                   <div className="season-card-force">
-                    <span className="season-card-force-icon"><CrossedSwordsIcon size={14} /></span>
-                    {t('seasonCardsModal.force', { value: String(card.force) })}
+                    <span className="season-card-force-icon"><FistIcon size={18} color="#3498db" /></span>
+                    {card.force}
                   </div>
                 )}
               </div>
