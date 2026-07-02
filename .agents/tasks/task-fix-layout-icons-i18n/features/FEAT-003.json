@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Fix missing diacritics in translated Spanish log strings and make CSS formula self-documenting",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/utils/gameLogic.ts, replace all ASCII approximations with proper Spanish diacritical characters: Estacion->Estación, Otono->Otoño, Te (tea ceremony)->Té, Politica->Política, ningun->ningún, rehen->rehén, Puntuacion->Puntuación, oposicion->oposición, Preparacion->Preparación, resolucion->resolución, colocacion->colocación, posicion->posición",
     "In src/App.css, change .region-forces max-width from calc(5 * 24px) to calc(5 * 21px + 4 * 3px) making the formula self-documenting"
@@ -14,5 +14,5 @@
   ],
   "verification": ["npx vite build"],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All 14 diacritic replacements applied in gameLogic.ts. CSS formula changed to calc(5 * 21px + 4 * 3px). Build succeeds."
 }
