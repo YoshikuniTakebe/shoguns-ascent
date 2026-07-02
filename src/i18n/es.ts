@@ -193,7 +193,7 @@ export const es: Record<TranslationKey, string> = {
   'seasonCardsModal.confirmMessage': '\u00BFComprar {name} por {cost} monedas?',
   'seasonCardsModal.confirm': 'Confirmar',
   'seasonCardsModal.cancel': 'Cancelar',
-  'seasonCardsModal.discount': '(descuento -1)',
+  'seasonCardsModal.discount': 'descuento',
   'seasonCardsModal.buyButton': 'Comprar',
   'seasonCardsModal.openMarket': 'Abrir Mercado',
   'seasonCardsModal.skipPurchase': 'No comprar nada',

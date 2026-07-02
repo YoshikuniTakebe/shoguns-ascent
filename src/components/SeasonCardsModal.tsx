@@ -243,7 +243,11 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 <span style={{ color: playerClan?.color || '#ccc', fontWeight: 'bold' }}>{player.name}</span>
                 <CoinIcon size={24} />
                 <span>{player.coins}</span>
-                {isDiscounted && <span style={{ color: '#27ae60', marginLeft: '6px' }}>{t('seasonCardsModal.discount')}</span>}
+                {isDiscounted && (
+                  <span style={{ color: '#27ae60', marginLeft: '6px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                    ({t('seasonCardsModal.discount')} -<CoinIcon size={14} color="#27ae60" strokeWidth="2" />)
+                  </span>
+                )}
               </span>
             );
           })()}
@@ -378,8 +382,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                   <span>{currentPlayer.coins}</span>
                 </span>
                 {isDiscounted && (
-                  <span style={{ color: '#27ae60', marginLeft: '8px' }}>
-                    {t('seasonCardsModal.discount')}
+                  <span style={{ color: '#27ae60', marginLeft: '8px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                    ({t('seasonCardsModal.discount')} -<CoinIcon size={14} color="#27ae60" strokeWidth="2" />)
                   </span>
                 )}
               </p>

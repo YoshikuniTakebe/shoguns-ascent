@@ -242,7 +242,7 @@ export const en = {
   'seasonCardsModal.confirmMessage': 'Buy {name} for {cost} coins?',
   'seasonCardsModal.confirm': 'Confirm',
   'seasonCardsModal.cancel': 'Cancel',
-  'seasonCardsModal.discount': '(discount -1)',
+  'seasonCardsModal.discount': 'discount',
   'seasonCardsModal.buyButton': 'Buy',
   'seasonCardsModal.openMarket': 'Open Market',
   'seasonCardsModal.skipPurchase': 'Skip Purchase',
