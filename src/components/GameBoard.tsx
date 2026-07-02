@@ -455,14 +455,19 @@ export const GameBoard = () => {
                   return (
                     <div
                       key={`harvest-${regionId}`}
-                      className="harvest-hex"
+                      className="harvest-hex-wrapper"
                       style={{
                         left: `${harvest.position.x}px`,
                         top: `${harvest.position.y}px`,
-                        backgroundColor: harvest.color,
-                        borderColor: harvest.color,
                       }}
                     >
+                      <div
+                        className="harvest-hex"
+                        style={{
+                          backgroundColor: harvest.color,
+                          borderColor: harvest.color,
+                        }}
+                      >
                       <div className={`harvest-hex-content ${layoutClass}`}>
                         {totalIcons === 3 ? (
                           <>
@@ -473,6 +478,7 @@ export const GameBoard = () => {
                           allIcons
                         )}
                       </div>
+                    </div>
                     </div>
                   );
                 })}

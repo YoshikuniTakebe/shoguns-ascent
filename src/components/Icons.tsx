@@ -308,7 +308,7 @@ export const AutumnIcon = ({ size = 24, color = 'currentColor', className }: Ico
     className={className}
     width={size}
     height={size}
-    viewBox="0 0 2200 1466"
+    viewBox="780 380 680 680"
     fill={color}
     stroke="none"
   >
