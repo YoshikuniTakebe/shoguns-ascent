@@ -395,11 +395,11 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
         : activePlayer?.clanId;
       if (figure.type === 'fortress' && movingPlayerClan !== 'tortuga') return;
 
-      // Toggle selection: if already selected, deselect; otherwise select only this one
+      // Toggle selection: if already selected, deselect; otherwise add to selection
       if (selectedFigures.includes(figureId)) {
-        setSelectedFigures([]);
+        setSelectedFigures(selectedFigures.filter(id => id !== figureId));
       } else {
-        setSelectedFigures([figureId]);
+        setSelectedFigures([...selectedFigures, figureId]);
       }
     }
   };

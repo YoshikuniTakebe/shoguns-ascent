@@ -114,7 +114,7 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
                 {card.force !== undefined && (
                   <div className="season-card-force">
                     <span className="season-card-force-icon"><FistIcon size={18} color="#3498db" /></span>
-                    {card.force}
+                    {card.id === 'sp-oni-of-skulls' ? '1/3' : card.id === 'su-oni-of-blood' ? '2/4' : card.force}
                   </div>
                 )}
               </div>
