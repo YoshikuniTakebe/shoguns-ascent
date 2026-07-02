@@ -1,0 +1,25 @@
+{
+  "project_type": "TypeScript + React + Vite board game app",
+  "language": "TypeScript",
+  "build_system": "Vite with tsc for type checking",
+  "test_framework": "No test framework found",
+  "build_command": "npm run build",
+  "test_command": "npm run build (no tests, only build verification)",
+  "verification_instructions": "Run `npm run build` to verify TypeScript compiles and Vite bundles successfully",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install && npm run build",
+  "environment_constraints": "None - standard npm project with network access",
+  "contribution_requirements": "None documented",
+  "key_patterns": "i18n system uses `useT()` hook returning `t(key)` function. TranslationKey type is derived from `keyof typeof en` in src/i18n/en.ts. All translation keys must be added to en.ts (which defines the type) and es.ts (typed as Record<TranslationKey, string>). Season cards are defined as arrays in src/types/game.ts with string `effect` fields. Components render `{card.effect}` directly. The approach should change card.effect to be a translation key (e.g., 'card.effect.sp-fukurokuju') and use t() in components.",
+  "relevant_files": [
+    "src/types/game.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/i18n/index.ts",
+    "src/components/SeasonCardsModal.tsx",
+    "src/components/SeasonCardsMarket.tsx",
+    "src/components/PlayerCardsModal.tsx",
+    "src/components/RegionDetailModal.tsx"
+  ],
+  "directory_structure": "src/types/game.ts (card data), src/i18n/ (translation system), src/components/ (React components rendering cards)"
+}

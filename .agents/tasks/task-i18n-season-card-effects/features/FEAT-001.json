@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add translation keys for all season card effects and names to the i18n system, and update components to use translated text instead of raw English strings.",
+  "status": "in_progress",
+  "steps": [
+    "Step 1: Add translation keys for all season card effects to src/i18n/en.ts. Use format 'card.effect.<card-id>' (without the -2 suffix for duplicates, since they have identical text). For example: 'card.effect.sp-benevolence': 'When you spend Coins, you may give one to another player. If you do, gain Honor and 2 VP.' There are 105 unique card IDs (excluding -2 duplicates). The English values should be the exact current effect text from game.ts.",
+    "Step 2: Add corresponding Spanish translations for all season card effects to src/i18n/es.ts using the same keys. Translate the English effect text to Spanish game terminology (PV for VP, Monedas for Coins, Fuerza for Force, Invocar for Summon, etc.) following the existing translation style in es.ts.",
+    "Step 3: Also add translation keys for card names that are English phrases (not proper Japanese nouns). Names like 'Benevolence', 'Courage', 'Path of the Lion', 'Form of the Beast', 'Way of the Shogun', etc. should be translatable. Use format 'card.name.<card-id>'. Japanese proper nouns like 'Fukurokuju', 'Daikokuten', 'Jinmenju' etc. can stay as-is (still add a key that maps to the same name in both languages).",
+    "Step 4: Update src/components/SeasonCardsModal.tsx - Change `{card.effect}` on line 284 to use `t('card.effect.<id>' as TranslationKey)` where <id> is derived from card.id (strip the -2 suffix). Also change `{card.name}` on line 260. Also update the zoom fallback at line ~440 that shows `{zoomedCard.name}` and `{zoomedCard.effect}`.",
+    "Step 5: Update src/components/SeasonCardsMarket.tsx - Change `{card.effect}` on line 71 and `{card.name}` on line 67 to use t() with the translation keys.",
+    "Step 6: Update src/components/PlayerCardsModal.tsx - Change `{card.effect}` on line 91, `{card.name}` on line 79, and in the zoom overlay `{zoomedCard.name}` on line 112 and `{zoomedCard.effect}` on line 113.",
+    "Step 7: Update src/components/RegionDetailModal.tsx - The `getMonsterInfo` function returns card.name and card.effect as strings used in tooltip text. Since this is outside a React component (no hook access), create a helper function or pass t as parameter. The tooltip at line ~182 uses `info.name` and `info.effect`.",
+    "Step 8: Create a helper utility function (e.g., in src/i18n/index.ts or a new src/utils/cardTranslations.ts) that converts a card.id to its effect translation key (strips -2 suffix and prefixes with 'card.effect.'). Similarly for card.name. This avoids repeating the logic in every component.",
+    "Step 9: Run `npm run build` to verify everything compiles correctly."
+  ],
+  "acceptance_criteria": [
+    "All season card effects render through the i18n translation system (t function) rather than raw English strings",
+    "Spanish translations exist for all ~105 unique card effects",
+    "Card names that are English words/phrases are also translated",
+    "The project builds successfully with `npm run build`",
+    "Duplicate cards (-2 suffix) correctly share translation keys with their base card"
+  ],
+  "verification": [
+    "Run `npm run build` and confirm exit code 0 with no TypeScript errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

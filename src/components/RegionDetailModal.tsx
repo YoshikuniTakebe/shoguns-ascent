@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS, PROVINCE_COLORS } from '../types/game';
 import type { Figure, GameState } from '../types/game';
-import { useT } from '../i18n';
+import { useT, t as tStandalone } from '../i18n';
 import { FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { getMonsterFigureImage, getCastleImage, getDaimyoImage, getBushiImage, getShintoImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
 import { calculateForce, getPlayerSeasonCardEffects } from '../utils/gameLogic';
+import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 
 interface RegionDetailModalProps {
   regionId: string;
@@ -31,7 +32,7 @@ function getMonsterInfo(monsterCardId: string): { name: string; effect: string; 
   const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
   const card = allCards.find(c => c.id === monsterCardId);
   if (card) {
-    return { name: card.name, effect: card.effect, force: card.force };
+    return { name: tStandalone(getCardNameKey(card.id)), effect: tStandalone(getCardEffectKey(card.id)), force: card.force };
   }
   return null;
 }

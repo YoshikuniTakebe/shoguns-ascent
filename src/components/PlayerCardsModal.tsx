@@ -6,6 +6,7 @@ import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { SunIcon, MoonIcon } from './Icons';
 import { getMonsterImage } from '../utils/figureImages';
+import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
   monster: '#cd7f32',
@@ -76,7 +77,7 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
                   </div>
                 )}
                 <div className="season-card-header">
-                  <span className="season-card-name">{card.name}</span>
+                  <span className="season-card-name">{t(getCardNameKey(card.id))}</span>
                   <span className="season-card-cost">
                     <span className="season-card-coin">&#x26C1;</span>
                     {card.cost}
@@ -88,7 +89,7 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
                 >
                   {t(CARD_TYPE_KEYS[card.cardType])}
                 </span>
-                <p className="season-card-effect">{card.effect}</p>
+                <p className="season-card-effect">{t(getCardEffectKey(card.id))}</p>
                 {card.force !== undefined && (
                   <div className="season-card-force">
                     <span className="season-card-force-icon">&#x2694;</span>
@@ -109,8 +110,8 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
               ) : (
                 <div className="card-zoom-fallback">
                   <span className="card-zoom-fallback-icon">&#x1F3B4;</span>
-                  <span className="card-zoom-fallback-name">{zoomedCard.name}</span>
-                  <span className="card-zoom-fallback-effect">{zoomedCard.effect}</span>
+                  <span className="card-zoom-fallback-name">{t(getCardNameKey(zoomedCard.id))}</span>
+                  <span className="card-zoom-fallback-effect">{t(getCardEffectKey(zoomedCard.id))}</span>
                 </div>
               )}
             </div>

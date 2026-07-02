@@ -3,6 +3,7 @@ import { getCurrentPlayer } from '../utils/gameLogic';
 import type { SeasonCard } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
+import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 
 export const SeasonCardsMarket = () => {
   const { gameState, localPlayerId, doBuySeasonCard } = useGameStore();
@@ -64,11 +65,11 @@ export const SeasonCardsMarket = () => {
     return (
       <div key={card.id} className={`season-card-item${isRestricted ? ' card-restricted' : ''}`}>
         <div className="card-header">
-          <span className="card-name">{card.name}</span>
+          <span className="card-name">{t(getCardNameKey(card.id))}</span>
           <span className="card-cost">{card.cost} coins</span>
         </div>
         <div className="card-type">{t(cardTypeLabelKeys[card.cardType] || ('market.upgrade' as TranslationKey))}</div>
-        <div className="card-effect">{card.effect}</div>
+        <div className="card-effect">{t(getCardEffectKey(card.id))}</div>
         {card.force !== undefined && card.force > 0 && (
           <div className="card-force">Force: {card.force}</div>
         )}
