@@ -312,10 +312,10 @@ export const AutumnIcon = ({ size = 24, color = 'currentColor', className }: Ico
     fill={color}
     stroke="none"
   >
-    {/* Canadian/classic maple leaf silhouette */}
-    <path d="M12 2 L12.5 5 L14 4 L13.5 6.5 L16 5.5 L14.5 8 L17 7.5 L15 9.5 L18 9 L15.5 11 L19 11.5 L15.5 13 L17 15 L14 14 L14.5 17 L12 15 L9.5 17 L10 14 L7 15 L8.5 13 L5 11.5 L8.5 11 L6 9 L9 9.5 L7 7.5 L9.5 8 L8 5.5 L10.5 6.5 L10 4 L11.5 5 Z" />
+    {/* Maple leaf 🍁 silhouette */}
+    <path d="M12 1 L13 4 L15 2.5 L14.5 5.5 L17.5 4 L16 7 L19 6 L17 8.5 L21 8 L18 10.5 L22 11.5 L18 12.5 L20 14.5 L17 14 L18 17 L15 15.5 L14.5 18 L12 16 L9.5 18 L9 15.5 L6 17 L7 14 L4 14.5 L6 12.5 L2 11.5 L6 10.5 L3 8 L7 8.5 L5 6 L8 7 L6.5 4 L9.5 5.5 L9 2.5 L11 4 Z" />
     {/* Stem */}
-    <rect x="11.5" y="15" width="1" height="7" rx="0.5" fill={color} />
+    <path d="M12 16 L12 22" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none" />
   </svg>
 );
 
