@@ -1,0 +1,7 @@
+{
+  "task_id": "task-icon-tokens-in-card-effects",
+  "task_description": "Replace textual references to VP, Coins, Honor, Bushi, and Shinto in card effect translations with icon tokens that render inline SVG icons. Fix Piedad card text and rename deck.archway to Tori in Spanish.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

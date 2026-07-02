@@ -8,6 +8,7 @@ import { ClanShield } from './ClanShields';
 import { CoinIcon, SpringIcon, SummerIcon, AutumnIcon, SunIcon, MoonIcon } from './Icons';
 import { getMonsterImage } from '../utils/figureImages';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
+import { renderCardEffect } from '../utils/renderCardEffect';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
   monster: '#cd7f32',
@@ -282,7 +283,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 <span className="season-card-group-badge">
                   {translateGroup(card.group)}
                 </span>
-                <p className="season-card-effect">{t(getCardEffectKey(card.id))}</p>
+                <p className="season-card-effect">{renderCardEffect(t(getCardEffectKey(card.id)))}</p>
                 {card.force !== undefined && (
                   <div className="season-card-force">
                     <span className="season-card-force-icon">&#x2694;</span>
@@ -439,7 +440,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 <div className="card-zoom-fallback">
                   <span className="card-zoom-fallback-icon">&#x1F3B4;</span>
                   <span className="card-zoom-fallback-name">{t(getCardNameKey(zoomedCard.id))}</span>
-                  <span className="card-zoom-fallback-effect">{t(getCardEffectKey(zoomedCard.id))}</span>
+                  <span className="card-zoom-fallback-effect">{renderCardEffect(t(getCardEffectKey(zoomedCard.id)))}</span>
                 </div>
               )}
             </div>

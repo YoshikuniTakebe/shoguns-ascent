@@ -1,0 +1,25 @@
+{
+  "project_type": "React + TypeScript + Vite board game app with Zustand state management",
+  "language": "TypeScript/TSX",
+  "build_system": "Vite with TypeScript compilation (tsc -b && vite build)",
+  "test_framework": "No test framework found (no test files)",
+  "build_command": "npm run build",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "Run npx tsc --noEmit for type checking and npm run build for full build verification",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install (already done, node_modules exists)",
+  "environment_constraints": "None discovered",
+  "contribution_requirements": "None (no CONTRIBUTING.md)",
+  "key_patterns": "Translation system: i18n/en.ts and i18n/es.ts export const objects typed as TranslationKey. useT() hook returns a t(key, params?) function. Card effects use getCardEffectKey(cardId) from utils/cardTranslations.ts. Icons are in src/components/Icons.tsx as React SVG components (BushiIcon, CoinIcon, HonorIcon, VPIcon, ShintoIcon). The t() function currently returns plain strings. To render icons inline, we need a new utility that parses token syntax like {vp}3 and returns React elements (JSX).",
+  "relevant_files": [
+    "src/components/Icons.tsx",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/i18n/index.ts",
+    "src/utils/cardTranslations.ts",
+    "src/components/SeasonCardsModal.tsx",
+    "src/components/SeasonCardsMarket.tsx",
+    "src/components/PlayerCardsModal.tsx"
+  ],
+  "directory_structure": "src/components/ (React components), src/i18n/ (en.ts, es.ts, index.ts translations), src/utils/ (gameLogic.ts, cardTranslations.ts, figureImages.ts), src/store/ (Zustand store), src/types/ (TypeScript types)"
+}
