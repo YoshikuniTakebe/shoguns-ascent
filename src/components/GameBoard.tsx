@@ -227,20 +227,20 @@ export const GameBoard = () => {
         <div className="legend-button-wrapper">
           <button className="legend-btn">?</button>
           <div className="legend-tooltip">
-            <div className="legend-tooltip-row"><BushiIcon size={20} color="#fff" /><span>Bushi</span></div>
-            <div className="legend-tooltip-row"><ShintoIcon size={20} color="#fff" /><span>Shinto</span></div>
-            <div className="legend-tooltip-row"><FortressIcon size={20} color="#fff" /><span>Fortaleza</span></div>
-            <div className="legend-tooltip-row"><DaimyoIcon size={20} color="#fff" /><span>Daimyo</span></div>
-            <div className="legend-tooltip-row"><MonsterIcon size={20} color="#fff" /><span>Monstruo</span></div>
-            <div className="legend-tooltip-row"><CoinIcon size={20} color="#fff" /><span>Moneda</span></div>
-            <div className="legend-tooltip-row"><VPIcon size={20} color="#fff" /><span>PV</span></div>
-            <div className="legend-tooltip-row"><HonorIcon size={20} color="#fff" /><span>Honor</span></div>
-            <div className="legend-tooltip-row"><RoninIcon size={20} color="#fff" /><span>Ronin</span></div>
-            <div className="legend-tooltip-row"><FistIcon size={20} color="#fff" /><span>Fuerza</span></div>
-            <div className="legend-tooltip-row"><SpringIcon size={20} color="#fff" /><span>Primavera</span></div>
-            <div className="legend-tooltip-row"><SummerIcon size={20} color="#fff" /><span>Verano</span></div>
-            <div className="legend-tooltip-row"><AutumnIcon size={20} color="#fff" /><span>Otono</span></div>
-            <div className="legend-tooltip-row"><WinterIcon size={20} color="#fff" /><span>Invierno</span></div>
+            <div className="legend-tooltip-row"><BushiIcon size={20} color="#fff" /><span>{t('legend.bushi')}</span></div>
+            <div className="legend-tooltip-row"><ShintoIcon size={20} color="#fff" /><span>{t('legend.shinto')}</span></div>
+            <div className="legend-tooltip-row"><FortressIcon size={20} color="#fff" /><span>{t('legend.fortress')}</span></div>
+            <div className="legend-tooltip-row"><DaimyoIcon size={20} color="#fff" /><span>{t('legend.daimyo')}</span></div>
+            <div className="legend-tooltip-row"><MonsterIcon size={20} color="#fff" /><span>{t('legend.monster')}</span></div>
+            <div className="legend-tooltip-row"><CoinIcon size={20} color="#fff" /><span>{t('legend.coin')}</span></div>
+            <div className="legend-tooltip-row"><VPIcon size={20} color="#fff" /><span>{t('legend.vp')}</span></div>
+            <div className="legend-tooltip-row"><HonorIcon size={20} color="#fff" /><span>{t('legend.honor')}</span></div>
+            <div className="legend-tooltip-row"><RoninIcon size={20} color="#fff" /><span>{t('legend.ronin')}</span></div>
+            <div className="legend-tooltip-row"><FistIcon size={20} color="#fff" /><span>{t('legend.force')}</span></div>
+            <div className="legend-tooltip-row"><SpringIcon size={20} color="#fff" /><span>{t('legend.spring')}</span></div>
+            <div className="legend-tooltip-row"><SummerIcon size={20} color="#fff" /><span>{t('legend.summer')}</span></div>
+            <div className="legend-tooltip-row"><AutumnIcon size={20} color="#fff" /><span>{t('legend.autumn')}</span></div>
+            <div className="legend-tooltip-row"><WinterIcon size={20} color="#fff" /><span>{t('legend.winter')}</span></div>
           </div>
         </div>
         <div className="mandate-counter">

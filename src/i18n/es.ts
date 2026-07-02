@@ -375,4 +375,20 @@ export const es: Record<TranslationKey, string> = {
   // Alliance Request
   'actions.requestLabel': 'Peticion',
   'actions.requestingCoins': 'Pidiendo {amount} monedas por la alianza',
+
+  // Legend Tooltip
+  'legend.bushi': 'Bushi',
+  'legend.shinto': 'Shinto',
+  'legend.fortress': 'Fortaleza',
+  'legend.daimyo': 'Daimyo',
+  'legend.monster': 'Monstruo',
+  'legend.coin': 'Moneda',
+  'legend.vp': 'PV',
+  'legend.honor': 'Honor',
+  'legend.ronin': 'Ronin',
+  'legend.force': 'Fuerza',
+  'legend.spring': 'Primavera',
+  'legend.summer': 'Verano',
+  'legend.autumn': 'Otono',
+  'legend.winter': 'Invierno',
 };

@@ -39,6 +39,19 @@ import {
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
+ * Checks if a Luna player has at least one valid province to place a monster.
+ * A valid province must have a fortress owned by the player and fewer than 2 non-fortress figures.
+ */
+function lunaHasValidProvince(gameState: GameState, playerId: string): boolean {
+  return Object.values(gameState.provinces).some(province => {
+    const hasFortress = province.figures.some(f => f.owner === playerId && f.type === 'fortress');
+    if (!hasFortress) return false;
+    const lunaFigures = province.figures.filter(f => f.owner === playerId && f.type !== 'fortress').length;
+    return lunaFigures < 2;
+  });
+}
+
+/**
  * Detects if the given state has transitioned to a war phase with unresolved battles.
  * Returns partial store state to set battleStepPhase if war is active, empty object otherwise.
  */
@@ -613,13 +626,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         // Luna clan: check if there's a valid province BEFORE showing placement popup
         const placingPlayer = ns.players.find(p => p.id === apid);
         if (placingPlayer && placingPlayer.clanId === 'luna') {
-          const hasValidProvince = Object.values(ns.provinces).some(province => {
-            const hasFortress = province.figures.some(f => f.owner === apid && f.type === 'fortress');
-            if (!hasFortress) return false;
-            const lunaFigures = province.figures.filter(f => f.owner === apid && f.type !== 'fortress').length;
-            return lunaFigures < 2;
-          });
-          if (!hasValidProvince) {
+          if (!lunaHasValidProvince(ns, apid)) {
             // No valid province: monster goes to reserve directly
             const updatedPlayers = ns.players.map(p => {
               if (p.id !== apid) return p;
@@ -920,16 +927,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Luna clan power: max 2 figures per province. Check if Luna has ANY valid province to place.
     const placingPlayer = gameState.players.find(p => p.id === monsterPlacementPlayerId);
     if (placingPlayer && placingPlayer.clanId === 'luna') {
-      const hasValidProvince = Object.values(gameState.provinces).some(province => {
-        // Must have a fortress (Luna is not dragonfly)
-        const hasFortress = province.figures.some(f => f.owner === monsterPlacementPlayerId && f.type === 'fortress');
-        if (!hasFortress) return false;
-        // Must have fewer than 2 non-fortress figures
-        const lunaFigures = province.figures.filter(f => f.owner === monsterPlacementPlayerId && f.type !== 'fortress').length;
-        return lunaFigures < 2;
-      });
-
-      if (!hasValidProvince) {
+      if (!lunaHasValidProvince(gameState, monsterPlacementPlayerId)) {
         // No valid province: monster goes to reserve, show popup to inform player
         const updatedPlayers = gameState.players.map(p => {
           if (p.id !== monsterPlacementPlayerId) return p;

@@ -44,6 +44,9 @@ function computeReserveTotals(player: Player, gameState: GameState) {
   // Dual-type bonus counts for secondary types (only when monster is in reserve)
   const shintoMonstersInReserve = monsterCardsInReserve.filter(c => SHINTO_MONSTER_IDS.includes(c.id)).length;
   const daimyoMonstersInReserve = monsterCardsInReserve.filter(c => DAIMYO_MONSTER_IDS.includes(c.id)).length;
+  // Dual-type bonus counts for ALL owned monsters (for total computation)
+  const shintoMonstersOwned = monsterCards.filter(c => SHINTO_MONSTER_IDS.includes(c.id)).length;
+  const daimyoMonstersOwned = monsterCards.filter(c => DAIMYO_MONSTER_IDS.includes(c.id)).length;
 
   // Bushi
   const bushiOnMap = allMapFigures.filter(f => f.type === 'bushi').length;
@@ -57,7 +60,7 @@ function computeReserveTotals(player: Player, gameState: GameState) {
   const shintoTotal = shintoOnMap + shintoInTemples + shintoReserve;
   // Effective shinto reserve includes dual-type monsters in reserve
   const effectiveShintoReserve = shintoReserve + shintoMonstersInReserve;
-  const effectiveShintoTotal = shintoTotal + shintoMonstersInReserve;
+  const effectiveShintoTotal = shintoTotal + shintoMonstersOwned;
 
   // Fortresses
   const fortressesOnMap = allMapFigures.filter(f => f.type === 'fortress').length;
@@ -69,7 +72,7 @@ function computeReserveTotals(player: Player, gameState: GameState) {
   const daimyoTotal = 1; // Always has 1 daimyo
   // Effective daimyo reserve includes dual-type monsters in reserve
   const effectiveDaimyoReserve = daimyoReserve + daimyoMonstersInReserve;
-  const effectiveDaimyoTotal = daimyoTotal + daimyoMonstersInReserve;
+  const effectiveDaimyoTotal = daimyoTotal + daimyoMonstersOwned;
 
   return {
     bushi: { reserve: bushiReserve, total: bushiTotal },

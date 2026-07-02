@@ -373,6 +373,22 @@ export const en = {
   // Alliance Request
   'actions.requestLabel': 'Request',
   'actions.requestingCoins': 'Requesting {amount} coins for alliance',
+
+  // Legend Tooltip
+  'legend.bushi': 'Bushi',
+  'legend.shinto': 'Shinto',
+  'legend.fortress': 'Fortress',
+  'legend.daimyo': 'Daimyo',
+  'legend.monster': 'Monster',
+  'legend.coin': 'Coin',
+  'legend.vp': 'VP',
+  'legend.honor': 'Honor',
+  'legend.ronin': 'Ronin',
+  'legend.force': 'Force',
+  'legend.spring': 'Spring',
+  'legend.summer': 'Summer',
+  'legend.autumn': 'Autumn',
+  'legend.winter': 'Winter',
 } as const;
 
 export type TranslationKey = keyof typeof en;
