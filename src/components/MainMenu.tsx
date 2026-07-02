@@ -7,6 +7,7 @@ import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 import { shuffle } from '../utils/gameLogic';
 import titleImg from '../img/NoboruTaiyo.png';
+import typeGameBgImg from '../img/type_game_bg.png';
 
 const CLAN_POWERS: Record<string, string> = {
   koi: 'Monedas como Ronin. Al inicio de Guerra cambia Ronin por Monedas. En Contratar Ronin, sus Monedas suman Fuerza.',
@@ -88,7 +89,7 @@ export const MainMenu = () => {
 
       {mode === 'select' && (
         <div className="menu-options">
-          <button className="menu-btn" onClick={() => setMode('hotseat')}>
+          <button className="menu-btn" onClick={() => setMode('hotseat')} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <span className="btn-icon">
               <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="8" cy="7" r="3.5" />
@@ -100,7 +101,7 @@ export const MainMenu = () => {
             <span className="btn-text">{t('menu.hotseatMode')}</span>
             <span className="btn-desc">{t('menu.hotseatDesc')}</span>
           </button>
-          <button className="menu-btn" onClick={() => setMode('online')}>
+          <button className="menu-btn" onClick={() => setMode('online')} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <span className="btn-icon">
               <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" />
