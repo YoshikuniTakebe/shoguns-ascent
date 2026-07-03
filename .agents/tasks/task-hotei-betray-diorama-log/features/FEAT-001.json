@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Hotei pray/map choice (like Komainu), figure size debug overlay, and diorama size adjustments",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/store/gameStore.ts, extend the Komainu special case in doBuySeasonCard to also handle 'su-hotei' card id. When Hotei is bought, show the same choice popup (komainuChoiceVisible: true) to let player choose between map placement or pray.",
     "In src/store/gameStore.ts doKomainuPlaceAtTemple, handle Hotei-specific behavior: Hotei can REPLACE any existing shinto in a temple (not just add). When placing Hotei in a temple that has another player's shinto, remove that player's shinto figure from the temple, increment their shinto reserve, and place Hotei. Update the log message to reference Hotei when card is su-hotei.",
@@ -22,5 +22,5 @@
     "Run npx tsc --noEmit in the project root and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes compile cleanly with tsc --noEmit. Hotei logic reuses the existing komainuPrayMode/doKomainuPlaceAtTemple flow with a new komainuPrayCardId state field to distinguish between Komainu and Hotei. The TemplePanel shows a replacement selection popup when Hotei targets a temple with multiple other players' shinto, replaces directly when there's exactly one, or places normally when there are none. FIGURE_SIZE_OVERRIDES interpreted as absolute values from base 1.0 (e.g. -20% means 0.80)."
 }
