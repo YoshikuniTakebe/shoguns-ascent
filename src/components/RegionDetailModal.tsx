@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS, PROVINCE_COLORS } from '../types/game';
 import type { Figure, GameState } from '../types/game';
@@ -14,23 +14,29 @@ import { renderCardEffect } from '../utils/renderCardEffect';
 const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'sp-jorogumo': 0.85,
   'daimyo-tortuga': 1.32,
-  'bushi-loto': 0.85,
+  'bushi-loto': 0.80,
   'daimyo-loto': 0.90,
   'sp-oni-of-skulls': 1.30,
   'daimyo-koi': 0.94,
   'sp-earth-dragon': 1.30,
   'daimyo-luna': 1.25,
-  'bushi-luna': 0.95,
+  'bushi-luna': 0.90,
   'daimyo-libelula': 1.10,
   'daimyo-sol': 1.10,
   'sp-daikokuten': 0.80,
   'sp-oni-of-souls': 1.25,
   'sp-phoenix': 1.27,
-  'daimyo-bonsai': 1.10,
+  'daimyo-bonsai': 1.05,
   'bushi-zorro': 0.90,
   'daimyo-zorro': 1.05,
   'bushi-koi': 0.85,
-  'bushi-libelula': 0.95,
+  'bushi-libelula': 0.90,
+  'bushi-sol': 0.90,
+  'bushi-bonsai': 0.90,
+  'su-hotei': 1.15,
+  'su-yurei': 1.20,
+  'su-oni-of-souls': 1.25,
+  'su-oni-of-blood': 1.20,
 };
 
 /** Get the size scale override for a figure. Returns 1.0 if no override is defined. */
@@ -215,6 +221,33 @@ interface DioramaFigureProps {
 const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, onClick }: DioramaFigureProps) => {
   const sizeOverride = getSizeOverride(figure, ownerClanId);
   const figureHeight = iconSize * 2.2 * sizeOverride;
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [debugSize, setDebugSize] = useState<string>('');
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const img = imgRef.current;
+    if (!img) return;
+    const updateSize = () => {
+      const w = Math.round(img.clientWidth);
+      const h = Math.round(img.clientHeight);
+      if (w > 0 && h > 0) setDebugSize(`${w}x${h}`);
+    };
+    if (img.complete) updateSize();
+    img.addEventListener('load', updateSize);
+    // Also try after a short delay for cached images
+    const timer = setTimeout(updateSize, 100);
+    return () => {
+      img.removeEventListener('load', updateSize);
+      clearTimeout(timer);
+    };
+  }, [figureHeight]);
+
+  const debugOverlay = import.meta.env.DEV && debugSize ? (
+    <span style={{ position: 'absolute', top: '-16px', left: '50%', transform: 'translateX(-50%)', color: 'white', fontSize: '10px', whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 0 3px black, 0 0 3px black' }}>
+      {debugSize}
+    </span>
+  ) : null;
 
   // Build tooltip text
   let tooltipText = `${getFigureTypeName(figure.type)} - ${ownerName}`;
@@ -230,8 +263,9 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     const img = getMonsterFigureImage(figure.monsterCardId);
     if (img) {
       return (
-        <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
-          <img src={img} alt="Monster" className="region-diorama-figure-img" style={{ height: figureHeight }} />
+        <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer', position: 'relative' }}>
+          {debugOverlay}
+          <img ref={imgRef} src={img} alt="Monster" className="region-diorama-figure-img" style={{ height: figureHeight }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7))' }}>
             <ClanShield clanId={ownerClanId} size={36} />
             <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
@@ -243,8 +277,9 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     }
     // Fallback to template figure image when no specific image file exists for this monster
     return (
-      <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
-        <img src={TEMPLATE_FIGURE_IMG} alt="Monster" className="region-diorama-figure-img" style={{ height: figureHeight }} />
+      <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer', position: 'relative' }}>
+        {debugOverlay}
+        <img ref={imgRef} src={TEMPLATE_FIGURE_IMG} alt="Monster" className="region-diorama-figure-img" style={{ height: figureHeight }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7))' }}>
           <ClanShield clanId={ownerClanId} size={36} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
@@ -260,8 +295,9 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     const img = getCastleImage(ownerClanId);
     if (img) {
       return (
-        <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
-          <img src={img} alt="Castle" className="region-diorama-figure-img" style={{ height: figureHeight }} />
+        <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer', position: 'relative' }}>
+          {debugOverlay}
+          <img ref={imgRef} src={img} alt="Castle" className="region-diorama-figure-img" style={{ height: figureHeight }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7))' }}>
             <ClanShield clanId={ownerClanId} size={36} />
             <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
@@ -273,8 +309,9 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
     }
     // Fallback to template figure image if castle image not found
     return (
-      <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
-        <img src={TEMPLATE_FIGURE_IMG} alt="Fortress" className="region-diorama-figure-img" style={{ height: figureHeight }} />
+      <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer', position: 'relative' }}>
+        {debugOverlay}
+        <img ref={imgRef} src={TEMPLATE_FIGURE_IMG} alt="Fortress" className="region-diorama-figure-img" style={{ height: figureHeight }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7))' }}>
           <ClanShield clanId={ownerClanId} size={36} />
           <span className="region-diorama-owner-badge" style={{ backgroundColor: ownerColor }}>
@@ -289,22 +326,23 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
   const renderIcon = () => {
     switch (figure.type) {
       case 'bushi':
-        return <img src={getBushiImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Bushi" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
+        return <img ref={imgRef} src={getBushiImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Bushi" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
       case 'daimyo': {
         const daimyoImg = getDaimyoImage(ownerClanId);
-        return <img src={daimyoImg || TEMPLATE_FIGURE_IMG} alt="Daimyo" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
+        return <img ref={imgRef} src={daimyoImg || TEMPLATE_FIGURE_IMG} alt="Daimyo" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
       }
       case 'shinto':
-        return <img src={getShintoImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Shinto" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
+        return <img ref={imgRef} src={getShintoImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Shinto" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
       case 'kami':
         return <KamiIcon size={iconSize} color={ownerColor} />;
       default:
-        return <img src={TEMPLATE_FIGURE_IMG} alt="Figure" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
+        return <img ref={imgRef} src={TEMPLATE_FIGURE_IMG} alt="Figure" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
     }
   };
 
   return (
-    <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer' }}>
+    <div className="region-diorama-figure" title={tooltipText} onClick={onClick} style={{ cursor: 'pointer', position: 'relative' }}>
+      {debugOverlay}
       {renderIcon()}
       <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginTop: '3px', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7))' }}>
         <ClanShield clanId={ownerClanId} size={36} />

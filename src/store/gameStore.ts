@@ -326,11 +326,12 @@ interface GameStore {
   komainuChoiceVisible: boolean;
   komainuPrayMode: boolean;
   komainuPrayPlayerId: string | null;
+  komainuPrayCardId: string | null;
   confirmMonsterPlacement: () => void;
   doPlaceMonster: (provinceId: string) => void;
   doKomainuChoosePray: () => void;
   doKomainuChooseMap: () => void;
-  doKomainuPlaceAtTemple: (templeId: string) => void;
+  doKomainuPlaceAtTemple: (templeId: string, replaceFigureId?: string) => void;
   cancelMonsterPlacement: () => void;
 
   // Monster no placement popup (Luna - no valid province)
@@ -455,6 +456,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   komainuChoiceVisible: false,
   komainuPrayMode: false,
   komainuPrayPlayerId: null,
+  komainuPrayCardId: null,
   turnPopupPlayer: null,
   jinmenjuSummonActive: false,
   tradeModalOpen: false,
@@ -817,8 +819,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Check if the bought card is a monster - if so, enter monster placement flow
     const boughtCard = ns.players.find(p => p.id === apid)?.seasonCards.find(c => c.id === cardId);
     if (boughtCard && boughtCard.cardType === 'monster') {
-      // Komainu special case: show choice between map and pray
-      if (boughtCard.id === 'sp-komainu') {
+      // Komainu/Hotei special case: show choice between map and pray
+      if (boughtCard.id === 'sp-komainu' || boughtCard.id === 'su-hotei') {
         set({
           gameState: ns,
           monsterPlacementCard: boughtCard,
@@ -1266,6 +1268,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       monsterPlacementCard: null,
       komainuPrayMode: true,
       komainuPrayPlayerId: monsterPlacementPlayerId,
+      komainuPrayCardId: monsterPlacementCard.id,
     });
   },
 
@@ -1274,9 +1277,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ komainuChoiceVisible: false, monsterPlacementPopupVisible: true });
   },
 
-  doKomainuPlaceAtTemple: (templeId: string) => {
-    const { gameState, komainuPrayPlayerId } = get();
+  doKomainuPlaceAtTemple: (templeId: string, replaceFigureId?: string) => {
+    const { gameState, komainuPrayPlayerId, komainuPrayCardId } = get();
     if (!gameState || !komainuPrayPlayerId) return;
+
+    const isHotei = komainuPrayCardId === 'su-hotei';
 
     // Luna clan power: max 2 figures per temple (non-Luna: max 1)
     const komainuPlayer = gameState.players.find(p => p.id === komainuPrayPlayerId);
@@ -1290,25 +1295,54 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Luna clan power: max 2 shinto per temple. Non-Luna clans have no per-temple limit.
     if (komainuPlayer?.clanId === 'luna') {
       if (shintoInThisTemple >= 2) {
-        console.warn(`[Komainu] Luna player ${komainuPlayer.name} already has 2 shinto in ${temple.kamiType} temple`);
+        console.warn(`[Komainu/Hotei] Luna player ${komainuPlayer.name} already has 2 shinto in ${temple.kamiType} temple`);
         return;
       }
     }
 
     const figureId = Math.random().toString(36).substring(2, 10);
 
-    // Add shinto figure to the temple
+    // Hotei replacement logic: if replaceFigureId is provided, remove that figure and return shinto to owner
+    let updatedPlayers = gameState.players;
+    let updatedFigures = [...temple.figures];
+    let logMessage: string;
+
+    if (isHotei && replaceFigureId) {
+      const replacedFigure = temple.figures.find(f => f.figureId === replaceFigureId && f.playerId !== komainuPrayPlayerId);
+      if (!replacedFigure) return;
+
+      // Remove the replaced figure from temple
+      updatedFigures = updatedFigures.filter(f => f.figureId !== replaceFigureId);
+
+      // Return the shinto to its owner's reserve
+      const replacedOwner = gameState.players.find(p => p.id === replacedFigure.playerId);
+      updatedPlayers = gameState.players.map(p => {
+        if (p.id !== replacedFigure.playerId) return p;
+        return { ...p, shinto: p.shinto + 1 };
+      });
+
+      logMessage = `Hotei reemplaza shinto de ${replacedOwner?.name || 'jugador'} en santuario de ${capitalize(temple.kamiType)}`;
+    } else if (isHotei) {
+      logMessage = `Hotei colocado como shinto en santuario de ${capitalize(temple.kamiType)}`;
+    } else {
+      logMessage = `Komainu colocado como shinto en santuario de ${capitalize(temple.kamiType)}`;
+    }
+
+    // Add the new shinto figure to the temple
+    updatedFigures = [...updatedFigures, { playerId: komainuPrayPlayerId, figureId }];
+
     const updatedTemples = [...gameState.temples];
     updatedTemples[templeIndex] = {
       ...temple,
-      figures: [...temple.figures, { playerId: komainuPrayPlayerId, figureId }],
+      figures: updatedFigures,
     };
 
-    // Komainu itself counts as the shinto figure - do NOT decrement player's shinto reserve
+    // The monster itself counts as the shinto figure - do NOT decrement player's shinto reserve
     let ns: GameState = {
       ...gameState,
+      players: updatedPlayers,
       temples: updatedTemples,
-      log: [...gameState.log, `Komainu colocado como shinto en santuario de ${capitalize(temple.kamiType)}`],
+      log: [...gameState.log, logMessage],
     };
 
     // If placing during Ryujin kami resolution, advance kami resolution instead of train
@@ -1318,6 +1352,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         gameState: ns,
         komainuPrayMode: false,
         komainuPrayPlayerId: null as string | null,
+        komainuPrayCardId: null as string | null,
         monsterPlacementPlayerId: null as string | null,
       };
       if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
@@ -1344,6 +1379,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         showTrainModal: false,
         komainuPrayMode: false,
         komainuPrayPlayerId: null,
+        komainuPrayCardId: null as string | null,
         monsterPlacementPlayerId: null,
         ...warPopup3,
         ...kamiPopup3,
@@ -1357,6 +1393,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         showTrainModal: true,
         komainuPrayMode: false,
         komainuPrayPlayerId: null,
+        komainuPrayCardId: null as string | null,
         monsterPlacementPlayerId: null,
       });
     }
@@ -1652,8 +1689,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Check if the bought card is a monster - if so, enter monster placement flow
     const boughtCard = ns.players.find(p => p.id === currentTemple.winnerId)?.seasonCards.find(c => c.id === cardId);
     if (boughtCard && boughtCard.cardType === 'monster') {
-      // Komainu special case: show choice between map and pray
-      if (boughtCard.id === 'sp-komainu') {
+      // Komainu/Hotei special case: show choice between map and pray
+      if (boughtCard.id === 'sp-komainu' || boughtCard.id === 'su-hotei') {
         set({
           gameState: { ...ns, ryujinBuyActive: false },
           monsterPlacementCard: boughtCard,

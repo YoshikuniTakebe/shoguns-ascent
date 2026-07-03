@@ -5,6 +5,11 @@ import type { KamiType } from '../types/game';
 import type { TranslationKey } from '../i18n';
 import { useT } from '../i18n';
 
+interface HoteiReplacementTarget {
+  templeId: string;
+  figures: { figureId: string; playerId: string; playerName: string; clanColor: string }[];
+}
+
 const KAMI_BASE_EFFECT_KEYS: Record<KamiType, TranslationKey> = {
   amaterasu: 'kami.amaterasu.baseEffect',
   fujin: 'kami.fujin.baseEffect',
@@ -72,8 +77,9 @@ const KAMI_TILE_IMAGES: Record<KamiType, string> = {
 };
 
 export const TemplePanel = () => {
-  const { gameState, komainuPrayMode, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto, jinmenjuSummonActive, doJinmenjuPlaceTemple } = useGameStore();
+  const { gameState, komainuPrayMode, komainuPrayCardId, komainuPrayPlayerId, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto, jinmenjuSummonActive, doJinmenjuPlaceTemple } = useGameStore();
   const [selectedKami, setSelectedKami] = useState<KamiType | null>(null);
+  const [hoteiReplacementTarget, setHoteiReplacementTarget] = useState<HoteiReplacementTarget | null>(null);
   const t = useT();
 
   if (!gameState) return null;
@@ -139,7 +145,33 @@ export const TemplePanel = () => {
               }}
               onClick={() => {
                 if (komainuPrayMode) {
-                  doKomainuPlaceAtTemple(temple.id);
+                  const isHotei = komainuPrayCardId === 'su-hotei';
+                  if (isHotei) {
+                    // Check if there are other players' shinto in this temple
+                    const otherFigures = temple.figures.filter(f => f.playerId !== komainuPrayPlayerId);
+                    if (otherFigures.length === 0) {
+                      // No other players' shinto - just place normally
+                      doKomainuPlaceAtTemple(temple.id);
+                    } else if (otherFigures.length === 1) {
+                      // Exactly one other player's shinto - replace it directly
+                      doKomainuPlaceAtTemple(temple.id, otherFigures[0].figureId);
+                    } else {
+                      // Multiple other players' shinto - show selection popup
+                      const figures = otherFigures.map(f => {
+                        const player = gameState.players.find(pl => pl.id === f.playerId);
+                        const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
+                        return {
+                          figureId: f.figureId,
+                          playerId: f.playerId,
+                          playerName: player?.name || '',
+                          clanColor: clan?.color || '#666',
+                        };
+                      });
+                      setHoteiReplacementTarget({ templeId: temple.id, figures });
+                    }
+                  } else {
+                    doKomainuPlaceAtTemple(temple.id);
+                  }
                 } else if (jinmenjuSummonActive && isRecruitShintoTarget) {
                   doJinmenjuPlaceTemple(temple.id);
                 } else if (isRecruitShintoTarget) {
@@ -238,6 +270,65 @@ export const TemplePanel = () => {
                 })}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {hoteiReplacementTarget && (
+        <div className="kami-modal-backdrop" onClick={() => setHoteiReplacementTarget(null)}>
+          <div className="kami-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '320px' }}>
+            <button className="kami-modal-close" onClick={() => setHoteiReplacementTarget(null)}>
+              &times;
+            </button>
+            <h3 className="kami-modal-name" style={{ color: '#FFD700' }}>
+              Hotei - Reemplazar Shinto
+            </h3>
+            <p style={{ color: '#ccc', fontSize: '0.85rem', marginBottom: '12px' }}>
+              Elige el shinto a reemplazar:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {hoteiReplacementTarget.figures.map((fig) => (
+                <button
+                  key={fig.figureId}
+                  onClick={() => {
+                    doKomainuPlaceAtTemple(hoteiReplacementTarget.templeId, fig.figureId);
+                    setHoteiReplacementTarget(null);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: `1px solid ${fig.clanColor}`,
+                    borderRadius: '6px',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: fig.clanColor, flexShrink: 0 }} />
+                  {fig.playerName}
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  doKomainuPlaceAtTemple(hoteiReplacementTarget.templeId);
+                  setHoteiReplacementTarget(null);
+                }}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid #555',
+                  borderRadius: '6px',
+                  color: '#aaa',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                }}
+              >
+                Colocar sin reemplazar
+              </button>
+            </div>
           </div>
         </div>
       )}
