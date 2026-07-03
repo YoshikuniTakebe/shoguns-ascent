@@ -63,39 +63,79 @@ function detectWarTransition(state: GameState): Partial<{ battleStepPhase: 'popu
 }
 
 /**
- * Detects if the given state has transitioned to war and returns war upgrade summary from logs.
+ * Computes war upgrade summary directly from player warUpgrade cards.
+ * Mirrors the logic in applyWarUpgrades (gameLogic.ts) to determine bonuses.
  */
 function computeWarUpgradeSummary(state: GameState): { playerName: string; clanId: string; bonuses: { cardName: string; resource: string; amount: number }[] }[] {
-  const warStartIdx = state.log.findIndex(l => l.includes('=== War Phase begins ==='));
-  if (warStartIdx === -1) return [];
-  const playerMap: Map<string, { clanId: string; bonuses: { cardName: string; resource: string; amount: number }[] }> = new Map();
+  const summary: { playerName: string; clanId: string; bonuses: { cardName: string; resource: string; amount: number }[] }[] = [];
 
-  for (let i = warStartIdx + 1; i < state.log.length; i++) {
-    const entry = state.log[i];
-    if (entry.includes('(Way of') || entry.includes('(Zorro)')) {
-      const player = state.players.find(p => entry.startsWith(p.name));
-      if (player) {
-        if (!playerMap.has(player.id)) {
-          playerMap.set(player.id, { clanId: player.clanId, bonuses: [] });
+  for (const player of state.players) {
+    const warUpgradeCards = player.seasonCards.filter((c) => c.cardType === 'warUpgrade');
+    if (warUpgradeCards.length === 0) continue;
+
+    const bonuses: { cardName: string; resource: string; amount: number }[] = [];
+
+    for (const card of warUpgradeCards) {
+      const baseCardId = card.id.endsWith('-2') ? card.id.slice(0, -2) : card.id;
+
+      switch (baseCardId) {
+        case 'sp-way-of-the-shogun': {
+          bonuses.push({ cardName: 'Way of the Shogun', resource: 'coins', amount: 3 });
+          break;
         }
-        const parenMatch = entry.match(/\(([^)]+)\)/);
-        const cardName = parenMatch ? parenMatch[1] : entry;
-        // Extract resource and amount: "gains N coins/ronin/VP"
-        const gainsMatch = entry.match(/gains\s+(\d+)\s+(\w+)/);
-        const resource = gainsMatch ? gainsMatch[2].toLowerCase() : 'coins';
-        const amount = gainsMatch ? parseInt(gainsMatch[1], 10) : 0;
-        playerMap.get(player.id)!.bonuses.push({ cardName, resource, amount });
+        case 'sp-way-of-the-righteous': {
+          // Take 1 coin from each player with less honor who has coins
+          const playerHonorIdx = state.honorTrack.indexOf(player.id);
+          let count = 0;
+          for (const other of state.players) {
+            if (other.id === player.id) continue;
+            const otherHonorIdx = state.honorTrack.indexOf(other.id);
+            if (otherHonorIdx > playerHonorIdx && other.coins > 0) {
+              count++;
+            }
+          }
+          bonuses.push({ cardName: 'Way of the Righteous', resource: 'coins', amount: count });
+          break;
+        }
+        case 'su-way-of-bushido': {
+          const virtueCount = player.seasonCards.filter((c) => c.cardType === 'virtue').length;
+          bonuses.push({ cardName: 'Way of Bushido', resource: 'coins', amount: 2 });
+          bonuses.push({ cardName: 'Way of Bushido', resource: 'vp', amount: 2 * virtueCount });
+          break;
+        }
+        case 'su-way-of-the-ronin': {
+          bonuses.push({ cardName: 'Way of the Ronin', resource: 'ronin', amount: 2 });
+          break;
+        }
+        case 'au-way-of-the-moneylender': {
+          bonuses.push({ cardName: 'Way of the Moneylender', resource: 'coins', amount: 5 });
+          break;
+        }
+        case 'su-way-of-naginata':
+        case 'au-way-of-naginata': {
+          bonuses.push({ cardName: 'Way of Naginata', resource: 'effect', amount: 0 });
+          break;
+        }
+        case 'su-way-of-the-ashigaru': {
+          bonuses.push({ cardName: 'Way of the Ashigaru', resource: 'effect', amount: 0 });
+          break;
+        }
+        case 'au-way-of-the-katana': {
+          bonuses.push({ cardName: 'Way of the Katana', resource: 'effect', amount: 0 });
+          break;
+        }
+        case 'au-way-of-the-keiri': {
+          bonuses.push({ cardName: 'Way of the Keiri', resource: 'effect', amount: 0 });
+          break;
+        }
       }
     }
-  }
 
-  const summary: { playerName: string; clanId: string; bonuses: { cardName: string; resource: string; amount: number }[] }[] = [];
-  for (const [playerId, data] of playerMap) {
-    const player = state.players.find(p => p.id === playerId);
-    if (player && data.bonuses.length > 0) {
-      summary.push({ playerName: player.name, clanId: data.clanId, bonuses: data.bonuses });
+    if (bonuses.length > 0) {
+      summary.push({ playerName: player.name, clanId: player.clanId, bonuses });
     }
   }
+
   return summary;
 }
 
