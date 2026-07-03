@@ -107,6 +107,21 @@ export interface Mandate {
   hidden?: boolean;
 }
 
+export interface BattleResolutionData {
+  seppukuWinnerId: string | null;
+  hostageWinnerId: string | null;
+  roninWinnerId: string | null;
+  imperialPoetsWinnerId: string | null;
+  seppukuKillCount: number;
+  seppukuAccepted: boolean;
+  phoenixDiedInSeppuku: boolean;
+  phoenixDiedInBattle: boolean;
+  capturedHostage: { captorId: string; fromClanId: string; figureType: string; figureName: string } | null;
+  roninForce: number;
+  battleDeathCount: number;
+  imperialPoetsVP: number;
+}
+
 export interface Battle {
   provinceId: string;
   participants: string[];
@@ -116,6 +131,7 @@ export interface Battle {
   uncontested?: boolean;
   logStartIndex?: number;
   killedFigures?: { owner: string; figureType: string; count: number }[];
+  resolutionData?: BattleResolutionData;
 }
 
 export interface AllianceProposal {

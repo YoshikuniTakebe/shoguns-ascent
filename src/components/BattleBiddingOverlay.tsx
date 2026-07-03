@@ -251,7 +251,7 @@ export const BattleBiddingOverlay = ({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '4px', fontSize: '0.9rem' }}>
               {playerRonin !== undefined && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#e74c3c' }}>
-                  <RoninIcon size={18} color="#e74c3c" /> {playerRonin}
+                  <RoninIcon size={18} color="#e74c3c" /> {playerClanId === 'koi' ? Math.max(0, maxCoins - totalAssigned) : playerRonin}
                 </span>
               )}
               {playerVP !== undefined && (

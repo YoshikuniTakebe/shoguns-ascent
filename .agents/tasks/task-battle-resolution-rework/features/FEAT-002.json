@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Complete battle resolution rework with step-by-step interactive popups for Seppuku, Take Hostage, Hire Ronin, and final resolution with Phoenix revival, ally protection, and Imperial Poets summary",
+  "status": "in_progress",
+  "steps": [
+    "1. Rework the battleStepPhase state machine in the store. Currently it has states: null, 'popup', 'bidding', 'result'. The new states should support the step-by-step tactic resolution flow AFTER all bids are submitted. New states needed: 'seppuku-decision' (popup asking winner to sacrifice), 'seppuku-result' (showing sacrifice results), 'hostage-selection' (popup to select which troop to capture), 'ronin-result' (popup showing ronin hired), 'battle-resolution' (final result popup with sections for killed figures, prisoners, and imperial poets). Add new store state fields: seppukuWinnerId, hostageWinnerId, roninWinnerId, imperialPoetsWinnerId, selectedHostageTarget, battleResolutionData (stores intermediate results for display).",
+    "2. Modify resolveNextBattle in src/utils/gameLogic.ts to NOT resolve tactics automatically. Instead, split the resolution into phases. Create a new function that only resolves seppuku AFTER the player decision. The function should: (a) determine seppuku winner, (b) NOT kill figures yet - just store who won seppuku. The actual killing happens when the player confirms in the popup. Create resolveHostage, resolveRonin functions similarly.",
+    "3. For Seppuku: After bids are submitted, if someone won seppuku bid (highest bidder > 0), show a popup with ClanShield + player name in clan color, text 'Quieres sacrificar TODAS tus tropas?' with two buttons: 'Si, sacrifico TODAS' and 'No las sacrifico'. If yes: kill ALL their troops (bushi, shinto, daimyo, monster) in that battle province, grant 1VP per figure killed, gain 1 honor position per figure killed. Handle Phoenix revival: if Phoenix is among killed figures, immediately revive it (place it back in the same province). Then show a result popup: ClanShield + player name + 'has sacrificado tus tropas' + box showing 'Has obtenido: [VPIcon] X' and 'Has subido [HonorIcon] X posiciones'. Update honor track IMMEDIATELY before proceeding to next phases (it affects tiebreakers).",
+    "4. For Take Hostage: If someone won the take-hostage bid (highest bidder > 0), show a popup with ClanShield + player name in clan color, 'Elige a quien capturar'. Show a list of enemy figures in the province (Bushi, Shinto, or monster name) with ClanShield and name in clan color. EXCLUDE: daimyo figures and daimyo-type monsters (su-yurei, sp-fukurokuju). The list should be clickable - selecting one highlights it. A 'Capturar' button below activates only when one is selected. On capture: remove figure from province, add to player's hostages array, grant 1VP.",
+    "5. For Hire Ronin: If someone won the hire-ronin bid (highest bidder > 0), show a simple popup with ClanShield + player name in clan color + 'Ha contratado Ronin [RoninIcon]' + accept button. The ronin force is added to the player's total for final calculation.",
+    "6. For final battle resolution: Calculate total force considering: (a) seppuku killed figures are gone, (b) captured hostage is gone, (c) Phoenix revived from seppuku IS still present for force calculation, (d) ronin force added to hire-ronin winner. Compare forces, break ties by honor. Winner gets war province token. LOSERS (non-winners, non-allied-to-winner) lose ALL remaining troops in the province. Allied troops of the winner survive and stay on the map - they don't die.",
+    "7. For Imperial Poets: After battle resolution, if someone won imperial-poets bid (highest bidder > 0), count ALL deaths: seppuku deaths + battle resolution deaths. Phoenix counts once per death (if it died in seppuku AND again in battle resolution, it counts as 2 deaths). Winner gets 1VP per death. Show in the result popup summary.",
+    "8. Update the BattleResultPopup to include: (a) a 'Prisioneros' section showing which player captured which troop from which player (ClanShield, name, clan color for both captor and victim), (b) a 'Poetas Imperiales' section showing the winner's ClanShield + name + clan color and total VP with VPIcon, with a breakdown of seppuku deaths vs battle deaths.",
+    "9. Handle Phoenix monster (id 'sp-phoenix'): When Phoenix dies in seppuku, it immediately revives - place it back in the same province. It can then be captured in hostage phase or die again in battle resolution. If it dies in both seppuku and battle, it counts as 2 deaths for Imperial Poets. Track this in the battle resolution data.",
+    "10. Wire up the new step-by-step flow in the store's doSubmitWarTacticBids and doAcceptBattlePopup functions. After all bids are submitted, instead of calling resolveNextBattle immediately, enter the seppuku-decision phase. Each popup accept/action advances to the next phase. The flow is: bids submitted -> seppuku-decision (if winner exists) -> seppuku-result (if sacrificed) -> hostage-selection (if winner exists) -> ronin-result (if winner exists) -> battle-resolution -> result popup."
+  ],
+  "acceptance_criteria": [
+    "After bids submitted, seppuku winner gets a popup asking to sacrifice",
+    "Accepting sacrifice kills all troops, grants VP and honor, shows result popup",
+    "Declining sacrifice continues flow as if seppuku didn't happen",
+    "Hostage selection popup shows eligible enemy troops (no daimyo, no daimyo-type monsters)",
+    "Hostage popup has clickable list with Capturar button that activates on selection",
+    "Hire Ronin popup shows which player hired ronin with RoninIcon",
+    "Final force calculation excludes seppuku-killed and hostage-captured figures",
+    "Phoenix revives after seppuku death and can die again in battle",
+    "Phoenix deaths count separately in seppuku and battle for Imperial Poets (2 total)",
+    "Battle result popup shows Prisioneros section and Poetas Imperiales section",
+    "Allied troops of the winner survive and stay on the map",
+    "Honor is updated immediately after seppuku (affects subsequent tiebreakers)",
+    "npm run build succeeds without errors"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}

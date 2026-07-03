@@ -1925,13 +1925,26 @@ export function resolveNextBattle(state: GameState): GameState {
   // Record the log index where this battle's entries begin
   battle.logStartIndex = newState.log.length;
 
+  // Check if step-by-step resolution was used (resolutionData present = seppuku/hostage already handled)
+  const resData = battle.resolutionData;
+  const stepByStepMode = !!resData;
+
   // Resolve War Tactics (left to right: Seppuku, Take Hostage, Hire Ronin, Imperial Poets)
   const sortedTactics = [...WAR_TACTICS].sort((a, b) => a.order - b.order);
 
-  let battleDeathCount = 0;
+  let battleDeathCount = stepByStepMode ? (resData.seppukuAccepted ? resData.seppukuKillCount : 0) : 0;
   let imperialPoetsBidder: string | null = null;
 
   for (const tactic of sortedTactics) {
+    // In step-by-step mode, skip seppuku and take-hostage (already handled by store actions)
+    if (stepByStepMode && (tactic.id === 'seppuku' || tactic.id === 'take-hostage')) {
+      // Still need to detect imperial-poets winner and apply Sol tiebreaker for skipped tactics
+      if (tactic.id === 'seppuku' || tactic.id === 'take-hostage') {
+        // Sol tiebreak was handled during determineTacticWinners / not needed again
+        continue;
+      }
+    }
+
     // Find highest bidder for this tactic
     let highestBid = 0;
     let highestBidder: string | null = null;
@@ -1975,17 +1988,23 @@ export function resolveNextBattle(state: GameState): GameState {
         // Monsters are intentionally included in seppuku - they die and return to reserve
         // just like bushi/daimyo, granting VP and honor per monster killed.
         const ownFigures = currentProvFigures.figures.filter(
-          (f) => f.owner === highestBidder && (f.type === 'bushi' || f.type === 'daimyo' || f.type === 'monster')
+          (f) => f.owner === highestBidder && (f.type === 'bushi' || f.type === 'shinto' || f.type === 'daimyo' || f.type === 'monster')
         );
         const killCount = ownFigures.length;
+        let phoenixDiedInSeppuku = false;
         for (const fig of ownFigures) {
           bidder.victoryPoints += 1;
           if (fig.type === 'bushi') {
             bidder.bushi += 1;
+          } else if (fig.type === 'shinto') {
+            bidder.shinto += 1;
           } else if (fig.type === 'daimyo') {
             bidder.hasDaimyo = true;
           } else if (fig.type === 'monster') {
             bidder.monsters += 1;
+            if (fig.monsterCardId === 'sp-phoenix') {
+              phoenixDiedInSeppuku = true;
+            }
           }
         }
         const killedIds = ownFigures.map((f) => f.id);
@@ -1993,12 +2012,22 @@ export function resolveNextBattle(state: GameState): GameState {
           ...currentProvFigures,
           figures: currentProvFigures.figures.filter((f) => !killedIds.includes(f.id)),
         };
+        // Phoenix revival
+        if (phoenixDiedInSeppuku) {
+          const figureId = Math.random().toString(36).substring(2, 10);
+          const phoenixFigure = { type: 'monster' as const, owner: highestBidder!, id: figureId, monsterCardId: 'sp-phoenix' };
+          newState.provinces[battle.provinceId] = {
+            ...newState.provinces[battle.provinceId],
+            figures: [...newState.provinces[battle.provinceId].figures, phoenixFigure],
+          };
+          bidder.monsters -= 1;
+        }
         for (let i = 0; i < killCount; i++) {
           gainHonor(newState, highestBidder);
         }
         battleDeathCount += killCount;
         const seppukuHonorPos = getHonorRank(newState, highestBidder);
-        newState.log = [...newState.log, `${bidder.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV y ${killCount} Honor ahora ${bidder.victoryPoints} PV y posición ${seppukuHonorPos} en Honor`];
+        newState.log = [...newState.log, `${bidder.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV y ${killCount} Honor ahora ${bidder.victoryPoints} PV y posicion ${seppukuHonorPos} en Honor`];
         break;
       }
       case 'take-hostage': {
@@ -2169,11 +2198,40 @@ export function resolveNextBattle(state: GameState): GameState {
 
     // Imperial Poets: award VP for total figures that died during this battle
     const battleCasualtyCount = killedFigures.reduce((sum, kf) => sum + kf.count, 0);
+    // Check if Phoenix died in battle (relevant for step-by-step mode double-death tracking)
+    let phoenixDiedInBattle = false;
+    if (stepByStepMode && resData.phoenixDiedInSeppuku) {
+      // Check if Phoenix was among the killed battle figures
+      // (it would have been revived after seppuku, so if the owner lost, it dies again)
+      const seppukuOwnerId = resData.seppukuWinnerId;
+      if (seppukuOwnerId && seppukuOwnerId !== winnerId && !winner.allies.includes(seppukuOwnerId)) {
+        // The seppuku player lost the battle - their revived Phoenix died again
+        phoenixDiedInBattle = true;
+      }
+    }
     if (imperialPoetsBidder) {
-      const totalDeaths = battleDeathCount + battleCasualtyCount;
+      let totalDeaths = battleDeathCount + battleCasualtyCount;
+      // In step-by-step mode, Phoenix dying in seppuku + battle = already counted once in battleDeathCount (seppuku)
+      // and once in battleCasualtyCount (battle) so it's already 2. No additional adjustment needed.
       const poetsBidder = newState.players.find((p) => p.id === imperialPoetsBidder)!;
       poetsBidder.victoryPoints += totalDeaths;
       newState.log = [...newState.log, `${poetsBidder.name} obtiene ${totalDeaths} PV de Poetas Imperiales`];
+      // Store on resolutionData for popup display
+      if (stepByStepMode) {
+        battle.resolutionData = {
+          ...resData,
+          phoenixDiedInBattle,
+          battleDeathCount: battleCasualtyCount,
+          imperialPoetsVP: totalDeaths,
+        };
+      }
+    } else if (stepByStepMode) {
+      battle.resolutionData = {
+        ...resData,
+        phoenixDiedInBattle,
+        battleDeathCount: battleCasualtyCount,
+        imperialPoetsVP: 0,
+      };
     }
 
     // Remove killed figures from province (keep winner's figures, allied figures, daimyos, and fortresses)
@@ -2752,7 +2810,7 @@ function syncHonorValues(state: GameState): void {
   });
 }
 
-function gainHonor(state: GameState, playerId: string): void {
+export function gainHonor(state: GameState, playerId: string): void {
   const idx = state.honorTrack.indexOf(playerId);
   if (idx > 0) {
     // Move toward index 0 = better honor (lower index = higher honor)

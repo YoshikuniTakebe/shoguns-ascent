@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { GameState, MandateType, DeckConfig, SeasonCard } from '../types/game';
+import type { GameState, MandateType, DeckConfig, SeasonCard, BattleResolutionData, Hostage } from '../types/game';
+import { WAR_TACTICS, SEASON_CARDS_DATA } from '../types/game';
 import {
   createInitialGameState,
   setupSeason,
@@ -33,6 +34,7 @@ import {
   skipBetrayTurn,
   advanceHarvestResolution,
   loseHonor,
+  gainHonor,
   resolveUncontestedBattles,
 } from '../utils/gameLogic';
 
@@ -55,7 +57,7 @@ function lunaHasValidProvince(gameState: GameState, playerId: string): boolean {
  * Detects if the given state has transitioned to a war phase with unresolved battles.
  * Returns partial store state to set battleStepPhase if war is active, empty object otherwise.
  */
-function detectWarTransition(state: GameState): Partial<{ battleStepPhase: 'popup' | 'bidding' | 'result' | null; battleCurrentBiddingIndex: number }> {
+function detectWarTransition(state: GameState): Partial<{ battleStepPhase: 'popup' | 'bidding' | 'seppuku-decision' | 'seppuku-result' | 'hostage-selection' | 'ronin-result' | 'result' | null; battleCurrentBiddingIndex: number }> {
   if (state.currentPhase === 'war' && state.activeBattles.some(b => !b.resolved) && !state.zorroPlacementActive) {
     return { battleStepPhase: 'popup' as const, battleCurrentBiddingIndex: 0 };
   }
@@ -162,6 +164,79 @@ function detectKamiPopupPending(ns: GameState): Record<string, unknown> {
   return {};
 }
 
+/**
+ * Attaches resolution data to the current unresolved battle so resolveNextBattle can use it.
+ */
+function attachResolutionData(state: GameState, resData: BattleResolutionData): GameState {
+  const unresolvedIdx = state.activeBattles.findIndex(b => !b.resolved && !b.uncontested);
+  if (unresolvedIdx === -1) return state;
+  const updatedBattles = state.activeBattles.map((b, i) => {
+    if (i === unresolvedIdx) return { ...b, resolutionData: resData };
+    return b;
+  });
+  return { ...state, activeBattles: updatedBattles };
+}
+
+/**
+ * Determines tactic winners from bids without resolving - used to drive step-by-step popups.
+ */
+function determineTacticWinners(state: GameState, battle: { participants: string[]; warTacticBids: { [playerId: string]: { [tacticId: string]: number } } }): BattleResolutionData {
+  const result: BattleResolutionData = {
+    seppukuWinnerId: null,
+    hostageWinnerId: null,
+    roninWinnerId: null,
+    imperialPoetsWinnerId: null,
+    seppukuKillCount: 0,
+    seppukuAccepted: false,
+    phoenixDiedInSeppuku: false,
+    phoenixDiedInBattle: false,
+    capturedHostage: null,
+    roninForce: 0,
+    battleDeathCount: 0,
+    imperialPoetsVP: 0,
+  };
+
+  for (const tactic of WAR_TACTICS) {
+    let highestBid = 0;
+    let highestBidder: string | null = null;
+
+    battle.participants.forEach((pid) => {
+      const playerBids = battle.warTacticBids[pid];
+      const bid = playerBids?.[tactic.id] || 0;
+      if (bid > highestBid) {
+        highestBid = bid;
+        highestBidder = pid;
+      } else if (bid === highestBid && bid > 0 && highestBidder) {
+        // Tie-breaking by honor
+        const currentHonor = state.honorTrack.indexOf(highestBidder);
+        const challengerHonor = state.honorTrack.indexOf(pid);
+        if (challengerHonor < currentHonor) {
+          highestBidder = pid;
+        }
+      }
+    });
+
+    if (!highestBidder || highestBid === 0) continue;
+
+    switch (tactic.id) {
+      case 'seppuku':
+        result.seppukuWinnerId = highestBidder;
+        break;
+      case 'take-hostage':
+        result.hostageWinnerId = highestBidder;
+        break;
+      case 'hire-ronin':
+        result.roninWinnerId = highestBidder;
+        break;
+      case 'imperial-poets':
+        result.imperialPoetsWinnerId = highestBidder;
+        break;
+    }
+  }
+
+  return result;
+}
+
 interface GameStore {
   gameState: GameState | null;
   localPlayerId: string | null;
@@ -174,8 +249,10 @@ interface GameStore {
   lobbyId: string | null;
   currentMandateResolutionIndex: number;
   warTacticBidsSubmitted: boolean;
-  battleStepPhase: 'popup' | 'bidding' | 'result' | null;
+  battleStepPhase: 'popup' | 'bidding' | 'seppuku-decision' | 'seppuku-result' | 'hostage-selection' | 'ronin-result' | 'result' | null;
   battleCurrentBiddingIndex: number;
+  battleResolutionData: import('../types/game').BattleResolutionData | null;
+  selectedHostageTarget: { owner: string; figureId: string; figureType: string; figureName: string } | null;
   showTrainModal: boolean;
   buildFortressMode: boolean;
   language: 'en' | 'es';
@@ -277,6 +354,12 @@ interface GameStore {
   doSubmitWarTacticBids: (provinceId: string, tacticBids: { [tacticId: string]: number }) => void;
   doResolveNextBattle: () => void;
   doAcceptBattlePopup: () => void;
+  doSeppukuDecision: (accept: boolean) => void;
+  doSeppukuResultAccept: () => void;
+  doHostageSelect: (figureId: string) => void;
+  doHostageConfirm: () => void;
+  doHostageSkip: () => void;
+  doRoninResultAccept: () => void;
 
   // Coin Distribution
   doCoinDistributionChoice: (targetPlayerId: string) => void;
@@ -352,6 +435,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   warTacticBidsSubmitted: false,
   battleStepPhase: null,
   battleCurrentBiddingIndex: 0,
+  battleResolutionData: null,
+  selectedHostageTarget: null,
   showTrainModal: false,
   buildFortressMode: false,
   recruitMode: false,
@@ -1787,9 +1872,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (gameState.mode === 'hotseat') {
       // In hotseat: after current player bids, check if all done
       if (allBidsSubmitted(ns, provinceId)) {
-        ns = resolveNextBattle(ns);
-        // Battle resolved, show result popup before advancing
-        set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0 });
+        // Instead of resolving immediately, enter step-by-step resolution
+        const battle = ns.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
+        if (!battle) return;
+        const resData = determineTacticWinners(ns, battle);
+        // Enter first phase: seppuku decision if winner exists
+        if (resData.seppukuWinnerId) {
+          set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'seppuku-decision', battleCurrentBiddingIndex: 0, battleResolutionData: resData, selectedHostageTarget: null });
+        } else if (resData.hostageWinnerId) {
+          set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'hostage-selection', battleCurrentBiddingIndex: 0, battleResolutionData: resData, selectedHostageTarget: null });
+        } else if (resData.roninWinnerId) {
+          set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'ronin-result', battleCurrentBiddingIndex: 0, battleResolutionData: resData, selectedHostageTarget: null });
+        } else {
+          // No interactive phases needed, resolve battle directly
+          ns = resolveNextBattle(ns);
+          set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null });
+        }
       } else {
         // More participants need to bid - show popup for next participant
         const { battleCurrentBiddingIndex } = get();
@@ -1798,8 +1896,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else {
       // Online mode: auto-resolve once all participants have submitted
       if (allBidsSubmitted(ns, provinceId)) {
-        ns = resolveNextBattle(ns);
-        set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0 });
+        const battle = ns.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
+        if (!battle) return;
+        const resData = determineTacticWinners(ns, battle);
+        if (resData.seppukuWinnerId) {
+          set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'seppuku-decision', battleCurrentBiddingIndex: 0, battleResolutionData: resData, selectedHostageTarget: null });
+        } else if (resData.hostageWinnerId) {
+          set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'hostage-selection', battleCurrentBiddingIndex: 0, battleResolutionData: resData, selectedHostageTarget: null });
+        } else if (resData.roninWinnerId) {
+          set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'ronin-result', battleCurrentBiddingIndex: 0, battleResolutionData: resData, selectedHostageTarget: null });
+        } else {
+          ns = resolveNextBattle(ns);
+          set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null });
+        }
       } else {
         set({ gameState: ns, warTacticBidsSubmitted: true });
       }
@@ -1812,7 +1921,224 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'RESOLVE_BATTLE', playerId: get().localPlayerId });
       return;
     }
-    set({ gameState: resolveNextBattle(gameState), warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0 });
+    set({ gameState: resolveNextBattle(gameState), warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0, battleResolutionData: null });
+  },
+  doSeppukuDecision: (accept: boolean) => {
+    const { gameState, battleResolutionData } = get();
+    if (!gameState || !battleResolutionData || !battleResolutionData.seppukuWinnerId) return;
+
+    const unresolvedIdx = gameState.activeBattles.findIndex(b => !b.resolved && !b.uncontested);
+    if (unresolvedIdx === -1) return;
+
+    if (!accept) {
+      // Player declines seppuku - skip to next phase
+      const updatedResData: BattleResolutionData = { ...battleResolutionData, seppukuAccepted: false };
+      if (updatedResData.hostageWinnerId) {
+        set({ battleStepPhase: 'hostage-selection', battleResolutionData: updatedResData });
+      } else if (updatedResData.roninWinnerId) {
+        set({ battleStepPhase: 'ronin-result', battleResolutionData: updatedResData });
+      } else {
+        // No more interactive phases, resolve battle
+        const withResData = attachResolutionData(gameState, updatedResData);
+        const ns = resolveNextBattle(withResData);
+        set({ gameState: ns, battleStepPhase: 'result', battleResolutionData: updatedResData, selectedHostageTarget: null });
+      }
+      return;
+    }
+
+    // Player accepts seppuku - kill all their troops in the battle province
+    const seppukuPlayerId = battleResolutionData.seppukuWinnerId;
+    const newState: GameState = {
+      ...gameState,
+      players: gameState.players.map(p => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages] })),
+      provinces: { ...gameState.provinces },
+      activeBattles: gameState.activeBattles.map(b => ({ ...b, warTacticBids: { ...b.warTacticBids } })),
+      honorTrack: [...gameState.honorTrack],
+      log: [...gameState.log],
+    };
+
+    const battle = newState.activeBattles[unresolvedIdx];
+    const province = newState.provinces[battle.provinceId];
+    const bidder = newState.players.find(p => p.id === seppukuPlayerId)!;
+
+    // Kill ALL own troops (bushi, shinto, daimyo, monster) - NOT fortress
+    const ownFigures = province.figures.filter(
+      f => f.owner === seppukuPlayerId && (f.type === 'bushi' || f.type === 'shinto' || f.type === 'daimyo' || f.type === 'monster')
+    );
+    const killCount = ownFigures.length;
+    let phoenixDied = false;
+
+    for (const fig of ownFigures) {
+      bidder.victoryPoints += 1;
+      if (fig.type === 'bushi') {
+        bidder.bushi += 1;
+      } else if (fig.type === 'shinto') {
+        bidder.shinto += 1;
+      } else if (fig.type === 'daimyo') {
+        bidder.hasDaimyo = true;
+      } else if (fig.type === 'monster') {
+        bidder.monsters += 1;
+        if (fig.monsterCardId === 'sp-phoenix') {
+          phoenixDied = true;
+        }
+      }
+    }
+
+    // Remove killed figures from province
+    const killedIds = new Set(ownFigures.map(f => f.id));
+    newState.provinces[battle.provinceId] = {
+      ...province,
+      figures: province.figures.filter(f => !killedIds.has(f.id)),
+    };
+
+    // Phoenix revival: if Phoenix died, immediately place it back
+    if (phoenixDied) {
+      const figureId = Math.random().toString(36).substring(2, 10);
+      const phoenixFigure = { type: 'monster' as const, owner: seppukuPlayerId, id: figureId, monsterCardId: 'sp-phoenix' };
+      newState.provinces[battle.provinceId] = {
+        ...newState.provinces[battle.provinceId],
+        figures: [...newState.provinces[battle.provinceId].figures, phoenixFigure],
+      };
+      // Phoenix revives so it's no longer in reserve
+      bidder.monsters -= 1;
+    }
+
+    // Gain honor for each killed figure
+    for (let i = 0; i < killCount; i++) {
+      gainHonor(newState, seppukuPlayerId);
+    }
+
+    newState.log = [...newState.log, `${bidder.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV y ${killCount} Honor`];
+
+    const updatedResData: BattleResolutionData = {
+      ...battleResolutionData,
+      seppukuAccepted: true,
+      seppukuKillCount: killCount,
+      phoenixDiedInSeppuku: phoenixDied,
+    };
+
+    set({ gameState: newState, battleStepPhase: 'seppuku-result', battleResolutionData: updatedResData });
+  },
+  doSeppukuResultAccept: () => {
+    const { gameState, battleResolutionData } = get();
+    if (!gameState || !battleResolutionData) return;
+
+    // Move to next phase
+    if (battleResolutionData.hostageWinnerId) {
+      set({ battleStepPhase: 'hostage-selection' });
+    } else if (battleResolutionData.roninWinnerId) {
+      set({ battleStepPhase: 'ronin-result' });
+    } else {
+      // No more interactive phases, resolve battle with updated state
+      const withResData = attachResolutionData(gameState, battleResolutionData);
+      const ns = resolveNextBattle(withResData);
+      set({ gameState: ns, battleStepPhase: 'result', battleResolutionData: battleResolutionData, selectedHostageTarget: null });
+    }
+  },
+  doHostageSelect: (figureId: string) => {
+    const { gameState, battleResolutionData } = get();
+    if (!gameState || !battleResolutionData || !battleResolutionData.hostageWinnerId) return;
+
+    const unresolvedIdx = gameState.activeBattles.findIndex(b => !b.resolved && !b.uncontested);
+    if (unresolvedIdx === -1) return;
+    const battle = gameState.activeBattles[unresolvedIdx];
+    const province = gameState.provinces[battle.provinceId];
+
+    const figure = province.figures.find(f => f.id === figureId);
+    if (!figure) return;
+
+    // Determine figure name
+    let figureName = figure.type === 'bushi' ? 'Bushi' : figure.type === 'shinto' ? 'Shinto' : '';
+    if (figure.type === 'monster' && figure.monsterCardId) {
+      const card = SEASON_CARDS_DATA.find(c => c.id === figure.monsterCardId);
+      figureName = card?.name || figure.monsterCardId || 'Monster';
+    }
+
+    set({ selectedHostageTarget: { owner: figure.owner, figureId: figure.id, figureType: figure.type, figureName } });
+  },
+  doHostageConfirm: () => {
+    const { gameState, battleResolutionData, selectedHostageTarget } = get();
+    if (!gameState || !battleResolutionData || !battleResolutionData.hostageWinnerId || !selectedHostageTarget) return;
+
+    const unresolvedIdx = gameState.activeBattles.findIndex(b => !b.resolved && !b.uncontested);
+    if (unresolvedIdx === -1) return;
+
+    const hostageWinnerId = battleResolutionData.hostageWinnerId;
+
+    const newState: GameState = {
+      ...gameState,
+      players: gameState.players.map(p => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages] })),
+      provinces: { ...gameState.provinces },
+      activeBattles: gameState.activeBattles.map(b => ({ ...b, warTacticBids: { ...b.warTacticBids } })),
+      honorTrack: [...gameState.honorTrack],
+      log: [...gameState.log],
+    };
+
+    const battle = newState.activeBattles[unresolvedIdx];
+    const province = newState.provinces[battle.provinceId];
+    const captor = newState.players.find(p => p.id === hostageWinnerId)!;
+
+    // Find and remove the figure from the province
+    const capturedFig = province.figures.find(f => f.id === selectedHostageTarget.figureId);
+    if (!capturedFig) return;
+
+    const hostage: Hostage = { fromClanId: capturedFig.owner, figureType: selectedHostageTarget.figureType };
+    captor.hostages.push(hostage);
+    captor.victoryPoints += 1;
+
+    newState.provinces[battle.provinceId] = {
+      ...province,
+      figures: province.figures.filter(f => f.id !== selectedHostageTarget.figureId),
+    };
+
+    // Return figure to victim's reserve
+    const victim = newState.players.find(p => p.id === capturedFig.owner);
+    if (victim) {
+      if (capturedFig.type === 'bushi') victim.bushi += 1;
+      else if (capturedFig.type === 'shinto') victim.shinto += 1;
+      else if (capturedFig.type === 'monster') victim.monsters += 1;
+    }
+
+    newState.log = [...newState.log, `${captor.name} captura un rehen (${selectedHostageTarget.figureName}) de ${victim?.name}`];
+
+    const updatedResData: BattleResolutionData = {
+      ...battleResolutionData,
+      capturedHostage: { captorId: hostageWinnerId, fromClanId: capturedFig.owner, figureType: capturedFig.type, figureName: selectedHostageTarget.figureName },
+    };
+
+    // Move to next phase
+    if (updatedResData.roninWinnerId) {
+      set({ gameState: newState, battleStepPhase: 'ronin-result', battleResolutionData: updatedResData, selectedHostageTarget: null });
+    } else {
+      // Resolve battle
+      const withResData = attachResolutionData(newState, updatedResData);
+      const ns = resolveNextBattle(withResData);
+      set({ gameState: ns, battleStepPhase: 'result', battleResolutionData: updatedResData, selectedHostageTarget: null });
+    }
+  },
+  doHostageSkip: () => {
+    const { gameState, battleResolutionData } = get();
+    if (!gameState || !battleResolutionData) return;
+
+    // No capturable figures - advance to next phase
+    if (battleResolutionData.roninWinnerId) {
+      set({ battleStepPhase: 'ronin-result', selectedHostageTarget: null });
+    } else {
+      const withResData = attachResolutionData(gameState, battleResolutionData);
+      const ns = resolveNextBattle(withResData);
+      set({ gameState: ns, battleStepPhase: 'result', battleResolutionData: battleResolutionData, selectedHostageTarget: null });
+    }
+  },
+  doRoninResultAccept: () => {
+    const { gameState, battleResolutionData } = get();
+    if (!gameState || !battleResolutionData) return;
+
+    // Resolve the battle with final force calculation
+    const withResData = attachResolutionData(gameState, battleResolutionData);
+    const ns = resolveNextBattle(withResData);
+
+    // Store resolution data for result popup
+    set({ gameState: ns, battleStepPhase: 'result', selectedHostageTarget: null });
   },
   doAcceptBattlePopup: () => {
     const { gameState } = get();
@@ -1820,13 +2146,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // If showing a battle result, dismiss it and move to popup for the next battle
     if (get().battleStepPhase === 'result') {
-      set({ battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+      set({ battleStepPhase: 'popup', battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null });
       return;
     }
 
     const currentBattleIndex = gameState.activeBattles.findIndex(b => !b.resolved);
     if (currentBattleIndex === -1) {
-      set({ battleStepPhase: null, battleCurrentBiddingIndex: 0 });
+      set({ battleStepPhase: null, battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null });
       return;
     }
 

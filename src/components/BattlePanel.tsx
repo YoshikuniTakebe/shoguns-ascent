@@ -1,10 +1,10 @@
 import { type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, PROVINCE_COLORS } from '../types/game';
-import type { Battle, GameState } from '../types/game';
+import { CLANS, PROVINCE_COLORS, SEASON_CARDS_DATA } from '../types/game';
+import type { Battle, GameState, BattleResolutionData } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { CoinIcon, BushiIcon, ShintoIcon, VPIcon, HonorIcon } from './Icons';
+import { CoinIcon, BushiIcon, ShintoIcon, VPIcon, HonorIcon, RoninIcon } from './Icons';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { calculateForce } from '../utils/gameLogic';
@@ -215,20 +215,25 @@ function BattleResultPopup({
   gameState,
   onAccept,
   t,
+  resolutionData,
 }: {
   battle: Battle;
   gameState: GameState;
   onAccept: () => void;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
+  resolutionData?: BattleResolutionData | null;
 }) {
   const resProvince = gameState.provinces[battle.provinceId];
   const winner = battle.winner ? gameState.players.find(p => p.id === battle.winner) : null;
   const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
   const battleLogs = extractBattleLogs(gameState.log, battle);
 
+  // Use resolution data from battle or prop
+  const resData = battle.resolutionData || resolutionData;
+
   return (
     <div className="battle-popup-overlay">
-      <div className="battle-popup-card">
+      <div className="battle-popup-card" style={{ maxHeight: '85vh', overflow: 'auto' }}>
         <h3 className="battle-popup-title">{t('battle.resultTitle')}</h3>
         <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
           {resProvince?.name || battle.provinceId}
@@ -268,7 +273,63 @@ function BattleResultPopup({
             })}
           </div>
         )}
-        {battleLogs.length > 0 && (
+        {/* Prisoners section */}
+        {resData?.capturedHostage && (
+          <div style={{ margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>
+              Prisioneros
+            </p>
+            {(() => {
+              const captor = gameState.players.find(p => p.id === resData.capturedHostage!.captorId);
+              const captorClan = captor ? CLANS.find(c => c.id === captor.clanId) : null;
+              const victim = gameState.players.find(p => p.id === resData.capturedHostage!.fromClanId);
+              const victimClan = victim ? CLANS.find(c => c.id === victim.clanId) : null;
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.9em', flexWrap: 'wrap' }}>
+                  <ClanShield clanId={captor?.clanId || ''} size={16} />
+                  <span style={{ color: captorClan?.color, fontWeight: 'bold' }}>{captor?.name}</span>
+                  <span style={{ opacity: 0.7 }}>captura</span>
+                  <span style={{ fontWeight: 'bold' }}>{resData.capturedHostage!.figureName}</span>
+                  <span style={{ opacity: 0.7 }}>de</span>
+                  <ClanShield clanId={victim?.clanId || ''} size={16} />
+                  <span style={{ color: victimClan?.color, fontWeight: 'bold' }}>{victim?.name}</span>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+        {/* Imperial Poets section */}
+        {resData?.imperialPoetsWinnerId && resData.imperialPoetsVP > 0 && (
+          <div style={{ margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>
+              Poetas Imperiales
+            </p>
+            {(() => {
+              const poetsPlayer = gameState.players.find(p => p.id === resData.imperialPoetsWinnerId);
+              const poetsClan = poetsPlayer ? CLANS.find(c => c.id === poetsPlayer.clanId) : null;
+              const seppukuDeaths = resData.seppukuAccepted ? resData.seppukuKillCount : 0;
+              const battleDeaths = resData.battleDeathCount;
+              return (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
+                    <ClanShield clanId={poetsPlayer?.clanId || ''} size={18} />
+                    <span style={{ color: poetsClan?.color, fontWeight: 'bold' }}>{poetsPlayer?.name}</span>
+                    <VPIcon size={16} color="#f5c842" />
+                    <span style={{ color: '#f5c842', fontWeight: 'bold' }}>{resData.imperialPoetsVP}</span>
+                  </div>
+                  <div style={{ fontSize: '0.85em', opacity: 0.8, paddingLeft: '0.5rem' }}>
+                    {seppukuDeaths > 0 && <p style={{ margin: '0.1rem 0' }}>Seppuku: {seppukuDeaths} muertes</p>}
+                    {battleDeaths > 0 && <p style={{ margin: '0.1rem 0' }}>Batalla: {battleDeaths} muertes</p>}
+                    {resData.phoenixDiedInSeppuku && resData.phoenixDiedInBattle && (
+                      <p style={{ margin: '0.1rem 0', color: '#f5c842' }}>Phoenix murio en seppuku y en batalla (2 muertes)</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+        {battleLogs.length > 0 && !resData && (
           <div style={{ textAlign: 'left', margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', fontSize: '0.9em' }}>
             {battleLogs.map((entry, i) => (
               <p key={i} style={{ margin: '0.2rem 0' }}>{renderBattleLogEntry(entry, gameState.players)}</p>
@@ -291,7 +352,15 @@ export const BattlePanel = () => {
     doAdvancePhase,
     battleStepPhase,
     battleCurrentBiddingIndex,
+    battleResolutionData,
+    selectedHostageTarget,
     doAcceptBattlePopup,
+    doSeppukuDecision,
+    doSeppukuResultAccept,
+    doHostageSelect,
+    doHostageConfirm,
+    doHostageSkip,
+    doRoninResultAccept,
     doCoinDistributionChoice,
     doCoinDistributionDismiss,
     biddingMapPeek,
@@ -407,6 +476,211 @@ export const BattlePanel = () => {
 
   const allBattles = gameState.activeBattles;
 
+  // --- SEPPUKU DECISION POPUP ---
+  if (battleStepPhase === 'seppuku-decision' && battleResolutionData?.seppukuWinnerId) {
+    const seppukuPlayer = gameState.players.find(p => p.id === battleResolutionData.seppukuWinnerId);
+    const seppukuClan = seppukuPlayer ? CLANS.find(c => c.id === seppukuPlayer.clanId) : null;
+
+    return createPortal(
+      <div className="battle-popup-overlay">
+        <div className="battle-popup-card" style={{ borderColor: seppukuClan?.color }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <ClanShield clanId={seppukuPlayer?.clanId || ''} size={36} />
+            <span style={{ color: seppukuClan?.color, fontWeight: 'bold', fontSize: '1.2em' }}>
+              {seppukuPlayer?.name}
+            </span>
+          </div>
+          <p style={{ fontSize: '1.1em', margin: '0.5rem 0 1rem', textAlign: 'center' }}>
+            Quieres sacrificar TODAS tus tropas?
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <button
+              className="btn-primary"
+              style={{ background: 'rgba(200, 50, 50, 0.8)', border: '1px solid #e74c3c' }}
+              onClick={() => doSeppukuDecision(true)}
+            >
+              Si, sacrifico TODAS
+            </button>
+            <button
+              className="btn-primary"
+              style={{ background: 'rgba(60, 60, 80, 0.8)', border: '1px solid rgba(255,255,255,0.3)' }}
+              onClick={() => doSeppukuDecision(false)}
+            >
+              No las sacrifico
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  // --- SEPPUKU RESULT POPUP ---
+  if (battleStepPhase === 'seppuku-result' && battleResolutionData?.seppukuWinnerId) {
+    const seppukuPlayer = gameState.players.find(p => p.id === battleResolutionData.seppukuWinnerId);
+    const seppukuClan = seppukuPlayer ? CLANS.find(c => c.id === seppukuPlayer.clanId) : null;
+    const killCount = battleResolutionData.seppukuKillCount;
+
+    return createPortal(
+      <div className="battle-popup-overlay">
+        <div className="battle-popup-card" style={{ borderColor: seppukuClan?.color }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <ClanShield clanId={seppukuPlayer?.clanId || ''} size={36} />
+            <span style={{ color: seppukuClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+              {seppukuPlayer?.name}
+            </span>
+          </div>
+          <p style={{ fontSize: '1em', margin: '0.5rem 0', textAlign: 'center', color: seppukuClan?.color }}>
+            has sacrificado tus tropas
+          </p>
+          <div style={{ margin: '0.75rem 0', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '0.95em' }}>Has obtenido:</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.3rem 0' }}>
+              <VPIcon size={18} color="#f5c842" />
+              <span style={{ color: '#f5c842', fontWeight: 'bold' }}>{killCount}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.3rem 0' }}>
+              <span>Has subido</span>
+              <HonorIcon size={18} color="#e57373" />
+              <span style={{ color: '#e57373', fontWeight: 'bold' }}>{killCount}</span>
+              <span>posiciones</span>
+            </div>
+          </div>
+          <button className="btn-primary battle-popup-accept" onClick={doSeppukuResultAccept}>
+            {t('battle.continue')}
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  // --- HOSTAGE SELECTION POPUP ---
+  if (battleStepPhase === 'hostage-selection' && battleResolutionData?.hostageWinnerId) {
+    const hostagePlayer = gameState.players.find(p => p.id === battleResolutionData.hostageWinnerId);
+    const hostageClan = hostagePlayer ? CLANS.find(c => c.id === hostagePlayer.clanId) : null;
+
+    const unresolvedBattle = allBattles.find(b => !b.resolved && !b.uncontested);
+    const province = unresolvedBattle ? gameState.provinces[unresolvedBattle.provinceId] : null;
+
+    // Get capturable enemy figures: bushi, shinto, named monsters (NOT daimyo, NOT daimyo-type monsters)
+    const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
+    const capturableFigures = province ? province.figures.filter(f => {
+      if (f.owner === battleResolutionData.hostageWinnerId) return false;
+      if (f.type === 'daimyo') return false;
+      if (f.type === 'fortress') return false;
+      if (f.type === 'monster' && f.monsterCardId && DAIMYO_MONSTER_IDS.includes(f.monsterCardId)) return false;
+      if (f.type === 'bushi' || f.type === 'shinto' || f.type === 'monster') return true;
+      return false;
+    }) : [];
+
+    // If no capturable figures, show info popup and skip
+    if (capturableFigures.length === 0) {
+      return createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card" style={{ borderColor: hostageClan?.color }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <ClanShield clanId={hostagePlayer?.clanId || ''} size={36} />
+              <span style={{ color: hostageClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+                {hostagePlayer?.name}
+              </span>
+            </div>
+            <p style={{ fontSize: '1em', margin: '0.5rem 0 0.75rem', textAlign: 'center', opacity: 0.8 }}>
+              No hay tropas capturables
+            </p>
+            <button className="btn-primary battle-popup-accept" onClick={doHostageSkip}>
+              {t('battle.continue')}
+            </button>
+          </div>
+        </div>,
+        document.body
+      );
+    }
+
+    return createPortal(
+      <div className="battle-popup-overlay">
+        <div className="battle-popup-card" style={{ borderColor: hostageClan?.color, maxHeight: '80vh', overflow: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <ClanShield clanId={hostagePlayer?.clanId || ''} size={36} />
+            <span style={{ color: hostageClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+              {hostagePlayer?.name}
+            </span>
+          </div>
+          <p style={{ fontSize: '1em', margin: '0.5rem 0 0.75rem', textAlign: 'center' }}>
+            Elige a quien capturar
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.75rem' }}>
+            {capturableFigures.map(fig => {
+              const figOwner = gameState.players.find(p => p.id === fig.owner);
+              const figClan = figOwner ? CLANS.find(c => c.id === figOwner.clanId) : null;
+              let figName = fig.type === 'bushi' ? 'Bushi' : fig.type === 'shinto' ? 'Shinto' : '';
+              if (fig.type === 'monster' && fig.monsterCardId) {
+                const card = SEASON_CARDS_DATA.find(c => c.id === fig.monsterCardId);
+                figName = card?.name || fig.monsterCardId;
+              }
+              const isSelected = selectedHostageTarget?.figureId === fig.id;
+              return (
+                <div
+                  key={fig.id}
+                  onClick={() => doHostageSelect(fig.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 0.75rem',
+                    background: isSelected ? 'rgba(255,215,0,0.2)' : 'rgba(0,0,0,0.2)',
+                    borderRadius: '6px',
+                    border: isSelected ? '2px solid #FFD700' : '1px solid rgba(255,255,255,0.15)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <ClanShield clanId={figOwner?.clanId || ''} size={20} />
+                  <span style={{ color: figClan?.color, fontWeight: 'bold' }}>{figName}</span>
+                </div>
+              );
+            })}
+          </div>
+          <button
+            className="btn-primary battle-popup-accept"
+            disabled={!selectedHostageTarget}
+            style={{ opacity: selectedHostageTarget ? 1 : 0.5 }}
+            onClick={doHostageConfirm}
+          >
+            Capturar
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  // --- RONIN RESULT POPUP ---
+  if (battleStepPhase === 'ronin-result' && battleResolutionData?.roninWinnerId) {
+    const roninPlayer = gameState.players.find(p => p.id === battleResolutionData.roninWinnerId);
+    const roninClan = roninPlayer ? CLANS.find(c => c.id === roninPlayer.clanId) : null;
+
+    return createPortal(
+      <div className="battle-popup-overlay">
+        <div className="battle-popup-card" style={{ borderColor: roninClan?.color }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <ClanShield clanId={roninPlayer?.clanId || ''} size={36} />
+            <span style={{ color: roninClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+              {roninPlayer?.name}
+            </span>
+          </div>
+          <p style={{ fontSize: '1em', margin: '0.5rem 0', textAlign: 'center' }}>
+            Ha contratado Ronin <RoninIcon size={20} color="#e74c3c" />
+          </p>
+          <button className="btn-primary battle-popup-accept" onClick={doRoninResultAccept}>
+            {t('battle.accept')}
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
   // Step-by-step battle flow:
   // Find first battle with resolved === false. That's what we display.
   // If uncontested -> show popup. If contested -> show bidding flow. If all resolved -> war complete.
@@ -424,6 +698,7 @@ export const BattlePanel = () => {
           gameState={gameState}
           onAccept={doAcceptBattlePopup}
           t={t}
+          resolutionData={battleResolutionData}
         />,
         document.body
       );
@@ -640,6 +915,7 @@ export const BattlePanel = () => {
           gameState={gameState}
           onAccept={doAcceptBattlePopup}
           t={t}
+          resolutionData={battleResolutionData}
         />,
         document.body
       );
@@ -705,6 +981,7 @@ export const BattlePanel = () => {
           gameState={gameState}
           onAccept={doAcceptBattlePopup}
           t={t}
+          resolutionData={battleResolutionData}
         />,
         document.body
       );
