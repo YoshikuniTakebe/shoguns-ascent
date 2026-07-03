@@ -43,7 +43,7 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
           &times;
         </button>
         {/* Legend button */}
-        <div className="legend-button-wrapper" style={{ position: 'absolute', top: '0.6rem', left: '0.9rem', zIndex: 1 }}>
+        <div className="legend-button-wrapper" style={{ position: 'absolute', top: '0.6rem', left: '4.9rem', zIndex: 1 }}>
           <button className="legend-btn">?</button>
           <div className="legend-tooltip">
             <div className="legend-tooltip-row"><BushiIcon size={20} color="#fff" /><span>{t('legend.bushi')}</span></div>
@@ -51,11 +51,11 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
             <div className="legend-tooltip-row"><FortressIcon size={20} color="#fff" /><span>{t('legend.fortress')}</span></div>
             <div className="legend-tooltip-row"><DaimyoIcon size={20} color="#fff" /><span>{t('legend.daimyo')}</span></div>
             <div className="legend-tooltip-row"><MonsterIcon size={20} color="#fff" /><span>{t('legend.monster')}</span></div>
-            <div className="legend-tooltip-row"><CoinIcon size={20} color="#fff" /><span>{t('legend.coin')}</span></div>
-            <div className="legend-tooltip-row"><VPIcon size={20} color="#fff" /><span>{t('legend.vp')}</span></div>
-            <div className="legend-tooltip-row"><HonorIcon size={20} color="#fff" /><span>{t('legend.honor')}</span></div>
+            <div className="legend-tooltip-row"><CoinIcon size={20} color="#c8a951" /><span>{t('legend.coin')}</span></div>
+            <div className="legend-tooltip-row"><VPIcon size={20} color="#e94560" /><span>{t('legend.vp')}</span></div>
+            <div className="legend-tooltip-row"><HonorIcon size={20} color="#9b59b6" /><span>{t('legend.honor')}</span></div>
             <div className="legend-tooltip-row"><RoninIcon size={20} color="#fff" /><span>{t('legend.ronin')}</span></div>
-            <div className="legend-tooltip-row"><FistIcon size={20} color="#fff" /><span>{t('legend.force')}</span></div>
+            <div className="legend-tooltip-row"><FistIcon size={20} color="#3498db" /><span>{t('legend.force')}</span></div>
             <div className="legend-tooltip-row"><SpringIcon size={20} color="#FFB7C5" /><span style={{ color: '#FFB7C5' }}>{t('legend.spring')}</span></div>
             <div className="legend-tooltip-row"><SummerIcon size={20} color="#FF6B35" /><span style={{ color: '#FF6B35' }}>{t('legend.summer')}</span></div>
             <div className="legend-tooltip-row"><AutumnIcon size={20} color="#D4A574" /><span style={{ color: '#D4A574' }}>{t('legend.autumn')}</span></div>
@@ -63,7 +63,7 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
           </div>
         </div>
         <div className="season-cards-theme-toggle" onClick={() => setLightMode(!lightMode)}>
-          <div className={`theme-toggle-track${lightMode ? ' light' : ''}`}>
+          <div className={`theme-toggle-track${lightMode ? ' light' : ''}`} style={{ position: 'relative', left: '-0.5rem' }}>
             <div className="theme-toggle-thumb">
               {lightMode ? <SunIcon size={16} color="#f5a623" /> : <MoonIcon size={16} color="#c8d6e5" />}
             </div>
@@ -71,7 +71,7 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
         </div>
         <h2 className="season-cards-modal-title">
           <ClanShield clanId={player.clanId} size={35} />
-          <span style={{ color: clan?.color || '#ccc', fontWeight: 'bold' }}>{t('playerCards.title', { name: player.name })}</span>
+          <span style={{ color: clan?.color || '#ccc', fontWeight: 'bold', textShadow: '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff' }}>{t('playerCards.title', { name: player.name })}</span>
         </h2>
         {player.seasonCards.length === 0 ? (
           <p className="player-cards-empty">{t('playerCards.empty')}</p>

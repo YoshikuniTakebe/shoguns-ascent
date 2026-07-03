@@ -202,7 +202,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
           </button>
         )}
         {/* Legend button */}
-        <div className="legend-button-wrapper" style={{ position: 'absolute', top: '0.6rem', left: '7.5rem', zIndex: 10 }}>
+        <div className="legend-button-wrapper" style={{ position: 'absolute', top: '0.6rem', left: '5.5rem', zIndex: 10 }}>
           <button className="legend-btn">?</button>
           <div className="legend-tooltip">
             <div className="legend-tooltip-row"><BushiIcon size={20} color="#fff" /><span>{t('legend.bushi')}</span></div>
@@ -210,11 +210,11 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
             <div className="legend-tooltip-row"><FortressIcon size={20} color="#fff" /><span>{t('legend.fortress')}</span></div>
             <div className="legend-tooltip-row"><DaimyoIcon size={20} color="#fff" /><span>{t('legend.daimyo')}</span></div>
             <div className="legend-tooltip-row"><MonsterIcon size={20} color="#fff" /><span>{t('legend.monster')}</span></div>
-            <div className="legend-tooltip-row"><CoinIcon size={20} color="#fff" /><span>{t('legend.coin')}</span></div>
-            <div className="legend-tooltip-row"><VPIcon size={20} color="#fff" /><span>{t('legend.vp')}</span></div>
-            <div className="legend-tooltip-row"><HonorIcon size={20} color="#fff" /><span>{t('legend.honor')}</span></div>
+            <div className="legend-tooltip-row"><CoinIcon size={20} color="#c8a951" /><span>{t('legend.coin')}</span></div>
+            <div className="legend-tooltip-row"><VPIcon size={20} color="#e94560" /><span>{t('legend.vp')}</span></div>
+            <div className="legend-tooltip-row"><HonorIcon size={20} color="#9b59b6" /><span>{t('legend.honor')}</span></div>
             <div className="legend-tooltip-row"><RoninIcon size={20} color="#fff" /><span>{t('legend.ronin')}</span></div>
-            <div className="legend-tooltip-row"><FistIcon size={20} color="#fff" /><span>{t('legend.force')}</span></div>
+            <div className="legend-tooltip-row"><FistIcon size={20} color="#3498db" /><span>{t('legend.force')}</span></div>
             <div className="legend-tooltip-row"><SpringIcon size={20} color="#FFB7C5" /><span style={{ color: '#FFB7C5' }}>{t('legend.spring')}</span></div>
             <div className="legend-tooltip-row"><SummerIcon size={20} color="#FF6B35" /><span style={{ color: '#FF6B35' }}>{t('legend.summer')}</span></div>
             <div className="legend-tooltip-row"><AutumnIcon size={20} color="#D4A574" /><span style={{ color: '#D4A574' }}>{t('legend.autumn')}</span></div>
@@ -245,7 +245,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 <span>{player.coins}</span>
                 {isDiscounted && (
                   <span style={{ color: '#27ae60', marginLeft: '6px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                    ({t('seasonCardsModal.discount')} -<CoinIcon size={14} color="#27ae60" strokeWidth="2" />)
+                    ({t('seasonCardsModal.discount')} -1 <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#27ae60" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>)
                   </span>
                 )}
               </span>
@@ -264,7 +264,6 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 style={{
                   borderLeftColor: CARD_TYPE_COLORS[card.cardType],
                   opacity: isInteractiveMode && !affordable ? 0.4 : 1,
-                  pointerEvents: isInteractiveMode && ((!isRyujinMode && !playerConfirmed) || !affordable) ? 'none' : 'auto',
                   cursor: 'pointer',
                 }}
                 onClick={() => setZoomedCard(card)}
@@ -383,7 +382,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 </span>
                 {isDiscounted && (
                   <span style={{ color: '#27ae60', marginLeft: '8px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                    ({t('seasonCardsModal.discount')} -<CoinIcon size={14} color="#27ae60" strokeWidth="2" />)
+                    ({t('seasonCardsModal.discount')} -1 <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#27ae60" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>)
                   </span>
                 )}
               </p>

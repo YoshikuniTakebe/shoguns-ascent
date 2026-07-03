@@ -46,9 +46,10 @@ export function renderCardEffect(text: string): ReactNode[] {
     const IconComponent = ICON_MAP[iconName];
     if (IconComponent) {
       const iconColor = COLOR_MAP[iconName] || undefined;
+      const iconSize = iconName === 'shinto' ? 17 : 14;
       result.push(
         <span key={`icon-${matchStart}`} style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', gap: '1px' }}>
-          <IconComponent size={14} color={iconColor} />
+          <IconComponent size={iconSize} color={iconColor} />
           {amount && <span style={{ fontWeight: 'bold', color: '#c8a951' }}>{amount}</span>}
         </span>
       );

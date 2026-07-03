@@ -49,7 +49,7 @@ const positions: Record<string, { x: number; y: number }> = {
 // Position and color metadata for harvest badge rendering on the map
 const HARVEST_BADGE_META: Record<string, { color: string; position: { x: number; y: number } }> = {
   hokkaido: { color: '#5BC0EB', position: { x: 1350, y: 180 } },
-  oshu: { color: '#9B8EC4', position: { x: 1315, y: 380 } },
+  oshu: { color: '#B0BEC5' /* previous: #9B8EC4 */, position: { x: 1315, y: 380 } },
   kanto: { color: '#E63946', position: { x: 1345, y: 600 } },
   edo: { color: '#2D8B4E', position: { x: 940, y: 540 } },
   kansai: { color: '#F57C20', position: { x: 885, y: 630 } },
