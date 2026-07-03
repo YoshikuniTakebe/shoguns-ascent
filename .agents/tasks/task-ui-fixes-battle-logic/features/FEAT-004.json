@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Implement full Fukurokuju logic: increase max fortress reserve by 1, treat as fortress for recruit (count for placements and allow recruiting where Fukurokuju is), cannot be taken hostage, immune to betrayal",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/utils/gameLogic.ts, find the `calculateRecruitPlacements` function (around line 676). Currently it counts fortress figures on the map. It should also count Fukurokuju (monsterCardId === 'sp-fukurokuju') as a fortress for this count. Add: also count figures where f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju' && f.owner === playerId as fortresses.",
     "2. In src/utils/gameLogic.ts, find the `recruitPlaceFigure` function (around line 685). Currently it validates that a province must have a fortress. It should ALSO allow placement in provinces where Fukurokuju is present (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju' && f.owner === playerId). Update the validation: hasFortress should also check for Fukurokuju.",
@@ -27,5 +27,5 @@
     "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 6 hasFortress checks updated across 3 files (gameLogic.ts, RegionCard.tsx, gameStore.ts). The lunaHasValidProvince helper in gameStore.ts also needed the update. Pre-existing TS6133 warnings in ActionPanel.tsx about unused variables are not related to this change."
 }
