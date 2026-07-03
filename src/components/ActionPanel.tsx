@@ -128,7 +128,7 @@ export const ActionPanel = () => {
           )}
 
           {isMyTurn && (!cp || cp.allies.length === 0) && (
-            <div className="alliance-options">
+            <div className="alliance-options" style={{ maxHeight: '200px', overflowY: 'auto' }}>
               {gameState.players
                 .filter(p => p.id !== (gameState.mode === 'hotseat' ? cp?.id : localPlayerId))
                 .filter(p => !cp?.allies.includes(p.id) && p.allies.length === 0)
@@ -531,7 +531,7 @@ export const ActionPanel = () => {
                         </button>
                       ))}
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
                       <button
                         className="btn-primary"
                         style={{ flex: 1 }}

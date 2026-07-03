@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Battle result popup layout fixes: bets section horizontal coins, casualties 3-column layout without type text, imperial poets single line, popup spacing/height adjustments, and seppuku result popup improvements",
+  "status": "pending",
+  "steps": [
+    "1. In src/components/BattlePanel.tsx, in the BattleResultPopup component, find the 'Apuestas' section (around line 178-206). Change the coin display per tactic from vertical (column) to horizontal (row). Currently each bid is a div with flexDirection column per tactic. Change the inner layout of each bid entry from column to row: make the CoinIcon and amount display horizontally (flex row with gap), so all bids for a tactic fit in one row.",
+    "2. In src/components/BattlePanel.tsx, in the 'Killed figures' (battle.killedFigures) section, remove the text that shows the figure type name (e.g. 'daimyo eliminado', 'shinto eliminado'). Instead show only: ClanShield + player name + FigureTypeIcon + count. Layout: distribute entries in a 3-column grid using CSS grid with grid-template-columns: repeat(3, 1fr) or flexbox with flex-wrap so items are in 3 columns.",
+    "3. In src/components/BattlePanel.tsx, in the 'Poetas Imperiales' section, change the death breakdown from two lines ('Seppuku: X muertes' and 'Batalla: Y muertes') to a single line: 'X muertos por Seppuku y Y muertos en Batalla'. This should be rendered in one <p> element without linebreaks.",
+    "4. In src/components/BattlePanel.tsx, reduce the top padding/margin of the popup card. Currently the card has no explicit padding-top override. Add paddingTop: '15px' to the inline style of the .battle-popup-card div. Also increase the maxHeight from '85vh' to a value that provides 25px more on top and 25px more on bottom. Change maxHeight to 'calc(85vh + 50px)' or simply '90vh'.",
+    "5. In src/components/BattlePanel.tsx, improve the Seppuku result popup (battleStepPhase === 'seppuku-result'). Center the content, make the troop sacrifice icons larger (increase FigureTypeIcon size from 16 to 28-32), make the VPIcon/HonorIcon larger (from 18 to 28), use MonsterIcon component (imported from ./Icons) for monster figures instead of FigureTypeIcon's default emoji fallback, and color the troop icons with the clan color. Pass the seppukuClan?.color as the color prop for the icons."
+  ],
+  "acceptance_criteria": [
+    "Bets section shows coin amounts in a horizontal row, not stacked vertically",
+    "Casualties section is in 3-column layout without figure type text labels",
+    "Imperial Poets section death breakdown is a single line: 'X muertos por Seppuku y Y muertos en Batalla'",
+    "Popup has max 15px between top border and content, maxHeight increased by 50px total",
+    "Seppuku result popup has centered content, larger troop/VP/honor icons, monster icon uses MonsterIcon component in clan color",
+    "TypeScript compilation succeeds"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit",
+    "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

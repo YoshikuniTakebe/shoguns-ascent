@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "UI adjustments: figure sizes in diorama, Fujin undo button icon change, Fujin text change, Sol glow removal, season cards modal title border color change, tea ceremony scrollbar fix, betray monster cancel button layout fix",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/components/RegionDetailModal.tsx, update the FIGURE_SIZE_OVERRIDES object. Apply NEW net values: 'daimyo-tortuga': 0.90, 'daimyo-libelula': 0.95, 'bushi-luna': 0.85, 'bushi-zorro': 0.90, 'daimyo-zorro': 0.95, 'daimyo-loto': 0.95, 'bushi-sol': 0.95, 'bushi-loto': 0.95, 'bushi-koi': 1.05, 'daimyo-sol': 0.95, 'daimyo-bonsai': 0.95, 'bushi-bonsai': 0.93, 'bushi-libelula': 0.93. Leave all other entries (monsters etc) unchanged.",
+    "2. In src/components/GameBoard.tsx, change the Fujin undo button from a text button with class 'btn-primary' to a circular button (like the Raijin undo button pattern on line ~310) using the UndoIcon component. Style: width 36px, height 36px, borderRadius 50%, padding 0, display inline-flex, alignItems center, justifyContent center, use btn-secondary class.",
+    "3. In src/components/GameBoard.tsx, change the Fujin movements text. Currently it shows '{count} Movimientos'. Change it to show: ClanShield of the winning player + player name in clan color + 'tienes {count} movimientos'. Get the winnerId from currentTemple.winnerId, find the player and clan from gameState.",
+    "4. In src/components/RegionCard.tsx, remove the Sol glow effect. Remove the conditional class assignment that adds 'figure-icon-sol' when ownerClanId === 'sol'. The figures should render the same as other clans (they already have a border from the figure-icon class drop-shadow filter).",
+    "5. In src/App.css, change the .season-cards-modal-title text-shadow from white (#fff) to a soft gray. Change all occurrences of '#fff' in the text-shadow to '#aaa' or 'rgba(170,170,170,0.8)' in the .season-cards-modal-title and .season-cards-modal-title * rules.",
+    "6. In src/components/ActionPanel.tsx, fix the tea ceremony alliance selection scrollbar issue. When a clan button is selected and grows, it causes the sidebar to scroll. Add a CSS fix: the btn-alliance.selected class should not increase its height/padding significantly, OR add overflow-y handling to the right-panel. The simplest fix: in the .alliance-options container or the tea-phase section, set a max-height and overflow-y: auto so only that section scrolls, not the whole sidebar.",
+    "7. In src/components/ActionPanel.tsx, fix the betray monster selection popup button layout. The 'Reemplazar' and 'Cancelar' buttons currently use flexDirection: 'row' (display: flex with gap). Change it to flexDirection: 'column' so they stack vertically instead of overflowing horizontally."
+  ],
+  "acceptance_criteria": [
+    "FIGURE_SIZE_OVERRIDES has the correct net values for all 13 specified figures",
+    "Fujin undo button is a circular icon button with UndoIcon instead of text",
+    "Fujin movements text shows clan shield + player name + 'tienes X movimientos'",
+    "Sol clan troops no longer have the solGlow animation class on the map",
+    "Season cards modal title has gray text-shadow border instead of white",
+    "Tea ceremony alliance selection does not cause the whole sidebar to scroll",
+    "Betray monster selection Reemplazar/Cancelar buttons are stacked vertically",
+    "TypeScript compilation succeeds with no errors"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit",
+    "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

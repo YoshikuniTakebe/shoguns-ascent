@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Implement full Fukurokuju logic: increase max fortress reserve by 1, treat as fortress for recruit (count for placements and allow recruiting where Fukurokuju is), cannot be taken hostage, immune to betrayal",
+  "status": "pending",
+  "steps": [
+    "1. In src/utils/gameLogic.ts, find the `calculateRecruitPlacements` function (around line 676). Currently it counts fortress figures on the map. It should also count Fukurokuju (monsterCardId === 'sp-fukurokuju') as a fortress for this count. Add: also count figures where f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju' && f.owner === playerId as fortresses.",
+    "2. In src/utils/gameLogic.ts, find the `recruitPlaceFigure` function (around line 685). Currently it validates that a province must have a fortress. It should ALSO allow placement in provinces where Fukurokuju is present (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju' && f.owner === playerId). Update the validation: hasFortress should also check for Fukurokuju.",
+    "3. In src/utils/gameLogic.ts, the take-hostage logic (around line 2174-2177) already excludes 'sp-fukurokuju' from being captured. Verify this is correct - it is. No change needed here.",
+    "4. In src/utils/gameLogic.ts, the betray logic (around line 1258-1259) already prevents targeting Fukurokuju. Verify - it is. No change needed here.",
+    "5. In src/components/RegionCard.tsx, in the recruit target highlighting logic (around line 160-175), currently it checks for fortress figures to determine if a province is a valid recruit target. Also check for Fukurokuju owned by the player. Update the hasFortress check: province.figures.some(f => (f.type === 'fortress' && f.owner === apid) || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju' && f.owner === apid)).",
+    "6. In src/components/RegionCard.tsx, same change for the monster placement target logic (around line 128-145) where hasFortress is checked for monster placement provinces.",
+    "7. Consider the Jinmenju summon active check in ActionPanel.tsx - the jinmenju province check should NOT count Fukurokuju province. That logic only looks for 'sp-jinmenju' so no change needed.",
+    "8. In src/store/gameStore.ts, find doRecruitPlaceFigure or wherever the recruit validation is done on the store side. Check if there's duplicate validation that needs the same Fukurokuju update. Look for hasFortress checks in the store recruit logic."
+  ],
+  "acceptance_criteria": [
+    "calculateRecruitPlacements counts Fukurokuju as a fortress for placement count",
+    "recruitPlaceFigure allows placement in provinces where Fukurokuju (owned by player) is present",
+    "RegionCard highlights provinces with Fukurokuju as valid recruit targets",
+    "RegionCard highlights provinces with Fukurokuju as valid monster placement targets",
+    "Fukurokuju cannot be taken hostage (already implemented)",
+    "Fukurokuju is immune to betray (already implemented)",
+    "TypeScript compilation succeeds"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit",
+    "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

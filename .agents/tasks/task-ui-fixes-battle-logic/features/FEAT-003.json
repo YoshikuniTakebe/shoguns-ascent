@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Fix battle force display bug: participantForces should show FINAL force after seppuku casualties removed, after hostage taken, and after ronin added - not the initial pre-resolution force",
+  "status": "pending",
+  "steps": [
+    "1. The bug is in src/utils/gameLogic.ts in the resolveNextBattle function. Currently at line ~2050, 'preResolutionForces' is calculated BEFORE seppuku/hostage removals (it uses the province state at that point). But in step-by-step mode (stepByStepMode === true), seppuku and hostage-taking already happened via store actions BEFORE resolveNextBattle is called. So for step-by-step mode, the forces ARE already correct since province figures were already updated by the store. However, the comment says 'BEFORE any seppuku/hostage removals' which was the old non-step-by-step logic.",
+    "2. The real issue: in step-by-step mode, the participantForces are computed from the province at the START of resolveNextBattle, AFTER seppuku/hostage/ronin were applied by store actions. But in the BattleResultPopup, it shows `battle.resolutionData.participantForces` OR `battleResolutionData.participantForces` from the store. The store's `battleResolutionData` is set by `determineTacticWinners` (line 198) which computes forces at the time bids are submitted - BEFORE any tactics are applied. This is the stale value shown in the popup.",
+    "3. Fix: In src/utils/gameLogic.ts resolveNextBattle function, when in stepByStepMode and storing battle.resolutionData, always UPDATE the participantForces field to use the actual forces computed from `finalProvince` (the province state AFTER seppuku/hostage) INCLUDING ronin. Replace all occurrences where `...resData` is spread into battle.resolutionData with an override: `participantForces: preResolutionForces` (which in step-by-step mode already reflects post-seppuku/hostage state since those were applied before this function was called).",
+    "4. Actually, looking more carefully: the `preResolutionForces` variable is computed from `province` (which is the state at the START of resolveNextBattle). In step-by-step mode, seppuku/hostage were already executed by store actions so `province` already reflects those changes. But it does NOT include ronin force for the hire-ronin winner. The fix: ensure preResolutionForces includes ronin force for hire-ronin winner (it already does via the preHireRoninWinner check above). BUT the issue is that in step-by-step mode, the `resData` that gets spread has its own `participantForces` from determineTacticWinners (the stale value). So when we do `...resData`, we need to OVERRIDE participantForces. Add `participantForces: preResolutionForces` to all battle.resolutionData assignments in stepByStepMode.",
+    "5. In src/utils/gameLogic.ts, at lines ~2366 and ~2391 where `battle.resolutionData = { ...resData, ... }` is set in stepByStepMode blocks, explicitly add `participantForces: preResolutionForces` to override the stale value from resData."
+  ],
+  "acceptance_criteria": [
+    "In step-by-step mode, battle result popup shows the force AFTER seppuku casualties, AFTER hostage taken, and WITH ronin added",
+    "If a player committed seppuku and lost all troops, their force shows as 0 (or just ronin if they won hire-ronin)",
+    "If a player had a troop taken as hostage, the force reflects the reduced figure count",
+    "TypeScript compilation succeeds"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit",
+    "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

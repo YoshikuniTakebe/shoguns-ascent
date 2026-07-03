@@ -132,7 +132,7 @@ const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure:
 
   if (figure.type === 'bushi') {
     return (
-      <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
+      <span className={`figure-icon figure-icon-wrapper`}>
         <BushiIcon size={21} color={color} />
         {tooltipContent}
       </span>
@@ -140,7 +140,7 @@ const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure:
   }
   if (figure.type === 'shinto') {
     return (
-      <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
+      <span className={`figure-icon figure-icon-wrapper`}>
         <ShintoIcon size={21} color={color} />
         {tooltipContent}
       </span>
@@ -148,7 +148,7 @@ const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure:
   }
   if (figure.type === 'fortress') {
     return (
-      <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
+      <span className={`figure-icon figure-icon-wrapper`}>
         <FortressIcon size={21} color={color} />
         {tooltipContent}
       </span>
@@ -156,7 +156,7 @@ const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure:
   }
   if (figure.type === 'daimyo') {
     return (
-      <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
+      <span className={`figure-icon figure-icon-wrapper`}>
         <DaimyoIcon size={21} color={color} />
         {tooltipContent}
       </span>
@@ -164,7 +164,7 @@ const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure:
   }
   if (figure.type === 'monster') {
     return (
-      <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
+      <span className={`figure-icon figure-icon-wrapper`}>
         <MonsterIcon size={21} color={color} />
         {tooltipContent}
       </span>
@@ -176,7 +176,7 @@ const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure:
     kami: '\u2728',
   };
   return (
-    <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`} style={{ color }}>
+    <span className={`figure-icon figure-icon-wrapper`} style={{ color }}>
       {icons[figure.type] || '\u25CF'}
       {tooltipContent}
     </span>

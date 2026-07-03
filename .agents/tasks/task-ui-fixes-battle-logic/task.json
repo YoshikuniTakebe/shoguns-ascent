@@ -1,0 +1,7 @@
+{
+  "task_id": "task-ui-fixes-battle-logic",
+  "task_description": "Multiple UI fixes, battle force display bug fix, and Fukurokuju logic implementation",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

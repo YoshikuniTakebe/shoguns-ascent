@@ -1,0 +1,30 @@
+{
+  "project_type": "React+TypeScript+Vite+Zustand board game (Rising Sun adaptation)",
+  "language": "TypeScript/React",
+  "build_system": "Vite with TypeScript, npm scripts",
+  "test_framework": "No test framework found - project uses manual testing",
+  "build_command": "cd /projects/sandbox/shoguns-ascent && npx tsc -b && npx vite build",
+  "test_command": "cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit",
+  "verification_instructions": "Run TypeScript compilation to check for type errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/shoguns-ascent && npm install",
+  "environment_constraints": "No test framework. Verify by running tsc type checks and vite build.",
+  "contribution_requirements": "Work directly on main branch, commit and push to main",
+  "key_patterns": "Components in src/components/, game logic in src/utils/gameLogic.ts, state in src/store/gameStore.ts, CSS in src/App.css (single minified file), i18n in src/i18n/en.ts and es.ts, figure images in src/utils/figureImages.ts. Types in src/types/game.ts. Icons as SVG components in src/components/Icons.tsx. ClanShield in src/components/ClanShields.tsx.",
+  "relevant_files": [
+    "src/components/RegionDetailModal.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/components/KamiResolutionPopup.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/ActionPanel.tsx",
+    "src/components/RegionCard.tsx",
+    "src/components/Icons.tsx",
+    "src/App.css",
+    "src/store/gameStore.ts",
+    "src/utils/gameLogic.ts",
+    "src/types/game.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts"
+  ],
+  "directory_structure": "src/components/ - React components, src/store/ - Zustand store, src/utils/ - game logic, src/types/ - TypeScript types, src/i18n/ - translations, src/img/ - images, src/App.css - all styles"
+}

@@ -280,14 +280,21 @@ export const GameBoard = () => {
             if (gameState.fujinMovesRemaining < 0) return null;
             const { doFujinDone, doFujinUndo, fujinPreMoveState } = useGameStore.getState();
             const movesRemaining = gameState.fujinMovesRemaining;
+            const winnerPlayer = currentTemple.winnerId ? gameState.players.find(p => p.id === currentTemple.winnerId) : null;
+            const winnerClan = winnerPlayer ? CLANS.find(c => c.id === winnerPlayer.clanId) : null;
+            const clanColor = winnerClan?.color || '#fff';
             return (
               <div className="kami-action-overlay" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 {movesRemaining > 0 && (
-                  <span>{t('kami.resolution.fujinMoves', { count: String(movesRemaining) })}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
+                    {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
+                    <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
+                    {' tienes ' + movesRemaining + ' movimientos'}
+                  </span>
                 )}
                 {fujinPreMoveState && (
-                  <button className="btn-primary" onClick={doFujinUndo} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
-                    {t('kami.resolution.fujinUndo')}
+                  <button className="btn-secondary" onClick={doFujinUndo} style={{ width: '36px', height: '36px', borderRadius: '50%', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <UndoIcon size={18} color="currentColor" />
                   </button>
                 )}
                 {movesRemaining > 0 && (
