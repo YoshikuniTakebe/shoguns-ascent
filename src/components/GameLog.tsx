@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
-import { VPIcon, CoinIcon, RoninIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, ShintoIcon, DaimyoIcon, FortressIcon, MonsterIcon } from './Icons';
+import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, ShintoIcon, DaimyoIcon, FortressIcon, MonsterIcon } from './Icons';
 
 const MANDATE_COLORS: Record<string, string> = {
   train: '#8B4513',
@@ -169,6 +169,12 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
   const roninPattern = /(\d+\s*)?\b(ronin|ronins)\b/gi;
   segments = applyPattern(segments, roninPattern, (m, key) => (
     <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#E63946', fontWeight: 'bold' }}>{m}<RoninIcon size={14} color="#E63946" /></span>
+  ));
+
+  // 6.5. Replace honor keyword with bold styling + HonorIcon
+  const honorPattern = /\b(honor)\b/gi;
+  segments = applyPattern(segments, honorPattern, (m, key) => (
+    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}>{m}<HonorIcon size={14} /></span>
   ));
 
   // 7. Replace moneda/monedas/coin/coins keyword (and preceding number if present) with bold gold + icon

@@ -1207,7 +1207,8 @@ function executeBetray(state: GameState, issuerId: string): GameState {
     }
     issuer.allies = [];
     loseHonor(newState, issuerId);
-    newState.log = [...newState.log, `${issuer.name} rompe su alianza y pierde honor`];
+    const newHonorPosition = newState.honorTrack.indexOf(issuerId) + 1;
+    newState.log = [...newState.log, `${issuer.name} rompe su alianza y pierde honor bajando a la posicion ${newHonorPosition}`];
   }
 
   // Set up interactive betray state - only the issuer acts
