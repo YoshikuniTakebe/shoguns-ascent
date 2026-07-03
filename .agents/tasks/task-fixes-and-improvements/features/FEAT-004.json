@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "UI improvements: Legend button position fix, Sol clan color change, diorama figure size adjustments, Seppuku popup enhancement, Battle result popup enhancement",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "LEGEND BUTTON FIX in src/components/SeasonCardsModal.tsx and src/App.css: The legend button (? button) and theme toggle are both positioned at top-left (absolute, top: 0.6-0.7rem, left: 0.9rem) causing overlap. Fix by moving the theme toggle to be positioned next to the legend button (to its right). Change the inline style on the legend-button-wrapper div to keep it at top-left. Change the CSS for .season-cards-theme-toggle to position it at top: 0.7rem, left: 3.5rem (right of the ? button) instead of left: 0.9rem.",
     "SOL CLAN COLOR CHANGE in src/types/game.ts: Change Sol clan color from '#DAA520' (goldenrod) to '#8B6914' (the Shikoku hex reward badge color). This is the CLANS array entry for 'sol'.",
@@ -22,5 +22,5 @@
   ],
   "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 6 changes implemented successfully. TypeScript compilation passes. participantForces computed in determineTacticWinners (step-by-step mode) and preResolutionForces at start of resolveNextBattle (non-step-by-step). seppukuFigures computed in both doSeppukuDecision store action and resolveNextBattle seppuku case. FistIcon was imported but DaimyoIcon/MonsterIcon were not needed since FigureTypeIcon handles rendering internally."
 }
