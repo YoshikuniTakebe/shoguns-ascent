@@ -21,6 +21,9 @@ export const TradeModal = () => {
   if (!cp) return null;
 
   const otherPlayers = gameState.players.filter(p => p.id !== cp.id);
+  const targetPlayer = selectedPlayer ? gameState.players.find(p => p.id === selectedPlayer) : null;
+  const requestCoinsMax = targetPlayer ? targetPlayer.coins : 20;
+  const requestRoninMax = targetPlayer ? targetPlayer.ronin : 20;
 
   const handleSend = () => {
     if (!selectedPlayer) return;
@@ -77,7 +80,7 @@ export const TradeModal = () => {
               <input
                 type="range"
                 min={0}
-                max={20}
+                max={requestCoinsMax}
                 value={requestCoins}
                 onChange={(e) => setRequestCoins(Number(e.target.value))}
                 className="trade-slider"
@@ -112,7 +115,7 @@ export const TradeModal = () => {
               <input
                 type="range"
                 min={0}
-                max={20}
+                max={requestRoninMax}
                 value={requestRonin}
                 onChange={(e) => setRequestRonin(Number(e.target.value))}
                 className="trade-slider"
@@ -133,7 +136,12 @@ export const TradeModal = () => {
                   key={p.id}
                   className={`trade-player-btn${isSelected ? ' selected' : ''}`}
                   style={{ borderColor: isSelected ? (clan?.color || '#c8a951') : 'transparent' }}
-                  onClick={() => setSelectedPlayer(p.id)}
+                  onClick={() => {
+                    setSelectedPlayer(p.id);
+                    // Clamp request values to target player's actual resources
+                    if (requestCoins > p.coins) setRequestCoins(p.coins);
+                    if (requestRonin > p.ronin) setRequestRonin(p.ronin);
+                  }}
                 >
                   <ClanShield clanId={p.clanId} size={28} />
                   <span style={{ color: clan?.color, fontWeight: 'bold' }}>{p.name}</span>

@@ -450,6 +450,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   doSendTrade: (toPlayerId, offerCoins, offerRonin, requestCoins, requestRonin) => {
     const { gameState } = get();
     if (!gameState) return;
+    if (gameState.currentPhase !== 'politics') return;
     const cp = gameState.players[gameState.currentPlayerIndex];
     if (!cp) return;
     // Validate sender has enough resources
@@ -472,6 +473,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   doAcceptTrade: (offerId) => {
     const { gameState } = get();
     if (!gameState) return;
+    if (gameState.currentPhase !== 'politics') return;
     const offer = gameState.tradeOffers.find(o => o.id === offerId);
     if (!offer || offer.status !== 'pending') return;
     const sender = gameState.players.find(p => p.id === offer.fromPlayerId);
@@ -479,15 +481,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!sender || !recipient) return;
     // Validate resources
     if (sender.coins < offer.offerCoins || sender.ronin < offer.offerRonin) {
-      // Sender no longer has enough - remove the offer
+      // Sender no longer has enough - remove the offer and notify
       const ns = { ...gameState, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
-      set({ gameState: ns });
+      set({ gameState: ns, ruleViolationMessage: `${sender.name} no longer has enough resources to fulfill this trade.` });
       return;
     }
     if (recipient.coins < offer.requestCoins || recipient.ronin < offer.requestRonin) {
-      // Recipient does not have enough to fulfill request - remove the offer
+      // Recipient does not have enough to fulfill request - remove the offer and notify
       const ns = { ...gameState, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
-      set({ gameState: ns });
+      set({ gameState: ns, ruleViolationMessage: `You do not have enough resources to accept this trade.` });
       return;
     }
     // Transfer resources
@@ -1592,7 +1594,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'INITIATE_WAR', playerId: get().localPlayerId });
       return;
     }
-    const ns = initiateWarPhase(gameState);
+    const nsRaw = initiateWarPhase(gameState);
+    // Clear pending trade offers when leaving politics phase
+    const ns = { ...nsRaw, tradeOffers: [] as typeof nsRaw.tradeOffers };
     if (ns.zorroPlacementActive) {
       // Zorro needs to place first, don't start battles yet
       set({ gameState: ns, battleCurrentBiddingIndex: 0 });

@@ -247,7 +247,8 @@ export const ActionPanel = () => {
           <h4>{t('actions.politics', { current: gameState.politicsMandateCount + 1, total: gameState.maxMandates })}</h4>
           <p className="phase-description">{t('actions.politicsDesc')}</p>
 
-          {/* Trade button */}
+          {/* Trade button - only in hotseat mode */}
+          {gameState.mode === 'hotseat' && (
           <button
             className="btn-secondary trade-btn"
             onClick={() => setTradeModalOpen(true)}
@@ -256,6 +257,7 @@ export const ActionPanel = () => {
             <HandshakeIcon size={22} color="#c8a951" />
             <span style={{ fontWeight: 'bold', color: '#c8a951', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('trade.button')}</span>
           </button>
+          )}
 
           {/* Train mandate active - show skip option */}
           {gameState.trainMandateActive && (() => {

@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-004",
+  "type": "fix",
+  "description": "Code review fixes: clear stale trade offers on phase transition, add phase guards to trade actions, cap request slider max to target player resources, show rule violation message on insufficient funds, gate trade button behind hotseat mode",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/store/gameStore.ts, in doInitiateWar (the politics-to-war transition), clear tradeOffers by adding tradeOffers: [] to the state update.",
+    "2. In src/store/gameStore.ts, add a phase guard at the top of doSendTrade: if currentPhase !== 'politics', return early.",
+    "3. In src/store/gameStore.ts, add a phase guard at the top of doAcceptTrade: if currentPhase !== 'politics', return early.",
+    "4. In src/components/TradeModal.tsx, replace the hardcoded max={20} on request sliders with the selected target player's actual coins/ronin.",
+    "5. In src/store/gameStore.ts, in doAcceptTrade, when resources are insufficient, set ruleViolationMessage to inform the user before removing the offer.",
+    "6. In src/components/ActionPanel.tsx, gate the TRATO button behind gameState.mode === 'hotseat'."
+  ],
+  "acceptance_criteria": [
+    "Trade offers are cleared when transitioning from politics to war",
+    "doSendTrade returns early if currentPhase is not politics",
+    "doAcceptTrade returns early if currentPhase is not politics",
+    "Request coin slider max equals the selected target player's actual coins",
+    "Request ronin slider max equals the selected target player's actual ronin",
+    "When accepting a trade with insufficient funds, a rule violation message is shown",
+    "TRATO button only appears in hotseat mode",
+    "Build passes with npm run build"
+  ],
+  "verification": [
+    "npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": null
+}
