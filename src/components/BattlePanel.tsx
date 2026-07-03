@@ -231,28 +231,73 @@ function BattleResultPopup({
   // Use resolution data from battle or prop
   const resData = battle.resolutionData || resolutionData;
 
+  // Build bets data from battle.warTacticBids
+  const tacticIds = ['seppuku', 'take-hostage', 'hire-ronin', 'imperial-poets'] as const;
+  const tacticLabels: Record<string, string> = {
+    'seppuku': 'Seppuku',
+    'take-hostage': 'Take Hostage',
+    'hire-ronin': 'Hire Ronin',
+    'imperial-poets': 'Imperial Poets',
+  };
+
   return (
     <div className="battle-popup-overlay">
-      <div className="battle-popup-card" style={{ maxHeight: '85vh', overflow: 'auto' }}>
+      <div className="battle-popup-card" style={{ maxWidth: '700px', width: '95%', maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}>
         <h3 className="battle-popup-title">{t('battle.resultTitle')}</h3>
         <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
           {resProvince?.name || battle.provinceId}
         </p>
+        {/* Bets (Apuestas) container */}
+        {battle.warTacticBids && Object.keys(battle.warTacticBids).length > 0 && (
+          <div style={{ margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>Apuestas</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+              {tacticIds.map(tacticId => {
+                const bidsForTactic = battle.participants
+                  .map(pid => {
+                    const playerBids = battle.warTacticBids[pid];
+                    const amount = playerBids?.[tacticId] || 0;
+                    if (amount <= 0) return null;
+                    const player = gameState.players.find(p => p.id === pid);
+                    const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
+                    return { pid, player, clan, amount };
+                  })
+                  .filter(Boolean) as { pid: string; player: any; clan: any; amount: number }[];
+                return (
+                  <div key={tacticId} style={{ background: 'rgba(0,0,0,0.15)', padding: '0.4rem', borderRadius: '4px', minWidth: '120px', flex: 1 }}>
+                    <p style={{ margin: '0 0 0.3rem', fontSize: '0.8em', fontWeight: 'bold', opacity: 0.8 }}>{tacticLabels[tacticId]}</p>
+                    {bidsForTactic.length === 0 && (
+                      <span style={{ fontSize: '0.75em', opacity: 0.5 }}>-</span>
+                    )}
+                    {bidsForTactic.map(({ pid, clan, amount }) => (
+                      <div key={pid} style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', margin: '0.1rem 0' }}>
+                        <CoinIcon size={14} color={clan?.color || '#FFD700'} />
+                        <span style={{ fontWeight: 'bold', color: clan?.color || '#fff', fontSize: '0.85em' }}>{amount}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {/* Participant force badges */}
         {resData?.participantForces && resData.participantForces.length > 0 && (
           <div style={{ margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
-            {resData.participantForces.map((pf, i) => {
-              const pfPlayer = gameState.players.find(p => p.id === pf.playerId);
-              const pfClan = pfPlayer ? CLANS.find(c => c.id === pfPlayer.clanId) : null;
-              return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.2rem 0' }}>
-                  <ClanShield clanId={pfPlayer?.clanId || ''} size={20} />
-                  <span style={{ color: pfClan?.color, fontWeight: 'bold', fontSize: '0.9em' }}>{pfPlayer?.name}</span>
-                  <FistIcon size={16} color={pfClan?.color || '#fff'} />
-                  <span style={{ fontWeight: 'bold', fontSize: '0.9em' }}>{pf.force}</span>
-                </div>
-              );
-            })}
+            <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>Fuerza Total</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', maxWidth: '100%' }}>
+              {resData.participantForces.map((pf, i) => {
+                const pfPlayer = gameState.players.find(p => p.id === pf.playerId);
+                const pfClan = pfPlayer ? CLANS.find(c => c.id === pfPlayer.clanId) : null;
+                return (
+                  <div key={i} style={{ background: 'rgba(15,52,96,0.5)', border: `1px solid ${pfClan?.color || '#fff'}`, borderRadius: '6px', padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <ClanShield clanId={pfPlayer?.clanId || ''} size={18} />
+                    <FistIcon size={16} color={pfClan?.color || '#fff'} />
+                    <span style={{ fontWeight: 'bold', color: pfClan?.color || '#fff' }}>{pf.force}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
         {winner && winnerClan && (
@@ -267,6 +312,25 @@ function BattleResultPopup({
           <p style={{ color: winnerClan?.color, margin: '0.25rem 0' }}>
             {t('battle.resultWarToken', { province: resProvince?.name || battle.provinceId })}
           </p>
+        )}
+        {/* Seppuku section */}
+        {resData?.seppukuAccepted && resData.seppukuWinnerId && (
+          <div style={{ margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>Seppuku</p>
+            {(() => {
+              const seppPlayer = gameState.players.find(p => p.id === resData.seppukuWinnerId);
+              const seppClan = seppPlayer ? CLANS.find(c => c.id === seppPlayer.clanId) : null;
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.9em', flexWrap: 'wrap' }}>
+                  <ClanShield clanId={seppPlayer?.clanId || ''} size={16} />
+                  <span style={{ color: seppClan?.color, fontWeight: 'bold' }}>{seppPlayer?.name}</span>
+                  <span style={{ opacity: 0.7 }}>sacrifico</span>
+                  <span style={{ fontWeight: 'bold' }}>{resData.seppukuKillCount}</span>
+                  <span style={{ opacity: 0.7 }}>unidades</span>
+                </div>
+              );
+            })()}
+          </div>
         )}
         {/* Killed figures display */}
         {battle.killedFigures && battle.killedFigures.length > 0 && (
@@ -406,6 +470,9 @@ export const BattlePanel = () => {
 
   // --- COIN DISTRIBUTION POPUP: show when winner must allocate remainder coins ---
   if (gameState.coinDistributionPending) {
+    // If map peek is active, hide the popup so the map is visible
+    if (biddingMapPeek) return null;
+
     const pending = gameState.coinDistributionPending;
     const winner = gameState.players.find(p => p.id === pending.winnerId);
     const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
@@ -458,7 +525,18 @@ export const BattlePanel = () => {
     return createPortal(
       <div className="battle-popup-overlay">
         <div className="battle-popup-card">
-          <h3 className="battle-popup-title">{t('battle.coinDistributionTitle')}</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+            <h3 className="battle-popup-title" style={{ margin: 0 }}>{t('battle.coinDistributionTitle')}</h3>
+            <button
+              className="bidding-peek-map-btn"
+              onClick={() => setBiddingMapPeek(true)}
+              title="Ver Mapa"
+              style={{ background: 'rgba(30,50,80,0.8)', border: '1px solid var(--border-gold)', borderRadius: '4px', padding: '0.3rem 0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-primary)', fontSize: '0.8em' }}
+            >
+              <span style={{ fontSize: '1.1em' }}>&#128065;</span>
+              <span>Ver Mapa</span>
+            </button>
+          </div>
           <p style={{ fontSize: '0.95em', marginBottom: '0.5rem' }}>
             {province?.name || pending.battleProvinceId}
           </p>
@@ -570,12 +648,10 @@ export const BattlePanel = () => {
           </p>
           <div style={{ margin: '0.75rem 0', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }}>
             <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '0.95em' }}>Has obtenido:</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.3rem 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.3rem 0', flexWrap: 'wrap' }}>
               <VPIcon size={18} color="#f5c842" />
               <span style={{ color: '#f5c842', fontWeight: 'bold' }}>{killCount}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.3rem 0' }}>
-              <span>Has subido</span>
+              <span>y has subido</span>
               <HonorIcon size={18} color="#9b59b6" />
               <span style={{ color: '#9b59b6', fontWeight: 'bold' }}>{killCount}</span>
               <span>posiciones</span>

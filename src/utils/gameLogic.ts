@@ -2003,15 +2003,44 @@ export function resolveNextBattle(state: GameState): GameState {
   const provinceName = province?.name || battle.provinceId;
   newState.log = [...newState.log, `--- Inicio Batalla ${battleNumber} (${provinceName}) ---`];
 
-  // Compute participant forces BEFORE any seppuku/hostage removals (for non-step-by-step mode)
-  const preResolutionForces = battle.participants.map(pid => ({
-    playerId: pid,
-    force: calculateForce(province, pid, newState),
-  }));
-
   // Check if step-by-step resolution was used (resolutionData present = seppuku/hostage already handled)
   const resData = battle.resolutionData;
   const stepByStepMode = !!resData;
+
+  // Determine hire-ronin winner BEFORE computing preResolutionForces so we can include ronin in force display
+  let preHireRoninWinner: string | null = null;
+  {
+    let highestRoninBid = 0;
+    battle.participants.forEach((pid) => {
+      const playerBids = battle.warTacticBids[pid];
+      const bid = playerBids?.['hire-ronin'] || 0;
+      if (bid > highestRoninBid) {
+        highestRoninBid = bid;
+        preHireRoninWinner = pid;
+      } else if (bid === highestRoninBid && bid > 0) {
+        const currentHonor = newState.honorTrack.indexOf(preHireRoninWinner!);
+        const challengerHonor = newState.honorTrack.indexOf(pid);
+        if (challengerHonor < currentHonor) {
+          preHireRoninWinner = pid;
+        }
+      }
+    });
+  }
+
+  // Compute participant forces BEFORE any seppuku/hostage removals, but INCLUDING ronin for hire-ronin winner
+  const preResolutionForces = battle.participants.map(pid => {
+    let force = calculateForce(province, pid, newState);
+    if (pid === preHireRoninWinner) {
+      const player = newState.players.find(p => p.id === pid)!;
+      force += player.ronin;
+      if (player.clanId === 'koi') {
+        const totalBidByPlayer = Object.values(battle.warTacticBids[pid] || {}).reduce((s, v) => s + v, 0);
+        const remainingCoins = player.coins - totalBidByPlayer;
+        force += Math.max(0, remainingCoins);
+      }
+    }
+    return { playerId: pid, force };
+  });
 
   // Resolve War Tactics (left to right: Seppuku, Take Hostage, Hire Ronin, Imperial Poets)
   const sortedTactics = [...WAR_TACTICS].sort((a, b) => a.order - b.order);

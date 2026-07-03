@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "Battle result window improvements: force total as badges (3 per row), correct ronin force in total, wider layout no horizontal scroll, seppuku section, bets container showing coins per tactic per clan, and force total title. Also seppuku popup text on single line, coin distribution peek map button.",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/components/BattlePanel.tsx BattleResultPopup, change the participantForces display from a vertical list to horizontal badge-style layout with flex-wrap, 3 badges per row. Each badge shows ClanShield + FistIcon(clan color) + force number (bold, clan color). The force displayed should include ronin if the player won hire-ronin tactic.",
+    "2. Fix the force total calculation: the participantForces in resolutionData is computed BEFORE ronin are added. We need to add ronin force to the winner of hire-ronin. In BattleResultPopup, check battle.warTacticBids to determine who won hire-ronin and add their ronin force to the displayed total. Access the battle's warTacticBids and the player's ronin count from gameState.",
+    "3. Add a 'Fuerza Total' title text above the force badges section, similar to how 'Bajas', 'Prisioneros', and 'Poetas Imperiales' have titles.",
+    "4. Add a new 'Seppuku' section in the battle result popup that shows which player won seppuku (if any) and how many units were sacrificed. Format: ClanShield + player name + 'sacrifico' + count + 'unidades'.",
+    "5. Add a new 'Apuestas' (Bets) container BEFORE the force total section. This container has 4 sub-containers in a row (flex-wrap). Each sub-container has a title: 'Seppuku', 'Take Hostage', 'Hire Ronin', 'Imperial Poets'. Inside each, show for each clan that bid > 0: a CoinIcon in the clan color + the number of coins in bold + clan color. This gives a visual overview of all bets.",
+    "6. Make the battle result popup wider to avoid horizontal scrolling: increase max-width and ensure content wraps within. Remove maxHeight scroll or make it vertical-only with appropriate width.",
+    "7. In the seppuku result popup (battleStepPhase === 'seppuku-result'), put the VP and Honor text on a single line with format: 'VPIcon {number} y has subido HonorIcon {number} posiciones' all inline.",
+    "8. In the coin distribution popup (coinDistributionPending with remainder > 0), add a 'Ver Mapa' button that calls setBiddingMapPeek(true) to allow peeking at the map. Import setBiddingMapPeek if needed."
+  ],
+  "acceptance_criteria": [
+    "tsc --noEmit passes without errors",
+    "npm run build succeeds",
+    "Force total shows as badges, 3 per row, with correct values including ronin",
+    "Force total section has 'Fuerza Total' title",
+    "Seppuku section shows in result popup when seppuku occurred",
+    "Bets container shows 4 tactic columns with clan-colored coin icons and amounts",
+    "Battle result window is wide enough to not need horizontal scrolling",
+    "Seppuku result popup shows VP and honor on single line",
+    "Coin distribution popup has Ver Mapa button"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit && npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}
