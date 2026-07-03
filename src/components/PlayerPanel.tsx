@@ -88,6 +88,11 @@ const PlayerReserves = ({ player, gameState }: { player: Player; gameState: Game
   const clan = CLANS.find(c => c.id === player.clanId)!;
   const totals = computeReserveTotals(player, gameState);
 
+  // Get list of monster card names for tooltip
+  const monsterCardNames = player.seasonCards
+    .filter(c => c.cardType === 'monster')
+    .map(c => c.name);
+
   return (
     <>
       <span className="reserve-item" title="Bushi">
@@ -106,9 +111,16 @@ const PlayerReserves = ({ player, gameState }: { player: Player; gameState: Game
         <DaimyoIcon size={18} color={clan.color} className="reserve-icon" />
         <span className="reserve-count">{totals.daimyo.reserve}/{totals.daimyo.total}</span>
       </span>
-      <span className="reserve-item" title="Monstruo">
+      <span className="reserve-item reserve-item-monster-wrapper">
         <MonsterIcon size={18} color={clan.color} className="reserve-icon" />
         <span className="reserve-count">{totals.monsters.reserve}/{totals.monsters.total}</span>
+        {monsterCardNames.length > 0 && (
+          <span className="figure-tooltip monster-reserve-tooltip" style={{ borderColor: clan.color }}>
+            {monsterCardNames.map((name, idx) => (
+              <span key={idx} className="figure-tooltip-name" style={{ color: clan.color }}>{name}</span>
+            ))}
+          </span>
+        )}
       </span>
     </>
   );

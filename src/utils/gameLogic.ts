@@ -7,7 +7,7 @@ import type {
 import {
   CLANS, PROVINCES_DATA, HOME_PROVINCES, WAR_TACTICS,
   KAMI_DATA, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS,
-  DECK_GROUPS, CLAN_INCOME,
+  DECK_GROUPS, CLAN_INCOME, SEASON_CARDS_DATA,
 } from '../types/game';
 
 // ============================================================
@@ -1225,7 +1225,7 @@ function executeBetray(state: GameState, issuerId: string): GameState {
   return newState;
 }
 
-export function betraySelectFigure(state: GameState, issuerId: string, figureId: string, provinceId: string): GameState {
+export function betraySelectFigure(state: GameState, issuerId: string, figureId: string, provinceId: string, selectedMonsterCardId?: string): GameState {
   if (!state.betrayMandateActive || state.betrayMandateIssuerId !== issuerId) return state;
 
   const newState: GameState = {
@@ -1254,6 +1254,9 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
   // Validation: cannot target daimyo
   if (figure.type === 'daimyo') return state;
 
+  // Validation: cannot target monsters that count as daimyo (Fukurokuju, Yurei)
+  if (figure.type === 'monster' && figure.monsterCardId && ['sp-fukurokuju', 'su-yurei'].includes(figure.monsterCardId)) return state;
+
   // Validation: cannot target fortress (fortresses are structures, not figures)
   if (figure.type === 'fortress') return state;
 
@@ -1275,16 +1278,16 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
     if (issuer.shinto <= 0) return state;
   } else if (figure.type === 'monster') {
     // Check if issuer has an undeployed monster card
-    const deployedMonsterIds = new Set<string>();
+    const deployedMonsterCardIds = new Set<string>();
     Object.values(newState.provinces).forEach((prov) => {
       prov.figures.forEach((f) => {
-        if (f.type === 'monster' && f.owner === issuerId) {
-          deployedMonsterIds.add(f.id);
+        if (f.type === 'monster' && f.owner === issuerId && f.monsterCardId) {
+          deployedMonsterCardIds.add(f.monsterCardId);
         }
       });
     });
     const hasUndeployedMonster = issuer.seasonCards.some(
-      (card) => card.cardType === 'monster' && !deployedMonsterIds.has(card.id)
+      (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
     );
     if (!hasUndeployedMonster) return state;
   }
@@ -1295,6 +1298,9 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
 
   // Create a replacement figure of the same type owned by the issuer
   const replacementFigure = createFigure(figure.type, issuerId);
+  if (figure.type === 'monster' && selectedMonsterCardId) {
+    replacementFigure.monsterCardId = selectedMonsterCardId;
+  }
   newFigures.push(replacementFigure);
   newState.provinces[provinceId] = { ...province, figures: newFigures };
 
@@ -1319,6 +1325,14 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
   newState.betraySelectedOwners.push(figure.owner);
   newState.betraySelectionsRemaining -= 1;
 
+  // Get monster names for display
+  const targetMonsterName = figure.type === 'monster' && figure.monsterCardId
+    ? (SEASON_CARDS_DATA.find(c => c.id === figure.monsterCardId)?.name || undefined)
+    : undefined;
+  const replacementMonsterName = figure.type === 'monster' && selectedMonsterCardId
+    ? (SEASON_CARDS_DATA.find(c => c.id === selectedMonsterCardId)?.name || undefined)
+    : undefined;
+
   // Track replacement for UI display
   newState.betrayReplacements = [...newState.betrayReplacements, {
     figureType: figure.type,
@@ -1326,6 +1340,10 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
     targetPlayerName: figureOwner.name,
     provinceId: provinceId,
     provinceName: province.name,
+    targetMonsterName,
+    targetMonsterCardId: figure.type === 'monster' ? figure.monsterCardId : undefined,
+    replacementMonsterName,
+    replacementMonsterCardId: figure.type === 'monster' ? selectedMonsterCardId : undefined,
   }];
 
   newState.log = [...newState.log, `${issuer.name} reemplaza ${figure.type} de ${figureOwner.name} en ${province.name}`];

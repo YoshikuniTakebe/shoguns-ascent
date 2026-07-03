@@ -314,6 +314,11 @@ interface GameStore {
   toggleBetrayMode: () => void;
   doBetraySelectFigure: (figureId: string, provinceId: string) => void;
   doSkipBetrayTurn: () => void;
+  betrayMonsterSelectionVisible: boolean;
+  betrayMonsterSelectionProvinceId: string | null;
+  betrayMonsterSelectionFigureId: string | null;
+  doBetrayConfirmMonster: (monsterCardId: string) => void;
+  doBetrayDismissMonsterSelection: () => void;
 
   // Harvest acknowledgement
   doAcknowledgeHarvest: () => void;
@@ -655,6 +660,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       buildFortressMode: false,
       recruitMode: undoMandateState.recruitMandateActive,
       betrayMode: undoMandateState.betrayMandateActive,
+      betrayMonsterSelectionVisible: false,
+      betrayMonsterSelectionProvinceId: null,
+      betrayMonsterSelectionFigureId: null,
     });
   },
   kamiPhasePopupVisible: false,
@@ -1079,14 +1087,71 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'BETRAY_SELECT_FIGURE', playerId: apid, payload: { figureId, provinceId } });
       return;
     }
+    // Check if the target is a monster and the issuer has multiple in reserve
+    const province = gameState.provinces[provinceId];
+    const figure = province?.figures.find(f => f.id === figureId);
+    if (figure && figure.type === 'monster') {
+      const issuer = gameState.players.find(p => p.id === apid);
+      if (issuer) {
+        const deployedMonsterCardIds = new Set<string>();
+        Object.values(gameState.provinces).forEach((prov) => {
+          prov.figures.forEach((f) => {
+            if (f.type === 'monster' && f.owner === apid && f.monsterCardId) {
+              deployedMonsterCardIds.add(f.monsterCardId);
+            }
+          });
+        });
+        const reserveMonsters = issuer.seasonCards.filter(
+          (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
+        );
+        if (reserveMonsters.length > 1) {
+          // Show monster selection popup
+          set({ betrayMonsterSelectionVisible: true, betrayMonsterSelectionProvinceId: provinceId, betrayMonsterSelectionFigureId: figureId });
+          return;
+        }
+        // Single monster - use it directly
+        if (reserveMonsters.length === 1) {
+          const ns = betraySelectFigure(gameState, apid, figureId, provinceId, reserveMonsters[0].id);
+          if (!ns.betrayMandateActive) {
+            const advanced = advancePlayer(ns);
+            set({ gameState: advanced, betrayMode: false, undoMandateState: null, ...detectWarTransitionWithPopup(advanced), ...detectKamiPopupPending(advanced) });
+          } else {
+            set({ gameState: ns });
+          }
+          return;
+        }
+      }
+    }
     const ns = betraySelectFigure(gameState, apid, figureId, provinceId);
     if (!ns.betrayMandateActive) {
       const advanced = advancePlayer(ns);
       // Detect war phase transition and set up battle step phase for hotseat
       set({ gameState: advanced, betrayMode: false, undoMandateState: null, ...detectWarTransitionWithPopup(advanced), ...detectKamiPopupPending(advanced) });
     } else {
-      set({ gameState: ns, undoMandateState: JSON.parse(JSON.stringify(ns)) });
+      set({ gameState: ns });
     }
+  },
+  betrayMonsterSelectionVisible: false,
+  betrayMonsterSelectionProvinceId: null,
+  betrayMonsterSelectionFigureId: null,
+  doBetrayConfirmMonster: (monsterCardId: string) => {
+    const { gameState, localPlayerId } = get();
+    if (!gameState || !localPlayerId) return;
+    const cp = getCurrentPlayer(gameState);
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (!apid) return;
+    const { betrayMonsterSelectionProvinceId, betrayMonsterSelectionFigureId } = get();
+    if (!betrayMonsterSelectionProvinceId || !betrayMonsterSelectionFigureId) return;
+    const ns = betraySelectFigure(gameState, apid, betrayMonsterSelectionFigureId, betrayMonsterSelectionProvinceId, monsterCardId);
+    if (!ns.betrayMandateActive) {
+      const advanced = advancePlayer(ns);
+      set({ gameState: advanced, betrayMode: false, undoMandateState: null, betrayMonsterSelectionVisible: false, betrayMonsterSelectionProvinceId: null, betrayMonsterSelectionFigureId: null, ...detectWarTransitionWithPopup(advanced), ...detectKamiPopupPending(advanced) });
+    } else {
+      set({ gameState: ns, betrayMonsterSelectionVisible: false, betrayMonsterSelectionProvinceId: null, betrayMonsterSelectionFigureId: null });
+    }
+  },
+  doBetrayDismissMonsterSelection: () => {
+    set({ betrayMonsterSelectionVisible: false, betrayMonsterSelectionProvinceId: null, betrayMonsterSelectionFigureId: null });
   },
   doSkipBetrayTurn: () => {
     const { gameState, ws } = get();

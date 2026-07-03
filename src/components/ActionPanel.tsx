@@ -6,6 +6,7 @@ import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { BushiIcon, ShintoIcon, MonsterIcon, CoinIcon, UndoIcon, SpringIcon, SummerIcon, AutumnIcon, HandshakeIcon } from './Icons';
 import { ClanShield } from './ClanShields';
+import { getCardEffectKey } from '../utils/cardTranslations';
 
 export const ActionPanel = () => {
   const {
@@ -20,12 +21,15 @@ export const ActionPanel = () => {
     undoMandateState, doUndoMandate,
     jinmenjuSummonActive, doJinmenjuActivate, doJinmenjuCancel,
     setTradeModalOpen,
+    betrayMonsterSelectionVisible, betrayMonsterSelectionProvinceId, betrayMonsterSelectionFigureId,
+    doBetrayConfirmMonster, doBetrayDismissMonsterSelection,
   } = useGameStore();
   const t = useT();
 
   const [selectedAllianceTarget, setSelectedAllianceTarget] = useState<string | null>(null);
   const [bribeAmount, setBribeAmount] = useState<number>(0);
   const [requestAmount, setRequestAmount] = useState<number>(0);
+  const [selectedBetrayMonster, setSelectedBetrayMonster] = useState<string | null>(null);
 
   if (!gameState) return null;
   const cp = gameState.players[gameState.currentPlayerIndex];
@@ -468,6 +472,22 @@ export const ActionPanel = () => {
               );
             })();
 
+            // Get reserve monsters for the popup
+            const reserveMonsters = (() => {
+              if (!cp || !betrayMonsterSelectionVisible) return [];
+              const deployedMonsterCardIds = new Set<string>();
+              Object.values(gameState.provinces).forEach((prov) => {
+                prov.figures.forEach((f) => {
+                  if (f.type === 'monster' && f.owner === cp.id && f.monsterCardId) {
+                    deployedMonsterCardIds.add(f.monsterCardId);
+                  }
+                });
+              });
+              return cp.seasonCards.filter(
+                (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
+              );
+            })();
+
             return (
               <div className="betray-active">
                 <p className="betray-notice" style={{ margin: 0 }}>
@@ -482,24 +502,87 @@ export const ActionPanel = () => {
                 </p>
                 <p className="betray-selections">{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
                 {(canDeployBushi || canDeployShinto || canDeployMonster) && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '8px 0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', margin: '8px 0' }}>
                     {canDeployBushi && <BushiIcon size={36} color={cpClan?.color || '#E63946'} />}
                     {canDeployShinto && <ShintoIcon size={36} color={cpClan?.color || '#E63946'} />}
                     {canDeployMonster && <MonsterIcon size={36} color={cpClan?.color || '#E63946'} />}
                   </div>
                 )}
                 <p className="betray-instruction">{t('actions.betrayClickInstruction')}</p>
+
+                {/* Monster selection popup */}
+                {betrayMonsterSelectionVisible && cp && (
+                  <div style={{ background: 'rgba(15,52,96,0.97)', border: `2px solid ${cpClan?.color || '#E63946'}`, borderRadius: '10px', padding: '12px', margin: '8px 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <ClanShield clanId={cp.clanId} size={36} />
+                      <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold' }}>{cp.name}</span>
+                    </div>
+                    <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Selecciona monstruo</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }}>
+                      {reserveMonsters.map((card) => (
+                        <button
+                          key={card.id}
+                          className={`btn-alliance${selectedBetrayMonster === card.id ? ' selected' : ''}`}
+                          style={{ borderColor: cpClan?.color || '#E63946', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          onClick={() => setSelectedBetrayMonster(selectedBetrayMonster === card.id ? null : card.id)}
+                        >
+                          <MonsterIcon size={18} color={cpClan?.color || '#E63946'} />
+                          <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold' }}>{card.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <button
+                        className="btn-primary"
+                        style={{ flex: 1 }}
+                        disabled={!selectedBetrayMonster}
+                        onClick={() => {
+                          if (selectedBetrayMonster) {
+                            doBetrayConfirmMonster(selectedBetrayMonster);
+                            setSelectedBetrayMonster(null);
+                          }
+                        }}
+                      >
+                        Reemplazar
+                      </button>
+                      <button
+                        className="btn-secondary"
+                        style={{ flex: 1 }}
+                        onClick={() => { doBetrayDismissMonsterSelection(); setSelectedBetrayMonster(null); }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {gameState.betrayReplacements.length > 0 && (
                   <div style={{ marginTop: '8px', fontSize: '0.85em' }}>
                     {gameState.betrayReplacements.map((entry, idx) => {
                       const entryClan = CLANS.find(c => c.id === entry.targetClanId);
+                      const tooltipParts: string[] = [];
+                      if (entry.figureType === 'monster') {
+                        if (entry.targetMonsterName) tooltipParts.push(`Sustituido: ${entry.targetMonsterName}`);
+                        if (entry.targetMonsterCardId) {
+                          const effect = t(getCardEffectKey(entry.targetMonsterCardId));
+                          if (effect) tooltipParts.push(effect);
+                        }
+                        if (entry.replacementMonsterName) tooltipParts.push(`Desplegado: ${entry.replacementMonsterName}`);
+                        if (entry.replacementMonsterCardId) {
+                          const effect = t(getCardEffectKey(entry.replacementMonsterCardId));
+                          if (effect) tooltipParts.push(effect);
+                        }
+                      }
                       return (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }} title={tooltipParts.length > 0 ? tooltipParts.join(' | ') : undefined}>
                           <ClanShield clanId={entry.targetClanId} size={22} />
                           <span style={{ color: entryClan?.color || '#fff', fontWeight: 'bold' }}>{entry.targetPlayerName}</span>
                           {entry.figureType === 'bushi' && <BushiIcon size={18} color={entryClan?.color || '#fff'} />}
                           {entry.figureType === 'shinto' && <ShintoIcon size={18} color={entryClan?.color || '#fff'} />}
                           {entry.figureType === 'monster' && <MonsterIcon size={18} color={entryClan?.color || '#fff'} />}
+                          {entry.figureType === 'monster' && entry.targetMonsterName && (
+                            <span style={{ color: entryClan?.color || '#fff', fontSize: '0.9em' }}>{entry.targetMonsterName}</span>
+                          )}
                           <span style={{ color: 'var(--text-secondary)' }}>en {entry.provinceName}</span>
                         </div>
                       );

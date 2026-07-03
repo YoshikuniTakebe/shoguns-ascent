@@ -331,3 +331,8 @@
 /* Trade button in politics panel */
 .trade-btn{border-radius:8px;transition:all 0.2s}
 .trade-btn:hover{background:rgba(200,169,81,0.15)}
+
+/* Monster reserve tooltip in sidebar */
+.reserve-item-monster-wrapper{position:relative}
+.reserve-item-monster-wrapper:hover .monster-reserve-tooltip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+.monster-reserve-tooltip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(6px);background:linear-gradient(145deg,rgba(15,52,96,0.98),rgba(10,35,65,0.98));padding:6px 10px;border-radius:8px;white-space:nowrap;opacity:0;visibility:hidden;transition:all 0.2s;z-index:1000;display:flex;flex-direction:column;gap:2px;border-width:2px;border-style:solid;pointer-events:none;min-width:80px}
