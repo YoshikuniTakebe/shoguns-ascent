@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "feat",
   "description": "Battle result window improvements: force total as badges (3 per row), correct ronin force in total, wider layout no horizontal scroll, seppuku section, bets container showing coins per tactic per clan, and force total title. Also seppuku popup text on single line, coin distribution peek map button.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/BattlePanel.tsx BattleResultPopup, change the participantForces display from a vertical list to horizontal badge-style layout with flex-wrap, 3 badges per row. Each badge shows ClanShield + FistIcon(clan color) + force number (bold, clan color). The force displayed should include ronin if the player won hire-ronin tactic.",
     "2. Fix the force total calculation: the participantForces in resolutionData is computed BEFORE ronin are added. We need to add ronin force to the winner of hire-ronin. In BattleResultPopup, check battle.warTacticBids to determine who won hire-ronin and add their ronin force to the displayed total. Access the battle's warTacticBids and the player's ronin count from gameState.",
@@ -26,5 +26,5 @@
   ],
   "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit && npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes implemented successfully. Force calculation fix moved hireRoninWinner detection before preResolutionForces to include ronin in displayed totals. Badge layout uses flexbox with flex-wrap. Bets container shows all 4 tactics with clan-colored CoinIcons. Seppuku section added. Popup widened to 700px. Seppuku-result popup condensed to single line. Coin distribution peek map button added with biddingMapPeek null-return guard."
 }
