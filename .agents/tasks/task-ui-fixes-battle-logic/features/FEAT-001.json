@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "UI adjustments: figure sizes in diorama, Fujin undo button icon change, Fujin text change, Sol glow removal, season cards modal title border color change, tea ceremony scrollbar fix, betray monster cancel button layout fix",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/RegionDetailModal.tsx, update the FIGURE_SIZE_OVERRIDES object. Apply NEW net values: 'daimyo-tortuga': 0.90, 'daimyo-libelula': 0.95, 'bushi-luna': 0.85, 'bushi-zorro': 0.90, 'daimyo-zorro': 0.95, 'daimyo-loto': 0.95, 'bushi-sol': 0.95, 'bushi-loto': 0.95, 'bushi-koi': 1.05, 'daimyo-sol': 0.95, 'daimyo-bonsai': 0.95, 'bushi-bonsai': 0.93, 'bushi-libelula': 0.93. Leave all other entries (monsters etc) unchanged.",
     "2. In src/components/GameBoard.tsx, change the Fujin undo button from a text button with class 'btn-primary' to a circular button (like the Raijin undo button pattern on line ~310) using the UndoIcon component. Style: width 36px, height 36px, borderRadius 50%, padding 0, display inline-flex, alignItems center, justifyContent center, use btn-secondary class.",
@@ -27,5 +27,5 @@
     "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 7 UI changes implemented successfully. TypeScript compilation passes (only pre-existing unused variable warnings in ActionPanel.tsx). Vite build succeeds. The Fujin overlay now shows ClanShield + player name + movimientos text, and undo button uses UndoIcon in a circular button following the Raijin pattern already present in the file."
 }
