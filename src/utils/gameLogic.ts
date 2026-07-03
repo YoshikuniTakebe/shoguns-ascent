@@ -1993,6 +1993,12 @@ export function resolveNextBattle(state: GameState): GameState {
   // Record the log index where this battle's entries begin
   battle.logStartIndex = newState.log.length;
 
+  // Compute participant forces BEFORE any seppuku/hostage removals (for non-step-by-step mode)
+  const preResolutionForces = battle.participants.map(pid => ({
+    playerId: pid,
+    force: calculateForce(province, pid, newState),
+  }));
+
   // Check if step-by-step resolution was used (resolutionData present = seppuku/hostage already handled)
   const resData = battle.resolutionData;
   const stepByStepMode = !!resData;
@@ -2002,6 +2008,7 @@ export function resolveNextBattle(state: GameState): GameState {
 
   let battleDeathCount = stepByStepMode ? (resData.seppukuAccepted ? resData.seppukuKillCount : 0) : 0;
   let imperialPoetsBidder: string | null = null;
+  let seppukuFigures: { type: string; count: number }[] | undefined;
 
   for (const tactic of sortedTactics) {
     // In step-by-step mode, skip seppuku and take-hostage (already handled by store actions)
@@ -2096,6 +2103,12 @@ export function resolveNextBattle(state: GameState): GameState {
         battleDeathCount += killCount;
         const seppukuHonorPos = getHonorRank(newState, highestBidder);
         newState.log = [...newState.log, `${bidder.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV y ${killCount} Honor ahora ${bidder.victoryPoints} PV y posicion ${seppukuHonorPos} en Honor`];
+        // Compute figure type breakdown for seppuku
+        const figTypeCounts: Record<string, number> = {};
+        for (const fig of ownFigures) {
+          figTypeCounts[fig.type] = (figTypeCounts[fig.type] || 0) + 1;
+        }
+        seppukuFigures = Object.entries(figTypeCounts).map(([type, count]) => ({ type, count }));
         break;
       }
       case 'take-hostage': {
@@ -2298,6 +2311,23 @@ export function resolveNextBattle(state: GameState): GameState {
           battleDeathCount: battleCasualtyCount,
           imperialPoetsVP: totalDeaths,
         };
+      } else {
+        battle.resolutionData = {
+          seppukuWinnerId: null,
+          hostageWinnerId: null,
+          roninWinnerId: null,
+          imperialPoetsWinnerId: imperialPoetsBidder,
+          seppukuKillCount: 0,
+          seppukuAccepted: false,
+          phoenixDiedInSeppuku: false,
+          phoenixDiedInBattle,
+          capturedHostage: null,
+          roninForce: 0,
+          battleDeathCount: battleCasualtyCount,
+          imperialPoetsVP: totalDeaths,
+          seppukuFigures,
+          participantForces: preResolutionForces,
+        };
       }
     } else if (stepByStepMode) {
       battle.resolutionData = {
@@ -2305,6 +2335,23 @@ export function resolveNextBattle(state: GameState): GameState {
         phoenixDiedInBattle,
         battleDeathCount: battleCasualtyCount,
         imperialPoetsVP: 0,
+      };
+    } else {
+      battle.resolutionData = {
+        seppukuWinnerId: null,
+        hostageWinnerId: null,
+        roninWinnerId: null,
+        imperialPoetsWinnerId: null,
+        seppukuKillCount: 0,
+        seppukuAccepted: false,
+        phoenixDiedInSeppuku: false,
+        phoenixDiedInBattle,
+        capturedHostage: null,
+        roninForce: 0,
+        battleDeathCount: battleCasualtyCount,
+        imperialPoetsVP: 0,
+        seppukuFigures,
+        participantForces: preResolutionForces,
       };
     }
 

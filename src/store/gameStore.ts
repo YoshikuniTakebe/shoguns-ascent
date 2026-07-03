@@ -36,6 +36,7 @@ import {
   loseHonor,
   gainHonor,
   resolveUncontestedBattles,
+  calculateForce,
 } from '../utils/gameLogic';
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -180,7 +181,7 @@ function attachResolutionData(state: GameState, resData: BattleResolutionData): 
 /**
  * Determines tactic winners from bids without resolving - used to drive step-by-step popups.
  */
-function determineTacticWinners(state: GameState, battle: { participants: string[]; warTacticBids: { [playerId: string]: { [tacticId: string]: number } } }): BattleResolutionData {
+function determineTacticWinners(state: GameState, battle: { provinceId: string; participants: string[]; warTacticBids: { [playerId: string]: { [tacticId: string]: number } } }): BattleResolutionData {
   const result: BattleResolutionData = {
     seppukuWinnerId: null,
     hostageWinnerId: null,
@@ -194,6 +195,10 @@ function determineTacticWinners(state: GameState, battle: { participants: string
     roninForce: 0,
     battleDeathCount: 0,
     imperialPoetsVP: 0,
+    participantForces: battle.participants.map(pid => ({
+      playerId: pid,
+      force: calculateForce(state.provinces[battle.provinceId], pid, state),
+    })),
   };
 
   for (const tactic of WAR_TACTICS) {
@@ -2004,11 +2009,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     newState.log = [...newState.log, `${bidder.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV y ${killCount} Honor`];
 
+    // Compute figure type breakdown for the seppuku result popup
+    const figureTypeCounts: Record<string, number> = {};
+    for (const fig of ownFigures) {
+      figureTypeCounts[fig.type] = (figureTypeCounts[fig.type] || 0) + 1;
+    }
+    const seppukuFigures = Object.entries(figureTypeCounts).map(([type, count]) => ({ type, count }));
+
     const updatedResData: BattleResolutionData = {
       ...battleResolutionData,
       seppukuAccepted: true,
       seppukuKillCount: killCount,
       phoenixDiedInSeppuku: phoenixDied,
+      seppukuFigures,
     };
 
     set({ gameState: newState, battleStepPhase: 'seppuku-result', battleResolutionData: updatedResData });

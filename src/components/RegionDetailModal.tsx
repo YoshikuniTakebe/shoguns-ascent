@@ -22,6 +22,10 @@ const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'daimyo-luna': 1.15,
   'bushi-luna': 0.95,
   'daimyo-libelula': 1.10,
+  'daimyo-sol': 1.10,
+  'sp-daikokuten': 0.80,
+  'sp-oni-of-souls': 1.25,
+  'sp-phoenix': 1.15,
 };
 
 /** Get the size scale override for a figure. Returns 1.0 if no override is defined. */

@@ -120,6 +120,8 @@ export interface BattleResolutionData {
   roninForce: number;
   battleDeathCount: number;
   imperialPoetsVP: number;
+  seppukuFigures?: { type: string; count: number }[];
+  participantForces?: { playerId: string; force: number }[];
 }
 
 export interface Battle {
@@ -274,7 +276,7 @@ export interface GameState {
 
 export const CLANS: Clan[] = [
   { id: 'koi', name: 'Koi', color: '#E63946', initialHonor: 1 },
-  { id: 'sol', name: 'Sol', color: '#DAA520', initialHonor: 2 },
+  { id: 'sol', name: 'Sol', color: '#8B6914', initialHonor: 2 },
   { id: 'loto', name: 'Loto', color: '#8B5CF6', initialHonor: 3 },
   { id: 'tortuga', name: 'Tortuga', color: '#2D8B4E', initialHonor: 4 },
   { id: 'libelula', name: 'Libelula', color: '#5BC0EB', initialHonor: 5 },

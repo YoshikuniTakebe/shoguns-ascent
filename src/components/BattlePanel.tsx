@@ -4,7 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS, SEASON_CARDS_DATA } from '../types/game';
 import type { Battle, GameState, BattleResolutionData } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { CoinIcon, BushiIcon, ShintoIcon, VPIcon, HonorIcon, RoninIcon } from './Icons';
+import { CoinIcon, BushiIcon, ShintoIcon, VPIcon, HonorIcon, RoninIcon, FistIcon } from './Icons';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { calculateForce } from '../utils/gameLogic';
@@ -238,6 +238,23 @@ function BattleResultPopup({
         <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
           {resProvince?.name || battle.provinceId}
         </p>
+        {/* Participant force badges */}
+        {resData?.participantForces && resData.participantForces.length > 0 && (
+          <div style={{ margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            {resData.participantForces.map((pf, i) => {
+              const pfPlayer = gameState.players.find(p => p.id === pf.playerId);
+              const pfClan = pfPlayer ? CLANS.find(c => c.id === pfPlayer.clanId) : null;
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.2rem 0' }}>
+                  <ClanShield clanId={pfPlayer?.clanId || ''} size={20} />
+                  <span style={{ color: pfClan?.color, fontWeight: 'bold', fontSize: '0.9em' }}>{pfPlayer?.name}</span>
+                  <FistIcon size={16} color={pfClan?.color || '#fff'} />
+                  <span style={{ fontWeight: 'bold', fontSize: '0.9em' }}>{pf.force}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {winner && winnerClan && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <ClanShield clanId={winner.clanId} size={28} />
@@ -314,6 +331,7 @@ function BattleResultPopup({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
                     <ClanShield clanId={poetsPlayer?.clanId || ''} size={18} />
                     <span style={{ color: poetsClan?.color, fontWeight: 'bold' }}>{poetsPlayer?.name}</span>
+                    <span style={{ opacity: 0.8 }}>ha ganado</span>
                     <VPIcon size={16} color="#f5c842" />
                     <span style={{ color: '#f5c842', fontWeight: 'bold' }}>{resData.imperialPoetsVP}</span>
                   </div>
@@ -536,6 +554,7 @@ export const BattlePanel = () => {
     return createPortal(
       <div className="battle-popup-overlay">
         <div className="battle-popup-card" style={{ borderColor: seppukuClan?.color }}>
+          <h3 style={{ color: '#f5c842', textAlign: 'center', marginBottom: '0.5rem', marginTop: 0 }}>Has ganado Seppuku!</h3>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <ClanShield clanId={seppukuPlayer?.clanId || ''} size={36} />
             <span style={{ color: seppukuClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
@@ -553,11 +572,24 @@ export const BattlePanel = () => {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.3rem 0' }}>
               <span>Has subido</span>
-              <HonorIcon size={18} color="#e57373" />
-              <span style={{ color: '#e57373', fontWeight: 'bold' }}>{killCount}</span>
+              <HonorIcon size={18} color="#9b59b6" />
+              <span style={{ color: '#9b59b6', fontWeight: 'bold' }}>{killCount}</span>
               <span>posiciones</span>
             </div>
           </div>
+          {battleResolutionData.seppukuFigures && battleResolutionData.seppukuFigures.length > 0 && (
+            <div style={{ margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+              <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>Tropas sacrificadas:</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {battleResolutionData.seppukuFigures.map((entry, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <FigureTypeIcon figureType={entry.type} size={16} />
+                    <span style={{ fontWeight: 'bold' }}>{entry.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <button className="btn-primary battle-popup-accept" onClick={doSeppukuResultAccept}>
             {t('battle.continue')}
           </button>
