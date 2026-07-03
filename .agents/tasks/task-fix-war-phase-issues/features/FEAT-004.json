@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "fix",
   "description": "Fix the uncontested battle popup to show proper force information for allied wins. When a battle is uncontested because two allies share a province, the popup should show each player's force total and indicate who wins the province token. Update the BattlePanel uncontested popup to display force data for allied-win scenarios.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/BattlePanel.tsx: In the uncontested battle popup section (where battle.uncontested is true), enhance the display. If there are 2 participants and a winner, show both players' forces and indicate who won based on greater force.",
     "2. Import calculateForce from '../utils/gameLogic' if not already imported (it is already imported).",
@@ -19,5 +19,5 @@
   ],
   "verification": ["npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Enhanced the uncontested battle popup with 3 scenarios: allied (shows both forces), single player (wins without opposition), empty province (token discarded). Also fixed all pre-existing TypeScript errors in BattlePanel.tsx (BattleResultPopup t parameter typed as string instead of TranslationKey) and BattleBiddingOverlay.tsx (template literal as const not assignable to TranslationKey). Build now succeeds with zero TS errors."
 }
