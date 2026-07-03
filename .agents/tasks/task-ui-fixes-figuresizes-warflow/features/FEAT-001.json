@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix 4 issues: (1) Move ? legend button to right side of theme toggle in SeasonCardsModal, (2) Adjust diorama figure sizes, (3) Translate kami resolution reward text, (4) Fix war phase flow so summary popup shows before battle popup",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Step 1 - SeasonCardsModal.tsx: Move the legend button (?) to the RIGHT side of the theme toggle switch. The theme toggle is at CSS position 'position: absolute; top: 0.7rem; left: 3.8rem' (in src/App.css class .season-cards-theme-toggle). The legend button wrapper currently has inline style 'position: absolute, top: 0.6rem, left: 0.9rem'. Change it to be positioned to the right of the toggle. The toggle is 48px wide, so place the ? button at approximately left: 7.5rem (3.8rem + 48px + small gap). Keep the toggle position unchanged.",
     "Step 2 - RegionDetailModal.tsx: Update the FIGURE_SIZE_OVERRIDES constant (around line 14) to add/modify these entries: 'daimyo-bonsai': 1.10 (new, +10% from base 1.0), 'bushi-zorro': 0.90 (new, -10% from base 1.0), 'daimyo-zorro': 1.10 (new, +10% from base 1.0), 'sp-phoenix': 1.27 (currently 1.15, multiply by 1.10), 'daimyo-koi': 0.94 (currently 1.10, multiply by 0.85), 'daimyo-tortuga': 1.32 (currently 1.20, multiply by 1.10), 'bushi-koi': 0.85 (new, -15% from base 1.0)",
@@ -22,5 +22,5 @@
     "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 4 fixes implemented and verified. tsc -b and vite build both pass cleanly."
 }
