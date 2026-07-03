@@ -1678,7 +1678,14 @@ export function initiateWarPhase(state: GameState): GameState {
     if (!province) continue;
 
     // Get unique players with figures in this province
-    const playerIds = [...new Set(province.figures.map((f) => f.owner))];
+    // Exclude players who ONLY have fortress figures, unless their clan is 'tortuga'
+    const allOwners = [...new Set(province.figures.map((f) => f.owner))];
+    const playerIds = allOwners.filter((ownerId) => {
+      const ownerPlayer = newState.players.find((p) => p.id === ownerId);
+      if (ownerPlayer?.clanId === 'tortuga') return true;
+      const hasNonFortress = province.figures.some((f) => f.owner === ownerId && f.type !== 'fortress');
+      return hasNonFortress;
+    });
 
     if (playerIds.length === 0) {
       // Empty province - discard token (show as uncontested with no winner)
@@ -1807,7 +1814,14 @@ export function resolveUncontestedBattles(state: GameState): GameState {
     if (!province) return battle;
 
     // Re-evaluate participants based on current figures in province
-    const currentPlayerIds = [...new Set(province.figures.map(f => f.owner))];
+    // Exclude players who ONLY have fortress figures, unless their clan is 'tortuga'
+    const allCurrentOwners = [...new Set(province.figures.map(f => f.owner))];
+    const currentPlayerIds = allCurrentOwners.filter((ownerId) => {
+      const ownerPlayer = newState.players.find((p) => p.id === ownerId);
+      if (ownerPlayer?.clanId === 'tortuga') return true;
+      const hasNonFortress = province.figures.some((f) => f.owner === ownerId && f.type !== 'fortress');
+      return hasNonFortress;
+    });
 
     if (currentPlayerIds.length === 0) {
       // Empty - discard token
@@ -2615,7 +2629,7 @@ function applySolTiebreakBonus(state: GameState, winnerId: string, losers: strin
       if (loser.victoryPoints > 0) loser.victoryPoints -= 1;
     }
   }
-  state.log = [...state.log, `${winner.name} (Sol) gana +1 Moneda +1 PV por empate y ganar en Honor a ${losers.map((id) => state.players.find((p) => p.id === id)?.name ?? id).join(', ')} que pierde -1 Moneda -1 PV`];
+  state.log = [...state.log, `${winner.name} (Sol) gana 1 Moneda y 1 PV por empate y ganar en Honor a ${losers.map((id) => state.players.find((p) => p.id === id)?.name ?? id).join(', ')} que pierde 1 Moneda y 1 PV`];
 }
 
 /**

@@ -35,18 +35,7 @@ const MANDATE_IMAGES: Record<MandateType, string> = {
   betray: BetrayImg,
 };
 
-/** Mandate tile image for each mandate type, using actual PNG images (small version for exhausted list) */
-function MandateIllustration({ type, size = 52 }: { type: MandateType; size?: number }) {
-  return (
-    <img
-      src={MANDATE_IMAGES[type]}
-      alt={MANDATE_LABELS[type]}
-      width={size}
-      height={size}
-      style={{ objectFit: 'contain' }}
-    />
-  );
-}
+/** Mandate tile image for each mandate type, using actual PNG images (small version for exhausted list) - hidden for now */
 
 /**
  * PoliticsTrack - Shows the flow of a season:
@@ -105,10 +94,10 @@ export const PoliticsTrack = () => {
     }
   }
 
-  // Exhausted mandates (played 2 times already)
-  const exhaustedMandates = (Object.keys(mandateCounts) as MandateType[]).filter(
-    (t) => mandateCounts[t] >= 2
-  );
+  // Exhausted mandates (played 2 times already) - currently hidden
+  // const exhaustedMandates = (Object.keys(mandateCounts) as MandateType[]).filter(
+  //   (t) => mandateCounts[t] >= 2
+  // );
 
   const renderSlot = (slotIndex: number) => {
     const mandate = slotIndex < mandates.length ? mandates[slotIndex] : null;
@@ -316,22 +305,7 @@ export const PoliticsTrack = () => {
         <span className="politics-phase-tooltip">Fase de Batallas</span>
       </div>
 
-      {/* Exhausted mandates indicator */}
-      {exhaustedMandates.length > 0 && (
-        <div className="politics-track-exhausted">
-          {exhaustedMandates.map((t) => (
-            <span
-              key={t}
-              className="exhausted-mandate"
-              style={{ color: MANDATE_COLORS[t], borderColor: MANDATE_COLORS[t] }}
-              title={`${MANDATE_LABELS[t]} - agotada (jugada 2 veces)`}
-            >
-              <MandateIllustration type={t} size={21} />
-              <span className="exhausted-x">&times;</span>
-            </span>
-          ))}
-        </div>
-      )}
+      {/* Exhausted mandates indicator - hidden for now */}
 
       {/* Season Cards Button */}
       <button
