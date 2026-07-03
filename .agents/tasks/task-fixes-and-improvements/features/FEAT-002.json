@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix multiple game logic bugs: Marshal multi-select movement, Fujin confirmation step, Kotahi harvest ability, Betrayal flow improvements",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "MARSHAL MULTI-SELECT FIX in src/utils/gameLogic.ts: The moveForces function rejects figureIds.length !== 1 during marshal. Fix this by making it process multiple figures in a loop - for each selected figure, validate and move it individually. Keep marshalMovedFigures tracking. The user selects multiple figures and clicks destination, all valid ones should move.",
     "FUJIN CONFIRMATION STEP in src/store/gameStore.ts: In doFujinMove, when remaining <= 0 (all 2 moves used), do NOT auto-advance. Instead, keep the state as-is with fujinMovesRemaining=0, moveMode still true, and store the pre-move state. Show the same confirm/undo UI that exists. Add a check in the Fujin UI section (GameBoard.tsx around line 270-290) that when fujinMovesRemaining is 0 AND kamiResolutionActive is true AND the current temple is fujin, show only 'Confirmar' and 'Deshacer' buttons. The 'Confirmar' button calls doFujinDone(). The Undo button calls doFujinUndo().",
@@ -19,5 +19,5 @@
   ],
   "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 4 bugs fixed and TypeScript compilation passes. Marshal now processes multiple figures in a loop. Fujin no longer auto-advances after 2 moves (shows Confirmar/Deshacer buttons). Kotahi harvest pass added after main harvest loop. Betrayal flow no longer shows turnPopupPlayer between replacements and does not auto-finalize when selections reach 0."
 }
