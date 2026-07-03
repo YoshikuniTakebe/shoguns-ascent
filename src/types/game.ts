@@ -116,7 +116,7 @@ export interface BattleResolutionData {
   seppukuAccepted: boolean;
   phoenixDiedInSeppuku: boolean;
   phoenixDiedInBattle: boolean;
-  capturedHostage: { captorId: string; fromClanId: string; figureType: string; figureName: string } | null;
+  capturedHostage: { captorId: string; fromClanId: string; figureType: string; figureName: string; monsterCardId?: string } | null;
   roninForce: number;
   battleDeathCount: number;
   imperialPoetsVP: number;

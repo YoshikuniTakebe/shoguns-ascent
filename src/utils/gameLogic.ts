@@ -2031,10 +2031,10 @@ export function resolveNextBattle(state: GameState): GameState {
         break;
       }
       case 'take-hostage': {
-        // Capture 1 enemy Bushi/Shinto as hostage (Daimyo immune)
+        // Capture 1 enemy Bushi/Shinto/Monster as hostage (Daimyo and daimyo-type monsters immune)
         const curProv = newState.provinces[battle.provinceId];
         const enemyFigure = curProv.figures.find(
-          (f) => f.owner !== highestBidder && (f.type === 'bushi' || f.type === 'shinto')
+          (f) => f.owner !== highestBidder && (f.type === 'bushi' || f.type === 'shinto' || (f.type === 'monster' && f.monsterCardId && !['su-yurei', 'sp-fukurokuju'].includes(f.monsterCardId)))
         );
         if (enemyFigure) {
           const hostage: Hostage = { fromClanId: enemyFigure.owner, figureType: enemyFigure.type };
@@ -2048,8 +2048,8 @@ export function resolveNextBattle(state: GameState): GameState {
           if (victim) {
             if (enemyFigure.type === 'bushi') victim.bushi += 1;
             else if (enemyFigure.type === 'shinto') victim.shinto += 1;
+            else if (enemyFigure.type === 'monster') victim.monsters += 1;
           }
-          battleDeathCount += 1;
           newState.log = [...newState.log, `${bidder.name} toma un rehén de ${victim?.name}`];
         }
         break;
@@ -2205,8 +2205,14 @@ export function resolveNextBattle(state: GameState): GameState {
       // (it would have been revived after seppuku, so if the owner lost, it dies again)
       const seppukuOwnerId = resData.seppukuWinnerId;
       if (seppukuOwnerId && seppukuOwnerId !== winnerId && !winner.allies.includes(seppukuOwnerId)) {
-        // The seppuku player lost the battle - their revived Phoenix died again
-        phoenixDiedInBattle = true;
+        // Verify Phoenix is actually still in the province (not captured as hostage)
+        const phoenixStillPresent = finalProvince.figures.some(
+          (f) => f.monsterCardId === 'sp-phoenix' && f.owner === seppukuOwnerId
+        );
+        if (phoenixStillPresent) {
+          // The seppuku player lost the battle - their revived Phoenix died again
+          phoenixDiedInBattle = true;
+        }
       }
     }
     if (imperialPoetsBidder) {

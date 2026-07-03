@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-004",
+  "type": "fix",
+  "description": "Address review issues: hostage-eligible figure asymmetry, Phoenix double-death fragile inference, and hostage death counting inconsistency",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/utils/gameLogic.ts, fix the fallback take-hostage path to also allow capturing monsters (non-daimyo-type). Change the find condition to include (f.type === 'monster' && f.monsterCardId && !['su-yurei', 'sp-fukurokuju'].includes(f.monsterCardId)).",
+    "2. In src/utils/gameLogic.ts, fix the Phoenix double-death inference. Add a check that Phoenix figure is actually still in the province (not captured as hostage). Check finalProvince.figures for a figure with monsterCardId 'sp-phoenix' owned by the seppuku owner.",
+    "3. In src/utils/gameLogic.ts, remove the battleDeathCount += 1 line from the take-hostage case in the fallback path since hostage capture is not a death.",
+    "4. In src/types/game.ts, add monsterCardId field to capturedHostage interface so Phoenix capture can be detected."
+  ],
+  "acceptance_criteria": [
+    "Fallback take-hostage path can capture non-daimyo-type monsters",
+    "Phoenix double-death flag is only set if Phoenix figure is actually in the province (not captured)",
+    "Hostage capture does NOT increment battleDeathCount in the fallback path",
+    "npm run build succeeds without errors"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}

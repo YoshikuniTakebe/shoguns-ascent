@@ -2103,7 +2103,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const updatedResData: BattleResolutionData = {
       ...battleResolutionData,
-      capturedHostage: { captorId: hostageWinnerId, fromClanId: capturedFig.owner, figureType: capturedFig.type, figureName: selectedHostageTarget.figureName },
+      capturedHostage: { captorId: hostageWinnerId, fromClanId: capturedFig.owner, figureType: capturedFig.type, figureName: selectedHostageTarget.figureName, monsterCardId: capturedFig.monsterCardId },
     };
 
     // Move to next phase
