@@ -245,7 +245,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 <span>{player.coins}</span>
                 {isDiscounted && (
                   <span style={{ color: '#27ae60', marginLeft: '6px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                    ({t('seasonCardsModal.discount')} -1 <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#27ae60" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>)
+                    ({t('seasonCardsModal.discount')} -1 <CoinIcon size={23} color="#27ae60" strokeWidth="2" />)
                   </span>
                 )}
               </span>
@@ -375,14 +375,14 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
               <p style={{ margin: '0 0 20px', color: currentClan?.color || '#ccc', fontSize: '1.2em', fontWeight: 'bold' }}>
                 {currentPlayer.name}
               </p>
-              <p style={{ margin: '0 0 20px', color: '#aaa', fontSize: '0.9em' }}>
+              <p style={{ margin: '0 0 20px', color: '#aaa', fontSize: '1.1em' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <CoinIcon size={18} color="#DAA520" />
+                  <CoinIcon size={24} color="#DAA520" />
                   <span>{currentPlayer.coins}</span>
                 </span>
                 {isDiscounted && (
                   <span style={{ color: '#27ae60', marginLeft: '8px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                    ({t('seasonCardsModal.discount')} -1 <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#27ae60" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>)
+                    ({t('seasonCardsModal.discount')} -1 <CoinIcon size={23} color="#27ae60" strokeWidth="2" />)
                   </span>
                 )}
               </p>
