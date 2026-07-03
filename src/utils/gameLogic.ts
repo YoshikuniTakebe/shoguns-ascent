@@ -1999,6 +1999,10 @@ export function resolveNextBattle(state: GameState): GameState {
   // Record the log index where this battle's entries begin
   battle.logStartIndex = newState.log.length;
 
+  const battleNumber = unresolvedIdx + 1;
+  const provinceName = province?.name || battle.provinceId;
+  newState.log = [...newState.log, `--- Inicio Batalla ${battleNumber} (${provinceName}) ---`];
+
   // Compute participant forces BEFORE any seppuku/hostage removals (for non-step-by-step mode)
   const preResolutionForces = battle.participants.map(pid => ({
     playerId: pid,
@@ -2417,6 +2421,7 @@ export function resolveNextBattle(state: GameState): GameState {
     newState.log = [...newState.log, `${winner.name} gana la batalla en ${finalProvince.name}!`];
   }
 
+  newState.log = [...newState.log, `--- Batalla ${unresolvedIdx + 1} resuelta ---`];
   battle.resolved = true;
   return newState;
 }

@@ -2140,10 +2140,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     if (battle.uncontested) {
       // Mark uncontested battle as resolved (user accepted the popup)
+      const province = gameState.provinces[battle.provinceId];
+      const battleNumber = currentBattleIndex + 1;
+      const provinceName = province?.name || battle.provinceId;
+      const newLog = [...gameState.log, `--- Inicio Batalla ${battleNumber} (${provinceName}) ---`];
+      if (battle.winner) {
+        const winner = gameState.players.find(p => p.id === battle.winner);
+        newLog.push(`${winner?.name || ''} gana sin oposicion en ${provinceName}`);
+      } else {
+        newLog.push(`Ficha de guerra descartada en ${provinceName}`);
+      }
+      newLog.push(`--- Batalla ${battleNumber} resuelta ---`);
       const updatedBattles = [...gameState.activeBattles];
       updatedBattles[currentBattleIndex] = { ...battle, resolved: true };
       set({
-        gameState: { ...gameState, activeBattles: updatedBattles },
+        gameState: { ...gameState, activeBattles: updatedBattles, log: newLog },
         battleStepPhase: 'popup',
         battleCurrentBiddingIndex: 0,
       });
