@@ -383,6 +383,7 @@ export const BattlePanel = () => {
     doCoinDistributionDismiss,
     biddingMapPeek,
     setBiddingMapPeek,
+    warPhasePopupVisible,
   } = useGameStore();
   const t = useT();
 
@@ -399,6 +400,9 @@ export const BattlePanel = () => {
       </div>
     );
   }
+
+  // --- WAR PHASE POPUP: suppress battle popups while war summary is visible ---
+  if (warPhasePopupVisible) return null;
 
   // --- COIN DISTRIBUTION POPUP: show when winner must allocate remainder coins ---
   if (gameState.coinDistributionPending) {

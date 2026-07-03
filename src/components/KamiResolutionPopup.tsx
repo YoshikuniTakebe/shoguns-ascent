@@ -3,6 +3,7 @@ import { CLANS, KAMI_DATA } from '../types/game';
 import type { KamiType } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
+import type { TranslationKey } from '../i18n';
 
 import amaterasuImg from '../img/Amaterasu.png';
 import fujinImg from '../img/Fujin.png';
@@ -156,7 +157,7 @@ export const KamiResolutionPopup = () => {
               </span>
               {currentTemple.reward && (
                 <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>
-                  {t('kami.resolution.reward', { reward: currentTemple.reward })}
+                  {t('kami.resolution.reward', { reward: t(`kami.${currentTemple.kamiType}.summary` as TranslationKey) })}
                 </span>
               )}
               {currentTemple.kamiType === 'susanoo' && currentTemple.susanooVPGained !== undefined && (

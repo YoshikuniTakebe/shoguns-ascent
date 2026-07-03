@@ -1,0 +1,7 @@
+{
+  "task_id": "task-ui-fixes-figuresizes-warflow",
+  "task_description": "Fix 4 UI issues: reposition ? legend button in cards modal, adjust diorama figure sizes, translate kami resolution reward text to Spanish, fix war phase popup ordering",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

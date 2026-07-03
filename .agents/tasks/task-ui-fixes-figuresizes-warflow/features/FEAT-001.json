@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix 4 issues: (1) Move ? legend button to right side of theme toggle in SeasonCardsModal, (2) Adjust diorama figure sizes, (3) Translate kami resolution reward text, (4) Fix war phase flow so summary popup shows before battle popup",
+  "status": "in_progress",
+  "steps": [
+    "Step 1 - SeasonCardsModal.tsx: Move the legend button (?) to the RIGHT side of the theme toggle switch. The theme toggle is at CSS position 'position: absolute; top: 0.7rem; left: 3.8rem' (in src/App.css class .season-cards-theme-toggle). The legend button wrapper currently has inline style 'position: absolute, top: 0.6rem, left: 0.9rem'. Change it to be positioned to the right of the toggle. The toggle is 48px wide, so place the ? button at approximately left: 7.5rem (3.8rem + 48px + small gap). Keep the toggle position unchanged.",
+    "Step 2 - RegionDetailModal.tsx: Update the FIGURE_SIZE_OVERRIDES constant (around line 14) to add/modify these entries: 'daimyo-bonsai': 1.10 (new, +10% from base 1.0), 'bushi-zorro': 0.90 (new, -10% from base 1.0), 'daimyo-zorro': 1.10 (new, +10% from base 1.0), 'sp-phoenix': 1.27 (currently 1.15, multiply by 1.10), 'daimyo-koi': 0.94 (currently 1.10, multiply by 0.85), 'daimyo-tortuga': 1.32 (currently 1.20, multiply by 1.10), 'bushi-koi': 0.85 (new, -15% from base 1.0)",
+    "Step 3 - KamiResolutionPopup.tsx: The reward text is showing in English because it uses currentTemple.reward which is the raw English effect string from KAMI_DATA. Replace the direct rendering of currentTemple.reward with a translated version. In the component where it shows {t('kami.resolution.reward', { reward: currentTemple.reward })}, change the reward param to use t(`kami.${currentTemple.kamiType}.summary` as TranslationKey) instead of currentTemple.reward. This will use the already-existing translated summary keys like 'kami.ryujin.summary' which are properly translated to Spanish.",
+    "Step 4 - BattlePanel.tsx: Fix the war flow issue where the battle popup appears simultaneously with the war summary popup. Add a check at the top of the BattlePanel component (after the useGameStore destructuring) to read warPhasePopupVisible from the store. If warPhasePopupVisible is true, return null (suppress all battle panel rendering). This ensures the war summary popup is shown ALONE first, and only after dismissWarPhasePopup is called (which sets battleStepPhase to 'popup') do battles begin. Add warPhasePopupVisible to the destructuring from useGameStore()."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compilation (tsc -b) passes without errors",
+    "Vite build succeeds",
+    "In SeasonCardsModal: the ? button is positioned to the right of the theme toggle with a small gap",
+    "In RegionDetailModal: FIGURE_SIZE_OVERRIDES has updated/new entries for daimyo-bonsai, bushi-zorro, daimyo-zorro, sp-phoenix, daimyo-koi, daimyo-tortuga, bushi-koi",
+    "In KamiResolutionPopup: reward text uses translated kami summary keys instead of raw English effect text",
+    "In BattlePanel: component returns null when warPhasePopupVisible is true, preventing battle popup from showing while war summary is visible"
+  ],
+  "verification": [
+    "Run: cd /projects/sandbox/shoguns-ascent && npx tsc -b",
+    "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

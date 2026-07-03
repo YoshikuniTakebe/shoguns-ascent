@@ -1,0 +1,28 @@
+{
+  "project_type": "React SPA board game (Shogun-themed strategy game)",
+  "language": "TypeScript + React",
+  "build_system": "Vite with TypeScript compilation",
+  "test_framework": "No test framework configured",
+  "build_command": "cd /projects/sandbox/shoguns-ascent && npx tsc -b && npx vite build",
+  "test_command": "No tests configured - use build as validation",
+  "verification_instructions": "Run tsc -b to type-check, then vite build to confirm no errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install in /projects/sandbox/shoguns-ascent",
+  "environment_constraints": "No test framework, validation via TypeScript compilation and Vite build only",
+  "contribution_requirements": "Push directly to main",
+  "key_patterns": "Zustand store (gameStore.ts) holds all game state. Components use useGameStore() hook. i18n via useT() hook or standalone t() function. Figure size overrides in FIGURE_SIZE_OVERRIDES record in RegionDetailModal.tsx. Portals (createPortal) used for overlay popups in BattlePanel.",
+  "relevant_files": [
+    "src/components/SeasonCardsModal.tsx",
+    "src/components/RegionDetailModal.tsx",
+    "src/components/KamiResolutionPopup.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/store/gameStore.ts",
+    "src/i18n/es.ts",
+    "src/i18n/en.ts",
+    "src/i18n/index.ts",
+    "src/App.css",
+    "src/types/game.ts",
+    "src/utils/gameLogic.ts"
+  ],
+  "directory_structure": "src/components/ - React components, src/store/ - Zustand store, src/i18n/ - translations (en.ts, es.ts, index.ts), src/utils/ - game logic, src/types/ - TypeScript types"
+}
