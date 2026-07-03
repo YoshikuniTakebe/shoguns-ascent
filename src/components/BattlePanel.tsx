@@ -4,7 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS, SEASON_CARDS_DATA } from '../types/game';
 import type { Battle, GameState, BattleResolutionData } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { CoinIcon, BushiIcon, ShintoIcon, VPIcon, HonorIcon, RoninIcon, FistIcon } from './Icons';
+import { CoinIcon, BushiIcon, ShintoIcon, DaimyoIcon, MonsterIcon, VPIcon, HonorIcon, RoninIcon, FistIcon } from './Icons';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { calculateForce } from '../utils/gameLogic';
@@ -242,7 +242,7 @@ function BattleResultPopup({
 
   return (
     <div className="battle-popup-overlay">
-      <div className="battle-popup-card" style={{ maxWidth: '700px', width: '95%', maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}>
+      <div className="battle-popup-card" style={{ maxWidth: '700px', width: '95%', maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden', paddingTop: '15px' }}>
         <h3 className="battle-popup-title">{t('battle.resultTitle')}</h3>
         <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
           {resProvince?.name || battle.provinceId}
@@ -269,12 +269,14 @@ function BattleResultPopup({
                     {bidsForTactic.length === 0 && (
                       <span style={{ fontSize: '0.75em', opacity: 0.5 }}>-</span>
                     )}
-                    {bidsForTactic.map(({ pid, clan, amount }) => (
-                      <div key={pid} style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', margin: '0.1rem 0' }}>
-                        <CoinIcon size={14} color={clan?.color || '#FFD700'} />
-                        <span style={{ fontWeight: 'bold', color: clan?.color || '#fff', fontSize: '0.85em' }}>{amount}</span>
-                      </div>
-                    ))}
+                    <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '0.3rem' }}>
+                      {bidsForTactic.map(({ pid, clan, amount }) => (
+                        <div key={pid} style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <CoinIcon size={14} color={clan?.color || '#FFD700'} />
+                          <span style={{ fontWeight: 'bold', color: clan?.color || '#fff', fontSize: '0.85em' }}>{amount}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
@@ -338,20 +340,20 @@ function BattleResultPopup({
             <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>
               {t('battle.killedFigures')}
             </p>
-            {battle.killedFigures.map((kf, i) => {
-              const owner = gameState.players.find(p => p.id === kf.owner);
-              const ownerClan = owner ? CLANS.find(c => c.id === owner.clanId) : null;
-              const figTypeKey = `battle.figureType${kf.figureType.charAt(0).toUpperCase() + kf.figureType.slice(1)}` as TranslationKey;
-              return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.2rem 0', fontSize: '0.9em' }}>
-                  <ClanShield clanId={owner?.clanId || ''} size={16} />
-                  <span style={{ color: ownerClan?.color, fontWeight: 'bold' }}>{owner?.name}</span>
-                  <span style={{ opacity: 0.8 }}>-</span>
-                  <FigureTypeIcon figureType={kf.figureType} size={14} />
-                  <span>{t('battle.figuresKilled', { count: kf.count, type: t(figTypeKey) })}</span>
-                </div>
-              );
-            })}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.3rem' }}>
+              {battle.killedFigures.map((kf, i) => {
+                const owner = gameState.players.find(p => p.id === kf.owner);
+                const ownerClan = owner ? CLANS.find(c => c.id === owner.clanId) : null;
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85em' }}>
+                    <ClanShield clanId={owner?.clanId || ''} size={16} />
+                    <span style={{ color: ownerClan?.color, fontWeight: 'bold' }}>{owner?.name}</span>
+                    <FigureTypeIcon figureType={kf.figureType} size={14} />
+                    <span style={{ fontWeight: 'bold' }}>{kf.count}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
         {/* Prisoners section */}
@@ -400,8 +402,9 @@ function BattleResultPopup({
                     <span style={{ color: '#f5c842', fontWeight: 'bold' }}>{resData.imperialPoetsVP}</span>
                   </div>
                   <div style={{ fontSize: '0.85em', opacity: 0.8, paddingLeft: '0.5rem' }}>
-                    {seppukuDeaths > 0 && <p style={{ margin: '0.1rem 0' }}>Seppuku: {seppukuDeaths} muertes</p>}
-                    {battleDeaths > 0 && <p style={{ margin: '0.1rem 0' }}>Batalla: {battleDeaths} muertes</p>}
+                    {(seppukuDeaths > 0 || battleDeaths > 0) && (
+                      <p style={{ margin: '0.1rem 0' }}>{seppukuDeaths} muertos por Seppuku y {battleDeaths} muertos en Batalla</p>
+                    )}
                     {resData.phoenixDiedInSeppuku && resData.phoenixDiedInBattle && (
                       <p style={{ margin: '0.1rem 0', color: '#f5c842' }}>Phoenix murio en seppuku y en batalla (2 muertes)</p>
                     )}
@@ -648,25 +651,45 @@ export const BattlePanel = () => {
           </p>
           <div style={{ margin: '0.75rem 0', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }}>
             <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '0.95em' }}>Has obtenido:</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.3rem 0', flexWrap: 'wrap' }}>
-              <VPIcon size={18} color="#f5c842" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.3rem 0', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <VPIcon size={28} color="#f5c842" />
               <span style={{ color: '#f5c842', fontWeight: 'bold' }}>{killCount}</span>
               <span>y has subido</span>
-              <HonorIcon size={18} color="#9b59b6" />
+              <HonorIcon size={28} color="#9b59b6" />
               <span style={{ color: '#9b59b6', fontWeight: 'bold' }}>{killCount}</span>
               <span>posiciones</span>
             </div>
           </div>
           {battleResolutionData.seppukuFigures && battleResolutionData.seppukuFigures.length > 0 && (
-            <div style={{ margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            <div style={{ margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', textAlign: 'center' }}>
               <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>Tropas sacrificadas:</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {battleResolutionData.seppukuFigures.map((entry, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <FigureTypeIcon figureType={entry.type} size={16} />
-                    <span style={{ fontWeight: 'bold' }}>{entry.count}</span>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
+                {battleResolutionData.seppukuFigures.map((entry, i) => {
+                  const clanColor = seppukuClan?.color || '#fff';
+                  let icon: ReactNode;
+                  switch (entry.type) {
+                    case 'bushi':
+                      icon = <BushiIcon size={28} color={clanColor} />;
+                      break;
+                    case 'shinto':
+                      icon = <ShintoIcon size={28} color={clanColor} />;
+                      break;
+                    case 'daimyo':
+                      icon = <DaimyoIcon size={28} color={clanColor} />;
+                      break;
+                    case 'monster':
+                      icon = <MonsterIcon size={28} color={clanColor} />;
+                      break;
+                    default:
+                      icon = <FigureTypeIcon figureType={entry.type} size={28} />;
+                  }
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      {icon}
+                      <span style={{ fontWeight: 'bold' }}>{entry.count}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
