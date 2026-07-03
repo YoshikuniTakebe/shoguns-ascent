@@ -1,0 +1,19 @@
+{
+  "id": "FEAT-005",
+  "type": "feat",
+  "description": "Battle bidding overlay force badges: replace 'Fuerza:' text with FistIcon in clan color + bold number in clan color. Also update diorama figure size overrides.",
+  "status": "completed",
+  "steps": [
+    "1. In src/components/BattleBiddingOverlay.tsx, in the combatants panel section, replace the text '{t('battle.force')}: {c.force}' with a FistIcon component (size 16, color = clan color) followed by the force number in bold and clan color. Import FistIcon if not already imported.",
+    "2. In src/components/RegionDetailModal.tsx, update the FIGURE_SIZE_OVERRIDES map with the following changes: 'daimyo-zorro': change from 1.10 to 1.05 (was +10%, now +5%), 'sp-oni-of-skulls': change from 1.25 to 1.30 (was +25%, now +30%), 'sp-earth-dragon': change from 1.20 to 1.30 (was +20%, now +30%), 'daimyo-luna': change from 1.15 to 1.25 (was +15%, now +25%), add new entry 'bushi-libelula': 0.95 (new, -5%)"
+  ],
+  "acceptance_criteria": [
+    "tsc --noEmit passes without errors",
+    "npm run build succeeds",
+    "Bidding combatant badges show FistIcon in clan color + bold force number in clan color instead of 'Fuerza: N' text",
+    "RegionDetailModal figure sizes updated: daimyo-zorro 1.05, oni-of-skulls 1.30, earth-dragon 1.30, daimyo-luna 1.25, bushi-libelula 0.95"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit && npm run build"],
+  "blocked_reason": null,
+  "findings": "FistIcon was not pre-imported in BattleBiddingOverlay.tsx despite orchestrator briefing stating otherwise. Added it to existing Icons import line."
+}

@@ -1,0 +1,31 @@
+{
+  "project_type": "React + TypeScript + Vite + Zustand board game adaptation",
+  "language": "TypeScript/TSX with CSS",
+  "build_system": "Vite with tsc for type checking",
+  "test_framework": "None (manual testing only)",
+  "build_command": "cd /projects/sandbox/shoguns-ascent && npm run build",
+  "test_command": "cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit",
+  "verification_instructions": "Run tsc --noEmit to verify no type errors, then run npm run build to verify production build succeeds",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/shoguns-ascent && npm install",
+  "environment_constraints": "Internet access available for npm install if needed",
+  "contribution_requirements": "Work directly on main branch, commit and push to main",
+  "key_patterns": "Components in src/components/, state in src/store/gameStore.ts, game logic in src/utils/gameLogic.ts, types in src/types/game.ts, styling in src/App.css (minified single-line format), i18n in src/i18n/",
+  "relevant_files": [
+    "src/App.css",
+    "src/components/SeasonCardsModal.tsx",
+    "src/components/PlayerCardsModal.tsx",
+    "src/components/BattleBiddingOverlay.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/components/GameLog.tsx",
+    "src/components/RegionDetailModal.tsx",
+    "src/components/RegionCard.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/Icons.tsx",
+    "src/store/gameStore.ts",
+    "src/utils/gameLogic.ts",
+    "src/utils/renderCardEffect.tsx",
+    "src/types/game.ts"
+  ],
+  "directory_structure": "src/components/ - UI components, src/store/ - Zustand store (gameStore.ts), src/utils/ - logic and utilities, src/types/ - TypeScript types, src/i18n/ - translations, src/img/ - images, src/App.css - all styles (minified)"
+}

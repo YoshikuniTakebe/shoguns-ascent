@@ -1,0 +1,14 @@
+{
+  "task_id": "task-ui-fixes-and-battle-improvements",
+  "task_description": "Multiple UI fixes and improvements for the Shoguns Ascent board game: CSS adjustments to season/player cards modals, Zorro placement bugfix, battle log chronological ordering, battle result window redesign with force badges and bets container, bidding overlay force badge improvements, and figure size adjustments",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004", "FEAT-005"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "tsc --noEmit passes with no errors, npm run build succeeds. No test suite in this project (manual testing only)."
+  }
+}

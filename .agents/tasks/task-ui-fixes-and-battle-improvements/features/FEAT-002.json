@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix Zorro placement rules (fortress not a troop) and require Terminar button even when last bushi is placed",
+  "status": "completed",
+  "steps": [
+    "1. In src/store/gameStore.ts doZorroPlaceBushi function (around line 1749), change the check 'province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId)' to exclude fortress type: 'province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId && f.type !== 'fortress')'. This allows placing bushi in provinces where Zorro only has a fortress.",
+    "2. In src/components/RegionCard.tsx (around line 274), change 'province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId)' to also exclude fortress: 'province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId && f.type !== 'fortress')'",
+    "3. In src/utils/gameLogic.ts (around line 1732), change the eligible provinces filter to also exclude fortress when checking for own figures: 'prov.figures.some((f) => f.owner === zorroPlayer.id && f.type !== 'fortress')'",
+    "4. In src/store/gameStore.ts doZorroPlaceBushi, change the auto-advance behavior: when placementDone (newRemaining <= 0), do NOT auto-show the war popup. Instead, set zorroPlacementActive to false and zorroPlacementsRemaining to 0 but keep the overlay showing by NOT setting warPhasePopupVisible to true. Actually the simpler fix: always set newRemaining but NEVER set placementDone to true based on remaining count. Remove the 'placementDone = newRemaining <= 0' auto-trigger. The user should ALWAYS click 'Terminar' (doZorroSkipPlacement) to advance. So when newRemaining reaches 0, just update state like the else branch (set({ gameState: ns })) without triggering the war popup."
+  ],
+  "acceptance_criteria": [
+    "tsc --noEmit passes without errors",
+    "npm run build succeeds",
+    "Zorro can place bushi in a battle province where they only have a fortress",
+    "When the last bushi is placed, the game does NOT auto-advance to war popup - user must click Terminar",
+    "doZorroSkipPlacement still works correctly to advance after all placements"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit && npm run build"],
+  "blocked_reason": null,
+  "findings": "All three files updated successfully. Removed the entire placementDone auto-advance block in doZorroPlaceBushi - now always sets state without triggering war popup. User must click Terminar (doZorroSkipPlacement) which handles participant updates and war popup display. tsc and build both pass clean."
+}

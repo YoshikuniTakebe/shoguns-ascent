@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Battle log chronological ordering: add battle start/end markers, ensure logs appear in order, and fix incomplete log when war ends",
+  "status": "completed",
+  "steps": [
+    "1. In src/utils/gameLogic.ts resolveNextBattle function (around line 2000), add a log entry at the START of battle resolution: add '--- Inicio Batalla {N} ({provinceName}) ---' to newState.log right after battle.logStartIndex is set. The battle number N is unresolvedIdx + 1.",
+    "2. In src/utils/gameLogic.ts at the END of resolveNextBattle (around line 2418, after 'gana la batalla'), add '--- Batalla {N} resuelta ---' log entry. N is unresolvedIdx + 1.",
+    "3. For uncontested battles that are resolved in doAcceptBattlePopup (in gameStore.ts), also add start/end log markers when marking them as resolved. Add '--- Inicio Batalla {N} ({provinceName}) ---' and '--- Batalla {N} resuelta ---' entries.",
+    "4. Verify the log ordering: bonuses appear first (from applyWarUpgrades which runs before battles), then battle 1 start, battle 1 events, battle 1 resolved, battle 2 start, etc. The battle ordering should follow the activeBattles array order.",
+    "5. Investigate why the gamelog appears incomplete when war ends and the sidebar summary shows - this may be because the log entries from the last battle resolution are added AFTER the result popup is shown. Make sure the log is fully written before the war-complete summary appears on the sidebar."
+  ],
+  "acceptance_criteria": [
+    "tsc --noEmit passes without errors",
+    "npm run build succeeds",
+    "Each battle has '--- Inicio Batalla N (ProvinceName) ---' before its events and '--- Batalla N resuelta ---' after",
+    "Battles are logged chronologically (battle 1 fully before battle 2)",
+    "Uncontested battles also get start/end markers",
+    "Game log is complete when war ends and sidebar shows war results"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit && npm run build"],
+  "blocked_reason": null,
+  "findings": "Implementation added battle start/end markers in three locations: (1) resolveNextBattle start marker after logStartIndex is set, (2) resolveNextBattle end marker before battle.resolved = true, (3) doAcceptBattlePopup uncontested battles get both markers plus a descriptive message. The GameLog component already reads from gameState.log which contains all entries by the time the war summary shows, so no changes were needed there. tsc --noEmit and npm run build both pass."
+}

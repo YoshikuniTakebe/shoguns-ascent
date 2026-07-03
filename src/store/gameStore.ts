@@ -1750,6 +1750,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (hasOwnFigure) return;
 
     if (zorroPlayer.bushi <= 0) return;
+    if (gameState.zorroPlacementsRemaining <= 0) return;
 
     // Place bushi
     const newPlayers = gameState.players.map(p => {
