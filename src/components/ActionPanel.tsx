@@ -4,7 +4,7 @@ import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
-import { BushiIcon, ShintoIcon, CoinIcon, UndoIcon, SpringIcon, SummerIcon, AutumnIcon, HandshakeIcon } from './Icons';
+import { BushiIcon, ShintoIcon, MonsterIcon, CoinIcon, UndoIcon, SpringIcon, SummerIcon, AutumnIcon, HandshakeIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 
 export const ActionPanel = () => {
@@ -449,6 +449,25 @@ export const ActionPanel = () => {
           {/* Betray mandate active - issuer selects enemy figures to replace */}
           {gameState.betrayMandateActive && (() => {
             const cpClan = cp ? CLANS.find(c => c.id === cp.clanId) : null;
+
+            // Determine which figure types the issuer can deploy from reserve
+            const canDeployBushi = cp ? cp.bushi > 0 : false;
+            const canDeployShinto = cp ? cp.shinto > 0 : false;
+            const canDeployMonster = (() => {
+              if (!cp) return false;
+              const deployedMonsterCardIds = new Set<string>();
+              Object.values(gameState.provinces).forEach((prov) => {
+                prov.figures.forEach((f) => {
+                  if (f.type === 'monster' && f.owner === cp.id && f.monsterCardId) {
+                    deployedMonsterCardIds.add(f.monsterCardId);
+                  }
+                });
+              });
+              return cp.seasonCards.some(
+                (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
+              );
+            })();
+
             return (
               <div className="betray-active">
                 <p className="betray-notice" style={{ margin: 0 }}>
@@ -459,13 +478,34 @@ export const ActionPanel = () => {
                   <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
                 </p>
                 <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
-                  {t('actions.mandateDesc.betray')}
-                </p>
-                <p className="recruit-player-info">
-                  JUGADOR 1 DE 1
+                  Puedes reemplazar 2 figuras de clanes distintos desde tu reserva.
                 </p>
                 <p className="betray-selections">{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
+                {(canDeployBushi || canDeployShinto || canDeployMonster) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '8px 0' }}>
+                    {canDeployBushi && <BushiIcon size={36} color={cpClan?.color || '#E63946'} />}
+                    {canDeployShinto && <ShintoIcon size={36} color={cpClan?.color || '#E63946'} />}
+                    {canDeployMonster && <MonsterIcon size={36} color={cpClan?.color || '#E63946'} />}
+                  </div>
+                )}
                 <p className="betray-instruction">{t('actions.betrayClickInstruction')}</p>
+                {gameState.betrayReplacements.length > 0 && (
+                  <div style={{ marginTop: '8px', fontSize: '0.85em' }}>
+                    {gameState.betrayReplacements.map((entry, idx) => {
+                      const entryClan = CLANS.find(c => c.id === entry.targetClanId);
+                      return (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                          <ClanShield clanId={entry.targetClanId} size={22} />
+                          <span style={{ color: entryClan?.color || '#fff', fontWeight: 'bold' }}>{entry.targetPlayerName}</span>
+                          {entry.figureType === 'bushi' && <BushiIcon size={18} color={entryClan?.color || '#fff'} />}
+                          {entry.figureType === 'shinto' && <ShintoIcon size={18} color={entryClan?.color || '#fff'} />}
+                          {entry.figureType === 'monster' && <MonsterIcon size={18} color={entryClan?.color || '#fff'} />}
+                          <span style={{ color: 'var(--text-secondary)' }}>en {entry.provinceName}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
                   {undoMandateState && (
                     <button

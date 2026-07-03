@@ -227,6 +227,7 @@ export interface GameState {
   betrayMandateActive: boolean;
   betraySelectionsRemaining: number;
   betraySelectedOwners: string[];
+  betrayReplacements: { figureType: string; targetClanId: string; targetPlayerName: string; provinceId: string; provinceName: string }[];
   betrayMandateIssuerId: string | null;
   harvestMandateActive: boolean;
   harvestResolutionOrder: string[];

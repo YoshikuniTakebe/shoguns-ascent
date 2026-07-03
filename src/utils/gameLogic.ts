@@ -230,6 +230,7 @@ export function createInitialGameState(
     betrayMandateActive: false,
     betraySelectionsRemaining: 0,
     betraySelectedOwners: [],
+    betrayReplacements: [],
     betrayMandateIssuerId: null,
     harvestMandateActive: false,
     harvestResolutionOrder: [],
@@ -1312,6 +1313,15 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
   newState.betraySelectedOwners.push(figure.owner);
   newState.betraySelectionsRemaining -= 1;
 
+  // Track replacement for UI display
+  newState.betrayReplacements = [...newState.betrayReplacements, {
+    figureType: figure.type,
+    targetClanId: figureOwner.clanId,
+    targetPlayerName: figureOwner.name,
+    provinceId: provinceId,
+    provinceName: province.name,
+  }];
+
   newState.log = [...newState.log, `${issuer.name} reemplaza ${figure.type} de ${figureOwner.name} en ${province.name}`];
 
   // If no selections remaining, keep betrayMandateActive true (wait for 'Terminar' button)
@@ -1328,6 +1338,7 @@ function finalizeBetray(state: GameState): GameState {
     betrayMandateActive: false,
     betraySelectionsRemaining: 0,
     betraySelectedOwners: [],
+    betrayReplacements: [],
     betrayMandateIssuerId: null,
     log: [...state.log, 'Mandato de Traicionar resuelto'],
   };
@@ -2992,7 +3003,7 @@ export function advancePlayer(state: GameState): GameState {
   }
 
   // Politics phase advancement
-  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], marshalMovedFigures: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, recruitUsedFortressProvinces: [], betrayMandateActive: false, betraySelectionsRemaining: 0, betraySelectedOwners: [], betrayMandateIssuerId: null, log: [...state.log] };
+  const newState: GameState = { ...state, drawnMandates: [], mandateChoicePhase: false, trainMandateActive: false, trainResolutionOrder: [], trainResolutionIndex: 0, trainMandateIssuerId: null, marshalMandateActive: false, marshalResolutionOrder: [], marshalResolutionIndex: 0, marshalMandateIssuerId: null, marshalFortressBuiltBy: [], marshalMovedFigures: [], recruitMandateActive: false, recruitResolutionOrder: [], recruitResolutionIndex: 0, recruitMandateIssuerId: null, recruitPlacementsRemaining: 0, recruitUsedFortressProvinces: [], betrayMandateActive: false, betraySelectionsRemaining: 0, betraySelectedOwners: [], betrayReplacements: [], betrayMandateIssuerId: null, log: [...state.log] };
   newState.politicsMandateCount += 1;
 
   // Helper: advance to the next player in seating order (turnOrder)

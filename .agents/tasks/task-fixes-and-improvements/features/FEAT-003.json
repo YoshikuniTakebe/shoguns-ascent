@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Fix War phase flow (Zorro placement before battles) and improve Betrayal sidebar UI",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "WAR PHASE ZORRO FIX in src/components/BattlePanel.tsx: At the top of the BattlePanel component (after the coinDistributionPending check), add an early return if gameState.zorroPlacementActive is true. Return null or a simple panel showing 'Zorro esta colocando Bushi'. This prevents any battle popups from showing during Zorro placement. The GameBoard already handles Zorro placement UI via RegionCard highlights.",
     "BETRAYAL SIDEBAR UI REWORK in src/components/ActionPanel.tsx: In the betrayMandateActive section (around line 449-490), make these changes: (A) Remove the text 'JUGADOR 1 DE 1'. (B) Replace the mandate description text with 'Puedes reemplazar 2 figuras de clanes distintos desde tu reserva.' (C) Below 'Reemplazos restantes: N', show large icons (size 36-40) of the figure types the player can deploy: BushiIcon if issuer.bushi > 0, ShintoIcon if issuer.shinto > 0, MonsterIcon if issuer has an undeployed monster card. (D) Below the icons, show 'Pulsa sobre la figura que quieras sustituir en el mapa'. (E) Add a section below showing completed replacements: for each replacement done (track in gameState - use betrayReplacements array or compute from log), show the replacement info with clan shield, player name in color, and the province. (F) Keep the 'Terminar' button.",

@@ -370,6 +370,18 @@ export const BattlePanel = () => {
 
   if (!gameState) return null;
 
+  // --- ZORRO PLACEMENT: suppress battle popups while Zorro is placing bushi ---
+  if (gameState.zorroPlacementActive) {
+    return (
+      <div className="betray-active" style={{ padding: '1rem' }}>
+        <p style={{ margin: 0, fontWeight: 'bold', color: 'var(--accent-gold)' }}>GUERRA</p>
+        <p style={{ margin: '8px 0', color: 'var(--text-secondary)', fontSize: '0.9em' }}>
+          El clan Zorro esta colocando Bushi en provincias de batalla...
+        </p>
+      </div>
+    );
+  }
+
   // --- COIN DISTRIBUTION POPUP: show when winner must allocate remainder coins ---
   if (gameState.coinDistributionPending) {
     const pending = gameState.coinDistributionPending;
