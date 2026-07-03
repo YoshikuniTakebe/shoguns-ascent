@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "fix",
   "description": "Code review fixes: clear stale trade offers on phase transition, add phase guards to trade actions, cap request slider max to target player resources, show rule violation message on insufficient funds, gate trade button behind hotseat mode",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/store/gameStore.ts, in doInitiateWar (the politics-to-war transition), clear tradeOffers by adding tradeOffers: [] to the state update.",
     "2. In src/store/gameStore.ts, add a phase guard at the top of doSendTrade: if currentPhase !== 'politics', return early.",
@@ -25,5 +25,5 @@
     "npm run build"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All 5 review issues fixed. Build passes (exit 0). Pre-existing TS errors in BattleBiddingOverlay.tsx and BattlePanel.tsx remain (not related to our changes)."
 }
