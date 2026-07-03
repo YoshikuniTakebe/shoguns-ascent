@@ -2,7 +2,7 @@
   "id": "FEAT-005",
   "type": "fix",
   "description": "Code review fixes: Kotahi harvest Sol tiebreak, Fujin i18n, participantForces in step-by-step no-Poets battles",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Fix Kotahi harvest pass to call applySolTiebreakBonus in the tiebreak section, matching the main harvest loop",
     "Replace hardcoded 'Confirmar' string in Fujin overlay with i18n call, adding translation keys to both language files",
@@ -17,5 +17,5 @@
   ],
   "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 3 review issues fixed. Kotahi harvest tiebreak now calls applySolTiebreakBonus matching the main harvest loop. Fujin confirm button uses i18n with new key kami.resolution.fujinConfirm. participantForces added to step-by-step no-Poets branch. TypeScript compilation passes."
 }
