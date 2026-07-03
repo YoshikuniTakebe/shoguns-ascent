@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef, type DragEvent, type TouchEve
 import { WAR_TACTICS, CLANS } from '../types/game';
 import coinImg from '../img/coin.png';
 import { useT } from '../i18n';
+import type { TranslationKey } from '../i18n';
 import { ClanShield } from './ClanShields';
 import { RoninIcon, VPIcon } from './Icons';
 
@@ -296,7 +297,7 @@ export const BattleBiddingOverlay = ({
           {WAR_TACTICS.map((tactic, idx) => {
             const tacticCoins = Object.entries(coinPositions).filter(([, pos]) => pos === tactic.id);
             const isOver = dragOverTarget === tactic.id;
-            const tooltipKey = `battle.tacticDesc.${tactic.id}` as const;
+            const tooltipKey = `battle.tacticDesc.${tactic.id}` as TranslationKey;
             return (
               <div key={tactic.id} style={{ display: 'contents' }}>
                 {/* Vertical separator between Hire Ronin (order 3) and Imperial Poets (order 4) */}

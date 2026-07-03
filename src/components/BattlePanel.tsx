@@ -6,6 +6,7 @@ import type { Battle, GameState } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { CoinIcon, BushiIcon, ShintoIcon, VPIcon, HonorIcon } from './Icons';
 import { useT } from '../i18n';
+import type { TranslationKey } from '../i18n';
 import { calculateForce } from '../utils/gameLogic';
 import { BattleBiddingOverlay } from './BattleBiddingOverlay';
 import type { BattleCombatant } from './BattleBiddingOverlay';
@@ -218,7 +219,7 @@ function BattleResultPopup({
   battle: Battle;
   gameState: GameState;
   onAccept: () => void;
-  t: (key: string, params?: Record<string, string | number>) => string;
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }) {
   const resProvince = gameState.provinces[battle.provinceId];
   const winner = battle.winner ? gameState.players.find(p => p.id === battle.winner) : null;
@@ -254,7 +255,7 @@ function BattleResultPopup({
             {battle.killedFigures.map((kf, i) => {
               const owner = gameState.players.find(p => p.id === kf.owner);
               const ownerClan = owner ? CLANS.find(c => c.id === owner.clanId) : null;
-              const figTypeKey = `battle.figureType${kf.figureType.charAt(0).toUpperCase() + kf.figureType.slice(1)}` as string;
+              const figTypeKey = `battle.figureType${kf.figureType.charAt(0).toUpperCase() + kf.figureType.slice(1)}` as TranslationKey;
               return (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.2rem 0', fontSize: '0.9em' }}>
                   <ClanShield clanId={owner?.clanId || ''} size={16} />
@@ -464,6 +465,114 @@ export const BattlePanel = () => {
     const winner = battle.winner ? gameState.players.find(p => p.id === battle.winner) : null;
     const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
 
+    // Case 1: Empty province (no participants, no winner) - token discarded
+    if (battle.participants.length === 0 && !winner) {
+      return createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card">
+            <h3 className="battle-popup-title">{t('battle.battleNumber', { number: battleNumber })}</h3>
+            <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
+              {province?.name || battle.provinceId}
+            </p>
+            <p className="battle-popup-message" style={{ opacity: 0.8 }}>
+              {t('battle.uncontestedTokenDiscarded')}
+            </p>
+            <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
+              {t('battle.accept')}
+            </button>
+          </div>
+        </div>,
+        document.body
+      );
+    }
+
+    // Case 2: Allied province (2 participants who are allies, winner determined by force)
+    if (battle.participants.length === 2 && winner) {
+      const participants = battle.participants.map(pid => {
+        const p = gameState.players.find(x => x.id === pid)!;
+        const clan = CLANS.find(c => c.id === p.clanId);
+        const force = province ? calculateForce(province, pid, gameState) : 0;
+        return { player: p, clan, force, isWinner: pid === winner.id };
+      });
+
+      return createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card">
+            <h3 className="battle-popup-title">{t('battle.battleNumber', { number: battleNumber })}</h3>
+            <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
+              {province?.name || battle.provinceId}
+            </p>
+            <p style={{ fontSize: '0.9em', opacity: 0.8, marginBottom: '0.75rem' }}>
+              {t('battle.uncontestedAllied')}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              {participants.map(({ player: p, clan, force, isWinner }) => (
+                <div
+                  key={p.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 0.75rem',
+                    background: isWinner ? 'rgba(255,215,0,0.15)' : 'rgba(0,0,0,0.2)',
+                    borderRadius: '6px',
+                    border: isWinner ? '1px solid rgba(255,215,0,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <ClanShield clanId={p.clanId} size={isWinner ? 32 : 24} />
+                  <span style={{ color: clan?.color, fontWeight: 'bold', flex: 1 }}>{p.name}</span>
+                  <span style={{ fontSize: '0.9em', opacity: 0.9 }}>
+                    {t('battle.forceTotal', { force })}
+                  </span>
+                  {isWinner && (
+                    <span style={{ color: '#FFD700', fontWeight: 'bold', fontSize: '0.85em' }}>&#9733;</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <ClanShield clanId={winner.clanId} size={28} />
+              <span style={{ color: winnerClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+                {t('battle.winsProvinceToken', { name: winner.name })}
+              </span>
+            </div>
+            <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
+              {t('battle.accept')}
+            </button>
+          </div>
+        </div>,
+        document.body
+      );
+    }
+
+    // Case 3: Single player (1 participant, wins without opposition)
+    if (battle.participants.length === 1 && winner) {
+      return createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card">
+            <h3 className="battle-popup-title">{t('battle.battleNumber', { number: battleNumber })}</h3>
+            <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
+              {province?.name || battle.provinceId}
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <ClanShield clanId={winner.clanId} size={36} />
+              <span style={{ color: winnerClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+                {t('battle.uncontestedNoOpposition', { name: winner.name })}
+              </span>
+            </div>
+            <p style={{ color: winnerClan?.color, margin: '0.25rem 0' }}>
+              {t('battle.winsProvinceToken', { name: winner.name })}
+            </p>
+            <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
+              {t('battle.accept')}
+            </button>
+          </div>
+        </div>,
+        document.body
+      );
+    }
+
+    // Fallback (should not normally reach here)
     return createPortal(
       <div className="battle-popup-overlay">
         <div className="battle-popup-card">

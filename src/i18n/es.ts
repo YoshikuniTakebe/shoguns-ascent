@@ -152,6 +152,11 @@ export const es: Record<TranslationKey, string> = {
   'battle.figureTypeShinto': 'shinto',
   'battle.figureTypeMonster': 'monstruo',
   'battle.figureTypeDaimyo': 'daimyo',
+  'battle.uncontestedNoOpposition': '{name} gana sin oposicion',
+  'battle.uncontestedTokenDiscarded': 'No hay figuras presentes - la loseta de guerra se descarta',
+  'battle.uncontestedAllied': 'Provincia aliada - sin batalla',
+  'battle.winsProvinceToken': '{name} recibe la loseta de guerra',
+  'battle.forceTotal': 'Fuerza: {force}',
 
   // GameOverScreen
   'gameOver.title': 'FIN DEL JUEGO',

@@ -150,6 +150,11 @@ export const en = {
   'battle.figureTypeShinto': 'shinto',
   'battle.figureTypeMonster': 'monster',
   'battle.figureTypeDaimyo': 'daimyo',
+  'battle.uncontestedNoOpposition': '{name} wins without opposition',
+  'battle.uncontestedTokenDiscarded': 'No figures present - war token is discarded',
+  'battle.uncontestedAllied': 'Allied province - no battle',
+  'battle.winsProvinceToken': '{name} receives the war token',
+  'battle.forceTotal': 'Force: {force}',
 
   // GameOverScreen
   'gameOver.title': 'GAME OVER',

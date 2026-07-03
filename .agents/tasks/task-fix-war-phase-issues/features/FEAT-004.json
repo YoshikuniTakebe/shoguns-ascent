@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-004",
+  "type": "fix",
+  "description": "Fix the uncontested battle popup to show proper force information for allied wins. When a battle is uncontested because two allies share a province, the popup should show each player's force total and indicate who wins the province token. Update the BattlePanel uncontested popup to display force data for allied-win scenarios.",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/components/BattlePanel.tsx: In the uncontested battle popup section (where battle.uncontested is true), enhance the display. If there are 2 participants and a winner, show both players' forces and indicate who won based on greater force.",
+    "2. Import calculateForce from '../utils/gameLogic' if not already imported (it is already imported).",
+    "3. For the uncontested popup, show: province name, all participant clan shields and names with their force values, who won (with clan seal), and that they get the war token.",
+    "4. For the empty province case (no winner), show that the token is discarded.",
+    "5. For single-player uncontested (1 participant), show the player wins without opposition."
+  ],
+  "acceptance_criteria": [
+    "Uncontested battle popup for allied provinces shows both players' forces",
+    "Uncontested battle popup clearly shows the winner with clan seal",
+    "Uncontested battle popup for empty provinces shows token is discarded",
+    "Uncontested battle popup for single player shows win without opposition",
+    "npm run build succeeds (no new errors)"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}
