@@ -47,7 +47,7 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  */
 function lunaHasValidProvince(gameState: GameState, playerId: string): boolean {
   return Object.values(gameState.provinces).some(province => {
-    const hasFortress = province.figures.some(f => f.owner === playerId && f.type === 'fortress');
+    const hasFortress = province.figures.some(f => f.owner === playerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
     if (!hasFortress) return false;
     const lunaFigures = province.figures.filter(f => f.owner === playerId && f.type !== 'fortress').length;
     return lunaFigures < 2;
@@ -971,7 +971,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (player && province) {
         const isDragonfly = player.clanId === 'libelula';
         if (!isDragonfly) {
-          const hasFortress = province.figures.some(f => f.owner === apid && f.type === 'fortress');
+          const hasFortress = province.figures.some(f => f.owner === apid && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
           if (!hasFortress) {
             msg = 'No tienes fortaleza en esta provincia';
           } else if (player.clanId === 'luna') {

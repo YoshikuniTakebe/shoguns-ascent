@@ -672,7 +672,7 @@ function executeRecruit(state: GameState, issuerId: string): GameState {
 function calculateRecruitPlacements(state: GameState, playerId: string, issuerId: string): number {
   let totalFortresses = 0;
   for (const prov of Object.values(state.provinces)) {
-    totalFortresses += prov.figures.filter(f => f.owner === playerId && f.type === 'fortress').length;
+    totalFortresses += prov.figures.filter(f => f.owner === playerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju'))).length;
   }
   const bonus = isIssuerOrAlly(state, playerId, issuerId) ? 1 : 0;
   return totalFortresses + bonus;
@@ -700,7 +700,7 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
   // Validate province: must have player's fortress, UNLESS player is Dragonfly (libelula)
   const isDragonfly = player.clanId === 'libelula';
   if (!isDragonfly) {
-    const hasFortress = province.figures.some(f => f.owner === playerId && f.type === 'fortress');
+    const hasFortress = province.figures.some(f => f.owner === playerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
     if (!hasFortress) return state;
   }
 

@@ -246,8 +246,8 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
         // Libelula can place anywhere
         isMonsterTarget = true;
       } else {
-        // Can only place where the player has a fortress
-        const hasFortress = province.figures.some(f => f.type === 'fortress' && f.owner === monsterPlacementPlayerId);
+        // Can only place where the player has a fortress (Fukurokuju counts as fortress)
+        const hasFortress = province.figures.some(f => f.owner === monsterPlacementPlayerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
         if (hasFortress) {
           // Luna clan power: max 2 figures per province (excluding fortresses)
           if (placingPlayer.clanId === 'luna') {
@@ -299,7 +299,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
         // Dragonfly clan can place in any province
         isRecruitTarget = true;
       } else {
-        const hasFortress = province.figures.some(f => f.type === 'fortress' && f.owner === apid);
+        const hasFortress = province.figures.some(f => f.owner === apid && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
         if (hasFortress) {
           isRecruitTarget = true;
         } else {
