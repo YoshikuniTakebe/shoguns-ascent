@@ -340,6 +340,7 @@ export const en = {
   'kami.resolution.fujinMoves': '{count} Movements',
   'kami.resolution.fujinUndo': 'Undo',
   'kami.resolution.fujinDone': 'End movements',
+  'kami.resolution.fujinConfirm': 'Confirm',
   'kami.resolution.fujinCancel': 'Cancel Movement',
   'kami.resolution.raijinPlace': 'Place Bushi in a province',
   'kami.resolution.ryujinBuy': 'Buy a Season Card',

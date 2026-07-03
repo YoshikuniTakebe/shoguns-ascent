@@ -1095,6 +1095,12 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
         const bIdx = newState.honorTrack.indexOf(b.id);
         return aIdx - bIdx;
       })[0]?.id ?? null;
+
+      // Sol clan power: bonus on honor tiebreak win
+      if (strongestId) {
+        const losers = tiedPlayers.filter((p) => p.id !== strongestId).map((p) => p.id);
+        applySolTiebreakBonus(newState, strongestId, losers);
+      }
     }
 
     // Only grant if the Kotahi owner has majority
@@ -2335,6 +2341,7 @@ export function resolveNextBattle(state: GameState): GameState {
         phoenixDiedInBattle,
         battleDeathCount: battleCasualtyCount,
         imperialPoetsVP: 0,
+        participantForces: preResolutionForces,
       };
     } else {
       battle.resolutionData = {

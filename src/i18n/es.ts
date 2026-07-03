@@ -342,6 +342,7 @@ export const es: Record<TranslationKey, string> = {
   'kami.resolution.fujinMoves': '{count} Movimientos',
   'kami.resolution.fujinUndo': 'Deshacer',
   'kami.resolution.fujinDone': 'Finalizar movimientos',
+  'kami.resolution.fujinConfirm': 'Confirmar',
   'kami.resolution.fujinCancel': 'Cancelar Movimiento',
   'kami.resolution.raijinPlace': 'Coloca un Bushi en una provincia',
   'kami.resolution.ryujinBuy': 'Compra una carta de Estacion',

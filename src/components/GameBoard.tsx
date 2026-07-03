@@ -296,7 +296,7 @@ export const GameBoard = () => {
                   </button>
                 )}
                 <button className="btn-primary" onClick={doFujinDone} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
-                  {movesRemaining > 0 ? t('kami.resolution.fujinDone') : 'Confirmar'}
+                  {movesRemaining > 0 ? t('kami.resolution.fujinDone') : t('kami.resolution.fujinConfirm')}
                 </button>
               </div>
             );
