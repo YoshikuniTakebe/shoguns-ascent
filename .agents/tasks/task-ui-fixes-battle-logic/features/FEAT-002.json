@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Battle result popup layout fixes: bets section horizontal coins, casualties 3-column layout without type text, imperial poets single line, popup spacing/height adjustments, and seppuku result popup improvements",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/components/BattlePanel.tsx, in the BattleResultPopup component, find the 'Apuestas' section (around line 178-206). Change the coin display per tactic from vertical (column) to horizontal (row). Currently each bid is a div with flexDirection column per tactic. Change the inner layout of each bid entry from column to row: make the CoinIcon and amount display horizontally (flex row with gap), so all bids for a tactic fit in one row.",
     "2. In src/components/BattlePanel.tsx, in the 'Killed figures' (battle.killedFigures) section, remove the text that shows the figure type name (e.g. 'daimyo eliminado', 'shinto eliminado'). Instead show only: ClanShield + player name + FigureTypeIcon + count. Layout: distribute entries in a 3-column grid using CSS grid with grid-template-columns: repeat(3, 1fr) or flexbox with flex-wrap so items are in 3 columns.",
@@ -23,5 +23,5 @@
     "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing TS errors in ActionPanel.tsx (unused variables) unrelated to this feature. Vite build succeeds. All 5 acceptance criteria implemented: bets horizontal, kills 3-col grid no text, poets single line, popup 90vh + paddingTop 15px, seppuku icons enlarged and clan-colored with MonsterIcon/DaimyoIcon."
 }
