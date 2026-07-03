@@ -1,0 +1,34 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "CSS adjustments and UI tweaks for season cards modal, player cards modal, legend icons, and Oshu hex color",
+  "status": "completed",
+  "steps": [
+    "1. In src/App.css, change .season-cards-theme-toggle left from 3.8rem to 1.8rem",
+    "2. In src/components/SeasonCardsModal.tsx, change the legend-button-wrapper inline style from left:'7.5rem' to left:'5.5rem'",
+    "3. In src/App.css, change .legend-button-wrapper (the general class used in PlayerCardsModal) left to 23.5rem - but this is inline in PlayerCardsModal.tsx so change PlayerCardsModal.tsx legend-button-wrapper style left from '0.9rem' to '4.9rem'",
+    "4. In src/App.css, change .season-cards-modal max-width from 900px to 1000px, and add margin-top:-15px",
+    "5. In src/utils/renderCardEffect.tsx, increase shinto icon size from 14 to approximately 17 (20% larger). The icon map uses size 14 for all icons, so specifically for shinto make it ~17px. Best approach: add a SIZE_MAP or handle shinto case specially.",
+    "6. In the legend tooltip in SeasonCardsModal.tsx and PlayerCardsModal.tsx, change icon colors: VPIcon color to red (#e94560), CoinIcon color to gold (#c8a951), HonorIcon color to purple (#9b59b6), FistIcon color to blue (#3498db). Currently all are white.",
+    "7. In src/components/SeasonCardsModal.tsx, change the card onClick to always allow clicking the illustration to view zoomed (even if card is disabled/unaffordable). Remove pointerEvents:'none' from the card container but keep buy button disabled.",
+    "8. In src/components/SeasonCardsModal.tsx, change the discount text from '(discount -CoinIcon)' to '(discount -1 CoinIcon)' and change the CoinIcon in discount to use size=23 with stroke='#27ae60' and strokeWidth='2'. The CoinIcon SVG should be <svg width='23' height='23' viewBox='0 0 24 24' fill='none' stroke='#27ae60' stroke-width='2'>",
+    "9. In src/components/GameBoard.tsx, change the HARVEST_BADGE_META color for oshu from '#9B8EC4' to '#B0BEC5' (Luna troop color). Add a comment preserving the old color: '/* previous: #9B8EC4 */'",
+    "10. In src/components/PlayerCardsModal.tsx, add text-shadow/border to clan name for better readability: 1px white text-stroke and shadow. Also change .theme-toggle-track inline or CSS to add left:-0.5rem. Change the legend-button-wrapper style top:'0.6rem', left:'4.9rem', zIndex:1",
+    "11. In src/App.css, add left:-0.5rem to .theme-toggle-track (or add it as a position relative style in the toggle wrapper in PlayerCardsModal)"
+  ],
+  "acceptance_criteria": [
+    "tsc --noEmit passes without errors",
+    "npm run build succeeds",
+    "Season cards modal has theme toggle at left:1.8rem, legend at left:5.5rem",
+    "Player cards modal has clan name with white text-shadow, toggle-track with left:-0.5rem, legend at left:4.9rem",
+    "Season cards modal max-width is 1000px with margin-top:-15px",
+    "Shinto icon in card text is 20% larger than other icons",
+    "Legend icons have colored icons matching card text (VP red, Coin gold, Honor purple, Force blue)",
+    "Disabled cards can still be clicked to view zoomed image",
+    "Discount text shows '-1' followed by green coin SVG (23x23)",
+    "Oshu hex reward color is #B0BEC5 with old color commented"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit && npm run build"],
+  "blocked_reason": null,
+  "findings": "All 11 steps implemented successfully. tsc --noEmit and npm run build both pass cleanly. The CSS file is minified on single lines - edits targeted specific property values within the minified content."
+}
