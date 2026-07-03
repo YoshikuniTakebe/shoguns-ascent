@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Complete battle resolution rework with step-by-step interactive popups for Seppuku, Take Hostage, Hire Ronin, and final resolution with Phoenix revival, ally protection, and Imperial Poets summary",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Rework the battleStepPhase state machine in the store. Currently it has states: null, 'popup', 'bidding', 'result'. The new states should support the step-by-step tactic resolution flow AFTER all bids are submitted. New states needed: 'seppuku-decision' (popup asking winner to sacrifice), 'seppuku-result' (showing sacrifice results), 'hostage-selection' (popup to select which troop to capture), 'ronin-result' (popup showing ronin hired), 'battle-resolution' (final result popup with sections for killed figures, prisoners, and imperial poets). Add new store state fields: seppukuWinnerId, hostageWinnerId, roninWinnerId, imperialPoetsWinnerId, selectedHostageTarget, battleResolutionData (stores intermediate results for display).",
     "2. Modify resolveNextBattle in src/utils/gameLogic.ts to NOT resolve tactics automatically. Instead, split the resolution into phases. Create a new function that only resolves seppuku AFTER the player decision. The function should: (a) determine seppuku winner, (b) NOT kill figures yet - just store who won seppuku. The actual killing happens when the player confirms in the popup. Create resolveHostage, resolveRonin functions similarly.",
@@ -32,5 +32,5 @@
   ],
   "verification": ["npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Seppuku now includes shinto in ALL troops killed (original only killed bushi/daimyo/monster). Phoenix revival logic added to both step-by-step flow and fallback resolveNextBattle. The resolveNextBattle function checks for battle.resolutionData to skip seppuku/hostage phases that were already handled interactively. Imperial Poets VP tracking stores seppuku vs battle death breakdown on the battle's resolutionData for display in the result popup. Added doHostageSkip action for cases where no capturable figures exist. Koi dynamic ronin computed as maxCoins - totalAssigned in BattleBiddingOverlay."
 }
