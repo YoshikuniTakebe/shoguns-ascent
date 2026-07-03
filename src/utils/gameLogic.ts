@@ -1729,7 +1729,7 @@ export function initiateWarPhase(state: GameState): GameState {
     const eligibleProvinces = battleProvinceIds.filter(provId => {
       const prov = newState.provinces[provId];
       if (!prov) return false;
-      return !prov.figures.some((f) => f.owner === zorroPlayer.id);
+      return !prov.figures.some((f) => f.owner === zorroPlayer.id && f.type !== 'fortress');
     });
     if (eligibleProvinces.length > 0) {
       const remaining = Math.min(zorroPlayer.bushi, eligibleProvinces.length);

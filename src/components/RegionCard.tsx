@@ -271,7 +271,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   let isZorroTarget = false;
   if (gameState.zorroPlacementActive && gameState.zorroPlacementPlayerId) {
     const isBattleProvince = gameState.warProvinceSlots.some(s => s.provinceId === regionId);
-    const hasZorroFigure = province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId);
+    const hasZorroFigure = province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId && f.type !== 'fortress');
     if (isBattleProvince && !hasZorroFigure) {
       isZorroTarget = true;
     }

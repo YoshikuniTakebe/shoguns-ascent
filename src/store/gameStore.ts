@@ -1746,7 +1746,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const province = gameState.provinces[provinceId];
     if (!province) return;
 
-    const hasOwnFigure = province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId);
+    const hasOwnFigure = province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId && f.type !== 'fortress');
     if (hasOwnFigure) return;
 
     if (zorroPlayer.bushi <= 0) return;
@@ -1766,7 +1766,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     };
 
     const newRemaining = gameState.zorroPlacementsRemaining - 1;
-    const placementDone = newRemaining <= 0;
 
     const newLog = [...gameState.log, `${zorroPlayer.name} (Zorro) coloca 1 Bushi en ${province.name}`];
 
@@ -1775,38 +1774,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       players: newPlayers,
       provinces: newProvinces,
       zorroPlacementsRemaining: newRemaining,
-      zorroPlacementActive: !placementDone,
-      zorroPlacementPlayerId: placementDone ? null : gameState.zorroPlacementPlayerId,
+      zorroPlacementActive: true,
+      zorroPlacementPlayerId: gameState.zorroPlacementPlayerId,
       log: newLog,
     };
 
-    if (placementDone) {
-      // Update battle participants to include Zorro in provinces where they now have figures
-      const zorroId = ns.zorroPlacementPlayerId ?? gameState.zorroPlacementPlayerId;
-      let updatedNs = ns;
-      if (zorroId) {
-        updatedNs = {
-          ...ns,
-          activeBattles: ns.activeBattles.map(b => {
-            const prov = ns.provinces[b.provinceId];
-            const hasFigures = prov?.figures.some(f => f.owner === zorroId);
-            if (hasFigures && !b.participants.includes(zorroId)) {
-              const participants = [...b.participants, zorroId].sort((a, bb) => {
-                const aIdx = ns.turnOrder.indexOf(a);
-                const bIdx = ns.turnOrder.indexOf(bb);
-                return aIdx - bIdx;
-              });
-              return { ...b, participants, uncontested: false, winner: undefined };
-            }
-            return b;
-          }),
-        };
-      }
-      const summary2 = computeWarUpgradeSummary(updatedNs);
-      set({ gameState: updatedNs, warPhasePopupVisible: true, warPhaseUpgradeSummary: summary2, battleCurrentBiddingIndex: 0 });
-    } else {
-      set({ gameState: ns });
-    }
+    set({ gameState: ns });
   },
 
   doZorroSkipPlacement: () => {
