@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "UI improvements: Legend button position fix, Sol clan color change, diorama figure size adjustments, Seppuku popup enhancement, Battle result popup enhancement",
+  "status": "pending",
+  "steps": [
+    "LEGEND BUTTON FIX in src/components/SeasonCardsModal.tsx and src/App.css: The legend button (? button) and theme toggle are both positioned at top-left (absolute, top: 0.6-0.7rem, left: 0.9rem) causing overlap. Fix by moving the theme toggle to be positioned next to the legend button (to its right). Change the inline style on the legend-button-wrapper div to keep it at top-left. Change the CSS for .season-cards-theme-toggle to position it at top: 0.7rem, left: 3.5rem (right of the ? button) instead of left: 0.9rem.",
+    "SOL CLAN COLOR CHANGE in src/types/game.ts: Change Sol clan color from '#DAA520' (goldenrod) to '#8B6914' (the Shikoku hex reward badge color). This is the CLANS array entry for 'sol'.",
+    "DIORAMA FIGURE SIZE ADJUSTMENTS in src/components/RegionDetailModal.tsx: Update the FIGURE_SIZE_OVERRIDES object. Add/modify: 'daimyo-sol': 1.10, 'sp-daikokuten': 0.80, 'sp-oni-of-souls': 1.25, 'sp-phoenix': 1.15. Keep existing: 'daimyo-luna': 1.15, 'daimyo-libelula': 1.10. Note: 'Fenix' is the Phoenix monster card. Its monsterCardId is likely 'sp-phoenix' or similar - verify by searching game.ts for phoenix/fenix.",
+    "SEPPUKU RESULT POPUP ENHANCEMENT in src/components/BattlePanel.tsx: In the seppuku-result section (around line 525-555): (A) Add a title at the very top of the popup card: <h3> with text 'Has ganado Seppuku!' in gold color. (B) Change the honor icon color from '#e57373' (red) to a purple/violet color like '#9b59b6'. (C) Below the VP and Honor info, add a list showing the types and counts of troops sacrificed. Use battleResolutionData which should contain seppukuKillCount. Need to also track the figure breakdown - add seppukuFigures: { type: string; count: number }[] to BattleResolutionData. Compute it in the resolveNextBattle logic in gameLogic.ts when seppuku is accepted.",
+    "BATTLE RESULT POPUP FORCE BADGES in src/components/BattlePanel.tsx: In the BattleResultPopup component (around line 235-340), add a section showing the total force of each participant at the start of the battle (before ronin). Display force badges similar to the bidding overlay format: for each participant, show ClanShield + player name in clan color + FistIcon + force number. Use resolutionData which should have participant force info. Add participantForces: { playerId: string; force: number }[] to BattleResolutionData. Compute it during battle resolution in gameLogic.ts.",
+    "POETAS IMPERIALES FORMAT CHANGE in src/components/BattlePanel.tsx: In the Imperial Poets section of BattleResultPopup, change the format to show: 'ClanShield playerName (color) ha ganado VPIcon number'. Replace the current layout with this format."
+  ],
+  "acceptance_criteria": [
+    "Legend button (?) appears beside the theme toggle, not overlapping it",
+    "Sol clan figures on the map use color #8B6914 instead of #DAA520",
+    "Daimyo Sol in diorama is 10% larger, Daikokuten 20% smaller, Oni of Souls 25% larger, Phoenix 15% larger",
+    "Seppuku result popup shows 'Has ganado Seppuku!' title and lists sacrificed troop types",
+    "Battle result popup shows force badges for each participant",
+    "Imperial Poets section shows 'sello nombre ha ganado icono PV numero' format",
+    "TypeScript compilation passes"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit"],
+  "blocked_reason": null,
+  "findings": ""
+}

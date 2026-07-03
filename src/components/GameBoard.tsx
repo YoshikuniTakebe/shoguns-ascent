@@ -274,21 +274,29 @@ export const GameBoard = () => {
           <TemplePanel />
 
           {/* Fujin Interactive Overlay - between kami track and map */}
-          {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && gameState.fujinMovesRemaining > 0 && (() => {
+          {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && (() => {
+            const currentTemple = gameState.kamiResolutionTemples?.[gameState.kamiResolutionIndex ?? 0];
+            if (!currentTemple || currentTemple.kamiType !== 'fujin') return null;
+            if (gameState.fujinMovesRemaining < 0) return null;
             const { doFujinDone, doFujinUndo, fujinPreMoveState } = useGameStore.getState();
+            const movesRemaining = gameState.fujinMovesRemaining;
             return (
               <div className="kami-action-overlay" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <span>{t('kami.resolution.fujinMoves', { count: String(gameState.fujinMovesRemaining) })}</span>
+                {movesRemaining > 0 && (
+                  <span>{t('kami.resolution.fujinMoves', { count: String(movesRemaining) })}</span>
+                )}
                 {fujinPreMoveState && (
                   <button className="btn-primary" onClick={doFujinUndo} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
                     {t('kami.resolution.fujinUndo')}
                   </button>
                 )}
-                <button className="btn-primary" onClick={() => { setMoveFrom(null); setSelectedFigures([]); }} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
-                  {t('kami.resolution.fujinCancel')}
-                </button>
+                {movesRemaining > 0 && (
+                  <button className="btn-primary" onClick={() => { setMoveFrom(null); setSelectedFigures([]); }} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
+                    {t('kami.resolution.fujinCancel')}
+                  </button>
+                )}
                 <button className="btn-primary" onClick={doFujinDone} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
-                  {t('kami.resolution.fujinDone')}
+                  {movesRemaining > 0 ? t('kami.resolution.fujinDone') : 'Confirmar'}
                 </button>
               </div>
             );

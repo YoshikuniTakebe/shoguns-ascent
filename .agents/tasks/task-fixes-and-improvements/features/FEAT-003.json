@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Fix War phase flow (Zorro placement before battles) and improve Betrayal sidebar UI",
+  "status": "pending",
+  "steps": [
+    "WAR PHASE ZORRO FIX in src/components/BattlePanel.tsx: At the top of the BattlePanel component (after the coinDistributionPending check), add an early return if gameState.zorroPlacementActive is true. Return null or a simple panel showing 'Zorro esta colocando Bushi'. This prevents any battle popups from showing during Zorro placement. The GameBoard already handles Zorro placement UI via RegionCard highlights.",
+    "BETRAYAL SIDEBAR UI REWORK in src/components/ActionPanel.tsx: In the betrayMandateActive section (around line 449-490), make these changes: (A) Remove the text 'JUGADOR 1 DE 1'. (B) Replace the mandate description text with 'Puedes reemplazar 2 figuras de clanes distintos desde tu reserva.' (C) Below 'Reemplazos restantes: N', show large icons (size 36-40) of the figure types the player can deploy: BushiIcon if issuer.bushi > 0, ShintoIcon if issuer.shinto > 0, MonsterIcon if issuer has an undeployed monster card. (D) Below the icons, show 'Pulsa sobre la figura que quieras sustituir en el mapa'. (E) Add a section below showing completed replacements: for each replacement done (track in gameState - use betrayReplacements array or compute from log), show the replacement info with clan shield, player name in color, and the province. (F) Keep the 'Terminar' button.",
+    "BETRAYAL STATE TRACKING: In src/types/game.ts, add a new field to GameState: betrayReplacements: { figureType: string; targetOwnerClanId: string; targetOwnerName: string; provinceId: string; provinceName: string }[]. Initialize it as [] in createInitialGameState (src/utils/gameLogic.ts). In betraySelectFigure (src/utils/gameLogic.ts), push each replacement to this array. Clear it in finalizeBetray and skipBetrayTurn.",
+    "BETRAYAL AVAILABLE FIGURES CHECK: In ActionPanel.tsx, compute which figure types the issuer can deploy by checking: (A) issuer.bushi > 0 for BushiIcon, (B) issuer.shinto > 0 for ShintoIcon, (C) For monsters: check if issuer has any undeployed monster card (seasonCards with cardType='monster' where the card id is not deployed as a figure in any province). Show only the icons of types they CAN deploy."
+  ],
+  "acceptance_criteria": [
+    "During Zorro placement phase, no battle popups appear - BattlePanel returns null or informational message",
+    "Betrayal sidebar shows 'Puedes reemplazar 2 figuras de clanes distintos desde tu reserva.' instead of old text",
+    "No 'JUGADOR 1 DE 1' text in betrayal sidebar",
+    "Large figure type icons shown based on what player can deploy from reserve",
+    "Completed replacements shown with clan seal, player name, and province",
+    "TypeScript compilation passes"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit"],
+  "blocked_reason": null,
+  "findings": ""
+}

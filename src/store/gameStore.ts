@@ -1078,8 +1078,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Detect war phase transition and set up battle step phase for hotseat
       set({ gameState: advanced, betrayMode: false, undoMandateState: null, ...detectWarTransitionWithPopup(advanced), ...detectKamiPopupPending(advanced) });
     } else {
-      const newCurrentPlayerId = ns.players[ns.currentPlayerIndex]?.id || null;
-      set({ gameState: ns, undoMandateState: JSON.parse(JSON.stringify(ns)), ...(gameState.mode === 'hotseat' ? { turnPopupPlayer: newCurrentPlayerId } : {}) });
+      set({ gameState: ns, undoMandateState: JSON.parse(JSON.stringify(ns)) });
     }
   },
   doSkipBetrayTurn: () => {
@@ -1536,13 +1535,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const updated: GameState = { ...ns, fujinMovesRemaining: remaining };
 
     if (remaining <= 0) {
-      // Auto-complete
-      const advanced = advanceKamiResolution(updated);
-      if (!advanced.kamiResolutionActive && advanced.currentPhase === 'politics' && gameState.mode === 'hotseat') {
-        set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], fujinPreMoveState: preMoveSnapshot, turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null });
-      } else {
-        set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], fujinPreMoveState: preMoveSnapshot, ...detectWarTransitionWithPopup(advanced) });
-      }
+      // Do NOT auto-advance - keep state with fujinMovesRemaining=0 for confirmation step
+      set({ gameState: updated, moveFrom: null, selectedFigures: [], fujinPreMoveState: preMoveSnapshot });
     } else {
       set({ gameState: updated, moveFrom: null, selectedFigures: [], fujinPreMoveState: preMoveSnapshot });
     }

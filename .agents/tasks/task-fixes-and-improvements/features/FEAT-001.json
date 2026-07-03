@@ -1,0 +1,17 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Install dependencies and verify baseline TypeScript compilation passes",
+  "status": "completed",
+  "steps": [
+    "Run npm install in /projects/sandbox/shoguns-ascent",
+    "Run npx tsc -b --noEmit to verify the project compiles without errors"
+  ],
+  "acceptance_criteria": [
+    "npm install completes successfully",
+    "TypeScript compilation (npx tsc -b --noEmit) passes with no errors"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit"],
+  "blocked_reason": null,
+  "findings": ""
+}

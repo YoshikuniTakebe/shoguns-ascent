@@ -1,0 +1,29 @@
+{
+  "project_type": "React board game app (Rising Sun adaptation)",
+  "language": "TypeScript",
+  "build_system": "Vite + tsc",
+  "test_framework": "None (no test files found)",
+  "build_command": "cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit",
+  "test_command": "cd /projects/sandbox/shoguns-ascent && npx tsc -b --noEmit",
+  "verification_instructions": "Run TypeScript compilation to check for type errors. No unit tests exist.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install in project root",
+  "environment_constraints": "No Docker daemon available. Verify via tsc compilation only.",
+  "contribution_requirements": "Work directly on main branch. Commit and push to main.",
+  "key_patterns": "Game logic lives in src/utils/gameLogic.ts (pure functions). UI state management in src/store/gameStore.ts (Zustand). Components in src/components/. CSS in src/App.css (minified single file). Types in src/types/game.ts. Portals used for popups (createPortal to document.body).",
+  "relevant_files": [
+    "src/store/gameStore.ts",
+    "src/utils/gameLogic.ts",
+    "src/components/ActionPanel.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/components/BattleBiddingOverlay.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/RegionCard.tsx",
+    "src/components/RegionDetailModal.tsx",
+    "src/components/SeasonCardsModal.tsx",
+    "src/components/KamiResolutionPopup.tsx",
+    "src/types/game.ts",
+    "src/App.css"
+  ],
+  "directory_structure": "Root: package.json, vite.config.ts. src/: App.tsx, App.css, main.tsx. src/components/: All React components. src/store/: gameStore.ts (Zustand). src/utils/: gameLogic.ts (pure game logic), figureImages.ts, cardTranslations.ts, renderCardEffect.tsx. src/types/: game.ts (types + data constants). src/i18n/: internationalization. src/img/: image assets."
+}

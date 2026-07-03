@@ -1053,6 +1053,63 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
     }
   });
 
+  // Kotahi special ability: if a player owns a monster with monsterCardId 'sp-kotahi' in a province
+  // and has majority there but is NOT a harvester, they also receive the harvest reward
+  Object.values(newState.provinces).forEach((province) => {
+    // Check if any figure with monsterCardId 'sp-kotahi' exists in this province
+    const kotahiFigure = province.figures.find(f => f.type === 'monster' && f.monsterCardId === 'sp-kotahi');
+    if (!kotahiFigure) return;
+
+    const kotahiOwnerId = kotahiFigure.owner;
+
+    // Skip if the owner is already a harvester (they already got rewards from the main pass)
+    if (harvesters.includes(kotahiOwnerId)) return;
+
+    // Check if the Kotahi owner already has a reward entry for this province (avoid double-add)
+    if (harvestPlayerRewards.some(r => r.playerId === kotahiOwnerId && r.provinceId === province.id)) return;
+
+    // Calculate majority using the same logic as the main harvest
+    let maxForce = 0;
+    let strongestId: string | null = null;
+    let tied = false;
+
+    newState.players.forEach((player) => {
+      const force = calculateForce(province, player.id, newState);
+      if (force > maxForce) {
+        maxForce = force;
+        strongestId = player.id;
+        tied = false;
+      } else if (force === maxForce && force > 0) {
+        tied = true;
+      }
+    });
+
+    // Ties broken by honor (lower index = higher honor = wins tiebreaker)
+    if (tied && maxForce > 0) {
+      const tiedPlayers = newState.players.filter(
+        (p) => calculateForce(province, p.id, newState) === maxForce
+      );
+      strongestId = tiedPlayers.sort((a, b) => {
+        const aIdx = newState.honorTrack.indexOf(a.id);
+        const bIdx = newState.honorTrack.indexOf(b.id);
+        return aIdx - bIdx;
+      })[0]?.id ?? null;
+    }
+
+    // Only grant if the Kotahi owner has majority
+    if (strongestId !== kotahiOwnerId || maxForce <= 0) return;
+
+    const rewards = province.harvestRewards;
+    const hasReward = (rewards.vp && rewards.vp > 0) || (rewards.coins && rewards.coins > 0) || (rewards.ronin && rewards.ronin > 0) || (rewards.honor && rewards.honor > 0);
+    if (hasReward) {
+      harvestPlayerRewards.push({
+        playerId: kotahiOwnerId,
+        provinceId: province.id,
+        rewards: { ...rewards },
+      });
+    }
+  });
+
   // If there are rewards to show, set up interactive popup flow
   if (harvestPlayerRewards.length > 0) {
     newState.harvestMandateActive = true;
@@ -1257,9 +1314,9 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
 
   newState.log = [...newState.log, `${issuer.name} reemplaza ${figure.type} de ${figureOwner.name} en ${province.name}`];
 
-  // If no selections remaining, finalize
+  // If no selections remaining, keep betrayMandateActive true (wait for 'Terminar' button)
   if (newState.betraySelectionsRemaining <= 0) {
-    return finalizeBetray(newState);
+    return newState;
   }
 
   return newState;
@@ -2526,56 +2583,63 @@ export function moveForces(
   const toProvince = newState.provinces[toProvinceId];
   if (!fromProvince || !toProvince) return state;
 
-  // During marshal mandate, enforce single-figure movement rules
+  // During marshal mandate, enforce movement rules - process figures one by one
   if (state.marshalMandateActive) {
-    // Only accept a single figureId at a time
-    if (figureIds.length !== 1) return state;
-
-    const figureId = figureIds[0];
-
-    // Reject if figure already moved this turn
-    if (state.marshalMovedFigures.includes(figureId)) return state;
-
-    // Find the figure
-    const figure = fromProvince.figures.find(f => f.id === figureId && f.owner === playerId);
-    if (!figure) return state;
-
-    // Reject fortress movement unless player is Tortuga clan
     const player = state.players.find(p => p.id === playerId);
     if (!player) return state;
 
-    if (figure.type === 'fortress' && player.clanId !== 'tortuga') return state;
+    // Process each figure individually
+    let currentFromFigures = [...fromProvince.figures];
+    let currentToFigures = [...toProvince.figures];
+    let movedFigureIds: string[] = [...state.marshalMovedFigures];
+    let logEntries: string[] = [...newState.log];
+    let anyMoved = false;
 
-    // Adjacency check: skip for Libelula clan (can move anywhere)
-    if (player.clanId !== 'libelula') {
-      if (!isValidMove(fromProvinceId, toProvinceId)) return state;
-    } else {
-      // Libelula can move to any province except the same one
-      if (fromProvinceId === toProvinceId) return state;
+    for (const figureId of figureIds) {
+      // Reject if figure already moved this turn
+      if (movedFigureIds.includes(figureId)) continue;
+
+      // Find the figure in current from-province figures
+      const figure = currentFromFigures.find(f => f.id === figureId && f.owner === playerId);
+      if (!figure) continue;
+
+      // Reject fortress movement unless player is Tortuga clan
+      if (figure.type === 'fortress' && player.clanId !== 'tortuga') continue;
+
+      // Adjacency check: skip for Libelula clan (can move anywhere)
+      if (player.clanId !== 'libelula') {
+        if (!isValidMove(fromProvinceId, toProvinceId)) continue;
+      } else {
+        // Libelula can move to any province except the same one
+        if (fromProvinceId === toProvinceId) continue;
+      }
+
+      // Luna clan power: max 2 figures per province (excluding fortresses)
+      if (player.clanId === 'luna' && figure.type !== 'fortress') {
+        const lunaFiguresInDest = currentToFigures.filter(
+          (f) => f.owner === playerId && f.type !== 'fortress'
+        ).length;
+        if (lunaFiguresInDest >= 2) continue;
+      }
+
+      // Move the figure
+      currentFromFigures = currentFromFigures.filter(f => f.id !== figureId);
+      currentToFigures = [...currentToFigures, figure];
+      movedFigureIds = [...movedFigureIds, figureId];
+      anyMoved = true;
+
+      const figureDisplayName = figure.type === 'monster'
+        ? `monster(${player.seasonCards.find(c => c.cardType === 'monster')?.name || 'monster'})`
+        : figure.type;
+      logEntries = [...logEntries, `${player.name} mueve ${figureDisplayName} de ${fromProvince.name} a ${toProvince.name}`];
     }
 
-    // Luna clan power: max 2 figures per province (excluding fortresses)
-    if (player.clanId === 'luna' && figure.type !== 'fortress') {
-      const lunaFiguresInDest = toProvince.figures.filter(
-        (f) => f.owner === playerId && f.type !== 'fortress'
-      ).length;
-      if (lunaFiguresInDest >= 2) return state;
-    }
+    if (!anyMoved) return state;
 
-    // Move the figure
-    const movedFigures = [figure];
-    const remainingFigures = fromProvince.figures.filter(f => f.id !== figureId);
-
-    newState.provinces[fromProvinceId] = { ...fromProvince, figures: remainingFigures };
-    newState.provinces[toProvinceId] = { ...toProvince, figures: [...toProvince.figures, ...movedFigures] };
-
-    // Track figure as moved
-    newState.marshalMovedFigures = [...state.marshalMovedFigures, figureId];
-
-    const figureDisplayName = figure.type === 'monster'
-      ? `monster(${player.seasonCards.find(c => c.cardType === 'monster')?.name || 'monster'})`
-      : figure.type;
-    newState.log = [...newState.log, `${player.name} mueve ${figureDisplayName} de ${fromProvince.name} a ${toProvince.name}`];
+    newState.provinces[fromProvinceId] = { ...fromProvince, figures: currentFromFigures };
+    newState.provinces[toProvinceId] = { ...toProvince, figures: currentToFigures };
+    newState.marshalMovedFigures = movedFigureIds;
+    newState.log = logEntries;
 
     return newState;
   }

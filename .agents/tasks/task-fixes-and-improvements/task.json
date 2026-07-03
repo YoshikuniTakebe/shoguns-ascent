@@ -1,0 +1,7 @@
+{
+  "task_id": "task-fixes-and-improvements",
+  "task_description": "Multiple bug fixes and UI improvements for the Shogun's Ascent game: Marshal multi-select movement fix, Fujin confirmation step, Kotahi harvest ability, Betrayal flow rework, War phase Zorro flow fix, Legend button positioning, Sol clan color change, diorama figure sizes, Seppuku/Battle result popup enhancements",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}
