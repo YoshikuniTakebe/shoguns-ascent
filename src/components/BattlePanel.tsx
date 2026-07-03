@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import type { Battle, GameState } from '../types/game';
@@ -308,7 +309,7 @@ export const BattlePanel = () => {
 
     // If no remainder, show informational popup only
     if (pending.remainder === 0) {
-      return (
+      return createPortal(
         <div className="battle-popup-overlay">
           <div className="battle-popup-card">
             <h3 className="battle-popup-title">{t('battle.coinDistributionTitle')}</h3>
@@ -344,12 +345,13 @@ export const BattlePanel = () => {
               {t('battle.continue')}
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       );
     }
 
     // Remainder > 0: show choice selector
-    return (
+    return createPortal(
       <div className="battle-popup-overlay">
         <div className="battle-popup-card">
           <h3 className="battle-popup-title">{t('battle.coinDistributionTitle')}</h3>
@@ -397,7 +399,8 @@ export const BattlePanel = () => {
             })}
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -414,13 +417,14 @@ export const BattlePanel = () => {
     const justResolved = resolvedBattles[resolvedBattles.length - 1];
 
     if (justResolved) {
-      return (
+      return createPortal(
         <BattleResultPopup
           battle={justResolved}
           gameState={gameState}
           onAccept={doAcceptBattlePopup}
           t={t}
-        />
+        />,
+        document.body
       );
     }
   }
@@ -460,7 +464,7 @@ export const BattlePanel = () => {
     const winner = battle.winner ? gameState.players.find(p => p.id === battle.winner) : null;
     const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
 
-    return (
+    return createPortal(
       <div className="battle-popup-overlay">
         <div className="battle-popup-card">
           <h3 className="battle-popup-title">{t('battle.battleNumber', { number: battleNumber })}</h3>
@@ -475,7 +479,8 @@ export const BattlePanel = () => {
             {t('battle.accept')}
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -492,7 +497,7 @@ export const BattlePanel = () => {
     const player = gameState.players.find(p => p.id === currentParticipant);
     const playerClan = player ? CLANS.find(c => c.id === player.clanId) : null;
 
-    return (
+    return createPortal(
       <div className="battle-popup-overlay">
         <div className="battle-popup-card" style={{ borderColor: playerClan?.color }}>
           <h3 className="battle-popup-title">
@@ -508,7 +513,8 @@ export const BattlePanel = () => {
             {t('battle.accept')}
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -519,13 +525,14 @@ export const BattlePanel = () => {
     const justResolved = resolvedBattles[resolvedBattles.length - 1];
 
     if (justResolved) {
-      return (
+      return createPortal(
         <BattleResultPopup
           battle={justResolved}
           gameState={gameState}
           onAccept={doAcceptBattlePopup}
           t={t}
-        />
+        />,
+        document.body
       );
     }
   }
@@ -556,7 +563,7 @@ export const BattlePanel = () => {
       doSubmitWarTacticBids(battle.provinceId, bidValues);
     };
 
-    return (
+    return createPortal(
       <BattleBiddingOverlay
         playerName={player?.name || ''}
         playerClanColor={playerClan?.color || '#fff'}
@@ -572,7 +579,8 @@ export const BattlePanel = () => {
         playerBattleIndex={playerBattleIndex}
         playerTotalBattles={playerTotalBattles}
         onPeekMap={() => setBiddingMapPeek(true)}
-      />
+      />,
+      document.body
     );
   }
 
@@ -582,13 +590,14 @@ export const BattlePanel = () => {
     const justResolved = resolvedBattles[resolvedBattles.length - 1];
 
     if (justResolved) {
-      return (
+      return createPortal(
         <BattleResultPopup
           battle={justResolved}
           gameState={gameState}
           onAccept={doAcceptBattlePopup}
           t={t}
-        />
+        />,
+        document.body
       );
     }
   }
@@ -621,7 +630,7 @@ export const BattlePanel = () => {
         })}
       </div>
 
-      {isPart && !hasBid && (
+      {isPart && !hasBid && createPortal(
         <BattleBiddingOverlay
           playerName={gameState.players.find(p => p.id === apid)?.name || ''}
           playerClanColor={CLANS.find(c => c.id === gameState.players.find(p => p.id === apid)?.clanId)?.color || '#fff'}
@@ -644,7 +653,8 @@ export const BattlePanel = () => {
           playerBattleIndex={(() => { const pb = allBattles.filter(b => b.participants.includes(apid!)); return pb.findIndex(b => b.provinceId === battle.provinceId) + 1; })()}
           playerTotalBattles={allBattles.filter(b => b.participants.includes(apid!)).length}
           onPeekMap={() => setBiddingMapPeek(true)}
-        />
+        />,
+        document.body
       )}
 
       {isPart && hasBid && (

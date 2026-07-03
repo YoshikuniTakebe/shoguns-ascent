@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { Player, GameState } from '../types/game';
@@ -200,23 +201,26 @@ export const PlayerPanel = () => {
           );
         })}
       </div>
-      {viewingCardsPlayer && (
+      {viewingCardsPlayer && createPortal(
         <PlayerCardsModal
           player={viewingCardsPlayer}
           onClose={() => setViewingCardsPlayer(null)}
-        />
+        />,
+        document.body
       )}
-      {viewingWarTokensPlayer && (
+      {viewingWarTokensPlayer && createPortal(
         <WarTokensModal
           player={viewingWarTokensPlayer}
           onClose={() => setViewingWarTokensPlayer(null)}
-        />
+        />,
+        document.body
       )}
-      {viewingHostagesPlayer && (
+      {viewingHostagesPlayer && createPortal(
         <HostagesModal
           player={viewingHostagesPlayer}
           onClose={() => setViewingHostagesPlayer(null)}
-        />
+        />,
+        document.body
       )}
     </div>
   );
