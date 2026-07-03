@@ -150,6 +150,7 @@ export const MainMenu = () => {
           <div className="player-setup-list">
             {Array.from({ length: pc }, (_, i) => {
               const usedClans = clans.slice(0, pc).filter((_, idx) => idx !== i);
+              const selectedClanColor = CLANS.find(c => c.id === clans[i])?.color || '#fff';
               return (
                 <div key={i} className="player-setup-row">
                   <div className="player-setup-clan-icon">
@@ -163,6 +164,7 @@ export const MainMenu = () => {
                       setNames(n);
                     }}
                     placeholder={`Player ${i + 1}`}
+                    style={{ color: selectedClanColor }}
                   />
                   <select
                     value={clans[i]}
@@ -171,9 +173,10 @@ export const MainMenu = () => {
                       c[i] = e.target.value;
                       setClans(c);
                     }}
+                    style={{ color: selectedClanColor }}
                   >
                     {CLANS.filter(c => !usedClans.includes(c.id) || c.id === clans[i]).map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                      <option key={c.id} value={c.id} style={{ color: c.color }}>{c.name}</option>
                     ))}
                   </select>
                 </div>
