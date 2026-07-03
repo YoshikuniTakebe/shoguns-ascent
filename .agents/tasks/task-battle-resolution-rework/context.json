@@ -1,0 +1,27 @@
+{
+  "project_type": "React + TypeScript + Vite + Zustand board game app",
+  "language": "TypeScript",
+  "build_system": "Vite with tsc type-checking, npm scripts",
+  "test_framework": "None (no test framework configured)",
+  "build_command": "npm run build",
+  "test_command": "npm run build (type-check only, no tests)",
+  "verification_instructions": "Run `npm run build` - must compile without errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/shoguns-ascent && npm install",
+  "environment_constraints": "No test runner available. Verification is limited to TypeScript compilation via `npm run build`.",
+  "contribution_requirements": "Commit directly to main branch.",
+  "key_patterns": "Zustand store (src/store/gameStore.ts) manages all game state. Game logic lives in src/utils/gameLogic.ts with pure functions that take/return GameState. Components use createPortal(jsx, document.body) for popups with classes battle-popup-overlay and battle-popup-card. i18n in src/i18n/en.ts and es.ts. Icon components in src/components/Icons.tsx (VPIcon, CoinIcon, HonorIcon, RoninIcon, BushiIcon, ShintoIcon, MonsterIcon). ClanShield component for clan seals. Battle flow: battleStepPhase drives popup->bidding->result transitions. The resolveNextBattle function in gameLogic.ts resolves tactics in order (seppuku, take-hostage, hire-ronin, imperial-poets) then determines winner by force.",
+  "relevant_files": [
+    "src/utils/gameLogic.ts",
+    "src/store/gameStore.ts",
+    "src/components/BattlePanel.tsx",
+    "src/components/BattleBiddingOverlay.tsx",
+    "src/components/PoliticsTrack.tsx",
+    "src/components/GameLog.tsx",
+    "src/components/Icons.tsx",
+    "src/types/game.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts"
+  ],
+  "directory_structure": "src/components/ - React components, src/store/ - Zustand store, src/utils/ - game logic, src/types/ - TypeScript types, src/i18n/ - translations, src/img/ - images"
+}

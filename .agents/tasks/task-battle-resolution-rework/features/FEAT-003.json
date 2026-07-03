@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Koi clan bidding overlay: dynamically update available ronin count as coins are bid",
+  "status": "completed",
+  "steps": [
+    "1. In src/components/BattleBiddingOverlay.tsx, the Koi clan's available ronin equals their coins minus the coins currently assigned to tactics. Currently the overlay shows a static playerRonin value. For Koi, this should be dynamic: as the player drags coins to tactic slots, the displayed ronin count should decrease accordingly.",
+    "2. Add a prop to BattleBiddingOverlay: `isKoiClan?: boolean` (or detect from playerClanId === 'koi').",
+    "3. In the header section where playerRonin is displayed (around line 195), if the player is Koi, calculate the dynamic ronin as: playerRonin - totalAssigned (where totalAssigned = number of coins placed on any tactic). Display this computed value instead of the static playerRonin.",
+    "4. In BattlePanel.tsx where playerRonin is passed to BattleBiddingOverlay (around lines 681 and 748), for Koi players the passed value is already `player.coins`. The dynamic calculation in the overlay will subtract coins assigned to tactics from this base value to show remaining available ronin."
+  ],
+  "acceptance_criteria": [
+    "When a Koi player moves coins to tactic slots in the bidding overlay, the displayed ronin count decreases by the same amount",
+    "When a Koi player moves coins back to the pool, the displayed ronin count increases back",
+    "Non-Koi players see their static ronin count unchanged",
+    "npm run build succeeds without errors"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}

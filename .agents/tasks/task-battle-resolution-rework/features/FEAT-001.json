@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix fortress-only battle inclusion, hide exhausted mandates, fix Sol clan log message with icon tokens",
+  "status": "completed",
+  "steps": [
+    "1. In src/utils/gameLogic.ts, in the initiateWarPhase function around line 1681, change `const playerIds = [...new Set(province.figures.map((f) => f.owner))]` to filter out players who ONLY have fortress figures (unless their clan is 'tortuga'). Logic: for each unique owner, check if they have any non-fortress figure in the province. If not, exclude them UNLESS their clanId is 'tortuga'. Apply same logic in resolveUncontestedBattles around line 1810.",
+    "2. In src/components/PoliticsTrack.tsx, hide the exhausted mandates indicator section. The block starting at line 319 `{exhaustedMandates.length > 0 && (...)}` should be removed or commented out (the entire JSX block rendering exhausted mandates).",
+    "3. In src/utils/gameLogic.ts, in the applySolTiebreakBonus function around line 2618, change the log message from `${winner.name} (Sol) gana +1 Moneda +1 PV por empate y ganar en Honor a ${losers...} que pierde -1 Moneda -1 PV` to use icon token keywords that the GameLog renderer will pick up. The new format should be: `${winner.name} (Sol) gana 1 Moneda y 1 PV por empate y ganar en Honor a ${loserNames} que pierde 1 Moneda y 1 PV`. Remove the +/- signs so the GameLog icon patterns (which match `(\\d+\\s*)?\\b(moneda|monedas)\\b` and `(\\d+\\s*)?\\b(VP|PV)\\b`) will correctly render coin and VP icons."
+  ],
+  "acceptance_criteria": [
+    "Players with only fortresses (non-tortuga) are not included as battle participants",
+    "Tortuga clan with only fortresses IS included as a battle participant",
+    "The exhausted mandates tiles no longer appear in the PoliticsTrack",
+    "Sol clan log message contains 'gana 1 Moneda y 1 PV' and 'pierde 1 Moneda y 1 PV' (without + or - signs) so icon tokens render properly",
+    "npm run build succeeds without errors"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": "MandateIllustration function and exhaustedMandates variable had to be fully removed (not just unused-prefixed) due to noUnusedLocals:true in tsconfig. Build passes cleanly."
+}
