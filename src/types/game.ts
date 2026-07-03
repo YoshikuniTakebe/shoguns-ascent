@@ -498,7 +498,7 @@ export const SEASON_CARDS_DATA: SeasonCard[] = [
 
 export const PROVINCE_COLORS: Record<string, string> = {
   hokkaido: '#5BC0EB',
-  oshu: '#9B8EC4',
+  oshu: '#B0BEC5',
   edo: '#2D8B4E',
   kanto: '#E63946',
   kansai: '#F57C20',
