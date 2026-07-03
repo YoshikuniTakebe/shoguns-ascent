@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Fix battle force display bug: participantForces should show FINAL force after seppuku casualties removed, after hostage taken, and after ronin added - not the initial pre-resolution force",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "1. The bug is in src/utils/gameLogic.ts in the resolveNextBattle function. Currently at line ~2050, 'preResolutionForces' is calculated BEFORE seppuku/hostage removals (it uses the province state at that point). But in step-by-step mode (stepByStepMode === true), seppuku and hostage-taking already happened via store actions BEFORE resolveNextBattle is called. So for step-by-step mode, the forces ARE already correct since province figures were already updated by the store. However, the comment says 'BEFORE any seppuku/hostage removals' which was the old non-step-by-step logic.",
     "2. The real issue: in step-by-step mode, the participantForces are computed from the province at the START of resolveNextBattle, AFTER seppuku/hostage/ronin were applied by store actions. But in the BattleResultPopup, it shows `battle.resolutionData.participantForces` OR `battleResolutionData.participantForces` from the store. The store's `battleResolutionData` is set by `determineTacticWinners` (line 198) which computes forces at the time bids are submitted - BEFORE any tactics are applied. This is the stale value shown in the popup.",

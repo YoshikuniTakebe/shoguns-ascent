@@ -2368,6 +2368,7 @@ export function resolveNextBattle(state: GameState): GameState {
           phoenixDiedInBattle,
           battleDeathCount: battleCasualtyCount,
           imperialPoetsVP: totalDeaths,
+          participantForces: preResolutionForces,
         };
       } else {
         battle.resolutionData = {
