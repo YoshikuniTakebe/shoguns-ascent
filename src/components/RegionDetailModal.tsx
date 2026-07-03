@@ -16,10 +16,10 @@ const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'daimyo-tortuga': 1.32,
   'bushi-loto': 0.85,
   'daimyo-loto': 0.90,
-  'sp-oni-of-skulls': 1.25,
+  'sp-oni-of-skulls': 1.30,
   'daimyo-koi': 0.94,
-  'sp-earth-dragon': 1.20,
-  'daimyo-luna': 1.15,
+  'sp-earth-dragon': 1.30,
+  'daimyo-luna': 1.25,
   'bushi-luna': 0.95,
   'daimyo-libelula': 1.10,
   'daimyo-sol': 1.10,
@@ -28,8 +28,9 @@ const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'sp-phoenix': 1.27,
   'daimyo-bonsai': 1.10,
   'bushi-zorro': 0.90,
-  'daimyo-zorro': 1.10,
+  'daimyo-zorro': 1.05,
   'bushi-koi': 0.85,
+  'bushi-libelula': 0.95,
 };
 
 /** Get the size scale override for a figure. Returns 1.0 if no override is defined. */

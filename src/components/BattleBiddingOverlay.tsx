@@ -4,7 +4,7 @@ import coinImg from '../img/coin.png';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { ClanShield } from './ClanShields';
-import { RoninIcon, VPIcon } from './Icons';
+import { RoninIcon, VPIcon, FistIcon } from './Icons';
 
 export interface BattleCombatant {
   playerId: string;
@@ -285,7 +285,10 @@ export const BattleBiddingOverlay = ({
                 <div key={c.playerId} className="bidding-combatant-item">
                   <ClanShield clanId={c.clanId} size={20} />
                   <span className="bidding-combatant-name" style={{ color: clan?.color || '#fff' }}>{c.playerName}</span>
-                  <span className="bidding-combatant-force">{t('battle.force')}: {c.force}</span>
+                  <span className="bidding-combatant-force" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <FistIcon size={16} color={clan?.color || '#fff'} />
+                    <span style={{ fontWeight: 'bold', color: clan?.color || '#fff' }}>{c.force}</span>
+                  </span>
                 </div>
               );
             })}
