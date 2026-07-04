@@ -219,6 +219,7 @@ function formatGame(game: { id: string; name: string; players_json: string; stat
   let politicsMandateCount: number | null = null;
   let kamiResolutionIndex: number | null = null;
   let battleCount: number | null = null;
+  let currentPlayerIndex: number | null = null;
   if (latest) {
     try {
       const state = JSON.parse(latest.state_json);
@@ -227,6 +228,7 @@ function formatGame(game: { id: string; name: string; players_json: string; stat
       politicsMandateCount = state.politicsMandateCount ?? null;
       kamiResolutionIndex = state.kamiResolutionIndex ?? null;
       battleCount = Array.isArray(state.activeBattles) ? state.activeBattles.length : null;
+      currentPlayerIndex = state.currentPlayerIndex ?? null;
     } catch {
       lastSeason = latest.season;
       lastPhase = latest.phase;
@@ -246,6 +248,7 @@ function formatGame(game: { id: string; name: string; players_json: string; stat
     politicsMandateCount,
     kamiResolutionIndex,
     battleCount,
+    currentPlayerIndex,
   };
 }
 

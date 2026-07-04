@@ -20,6 +20,7 @@ interface GameRecord {
   politicsMandateCount: number | null;
   kamiResolutionIndex: number | null;
   battleCount: number | null;
+  currentPlayerIndex: number | null;
 }
 
 export const GamesLobby = () => {
@@ -93,10 +94,15 @@ export const GamesLobby = () => {
         onClick={() => type === 'active' ? resumeGame(game.id) : loadReplayGame(game.id)}
       >
         <span className="games-lobby-card-gamename">{game.name}</span>
-        <span className="games-lobby-card-playercount">{game.players.length} {t('lobby.players' as TranslationKey)}</span>
+        <span className="games-lobby-card-playercount">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+          </svg>
+          <strong>{game.players.length}</strong>
+        </span>
         <span className="games-lobby-card-clans">
           {game.players.map((p, i) => (
-            <span key={i} className="games-lobby-card-clan-entry">
+            <span key={i} className={`games-lobby-card-clan-entry${type === 'active' && game.currentPlayerIndex === i ? ' games-lobby-card-clan-entry-active' : ''}`}>
               <ClanShield clanId={p.clanId} size={18} />
               <span style={{ color: getClanColor(p.clanId) }}>{p.name}</span>
             </span>

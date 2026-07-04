@@ -22,5 +22,5 @@
     "Run: cd /projects/sandbox/shoguns-ascent && npx vite build"
   ],
   "blocked_reason": null,
-  "findings": "All 4 fixes implemented and verified. tsc -b and vite build both pass cleanly."
+  "findings": "All 4 fixes implemented and verified. tsc -b and vite build both pass cleanly. Additionally, performance optimizations for Train/Recruit lag were applied in a separate commit: removed gameState prop from FigureIcon (defeats React.memo), added CSS containment and will-change hints to .region-card, and adjusted figure sizes (daimyo-tortuga 1.09, sp-komainu 0.90, bushi-loto 0.84)."
 }
