@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Fix client-server API contract mismatches in gameStore.ts: use correct camelCase field names from server responses, remove unnecessary JSON.parse calls on already-parsed objects, fix hotseat persistence response property name, and add saveSnapshot call to doLotoChooseActualMandate.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Fix loadReplayGame to use snapshotIndex instead of snapshot_index, state (already parsed) instead of state_json with JSON.parse, and game.players instead of JSON.parse(game.players_json)",
     "Fix resumeGame to use lastSnapshot.state (already parsed) instead of JSON.parse(lastSnapshot.state_json)",
@@ -20,5 +20,5 @@
     "Run npm run build and confirm it passes with no errors"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "All four API contract fixes applied successfully. Build passes cleanly. The key issues were: (1) server transforms DB rows to camelCase before sending, so client must use camelCase field names; (2) server parses JSON fields before sending, so client must not call JSON.parse again; (3) save-hotseat returns {id} not {gameId}."
 }
