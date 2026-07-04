@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Create the Game Lobby frontend component with sections for active (resumable) games and finished (replayable) games. Add a Replay viewer component with step controls (next, previous, jump to next kami phase, jump to previous kami phase, jump to next battle, jump to previous battle). Integrate into the existing MainMenu/App routing.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Add new screen type 'games-lobby' and 'replay' to the store's screen type union in src/store/gameStore.ts: change 'menu' | 'lobby' | 'game' to 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay'",
     "Add replay-related state to the GameStore interface in src/store/gameStore.ts: replayGameId (string|null), replaySnapshots (array of {index, state_json, description, phase, season}), replayCurrentIndex (number), replayTotalSnapshots (number)",
@@ -31,5 +31,5 @@
     "Verify the new components exist and are properly imported in App.tsx"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly with npm run build. All components created and routed properly. The ActionPanel.tsx fix from FEAT-001 (prefixing unused variables with underscore) was included in this commit since it is required for the build to pass. The saveSnapshot function uses fire-and-forget fetch calls to avoid blocking game actions if the server is not running."
 }
