@@ -108,12 +108,19 @@ export const GameBoard = () => {
   const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek } = useGameStore();
   const t = useT();
 
-  const [translateX, setTranslateX] = useState(0);
-  const [translateY, setTranslateY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const panRef = useRef({ x: 0, y: 0 });
+  const mapCanvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({ startX: 0, startY: 0, startTranslateX: 0, startTranslateY: 0, didDrag: false, containerWidth: 0, containerHeight: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+
+  /** Apply the current pan position directly to the DOM */
+  const applyPan = useCallback(() => {
+    if (mapCanvasRef.current) {
+      mapCanvasRef.current.style.transform = `translate(${panRef.current.x}px, ${panRef.current.y}px)`;
+    }
+  }, []);
 
   // Center the map on first render once the container has a size
   useEffect(() => {
@@ -125,10 +132,10 @@ export const GameBoard = () => {
     if (cw === 0 || ch === 0) return;
     const { x, y } = computeInitialPan(cw, ch);
     const clamped = clampPan(x, y, cw, ch);
-    setTranslateX(clamped.x);
-    setTranslateY(clamped.y);
+    panRef.current = { x: clamped.x, y: clamped.y };
+    applyPan();
     setInitialized(true);
-  }, [initialized]);
+  }, [initialized, applyPan]);
 
   // Auto-dismiss rule violation message after 3 seconds
   useEffect(() => {
@@ -152,8 +159,8 @@ export const GameBoard = () => {
     dragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
-      startTranslateX: translateX,
-      startTranslateY: translateY,
+      startTranslateX: panRef.current.x,
+      startTranslateY: panRef.current.y,
       didDrag: false,
       containerWidth: cw,
       containerHeight: ch,
@@ -161,7 +168,7 @@ export const GameBoard = () => {
     setIsDragging(true);
     // Capture pointer so moves/up fire on document even if pointer leaves the element
     (e.target as Element).setPointerCapture(e.pointerId);
-  }, [translateX, translateY]);
+  }, []);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDragging) return;
@@ -179,9 +186,9 @@ export const GameBoard = () => {
     const rawY = dragRef.current.startTranslateY + dy;
     const { x: newX, y: newY } = clampPan(rawX, rawY, containerWidth, containerHeight);
 
-    setTranslateX(newX);
-    setTranslateY(newY);
-  }, [isDragging]);
+    panRef.current = { x: newX, y: newY };
+    applyPan();
+  }, [isDragging, applyPan]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     setIsDragging(false);
@@ -372,7 +379,7 @@ export const GameBoard = () => {
             )}
             <div
               className="map-canvas"
-              style={{ transform: `translate(${translateX}px, ${translateY}px)` }}
+              ref={mapCanvasRef}
             >
               <JapanMapBackground />
               <svg viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} className="japan-map">

@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
+import { useShallow } from 'zustand/react/shallow';
 import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS } from '../types/game';
 import type { Figure, GameState } from '../types/game';
 import { useT } from '../i18n';
@@ -184,8 +185,45 @@ const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure:
 });
 
 export const RegionCard = React.memo(({ regionId, style }: { regionId: string; style: CSSProperties }) => {
-  // Use individual selectors to avoid re-renders from unrelated state changes
-  const gameState = useGameStore(s => s.gameState);
+  // Use granular selectors to avoid re-renders from unrelated state changes
+  const province = useGameStore(s => s.gameState?.provinces[regionId]);
+  const {
+    players,
+    currentPlayerIndex,
+    currentPhase: _currentPhase,
+    mode,
+    marshalMandateActive,
+    marshalMovedFigures,
+    kamiResolutionActive,
+    fujinMovesRemaining,
+    kamiResolutionTemples,
+    kamiResolutionIndex,
+    zorroPlacementActive,
+    zorroPlacementPlayerId,
+    warProvinceSlots,
+    honorTrack: _honorTrack,
+    harvestMandateActive: _harvestMandateActive,
+    raijinPlacementActive,
+    currentSeason: _currentSeason,
+  } = useGameStore(useShallow(s => ({
+    players: s.gameState?.players,
+    currentPlayerIndex: s.gameState?.currentPlayerIndex ?? 0,
+    currentPhase: s.gameState?.currentPhase,
+    mode: s.gameState?.mode,
+    marshalMandateActive: s.gameState?.marshalMandateActive ?? false,
+    marshalMovedFigures: s.gameState?.marshalMovedFigures ?? [],
+    kamiResolutionActive: s.gameState?.kamiResolutionActive ?? false,
+    fujinMovesRemaining: s.gameState?.fujinMovesRemaining ?? 0,
+    kamiResolutionTemples: s.gameState?.kamiResolutionTemples ?? [],
+    kamiResolutionIndex: s.gameState?.kamiResolutionIndex ?? 0,
+    zorroPlacementActive: s.gameState?.zorroPlacementActive ?? false,
+    zorroPlacementPlayerId: s.gameState?.zorroPlacementPlayerId,
+    warProvinceSlots: s.gameState?.warProvinceSlots ?? [],
+    honorTrack: s.gameState?.honorTrack ?? [],
+    harvestMandateActive: s.gameState?.harvestMandateActive ?? false,
+    raijinPlacementActive: s.gameState?.raijinPlacementActive ?? false,
+    currentSeason: s.gameState?.currentSeason,
+  })));
   const selectedRegion = useGameStore(s => s.selectedRegion);
   const moveMode = useGameStore(s => s.moveMode);
   const moveFrom = useGameStore(s => s.moveFrom);
@@ -198,21 +236,21 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   const monsterPlacementPlayerId = useGameStore(s => s.monsterPlacementPlayerId);
   const jinmenjuSummonActive = useGameStore(s => s.jinmenjuSummonActive);
   const t = useT();
-  if (!gameState) return null;
+  if (!province || !players) return null;
 
-  const province = gameState.provinces[regionId];
-  if (!province) return null;
+  // Reconstruct a gameState-like object for functions that require it
+  const gameState = useGameStore.getState().gameState!;
 
   const isSelected = selectedRegion === regionId;
 
   // Determine active player during marshal
-  const cp = gameState.players[gameState.currentPlayerIndex];
-  const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
-  const activePlayer = apid ? gameState.players.find(p => p.id === apid) : null;
-  const isMarshalMove = moveMode && gameState.marshalMandateActive;
-  const isFujinMove = moveMode && gameState.kamiResolutionActive && gameState.fujinMovesRemaining > 0;
+  const cp = players[currentPlayerIndex];
+  const apid = mode === 'hotseat' ? cp?.id : localPlayerId;
+  const activePlayer = apid ? players.find(p => p.id === apid) : null;
+  const isMarshalMove = moveMode && marshalMandateActive;
+  const isFujinMove = moveMode && kamiResolutionActive && fujinMovesRemaining > 0;
   const fujinPlayerId = isFujinMove
-    ? gameState.kamiResolutionTemples[gameState.kamiResolutionIndex]?.winnerId
+    ? kamiResolutionTemples[kamiResolutionIndex]?.winnerId
     : null;
   const movePlayerId = isFujinMove ? fujinPlayerId : apid;
   const isLibelula = activePlayer?.clanId === 'libelula';
@@ -220,7 +258,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   // Move target logic: for Libelula during marshal, all provinces except moveFrom are valid
   // For Fujin movement, use the fujin player's clan for Libelula check
   const movePlayerClan = isFujinMove
-    ? gameState.players.find(p => p.id === fujinPlayerId)?.clanId
+    ? players.find(p => p.id === fujinPlayerId)?.clanId
     : activePlayer?.clanId;
   const isMovePlayerLibelula = movePlayerClan === 'libelula';
   let isMoveTarget = false;
@@ -240,7 +278,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   let isMonsterTarget = false;
   let isMonsterDimmed = false;
   if (monsterPlacementMode && monsterPlacementPlayerId) {
-    const placingPlayer = gameState.players.find(p => p.id === monsterPlacementPlayerId);
+    const placingPlayer = players.find(p => p.id === monsterPlacementPlayerId);
     if (placingPlayer) {
       if (placingPlayer.clanId === 'libelula') {
         // Libelula can place anywhere
@@ -269,9 +307,9 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
 
   // Zorro placement target logic
   let isZorroTarget = false;
-  if (gameState.zorroPlacementActive && gameState.zorroPlacementPlayerId) {
-    const isBattleProvince = gameState.warProvinceSlots.some(s => s.provinceId === regionId);
-    const hasZorroFigure = province.figures.some(f => f.owner === gameState.zorroPlacementPlayerId && f.type !== 'fortress');
+  if (zorroPlacementActive && zorroPlacementPlayerId) {
+    const isBattleProvince = warProvinceSlots.some(s => s.provinceId === regionId);
+    const hasZorroFigure = province.figures.some(f => f.owner === zorroPlacementPlayerId && f.type !== 'fortress');
     if (isBattleProvince && !hasZorroFigure) {
       isZorroTarget = true;
     }
@@ -280,7 +318,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   // Recruit province highlighting logic
   let isRecruitTarget = false;
   let isRecruitDimmed = false;
-  if (gameState.kamiResolutionActive && gameState.raijinPlacementActive) {
+  if (kamiResolutionActive && raijinPlacementActive) {
     isRecruitTarget = true;
   } else if (jinmenjuSummonActive && recruitMode && !monsterPlacementMode) {
     // When Jinmenju summon is active, only highlight the province where Jinmenju is
@@ -312,12 +350,12 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   const handleClick = () => {
     const { selectRegion, doMoveForces, setMoveFrom, setSelectedFigures, doBuildFortress, doRecruitPlaceFigure, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, doJinmenjuPlace } = useGameStore.getState();
     // Zorro placement: click province to place bushi
-    if (gameState.zorroPlacementActive && isZorroTarget) {
+    if (zorroPlacementActive && isZorroTarget) {
       doZorroPlaceBushi(regionId);
       return;
     }
     // Raijin placement: click province to summon bushi
-    if (gameState.kamiResolutionActive && gameState.raijinPlacementActive) {
+    if (kamiResolutionActive && raijinPlacementActive) {
       doRaijinPlace(regionId);
       return;
     }
@@ -387,11 +425,11 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
       if (figure.owner !== ownerId) return;
 
       // Cannot select already-moved figures (marshal only)
-      if (isMarshalMove && gameState.marshalMovedFigures.includes(figureId)) return;
+      if (isMarshalMove && marshalMovedFigures.includes(figureId)) return;
 
       // Cannot select fortress unless player is Tortuga
       const movingPlayerClan = isFujinMove
-        ? gameState.players.find(p => p.id === fujinPlayerId)?.clanId
+        ? players.find(p => p.id === fujinPlayerId)?.clanId
         : activePlayer?.clanId;
       if (figure.type === 'fortress' && movingPlayerClan !== 'tortuga') return;
 
@@ -408,7 +446,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   const isFigureDimmed = (fig: Figure): boolean => {
     if (isFujinMove) return false; // Fujin doesn't track moved figures
     if (!isMarshalMove) return false;
-    if (gameState.marshalMovedFigures.includes(fig.id)) return true;
+    if (marshalMovedFigures.includes(fig.id)) return true;
     return false;
   };
 
@@ -416,13 +454,13 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   const isFigureUnselectable = (fig: Figure): boolean => {
     if (isFujinMove) {
       if (fig.owner !== fujinPlayerId) return true;
-      const fujinPlayerClan = gameState.players.find(p => p.id === fujinPlayerId)?.clanId;
+      const fujinPlayerClan = players.find(p => p.id === fujinPlayerId)?.clanId;
       if (fig.type === 'fortress' && fujinPlayerClan !== 'tortuga') return true;
       return false;
     }
     if (!isMarshalMove) return false;
     if (fig.owner !== apid) return true;
-    if (gameState.marshalMovedFigures.includes(fig.id)) return true;
+    if (marshalMovedFigures.includes(fig.id)) return true;
     if (fig.type === 'fortress' && activePlayer?.clanId !== 'tortuga') return true;
     return false;
   };
@@ -435,18 +473,18 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   }
 
   // Check for war province token
-  const warSlot = gameState.warProvinceSlots.find(s => s.provinceId === regionId);
+  const warSlot = warProvinceSlots.find(s => s.provinceId === regionId);
 
   // Marshal/Fujin glow: when moveMode is true but source not yet selected, glow regions with active player's troops
   const isMarshalGlowCandidate = (isMarshalMove || isFujinMove) && moveMode && !moveFrom;
   const marshalGlowPlayerId = isFujinMove ? fujinPlayerId : apid;
-  const glowPlayerClanId = marshalGlowPlayerId ? gameState.players.find(p => p.id === marshalGlowPlayerId)?.clanId : undefined;
+  const glowPlayerClanId = marshalGlowPlayerId ? players.find(p => p.id === marshalGlowPlayerId)?.clanId : undefined;
   const hasTroopsForGlow = isMarshalGlowCandidate && marshalGlowPlayerId
-    ? province.figures.some(f => f.owner === marshalGlowPlayerId && (f.type !== 'fortress' || glowPlayerClanId === 'tortuga') && !gameState.marshalMovedFigures.includes(f.id))
+    ? province.figures.some(f => f.owner === marshalGlowPlayerId && (f.type !== 'fortress' || glowPlayerClanId === 'tortuga') && !marshalMovedFigures.includes(f.id))
     : false;
   const marshalGlowColor = hasTroopsForGlow
     ? (() => {
-        const glowPlayer = gameState.players.find(p => p.id === marshalGlowPlayerId);
+        const glowPlayer = players.find(p => p.id === marshalGlowPlayerId);
         const glowClan = glowPlayer ? CLANS.find(c => c.id === glowPlayer.clanId) : null;
         return glowClan?.color || '#DAA520';
       })()
@@ -462,7 +500,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
       {warSlot && <div className="war-token">{t('region.battle', { number: String(warSlot.number) })}</div>}
       <div className="region-forces">
         {Object.entries(figuresByOwner).map(([ownerId, figures]) => {
-          const player = gameState.players.find(p => p.id === ownerId);
+          const player = players.find(p => p.id === ownerId);
           const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
           const ownerColor = clan?.color || '#666';
           const isEnemy = betrayMode && ownerId !== apid;
