@@ -694,14 +694,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ]);
       const game = await gameRes.json();
       const snapshots = await snapshotsRes.json();
-      const parsedSnapshots = snapshots.map((s: { snapshot_index: number; state_json: string; description: string; phase: string; season: string }) => ({
-        index: s.snapshot_index,
-        state: JSON.parse(s.state_json) as GameState,
+      const parsedSnapshots = snapshots.map((s: { snapshotIndex: number; state: GameState; description: string; phase: string; season: string }) => ({
+        index: s.snapshotIndex,
+        state: s.state as GameState,
         description: s.description,
         phase: s.phase,
         season: s.season,
       }));
-      const players = JSON.parse(game.players_json || '[]');
+      const players = game.players || [];
       set({
         replayGameId: gameId,
         replaySnapshots: parsedSnapshots,
@@ -775,7 +775,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const snapshots = await snapshotsRes.json();
       if (snapshots.length === 0) return;
       const lastSnapshot = snapshots[snapshots.length - 1];
-      const gameState = JSON.parse(lastSnapshot.state_json) as GameState;
+      const gameState = lastSnapshot.state as GameState;
       set({
         gameState,
         localPlayerId: gameState.players[0]?.id || null,
@@ -837,8 +837,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       })
         .then(res => res.json())
         .then(data => {
-          if (data && data.gameId) {
-            set({ persistentGameId: data.gameId });
+          if (data && data.id) {
+            set({ persistentGameId: data.id });
           }
         })
         .catch(() => { /* silently ignore persistence errors */ });
@@ -964,6 +964,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const advanced = advancePlayer(ns);
       set({ gameState: advanced, ...detectWarTransitionWithPopup(advanced), ...detectKamiPopupPending(advanced), ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' && !advanced.kamiResolutionActive && !advanced.kamiPhasePopupPending ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}) });
     }
+    get().saveSnapshot();
   },
 
   // --- Buy Season Card (Train mandate) ---
