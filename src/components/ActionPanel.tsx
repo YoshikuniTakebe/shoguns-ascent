@@ -128,7 +128,7 @@ export const ActionPanel = () => {
           )}
 
           {isMyTurn && (!cp || cp.allies.length === 0) && (
-            <div className="alliance-options" style={{ maxHeight: '340px', overflowY: 'auto' }}>
+            <div className="alliance-options" style={{ maxHeight: '360px', overflowY: 'auto' }}>
               {gameState.players
                 .filter(p => p.id !== (gameState.mode === 'hotseat' ? cp?.id : localPlayerId))
                 .filter(p => !cp?.allies.includes(p.id) && p.allies.length === 0)
