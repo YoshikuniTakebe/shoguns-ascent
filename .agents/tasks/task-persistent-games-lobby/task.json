@@ -1,0 +1,7 @@
+{
+  "task_id": "task-persistent-games-lobby",
+  "task_description": "Create a persistent game system with SQLite storage, a games lobby UI for resuming active games and replaying finished games, and a step-by-step replay viewer with controls for navigating through game history including jumps to kami phases and battles.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

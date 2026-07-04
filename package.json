@@ -11,6 +11,8 @@
     "server": "tsx src/server/index.ts"
   },
   "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.11.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "react": "^19.2.7",

@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add SQLite-based persistence layer to the server for saving game state snapshots. Each game gets a record with metadata (id, name, players, status, timestamps). Every time the game state changes (broadcastState), a snapshot is saved. This enables resuming games and replaying them.",
+  "status": "in_progress",
+  "steps": [
+    "Install better-sqlite3 and @types/better-sqlite3 as dependencies (npm install better-sqlite3 @types/better-sqlite3)",
+    "Create src/server/database.ts with: (a) initDatabase() function that creates/opens a SQLite DB file at data/games.db (relative to project root), creating the data/ directory if needed. (b) Tables: 'games' (id TEXT PRIMARY KEY, name TEXT, players_json TEXT, status TEXT ['active','finished'], created_at TEXT, updated_at TEXT, mode TEXT, winner TEXT), 'snapshots' (id INTEGER PRIMARY KEY AUTOINCREMENT, game_id TEXT REFERENCES games(id), snapshot_index INTEGER, state_json TEXT, description TEXT, phase TEXT, season TEXT, created_at TEXT). (c) Export helper functions: saveGame(id, name, players, mode, status), updateGameStatus(id, status, winner?), saveSnapshot(gameId, state, description), getGameById(id), getActiveGames(), getFinishedGames(), getSnapshots(gameId), getSnapshotByIndex(gameId, index), getSnapshotCount(gameId)",
+    "In src/server/index.ts, import and call initDatabase() at server startup",
+    "Modify the START_GAME handler in src/server/index.ts to: save the new game to the DB using saveGame(), save the initial state as snapshot index 0",
+    "Modify the broadcastState() function in src/server/index.ts to also save a new snapshot each time state changes (increment snapshot_index). Include a description derived from the current phase/season. Also update the game's updated_at timestamp.",
+    "When a game reaches gameOver=true (detect in broadcastState), call updateGameStatus to mark as 'finished' with the winner",
+    "Add a Lobby interface field 'persistentGameId' to link the in-memory lobby to the database game record",
+    "Add REST endpoints: GET /api/games (list all games with status filter ?status=active|finished), GET /api/games/:id (get game metadata), GET /api/games/:id/snapshots (get all snapshots for replay), GET /api/games/:id/snapshots/:index (get specific snapshot), GET /api/games/:id/snapshot-count (get total snapshots)",
+    "Also support hotseat persistence: Add POST /api/games/save-hotseat endpoint that accepts a full GameState and saves it as a game + snapshot. Add PUT /api/games/:id/snapshot endpoint that accepts a GameState and appends a new snapshot for an existing game.",
+    "Add data/ to .gitignore so the SQLite file is not committed"
+  ],
+  "acceptance_criteria": [
+    "npm run build completes without TypeScript errors",
+    "Server starts successfully with npm run server (no crashes)",
+    "SQLite database file is created at data/games.db on first server start",
+    "GET /api/games returns an empty array initially",
+    "The database schema supports both active and finished game persistence with snapshot history"
+  ],
+  "verification": [
+    "Run npm run build and confirm it passes",
+    "Start server with timeout 5s and verify it logs startup message without errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

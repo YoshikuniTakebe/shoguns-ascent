@@ -27,6 +27,18 @@ import {
   skipBetrayTurn,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
+import {
+  initDatabase,
+  saveGame,
+  updateGameStatus,
+  saveSnapshot,
+  getGameById,
+  getActiveGames,
+  getFinishedGames,
+  getSnapshots,
+  getSnapshotByIndex,
+  getSnapshotCount,
+} from './database';
 
 const app = express();
 app.use(cors());
@@ -42,9 +54,13 @@ interface Lobby {
   maxPlayers: number;
   gameState: GameState | null;
   started: boolean;
+  persistentGameId: string | null;
 }
 
 const lobbies = new Map<string, Lobby>();
+
+// Initialize the database
+initDatabase();
 
 app.get('/api/lobbies', (_req, res) => {
   res.json(
@@ -68,10 +84,145 @@ app.post('/api/lobbies', (req, res) => {
     maxPlayers: maxPlayers || 5,
     gameState: null,
     started: false,
+    persistentGameId: null,
   };
   lobbies.set(lobby.id, lobby);
   res.json({ id: lobby.id });
 });
+
+// --- Game persistence REST endpoints ---
+
+app.get('/api/games', (req, res) => {
+  const status = req.query.status as string | undefined;
+  if (status === 'active') {
+    res.json(getActiveGames().map(formatGame));
+  } else if (status === 'finished') {
+    res.json(getFinishedGames().map(formatGame));
+  } else {
+    const all = [...getActiveGames(), ...getFinishedGames()];
+    res.json(all.map(formatGame));
+  }
+});
+
+app.get('/api/games/:id', (req, res) => {
+  const game = getGameById(req.params.id);
+  if (!game) {
+    res.status(404).json({ error: 'Game not found' });
+    return;
+  }
+  res.json(formatGame(game));
+});
+
+app.get('/api/games/:id/snapshots', (req, res) => {
+  const game = getGameById(req.params.id);
+  if (!game) {
+    res.status(404).json({ error: 'Game not found' });
+    return;
+  }
+  const snapshots = getSnapshots(req.params.id);
+  res.json(
+    snapshots.map((s) => ({
+      id: s.id,
+      gameId: s.game_id,
+      snapshotIndex: s.snapshot_index,
+      state: JSON.parse(s.state_json),
+      description: s.description,
+      phase: s.phase,
+      season: s.season,
+      createdAt: s.created_at,
+    }))
+  );
+});
+
+app.get('/api/games/:id/snapshots/:index', (req, res) => {
+  const index = parseInt(req.params.index, 10);
+  if (isNaN(index)) {
+    res.status(400).json({ error: 'Invalid snapshot index' });
+    return;
+  }
+  const snapshot = getSnapshotByIndex(req.params.id, index);
+  if (!snapshot) {
+    res.status(404).json({ error: 'Snapshot not found' });
+    return;
+  }
+  res.json({
+    id: snapshot.id,
+    gameId: snapshot.game_id,
+    snapshotIndex: snapshot.snapshot_index,
+    state: JSON.parse(snapshot.state_json),
+    description: snapshot.description,
+    phase: snapshot.phase,
+    season: snapshot.season,
+    createdAt: snapshot.created_at,
+  });
+});
+
+app.get('/api/games/:id/snapshot-count', (req, res) => {
+  const game = getGameById(req.params.id);
+  if (!game) {
+    res.status(404).json({ error: 'Game not found' });
+    return;
+  }
+  res.json({ count: getSnapshotCount(req.params.id) });
+});
+
+// --- Hotseat persistence endpoints ---
+
+app.post('/api/games/save-hotseat', (req, res) => {
+  const { state } = req.body as { state: GameState };
+  if (!state) {
+    res.status(400).json({ error: 'Missing state in request body' });
+    return;
+  }
+  const gameId = state.id || uuidv4();
+  const players = state.players.map((p) => ({ name: p.name, clanId: p.clanId }));
+  const gameName = `Hotseat - ${players.map((p) => p.name).join(' vs ')}`;
+  const status = state.gameOver ? 'finished' : 'active';
+
+  saveGame(gameId, gameName, players, 'hotseat', status);
+  saveSnapshot(gameId, state, 'Hotseat save');
+
+  if (state.gameOver) {
+    updateGameStatus(gameId, 'finished', state.winner);
+  }
+
+  res.json({ id: gameId });
+});
+
+app.put('/api/games/:id/snapshot', (req, res) => {
+  const { state } = req.body as { state: GameState };
+  if (!state) {
+    res.status(400).json({ error: 'Missing state in request body' });
+    return;
+  }
+  const game = getGameById(req.params.id);
+  if (!game) {
+    res.status(404).json({ error: 'Game not found' });
+    return;
+  }
+
+  const description = `${state.currentPhase} - ${state.currentSeason} (round ${state.round})`;
+  saveSnapshot(req.params.id, state, description);
+
+  if (state.gameOver) {
+    updateGameStatus(req.params.id, 'finished', state.winner);
+  }
+
+  res.json({ success: true });
+});
+
+function formatGame(game: { id: string; name: string; players_json: string; status: string; created_at: string; updated_at: string; mode: string; winner: string | null }) {
+  return {
+    id: game.id,
+    name: game.name,
+    players: JSON.parse(game.players_json),
+    status: game.status,
+    createdAt: game.created_at,
+    updatedAt: game.updated_at,
+    mode: game.mode,
+    winner: game.winner,
+  };
+}
 
 wss.on('connection', (ws: WebSocket) => {
   const playerId = uuidv4();
@@ -118,6 +269,18 @@ wss.on('connection', (ws: WebSocket) => {
             }
           });
           l.started = true;
+
+          // Persist game to database
+          const persistId = l.gameState.id || uuidv4();
+          l.persistentGameId = persistId;
+          saveGame(
+            persistId,
+            l.name,
+            l.players.map((p) => ({ name: p.name, clanId: p.clanId })),
+            'online'
+          );
+          saveSnapshot(persistId, l.gameState, 'Game started');
+
           l.players.forEach((p) =>
             p.ws.send(JSON.stringify({ type: 'GAME_START', state: l.gameState }))
           );
@@ -321,6 +484,17 @@ wss.on('connection', (ws: WebSocket) => {
 });
 
 function broadcastState(l: Lobby) {
+  // Save snapshot to database if game is persisted
+  if (l.persistentGameId && l.gameState) {
+    const description = `${l.gameState.currentPhase} - ${l.gameState.currentSeason} (round ${l.gameState.round})`;
+    saveSnapshot(l.persistentGameId, l.gameState, description);
+
+    // Detect game over and mark as finished
+    if (l.gameState.gameOver) {
+      updateGameStatus(l.persistentGameId, 'finished', l.gameState.winner);
+    }
+  }
+
   l.players.forEach((p) => {
     if (p.ws.readyState === WebSocket.OPEN) {
       p.ws.send(JSON.stringify({ type: 'GAME_STATE', state: l.gameState }));

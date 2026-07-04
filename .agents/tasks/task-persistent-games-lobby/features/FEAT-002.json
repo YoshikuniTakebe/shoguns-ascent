@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Create the Game Lobby frontend component with sections for active (resumable) games and finished (replayable) games. Add a Replay viewer component with step controls (next, previous, jump to next kami phase, jump to previous kami phase, jump to next battle, jump to previous battle). Integrate into the existing MainMenu/App routing.",
+  "status": "pending",
+  "steps": [
+    "Add new screen type 'games-lobby' and 'replay' to the store's screen type union in src/store/gameStore.ts: change 'menu' | 'lobby' | 'game' to 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay'",
+    "Add replay-related state to the GameStore interface in src/store/gameStore.ts: replayGameId (string|null), replaySnapshots (array of {index, state_json, description, phase, season}), replayCurrentIndex (number), replayTotalSnapshots (number)",
+    "Add replay actions to the store: loadReplayGame(gameId), replayNext(), replayPrev(), replayNextKami(), replayPrevKami(), replayNextBattle(), replayPrevBattle(), resumeGame(gameId)",
+    "Implement the replay actions: replayNext/replayPrev increment/decrement replayCurrentIndex and parse the state_json to set a read-only gameState. replayNextKami jumps forward to next snapshot where phase contains 'politics' and kamiResolutionActive is true. replayPrevKami jumps backward similarly. replayNextBattle jumps to next snapshot where phase='war'. replayPrevBattle jumps backward similarly.",
+    "Create src/components/GamesLobby.tsx: Fetches /api/games?status=active and /api/games?status=finished from the server. Shows two sections: 'Active Games' with a button to resume each, and 'Finished Games' with a button to replay each. Each game card shows: name, players (clan icons), date, current season/phase for active games, winner for finished games. Include a back button to return to MainMenu.",
+    "Create src/components/ReplayViewer.tsx: Displays the game board (reuses GameBoard component in read-only mode or displays a simplified version) with overlay replay controls. Controls: |<< (first), << (prev kami), < (prev step), > (next step), >> (next kami), >>| (last). Additional buttons: 'Prev Battle', 'Next Battle'. Shows current step number / total steps. Shows description of current snapshot. Back button to return to games lobby.",
+    "Update src/App.tsx to route 'games-lobby' screen to GamesLobby component and 'replay' screen to ReplayViewer component",
+    "Add a 'Games Lobby' button to the MainMenu mode selection screen (in the menu-options div alongside hotseat and online buttons) in src/components/MainMenu.tsx",
+    "For hotseat game persistence: modify the createGame action in gameStore.ts to POST the initial state to /api/games/save-hotseat and store the returned game ID. Modify actions that change gameState (after each state-changing action in the store) to PUT the new state to /api/games/:id/snapshot. Use a debounced approach or batch at key moments (after each mandate choice, after each phase advance, after war resolution, after kami resolution).",
+    "Add i18n keys for the lobby and replay UI to src/i18n/en.ts and src/i18n/es.ts: lobby.title, lobby.activeGames, lobby.finishedGames, lobby.resume, lobby.replay, lobby.noActiveGames, lobby.noFinishedGames, lobby.back, replay.title, replay.step, replay.of, replay.first, replay.last, replay.prevStep, replay.nextStep, replay.prevKami, replay.nextKami, replay.prevBattle, replay.nextBattle, replay.back, replay.description",
+    "Add CSS styles for the GamesLobby and ReplayViewer components in src/App.css, following the existing styling patterns (dark theme, Japanese aesthetic, gold/crimson accents)"
+  ],
+  "acceptance_criteria": [
+    "npm run build completes without TypeScript errors",
+    "The MainMenu shows a 'Games Lobby' button alongside hotseat and online options",
+    "Clicking 'Games Lobby' navigates to the games lobby screen",
+    "The games lobby shows active and finished game sections",
+    "Clicking 'Replay' on a finished game loads the replay viewer with step controls",
+    "Replay controls (next, prev, next kami, prev kami, next battle, prev battle) navigate through snapshots",
+    "Hotseat games are automatically saved to the server when the server is running",
+    "Both English and Spanish translations are provided for all new UI text"
+  ],
+  "verification": [
+    "Run npm run build and confirm it passes with no errors",
+    "Verify the new components exist and are properly imported in App.tsx"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -1,0 +1,30 @@
+{
+  "project_type": "React+TypeScript+Vite board game with Express+WebSocket backend",
+  "language": "TypeScript",
+  "build_system": "Vite (frontend), tsx (backend server runner)",
+  "test_framework": "None currently - no tests in the project",
+  "build_command": "npm run build",
+  "test_command": "npm run build (TypeScript type-check + Vite build as validation)",
+  "verification_instructions": "1. Run npm run build to verify no TypeScript errors. 2. Start the server with npm run server and verify it starts without errors.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/shoguns-ascent && npm install",
+  "environment_constraints": "OPEN_INTERNET - can install packages freely",
+  "contribution_requirements": "No CONTRIBUTING.md found. Direct push to main branch.",
+  "key_patterns": "Single Zustand store (gameStore.ts) holds all UI+game state. GameState type in types/game.ts is the central data structure. Server uses Express+WebSocket with in-memory lobbies. Game logic lives in utils/gameLogic.ts as pure functions. i18n uses custom hook useT() with en.ts/es.ts translation files. Components are functional React with hooks.",
+  "relevant_files": [
+    "src/server/index.ts",
+    "src/store/gameStore.ts",
+    "src/types/game.ts",
+    "src/App.tsx",
+    "src/components/MainMenu.tsx",
+    "src/components/GameOverScreen.tsx",
+    "src/utils/gameLogic.ts",
+    "src/i18n/index.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "package.json",
+    "tsconfig.app.json",
+    "tsconfig.node.json"
+  ],
+  "directory_structure": "Root: package.json, vite.config.ts, tsconfig.json. src/: App.tsx, main.tsx. src/components/: All React components. src/store/: gameStore.ts (Zustand). src/types/: game.ts (types+constants). src/utils/: gameLogic.ts (pure game logic). src/server/: index.ts (Express+WebSocket). src/i18n/: en.ts, es.ts, index.ts."
+}
