@@ -818,8 +818,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- UI Actions ---
   setScreen: (screen) => set({ screen }),
-  exitGame: () => {
-    get().saveSnapshot();
+  exitGame: async () => {
+    const { persistentGameId, gameState } = get();
+    try {
+      if (persistentGameId) {
+        get().saveSnapshot();
+      } else if (gameState) {
+        const res = await fetch('http://localhost:3001/api/games/save-hotseat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ state: gameState }),
+        });
+        const data = await res.json();
+        if (data && data.id) {
+          set({ persistentGameId: data.id });
+        }
+      }
+    } catch {
+      /* still navigate to menu even if save fails */
+    }
     set({ screen: 'menu' });
   },
   selectRegion: (regionId) => set({ selectedRegion: regionId }),

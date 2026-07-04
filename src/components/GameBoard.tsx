@@ -241,7 +241,7 @@ export const GameBoard = () => {
           {gameState.mode === 'hotseat' && <span className="hotseat-label">{t('game.hotseat')}</span>}
           {!isMyTurn && gameState.mode === 'online' && <span className="waiting-label">{t('game.waiting')}</span>}
         </div>
-        <div className="legend-button-wrapper" style={{ left: '21rem' }}>
+        <div className="legend-button-wrapper" style={{ left: '20rem' }}>
           <span className="game-name-header">{gameState.gameName}</span>
           <button className="legend-btn">?</button>
           <div className="legend-tooltip">

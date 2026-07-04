@@ -360,7 +360,7 @@
 .games-lobby-card-date{font-size:0.75rem;color:var(--text-secondary);white-space:nowrap;margin-left:auto}
 .games-lobby-back{margin-top:2rem}
 .game-name-header{font-style:italic;font-size:0.75rem;color:var(--accent-gold);margin-right:0.5rem;opacity:0.85}
-.exit-game-btn{position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);background:rgba(233,69,96,0.15);border:1px solid var(--accent-red);color:var(--accent-red);padding:0.2rem 0.6rem;border-radius:4px;font-size:0.7rem;cursor:pointer;transition:all 0.2s}
+.exit-game-btn{position:absolute;right:20.5rem;top:50%;transform:translateY(-50%);background:rgba(233,69,96,0.15);border:1px solid var(--accent-red);color:var(--accent-red);padding:0.2rem 0.6rem;border-radius:4px;font-size:0.7rem;cursor:pointer;transition:all 0.2s}
 .exit-game-btn:hover{background:rgba(233,69,96,0.3);box-shadow:0 0 8px rgba(233,69,96,0.3)}
 
 /* Replay Viewer */
