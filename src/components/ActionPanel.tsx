@@ -21,7 +21,7 @@ export const ActionPanel = () => {
     undoMandateState, doUndoMandate,
     jinmenjuSummonActive, doJinmenjuActivate, doJinmenjuCancel,
     setTradeModalOpen,
-    betrayMonsterSelectionVisible, betrayMonsterSelectionProvinceId, betrayMonsterSelectionFigureId,
+    betrayMonsterSelectionVisible, betrayMonsterSelectionProvinceId: _betrayMonsterSelectionProvinceId, betrayMonsterSelectionFigureId: _betrayMonsterSelectionFigureId,
     doBetrayConfirmMonster, doBetrayDismissMonsterSelection,
   } = useGameStore();
   const t = useT();

@@ -575,6 +575,32 @@ export const en = {
   'card.effect.au-way-of-the-keiri': 'At start of War Phase - Kill up to 2 opponent {bushi}/{shinto} in Daimyo Province, gain {vp}3 each.',
   'card.effect.au-way-of-the-moneylender': 'At start of War Phase - Gain {coin}5.',
   'card.effect.au-way-of-the-snake': 'After each Kami Turn is resolved, may perform a Betray Mandate.',
+  // Games Lobby
+  'lobby.title': 'Games Lobby',
+  'lobby.activeGames': 'Active Games',
+  'lobby.finishedGames': 'Finished Games',
+  'lobby.resume': 'Resume',
+  'lobby.replay': 'Replay',
+  'lobby.noActiveGames': 'No active games',
+  'lobby.noFinishedGames': 'No finished games',
+  'lobby.back': 'Back',
+  'lobby.gamesLobby': 'Games Lobby',
+
+  // Replay Viewer
+  'replay.title': 'Replay',
+  'replay.step': 'Step',
+  'replay.of': 'of',
+  'replay.first': 'First',
+  'replay.last': 'Last',
+  'replay.prevStep': 'Prev',
+  'replay.nextStep': 'Next',
+  'replay.prevKami': 'Prev Kami',
+  'replay.nextKami': 'Next Kami',
+  'replay.prevBattle': 'Prev Battle',
+  'replay.nextBattle': 'Next Battle',
+  'replay.back': 'Back to Lobby',
+  'replay.description': 'Description',
+
   // Trade system
   'trade.button': 'Trade',
   'trade.title': 'Trade Deal',

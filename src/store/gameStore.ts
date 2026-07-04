@@ -250,7 +250,7 @@ interface GameStore {
   moveFrom: string | null;
   selectedFigures: string[];
   ws: WebSocket | null;
-  screen: 'menu' | 'lobby' | 'game';
+  screen: 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay';
   lobbyId: string | null;
   currentMandateResolutionIndex: number;
   warTacticBidsSubmitted: boolean;
@@ -265,7 +265,7 @@ interface GameStore {
   setShowTrainModal: (show: boolean) => void;
 
   // UI actions
-  setScreen: (s: 'menu' | 'lobby' | 'game') => void;
+  setScreen: (s: 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay') => void;
   selectRegion: (id: string | null) => void;
   toggleMoveMode: () => void;
   setMoveFrom: (id: string | null) => void;
@@ -426,6 +426,25 @@ interface GameStore {
   doAcceptTrade: (offerId: string) => void;
   doRejectTrade: (offerId: string) => void;
 
+  // Persistence
+  persistentGameId: string | null;
+  saveSnapshot: () => void;
+
+  // Replay
+  replayGameId: string | null;
+  replaySnapshots: { index: number; state: GameState; description: string; phase: string; season: string }[];
+  replayCurrentIndex: number;
+  replayTotalSnapshots: number;
+  replayGameMetadata: { id: string; name: string; players: { name: string; clanId: string }[]; winner: string | null } | null;
+  loadReplayGame: (gameId: string) => Promise<void>;
+  replayNext: () => void;
+  replayPrev: () => void;
+  replayNextKami: () => void;
+  replayPrevKami: () => void;
+  replayNextBattle: () => void;
+  replayPrevBattle: () => void;
+  resumeGame: (gameId: string) => Promise<void>;
+
   // Online
   connectWebSocket: (url: string) => void;
   sendAction: (action: unknown) => void;
@@ -465,6 +484,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   turnPopupPlayer: null,
   jinmenjuSummonActive: false,
   tradeModalOpen: false,
+  persistentGameId: null,
+  replayGameId: null,
+  replaySnapshots: [],
+  replayCurrentIndex: 0,
+  replayTotalSnapshots: 0,
+  replayGameMetadata: null,
   ruleViolationMessage: null,
   setRuleViolationMessage: (msg) => set({ ruleViolationMessage: msg }),
   doJinmenjuActivate: () => {
@@ -648,6 +673,120 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const ns = { ...gameState, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
     set({ gameState: ns });
   },
+
+  // --- Persistence ---
+  saveSnapshot: () => {
+    const { persistentGameId, gameState } = get();
+    if (!persistentGameId || !gameState) return;
+    fetch(`http://localhost:3001/api/games/${persistentGameId}/snapshot`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state: gameState }),
+    }).catch(() => { /* silently ignore persistence errors */ });
+  },
+
+  // --- Replay ---
+  loadReplayGame: async (gameId) => {
+    try {
+      const [gameRes, snapshotsRes] = await Promise.all([
+        fetch(`http://localhost:3001/api/games/${gameId}`),
+        fetch(`http://localhost:3001/api/games/${gameId}/snapshots`),
+      ]);
+      const game = await gameRes.json();
+      const snapshots = await snapshotsRes.json();
+      const parsedSnapshots = snapshots.map((s: { snapshot_index: number; state_json: string; description: string; phase: string; season: string }) => ({
+        index: s.snapshot_index,
+        state: JSON.parse(s.state_json) as GameState,
+        description: s.description,
+        phase: s.phase,
+        season: s.season,
+      }));
+      const players = JSON.parse(game.players_json || '[]');
+      set({
+        replayGameId: gameId,
+        replaySnapshots: parsedSnapshots,
+        replayCurrentIndex: 0,
+        replayTotalSnapshots: parsedSnapshots.length,
+        replayGameMetadata: {
+          id: game.id,
+          name: game.name,
+          players,
+          winner: game.winner,
+        },
+        screen: 'replay',
+      });
+    } catch {
+      /* silently ignore errors */
+    }
+  },
+  replayNext: () => {
+    const { replayCurrentIndex, replayTotalSnapshots } = get();
+    if (replayCurrentIndex < replayTotalSnapshots - 1) {
+      set({ replayCurrentIndex: replayCurrentIndex + 1 });
+    }
+  },
+  replayPrev: () => {
+    const { replayCurrentIndex } = get();
+    if (replayCurrentIndex > 0) {
+      set({ replayCurrentIndex: replayCurrentIndex - 1 });
+    }
+  },
+  replayNextKami: () => {
+    const { replayCurrentIndex, replaySnapshots } = get();
+    for (let i = replayCurrentIndex + 1; i < replaySnapshots.length; i++) {
+      if (replaySnapshots[i].state.kamiResolutionActive) {
+        set({ replayCurrentIndex: i });
+        return;
+      }
+    }
+  },
+  replayPrevKami: () => {
+    const { replayCurrentIndex, replaySnapshots } = get();
+    for (let i = replayCurrentIndex - 1; i >= 0; i--) {
+      if (replaySnapshots[i].state.kamiResolutionActive) {
+        set({ replayCurrentIndex: i });
+        return;
+      }
+    }
+  },
+  replayNextBattle: () => {
+    const { replayCurrentIndex, replaySnapshots } = get();
+    for (let i = replayCurrentIndex + 1; i < replaySnapshots.length; i++) {
+      const s = replaySnapshots[i].state;
+      if (s.currentPhase === 'war' && s.activeBattles && s.activeBattles.length > 0) {
+        set({ replayCurrentIndex: i });
+        return;
+      }
+    }
+  },
+  replayPrevBattle: () => {
+    const { replayCurrentIndex, replaySnapshots } = get();
+    for (let i = replayCurrentIndex - 1; i >= 0; i--) {
+      const s = replaySnapshots[i].state;
+      if (s.currentPhase === 'war' && s.activeBattles && s.activeBattles.length > 0) {
+        set({ replayCurrentIndex: i });
+        return;
+      }
+    }
+  },
+  resumeGame: async (gameId) => {
+    try {
+      const snapshotsRes = await fetch(`http://localhost:3001/api/games/${gameId}/snapshots`);
+      const snapshots = await snapshotsRes.json();
+      if (snapshots.length === 0) return;
+      const lastSnapshot = snapshots[snapshots.length - 1];
+      const gameState = JSON.parse(lastSnapshot.state_json) as GameState;
+      set({
+        gameState,
+        localPlayerId: gameState.players[0]?.id || null,
+        persistentGameId: gameId,
+        screen: 'game',
+      });
+    } catch {
+      /* silently ignore errors */
+    }
+  },
+
   undoMandateState: null,
   doUndoMandate: () => {
     const { undoMandateState } = get();
@@ -688,7 +827,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // --- Game Lifecycle ---
   createGame: (players, mode, deckConfig) => {
     const state = createInitialGameState(players, mode, undefined, deckConfig);
-    set({ gameState: state, localPlayerId: state.players[0].id, screen: 'game' });
+    set({ gameState: state, localPlayerId: state.players[0].id, screen: 'game', persistentGameId: null });
+    // Persist hotseat games
+    if (mode === 'hotseat') {
+      fetch('http://localhost:3001/api/games/save-hotseat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.gameId) {
+            set({ persistentGameId: data.gameId });
+          }
+        })
+        .catch(() => { /* silently ignore persistence errors */ });
+    }
   },
   setGameState: (state) => set({ gameState: state }),
   setLocalPlayerId: (id) => set({ localPlayerId: id }),
@@ -789,6 +943,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Detect war phase transition and set up battle step phase for hotseat
       set({ gameState: advanced, ...detectWarTransitionWithPopup(advanced), ...detectKamiPopupPending(advanced), ...(gameState.mode === 'hotseat' && advanced.currentPhase === 'politics' && !advanced.kamiResolutionActive && !advanced.kamiPhasePopupPending ? { turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null } : {}) });
     }
+    get().saveSnapshot();
   },
   doLotoChooseActualMandate: (mandate) => {
     const { gameState, localPlayerId, ws } = get();
@@ -1553,6 +1708,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     set({ gameState: resolveKamiTurn(gameState) });
+    get().saveSnapshot();
   },
 
   doAcknowledgeKamiReward: () => {
@@ -1831,6 +1987,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const summary = computeWarUpgradeSummary(ns);
       set({ gameState: ns, warPhasePopupVisible: true, warPhaseUpgradeSummary: summary, battleCurrentBiddingIndex: 0 });
     }
+    get().saveSnapshot();
   },
 
   doZorroPlaceBushi: (provinceId: string) => {
@@ -1997,6 +2154,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     set({ gameState: resolveNextBattle(gameState), warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0, battleResolutionData: null });
+    get().saveSnapshot();
   },
   doSeppukuDecision: (accept: boolean) => {
     const { gameState, battleResolutionData } = get();
@@ -2329,6 +2487,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     set({ gameState: resolveWinter(gameState) });
+    get().saveSnapshot();
   },
 
   // --- Movement ---
@@ -2369,6 +2528,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const ns = advancePhase(gameState);
     // Detect war phase transition and set up battle step phase for hotseat
     set({ gameState: ns, ...detectWarTransitionWithPopup(ns), ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
+    get().saveSnapshot();
   },
   doAdvancePlayer: () => {
     const { gameState } = get();

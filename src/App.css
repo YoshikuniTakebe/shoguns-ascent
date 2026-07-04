@@ -337,3 +337,50 @@
 .reserve-item-monster-wrapper{position:relative}
 .reserve-item-monster-wrapper:hover .monster-reserve-tooltip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
 .monster-reserve-tooltip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(6px);background:linear-gradient(145deg,rgba(15,52,96,0.98),rgba(10,35,65,0.98));padding:6px 10px;border-radius:8px;white-space:nowrap;opacity:0;visibility:hidden;transition:all 0.2s;z-index:1000;display:flex;flex-direction:column;gap:2px;border-width:2px;border-style:solid;pointer-events:none;min-width:80px}
+
+/* Games Lobby */
+.games-lobby{display:flex;flex-direction:column;align-items:center;padding:2rem;min-height:100vh;background:linear-gradient(135deg,var(--bg-dark) 0%,var(--bg-medium) 50%,#1a0a2e 100%)}
+.games-lobby-title{font-size:2.5rem;color:var(--accent-gold);margin-bottom:2rem;letter-spacing:0.1em;text-shadow:0 0 15px rgba(200,169,81,0.3)}
+.games-lobby-loading{color:var(--text-secondary);font-size:1.2rem}
+.games-lobby-section{width:100%;max-width:800px;margin-bottom:2rem}
+.games-lobby-section-title{font-size:1.3rem;color:var(--accent-cream);margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border-gold)}
+.games-lobby-empty{color:var(--text-secondary);font-style:italic;padding:1rem;text-align:center}
+.games-lobby-grid{display:flex;flex-direction:column;gap:0.75rem}
+.games-lobby-card{background:linear-gradient(145deg,var(--bg-panel),var(--bg-medium));border:1px solid var(--border-gold);border-radius:10px;padding:1rem 1.25rem;transition:all 0.2s}
+.games-lobby-card:hover{border-color:var(--accent-gold);box-shadow:0 4px 15px rgba(200,169,81,0.15)}
+.games-lobby-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem}
+.games-lobby-card-name{font-weight:bold;color:var(--accent-gold);font-size:1rem}
+.games-lobby-card-date{font-size:0.8rem;color:var(--text-secondary)}
+.games-lobby-card-players{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.5rem}
+.games-lobby-player{font-size:0.85rem;font-weight:600}
+.games-lobby-card-winner{font-size:0.85rem;color:var(--accent-cream);margin-bottom:0.5rem;font-style:italic}
+.games-lobby-card-actions{display:flex;gap:0.75rem;justify-content:flex-end}
+.games-lobby-back{margin-top:2rem}
+
+/* Replay Viewer */
+.replay-viewer{display:flex;flex-direction:column;min-height:100vh;background:linear-gradient(135deg,var(--bg-dark) 0%,var(--bg-medium) 50%,#1a0a2e 100%)}
+.replay-header{display:flex;align-items:center;gap:1.5rem;padding:1rem 2rem;background:var(--bg-medium);border-bottom:1px solid var(--border-gold)}
+.replay-title{font-size:1.5rem;color:var(--accent-gold);letter-spacing:0.05em}
+.replay-back-btn{padding:0.5rem 1rem;font-size:0.85rem}
+.replay-content{flex:1;padding:2rem;overflow-y:auto}
+.replay-info-panel{max-width:800px;margin:0 auto}
+.replay-players{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;margin-bottom:1.5rem}
+.replay-player-card{background:var(--bg-dark);border-left:3px solid;border-radius:6px;padding:0.75rem 1rem}
+.replay-player-name{font-weight:bold;font-size:0.95rem;margin-bottom:0.3rem}
+.replay-player-stats{display:flex;gap:1rem;font-size:0.8rem;color:var(--text-secondary)}
+.replay-state-info{background:rgba(15,52,96,0.5);border:1px solid var(--border-gold);border-radius:8px;padding:1rem;margin-bottom:1.5rem}
+.replay-phase,.replay-season,.replay-description{margin-bottom:0.4rem;font-size:0.9rem;color:var(--text-primary)}
+.replay-description{color:var(--text-secondary);font-style:italic}
+.replay-provinces-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.5rem}
+.replay-province-item{display:flex;justify-content:space-between;padding:0.4rem 0.6rem;background:var(--bg-dark);border-radius:4px;font-size:0.8rem}
+.replay-province-name{color:var(--accent-cream)}
+.replay-province-figures{color:var(--text-secondary)}
+.replay-controls{padding:1rem 2rem;background:var(--bg-medium);border-top:1px solid var(--border-gold);display:flex;flex-direction:column;align-items:center;gap:0.75rem}
+.replay-controls-row{display:flex;align-items:center;gap:0.5rem}
+.replay-ctrl-btn{padding:0.5rem 0.75rem;background:var(--bg-dark);border:1px solid var(--border-gold);border-radius:6px;color:var(--text-primary);font-size:0.9rem;cursor:pointer;transition:all 0.2s;font-weight:bold}
+.replay-ctrl-btn:hover:not(:disabled){border-color:var(--accent-gold);background:rgba(200,169,81,0.1)}
+.replay-ctrl-btn:disabled{opacity:0.4;cursor:not-allowed}
+.replay-step-counter{font-size:1rem;font-weight:bold;color:var(--accent-gold);min-width:80px;text-align:center}
+.replay-battle-controls{margin-top:0.25rem}
+.replay-battle-btn{padding:0.4rem 1rem;font-size:0.8rem;background:rgba(233,69,96,0.1);border-color:rgba(233,69,96,0.4)}
+.replay-battle-btn:hover:not(:disabled){border-color:var(--accent-red);background:rgba(233,69,96,0.2)}

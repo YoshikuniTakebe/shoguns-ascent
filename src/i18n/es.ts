@@ -577,6 +577,32 @@ export const es: Record<TranslationKey, string> = {
   'card.effect.au-way-of-the-keiri': 'Al inicio de la Fase de Guerra - Mata hasta 2 {bushi}/{shinto} enemigos en la Provincia del Daimyo, gana {vp}3 por cada uno.',
   'card.effect.au-way-of-the-moneylender': 'Al inicio de la Fase de Guerra - Gana {coin}5.',
   'card.effect.au-way-of-the-snake': 'Después de cada Turno Kami resuelto, puedes realizar un Mandato Traicionar.',
+  // Games Lobby
+  'lobby.title': 'Sala de Partidas',
+  'lobby.activeGames': 'Partidas Activas',
+  'lobby.finishedGames': 'Partidas Terminadas',
+  'lobby.resume': 'Continuar',
+  'lobby.replay': 'Repetir',
+  'lobby.noActiveGames': 'No hay partidas activas',
+  'lobby.noFinishedGames': 'No hay partidas terminadas',
+  'lobby.back': 'Volver',
+  'lobby.gamesLobby': 'Sala de Partidas',
+
+  // Replay Viewer
+  'replay.title': 'Repeticion',
+  'replay.step': 'Paso',
+  'replay.of': 'de',
+  'replay.first': 'Primero',
+  'replay.last': 'Ultimo',
+  'replay.prevStep': 'Anterior',
+  'replay.nextStep': 'Siguiente',
+  'replay.prevKami': 'Kami Anterior',
+  'replay.nextKami': 'Kami Siguiente',
+  'replay.prevBattle': 'Batalla Anterior',
+  'replay.nextBattle': 'Batalla Siguiente',
+  'replay.back': 'Volver a Sala',
+  'replay.description': 'Descripcion',
+
   // Trade system
   'trade.button': 'Trato',
   'trade.title': 'Trato',

@@ -124,6 +124,18 @@ export const MainMenu = () => {
             <span className="btn-text">{t('menu.onlineMode')}</span>
             <span className="btn-desc">{t('menu.onlineDesc')}</span>
           </button>
+          <button className="menu-btn" onClick={() => setScreen('games-lobby')} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+            <span className="btn-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+            </span>
+            <span className="btn-text">{t('lobby.gamesLobby')}</span>
+            <span className="btn-desc"></span>
+          </button>
         </div>
       )}
 
