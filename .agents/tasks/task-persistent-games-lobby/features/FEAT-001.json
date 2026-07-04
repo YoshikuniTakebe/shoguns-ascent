@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Add SQLite-based persistence layer to the server for saving game state snapshots. Each game gets a record with metadata (id, name, players, status, timestamps). Every time the game state changes (broadcastState), a snapshot is saved. This enables resuming games and replaying them.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Install better-sqlite3 and @types/better-sqlite3 as dependencies (npm install better-sqlite3 @types/better-sqlite3)",
     "Create src/server/database.ts with: (a) initDatabase() function that creates/opens a SQLite DB file at data/games.db (relative to project root), creating the data/ directory if needed. (b) Tables: 'games' (id TEXT PRIMARY KEY, name TEXT, players_json TEXT, status TEXT ['active','finished'], created_at TEXT, updated_at TEXT, mode TEXT, winner TEXT), 'snapshots' (id INTEGER PRIMARY KEY AUTOINCREMENT, game_id TEXT REFERENCES games(id), snapshot_index INTEGER, state_json TEXT, description TEXT, phase TEXT, season TEXT, created_at TEXT). (c) Export helper functions: saveGame(id, name, players, mode, status), updateGameStatus(id, status, winner?), saveSnapshot(gameId, state, description), getGameById(id), getActiveGames(), getFinishedGames(), getSnapshots(gameId), getSnapshotByIndex(gameId, index), getSnapshotCount(gameId)",
@@ -27,5 +27,5 @@
     "Start server with timeout 5s and verify it logs startup message without errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Pre-existing TypeScript build errors in src/components/ActionPanel.tsx (unused variables betrayMonsterSelectionProvinceId and betrayMonsterSelectionFigureId) cause `npm run build` to fail. These are NOT caused by this feature. Server code runs fine via tsx. The `npm run build` command only builds the frontend (tsconfig.app.json excludes src/server). Server verified to start correctly and create data/games.db. All REST endpoints respond as expected."
 }
