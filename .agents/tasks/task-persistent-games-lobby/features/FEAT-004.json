@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "fix",
   "description": "Fix GamesLobby field name mismatch (use camelCase matching API response) and fix kami/battle replay jump logic (use phase metadata instead of inspecting cleared state fields).",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Fix GameRecord interface in GamesLobby.tsx to use 'players' (array), 'createdAt', 'updatedAt' instead of 'players_json', 'created_at', 'updated_at'",
     "Remove JSON.parse call on players and use game.players directly",
@@ -20,5 +20,5 @@
     "Run npm run build and confirm it passes with no errors"
   ],
   "blocked_reason": null,
-  "findings": null
+  "findings": "Both fixes applied and verified. GamesLobby now uses camelCase field names matching the API response. Replay jump logic now uses snapshot metadata (phase field and description) instead of inspecting GameState internal fields that are cleared post-resolution. Build passes cleanly."
 }
