@@ -1,0 +1,38 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Game name auto-generation, alliance options height fix, exit button with save, game name in header, and full Games Lobby redesign with new card format",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/components/ActionPanel.tsx at line ~131, change the alliance-options div inline style from maxHeight: '200px' to maxHeight: '340px'.",
+    "2. Add a `gameName` field to the GameState interface in src/types/game.ts (after the `id` field). Type: `gameName: string;`",
+    "3. In src/utils/gameLogic.ts `createInitialGameState` function, generate a gameName using this format: YY+MM+DD+HH+mm+random_word. The random word pool is: origami, matcha, tanuki, kappa, oni, sushi, ramen, ainu, samurai, ninja, shogun, bushi, shinto, daimyo, katana, totoro, mononoke, akira. Set it on the returned GameState object.",
+    "4. In src/store/gameStore.ts, add an `exitGame` action that: (a) calls saveSnapshot() to persist current state, (b) sets screen to 'menu'. Add the type definition and implementation.",
+    "5. In src/components/GameBoard.tsx game-header section, add the game name display (in italics) next to the legend-button-wrapper div. Also add an exit button that calls exitGame.",
+    "6. In src/server/index.ts, update the POST /api/games/save-hotseat endpoint to use gameState.gameName as the game name instead of the auto-generated 'Hotseat - X vs Y' string.",
+    "7. Completely redesign src/components/GamesLobby.tsx: add title image (NoboruTaiyo.png), use the same background as main-menu (the sakura/lotus SVG pattern), add 'Sala de Partidas' title with animated shimmer/shine effect and 1px gray border text, redesign game cards to show all info in one horizontal line (game name in italic, player count, clan seals + player names in clan color, game progress point as SEASON + phase letter + number, last saved date in DD-MM-YYYY HH:MM format). Active games get reddish-orange 1px border, finished games get bluish 1px border. Cards have hover glow + slight scale effect, and clicking loads the game.",
+    "8. Update src/App.css to support: (a) new .games-lobby background matching .main-menu pattern, (b) shimmer/shine animation on the lobby title with 1px gray border, (c) new game card styles with horizontal layout + reddish-orange border for active and bluish for finished, (d) hover illuminate/glow + scale effect on cards, (e) game name italic display in game header, (f) exit button styling in game header.",
+    "9. In src/i18n/en.ts and src/i18n/es.ts, add any new translation keys needed (e.g., 'game.exit', 'lobby.players' for player count display).",
+    "10. Ensure the game progress point logic: determine if current phase is politics (P + politicsMandateCount), kami resolution (K + kamiResolutionIndex+1), or war/battles (B + battleIndex+1). Season names in uppercase (PRIMAVERA/VERANO/OTONO for es, SPRING/SUMMER/AUTUMN for en)."
+  ],
+  "acceptance_criteria": [
+    "Alliance options div has maxHeight 340px",
+    "GameState includes gameName field auto-generated at creation time in format YYMMDDHHmm+random_word",
+    "Exit button in game header saves game and returns to menu",
+    "Game name appears in italic next to the legend ? button in game header",
+    "Games Lobby shows NoboruTaiyo.png title image and same background as main menu",
+    "Sala de Partidas title has animated shimmer/shine effect with 1px gray border",
+    "Game cards display all info in one horizontal line: italic game name, player count, clan seals + player names in clan colors, progress point (SEASON + letter + number), date DD-MM-YYYY HH:MM",
+    "Active game cards have reddish-orange 1px rounded border, finished have bluish border",
+    "Cards have hover glow and slight scale-up effect",
+    "Clicking a game card loads/resumes that game",
+    "Server uses gameName from state when saving hotseat games",
+    "TypeScript compiles without errors"
+  ],
+  "verification": [
+    "Run `npx tsc --noEmit` in /projects/sandbox/shoguns-ascent to verify no type errors",
+    "Run `npm run build` in /projects/sandbox/shoguns-ascent to verify production build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

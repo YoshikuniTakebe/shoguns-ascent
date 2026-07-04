@@ -38,6 +38,7 @@ import {
   getSnapshots,
   getSnapshotByIndex,
   getSnapshotCount,
+  getLatestSnapshot,
 } from './database';
 
 const app = express();
@@ -176,7 +177,7 @@ app.post('/api/games/save-hotseat', (req, res) => {
   }
   const gameId = state.id || uuidv4();
   const players = state.players.map((p) => ({ name: p.name, clanId: p.clanId }));
-  const gameName = `Hotseat - ${players.map((p) => p.name).join(' vs ')}`;
+  const gameName = state.gameName || `Hotseat - ${players.map((p) => p.name).join(' vs ')}`;
   const status = state.gameOver ? 'finished' : 'active';
 
   saveGame(gameId, gameName, players, 'hotseat', status);
@@ -212,6 +213,25 @@ app.put('/api/games/:id/snapshot', (req, res) => {
 });
 
 function formatGame(game: { id: string; name: string; players_json: string; status: string; created_at: string; updated_at: string; mode: string; winner: string | null }) {
+  const latest = getLatestSnapshot(game.id);
+  let lastSeason: string | null = null;
+  let lastPhase: string | null = null;
+  let politicsMandateCount: number | null = null;
+  let kamiResolutionIndex: number | null = null;
+  let battleCount: number | null = null;
+  if (latest) {
+    try {
+      const state = JSON.parse(latest.state_json);
+      lastSeason = state.currentSeason || latest.season;
+      lastPhase = state.currentPhase || latest.phase;
+      politicsMandateCount = state.politicsMandateCount ?? null;
+      kamiResolutionIndex = state.kamiResolutionIndex ?? null;
+      battleCount = Array.isArray(state.activeBattles) ? state.activeBattles.length : null;
+    } catch {
+      lastSeason = latest.season;
+      lastPhase = latest.phase;
+    }
+  }
   return {
     id: game.id,
     name: game.name,
@@ -221,6 +241,11 @@ function formatGame(game: { id: string; name: string; players_json: string; stat
     updatedAt: game.updated_at,
     mode: game.mode,
     winner: game.winner,
+    lastSeason,
+    lastPhase,
+    politicsMandateCount,
+    kamiResolutionIndex,
+    battleCount,
   };
 }
 

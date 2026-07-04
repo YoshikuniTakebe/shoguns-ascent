@@ -171,3 +171,17 @@ export function getSnapshotCount(gameId: string): number {
   const result = stmt.get(gameId) as { count: number };
   return result.count;
 }
+
+export function getLatestSnapshot(gameId: string): {
+  id: number;
+  game_id: string;
+  snapshot_index: number;
+  state_json: string;
+  description: string;
+  phase: string;
+  season: string;
+  created_at: string;
+} | undefined {
+  const stmt = db.prepare(`SELECT * FROM snapshots WHERE game_id = ? ORDER BY snapshot_index DESC LIMIT 1`);
+  return stmt.get(gameId) as any;
+}

@@ -619,4 +619,6 @@ export const es: Record<TranslationKey, string> = {
   'trade.accept': 'Aceptar',
   'trade.reject': 'Rechazar',
   'trade.nonBinding': 'Trato no vinculante',
+  'game.exit': 'Salir',
+  'lobby.players': 'jugadores',
 };

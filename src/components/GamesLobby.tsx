@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../i18n';
+import type { TranslationKey } from '../i18n';
 import { CLANS } from '../types/game';
+import { ClanShield } from './ClanShields';
+import titleImg from '../img/NoboruTaiyo.png';
 
 interface GameRecord {
   id: string;
@@ -12,6 +15,11 @@ interface GameRecord {
   updatedAt: string;
   mode: string;
   winner: string | null;
+  lastSeason: string | null;
+  lastPhase: string | null;
+  politicsMandateCount: number | null;
+  kamiResolutionIndex: number | null;
+  battleCount: number | null;
 }
 
 export const GamesLobby = () => {
@@ -48,43 +56,54 @@ export const GamesLobby = () => {
   const formatDate = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
-      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      return `${dd}-${mm}-${yyyy} ${hh}:${mi}`;
     } catch {
       return dateStr;
     }
   };
 
+  const getProgressPoint = (game: GameRecord): string => {
+    if (!game.lastSeason || !game.lastPhase) return '';
+    const seasonKey = `season.${game.lastSeason}` as TranslationKey;
+    const seasonName = t(seasonKey);
+    let phaseCode = '';
+    if (game.lastPhase === 'politics') {
+      phaseCode = `P${game.politicsMandateCount ?? 0}`;
+    } else if (game.lastPhase === 'kamiResolution' || game.lastPhase === 'kami') {
+      phaseCode = `K${(game.kamiResolutionIndex ?? 0) + 1}`;
+    } else if (game.lastPhase === 'war') {
+      phaseCode = `B${game.battleCount ?? 0}`;
+    } else {
+      phaseCode = game.lastPhase.charAt(0).toUpperCase() + '0';
+    }
+    return `${seasonName} ${phaseCode}`.toUpperCase();
+  };
+
   const renderGameCard = (game: GameRecord, type: 'active' | 'finished') => {
+    const cardClass = type === 'active' ? 'games-lobby-card games-lobby-card-active' : 'games-lobby-card games-lobby-card-finished';
     return (
-      <div key={game.id} className="games-lobby-card">
-        <div className="games-lobby-card-header">
-          <span className="games-lobby-card-name">{game.name}</span>
-          <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
-        </div>
-        <div className="games-lobby-card-players">
+      <div
+        key={game.id}
+        className={cardClass}
+        onClick={() => type === 'active' ? resumeGame(game.id) : loadReplayGame(game.id)}
+      >
+        <span className="games-lobby-card-gamename">{game.name}</span>
+        <span className="games-lobby-card-playercount">{game.players.length} {t('lobby.players' as TranslationKey)}</span>
+        <span className="games-lobby-card-clans">
           {game.players.map((p, i) => (
-            <span key={i} className="games-lobby-player" style={{ color: getClanColor(p.clanId) }}>
-              {p.name}
+            <span key={i} className="games-lobby-card-clan-entry">
+              <ClanShield clanId={p.clanId} size={18} />
+              <span style={{ color: getClanColor(p.clanId) }}>{p.name}</span>
             </span>
           ))}
-        </div>
-        {type === 'finished' && game.winner && (
-          <div className="games-lobby-card-winner">
-            Winner: {game.winner}
-          </div>
-        )}
-        <div className="games-lobby-card-actions">
-          {type === 'active' && (
-            <button className="btn-primary" onClick={() => resumeGame(game.id)}>
-              {t('lobby.resume')}
-            </button>
-          )}
-          {type === 'finished' && (
-            <button className="btn-secondary" onClick={() => loadReplayGame(game.id)}>
-              {t('lobby.replay')}
-            </button>
-          )}
-        </div>
+        </span>
+        <span className="games-lobby-card-progress">{getProgressPoint(game)}</span>
+        <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
       </div>
     );
   };
@@ -99,6 +118,7 @@ export const GamesLobby = () => {
 
   return (
     <div className="games-lobby">
+      <img src={titleImg} alt="Noboru Taiyo" className="games-lobby-title-img" />
       <h1 className="games-lobby-title">{t('lobby.title')}</h1>
 
       <div className="games-lobby-section">

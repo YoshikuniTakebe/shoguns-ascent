@@ -184,6 +184,7 @@ export interface TradeOffer {
 
 export interface GameState {
   id: string;
+  gameName: string;
   mode: 'online' | 'hotseat';
   players: Player[];
   provinces: { [provinceId: string]: Province & { figures: Figure[] } };

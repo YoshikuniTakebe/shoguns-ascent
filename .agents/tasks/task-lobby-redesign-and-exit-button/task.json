@@ -1,0 +1,7 @@
+{
+  "task_id": "task-lobby-redesign-and-exit-button",
+  "task_description": "Implement alliance options height fix, auto-generated game names, exit button with save during game, game name in header, and complete Games Lobby redesign with new card format showing all info horizontally, title image, shimmer effects, and colored borders for active/finished games.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

@@ -617,6 +617,8 @@ export const en = {
   'trade.accept': 'Accept',
   'trade.reject': 'Reject',
   'trade.nonBinding': 'Non-binding deal',
+  'game.exit': 'Exit',
+  'lobby.players': 'players',
 } as const;
 
 export type TranslationKey = keyof typeof en;

@@ -1,0 +1,31 @@
+{
+  "project_type": "React + TypeScript + Vite board game (Rising Sun adaptation)",
+  "language": "TypeScript/TSX",
+  "build_system": "Vite + tsc",
+  "test_framework": "None (no test files found)",
+  "build_command": "npm run build",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "1. Run npx tsc --noEmit to check type safety. 2. Run npm run build to verify production build succeeds.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "OPEN_INTERNET - full network access available",
+  "contribution_requirements": "Work directly on main branch, commit and push",
+  "key_patterns": "- Single App.css file with minified CSS classes on one line each. - Zustand store in src/store/gameStore.ts. - i18n translations in src/i18n/en.ts and src/i18n/es.ts. - Components in src/components/. - Game state type in src/types/game.ts. - Server with Express + SQLite in src/server/. - ClanShield component renders clan seal SVGs.",
+  "relevant_files": [
+    "src/components/ActionPanel.tsx",
+    "src/components/GamesLobby.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/MainMenu.tsx",
+    "src/App.tsx",
+    "src/App.css",
+    "src/store/gameStore.ts",
+    "src/server/index.ts",
+    "src/server/database.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/types/game.ts",
+    "src/utils/gameLogic.ts",
+    "src/components/ClanShields.tsx"
+  ],
+  "directory_structure": "Root: package.json, vite.config.ts, tsconfig.json. src/: App.tsx, App.css, main.tsx. src/components/: All React components. src/store/: Zustand gameStore.ts. src/types/: game.ts type definitions. src/utils/: gameLogic.ts. src/server/: Express server (index.ts, database.ts). src/i18n/: en.ts, es.ts. src/img/: NoboruTaiyo.png, type_game_bg.png, etc."
+}

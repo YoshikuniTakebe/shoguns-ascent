@@ -242,6 +242,7 @@ export const GameBoard = () => {
           {!isMyTurn && gameState.mode === 'online' && <span className="waiting-label">{t('game.waiting')}</span>}
         </div>
         <div className="legend-button-wrapper" style={{ left: '21rem' }}>
+          <span className="game-name-header">{gameState.gameName}</span>
           <button className="legend-btn">?</button>
           <div className="legend-tooltip">
             <div className="legend-tooltip-row"><BushiIcon size={20} color="#fff" /><span>{t('legend.bushi')}</span></div>
@@ -263,6 +264,9 @@ export const GameBoard = () => {
         <div className="mandate-counter">
           {t('game.round')} {gameState.round}/{gameState.maxRounds}
         </div>
+        <button className="exit-game-btn" onClick={() => useGameStore.getState().exitGame()} title={t('game.exit' as TranslationKey)}>
+          {t('game.exit' as TranslationKey)}
+        </button>
       </div>
 
       <div className="game-content">

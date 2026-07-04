@@ -185,6 +185,17 @@ export function createInitialGameState(
 
   const state: GameState = {
     id: generateId(),
+    gameName: (() => {
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mi = String(now.getMinutes()).padStart(2, '0');
+      const words = ['origami','matcha','tanuki','kappa','oni','sushi','ramen','ainu','samurai','ninja','shogun','bushi','shinto','daimyo','katana','totoro','mononoke','akira'];
+      const word = words[Math.floor(Math.random() * words.length)];
+      return `${yy}${mm}${dd}${hh}${mi}${word}`;
+    })(),
     mode,
     players: gamePlayers,
     provinces,

@@ -266,6 +266,7 @@ interface GameStore {
 
   // UI actions
   setScreen: (s: 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay') => void;
+  exitGame: () => void;
   selectRegion: (id: string | null) => void;
   toggleMoveMode: () => void;
   setMoveFrom: (id: string | null) => void;
@@ -817,6 +818,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- UI Actions ---
   setScreen: (screen) => set({ screen }),
+  exitGame: () => {
+    get().saveSnapshot();
+    set({ screen: 'menu' });
+  },
   selectRegion: (regionId) => set({ selectedRegion: regionId }),
   toggleMoveMode: () => set((s) => ({ moveMode: !s.moveMode, moveFrom: null, selectedFigures: [] })),
   setMoveFrom: (regionId) => set({ moveFrom: regionId }),
