@@ -734,7 +734,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   replayNextKami: () => {
     const { replayCurrentIndex, replaySnapshots } = get();
     for (let i = replayCurrentIndex + 1; i < replaySnapshots.length; i++) {
-      if (replaySnapshots[i].state.kamiResolutionActive) {
+      if (replaySnapshots[i].phase === 'politics' && replaySnapshots[i].description.toLowerCase().includes('kami')) {
         set({ replayCurrentIndex: i });
         return;
       }
@@ -743,7 +743,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   replayPrevKami: () => {
     const { replayCurrentIndex, replaySnapshots } = get();
     for (let i = replayCurrentIndex - 1; i >= 0; i--) {
-      if (replaySnapshots[i].state.kamiResolutionActive) {
+      if (replaySnapshots[i].phase === 'politics' && replaySnapshots[i].description.toLowerCase().includes('kami')) {
         set({ replayCurrentIndex: i });
         return;
       }
@@ -752,8 +752,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   replayNextBattle: () => {
     const { replayCurrentIndex, replaySnapshots } = get();
     for (let i = replayCurrentIndex + 1; i < replaySnapshots.length; i++) {
-      const s = replaySnapshots[i].state;
-      if (s.currentPhase === 'war' && s.activeBattles && s.activeBattles.length > 0) {
+      if (replaySnapshots[i].phase === 'war') {
         set({ replayCurrentIndex: i });
         return;
       }
@@ -762,8 +761,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   replayPrevBattle: () => {
     const { replayCurrentIndex, replaySnapshots } = get();
     for (let i = replayCurrentIndex - 1; i >= 0; i--) {
-      const s = replaySnapshots[i].state;
-      if (s.currentPhase === 'war' && s.activeBattles && s.activeBattles.length > 0) {
+      if (replaySnapshots[i].phase === 'war') {
         set({ replayCurrentIndex: i });
         return;
       }

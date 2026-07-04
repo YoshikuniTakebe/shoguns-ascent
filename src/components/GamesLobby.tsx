@@ -6,10 +6,10 @@ import { CLANS } from '../types/game';
 interface GameRecord {
   id: string;
   name: string;
-  players_json: string;
+  players: { name: string; clanId: string }[];
   status: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   mode: string;
   winner: string | null;
 }
@@ -55,15 +55,14 @@ export const GamesLobby = () => {
   };
 
   const renderGameCard = (game: GameRecord, type: 'active' | 'finished') => {
-    const players = JSON.parse(game.players_json || '[]') as { name: string; clanId: string }[];
     return (
       <div key={game.id} className="games-lobby-card">
         <div className="games-lobby-card-header">
           <span className="games-lobby-card-name">{game.name}</span>
-          <span className="games-lobby-card-date">{formatDate(game.updated_at || game.created_at)}</span>
+          <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
         </div>
         <div className="games-lobby-card-players">
-          {players.map((p, i) => (
+          {game.players.map((p, i) => (
             <span key={i} className="games-lobby-player" style={{ color: getClanColor(p.clanId) }}>
               {p.name}
             </span>
