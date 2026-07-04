@@ -13,9 +13,9 @@ import { renderCardEffect } from '../utils/renderCardEffect';
 /** Per-figure size overrides for diorama display. Keys are monsterCardId for monsters, or 'type-clanId' for clan figures. */
 const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'sp-jorogumo': 0.85,
-  'daimyo-tortuga': 0.99,
+  'daimyo-tortuga': 1.09,
   'bushi-tortuga': 0.95,
-  'bushi-loto': 0.95,
+  'bushi-loto': 0.84,
   'daimyo-loto': 0.95,
   'sp-oni-of-skulls': 1.30,
   'daimyo-koi': 0.94,
@@ -27,6 +27,7 @@ const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'sp-daikokuten': 0.80,
   'sp-oni-of-souls': 1.25,
   'sp-phoenix': 1.27,
+  'sp-komainu': 0.90,
   'daimyo-bonsai': 0.95,
   'bushi-zorro': 0.90,
   'daimyo-zorro': 0.95,

@@ -113,8 +113,9 @@ function getFigureDisplayName(figure: Figure): string {
 
 
 
-const FigureIcon = React.memo(({ figure, color, gameState, regionId }: { figure: Figure; color: string; gameState: GameState; regionId: string }) => {
+const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; color: string; regionId: string }) => {
   const t = useT();
+  const gameState = useGameStore.getState().gameState!;
   const ownerPlayer = gameState.players.find(p => p.id === figure.owner);
   const ownerClanId = ownerPlayer ? ownerPlayer.clanId : '';
   const force = getFigureForce(figure, ownerClanId, gameState, regionId);
@@ -237,9 +238,6 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   const jinmenjuSummonActive = useGameStore(s => s.jinmenjuSummonActive);
   const t = useT();
   if (!province || !players) return null;
-
-  // Reconstruct a gameState-like object for functions that require it
-  const gameState = useGameStore.getState().gameState!;
 
   const isSelected = selectedRegion === regionId;
 
@@ -523,7 +521,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
                     }}
                     className={`${isEnemy ? 'betray-target' : ''} ${isSelectedFigure ? 'marshal-selected' : ''}`}
                   >
-                    <FigureIcon figure={fig} color={ownerColor} gameState={gameState} regionId={regionId} />
+                    <FigureIcon figure={fig} color={ownerColor} regionId={regionId} />
                   </span>
                 );
               })}
