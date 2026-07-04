@@ -429,7 +429,7 @@ interface GameStore {
 
   // Persistence
   persistentGameId: string | null;
-  saveSnapshot: () => void;
+  saveSnapshot: () => Promise<void> | void;
 
   // Replay
   replayGameId: string | null;
@@ -679,11 +679,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   saveSnapshot: () => {
     const { persistentGameId, gameState } = get();
     if (!persistentGameId || !gameState) return;
-    fetch(`http://localhost:3001/api/games/${persistentGameId}/snapshot`, {
+    return fetch(`http://localhost:3001/api/games/${persistentGameId}/snapshot`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ state: gameState }),
-    }).catch(() => { /* silently ignore persistence errors */ });
+    }).then(() => {}).catch((err) => { console.error('[saveSnapshot] persistence error:', err); });
   },
 
   // --- Replay ---
@@ -781,8 +781,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         persistentGameId: gameId,
         screen: 'game',
       });
-    } catch {
-      /* silently ignore errors */
+    } catch (err) {
+      console.error('[resumeGame] failed to load game:', err);
     }
   },
 
@@ -822,7 +822,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { persistentGameId, gameState } = get();
     try {
       if (persistentGameId) {
-        get().saveSnapshot();
+        await get().saveSnapshot();
       } else if (gameState) {
         const res = await fetch('http://localhost:3001/api/games/save-hotseat', {
           method: 'POST',
@@ -834,10 +834,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
           set({ persistentGameId: data.id });
         }
       }
-    } catch {
-      /* still navigate to menu even if save fails */
+    } catch (err) {
+      console.error('[exitGame] save failed:', err);
     }
-    set({ screen: 'menu' });
+    set({ screen: 'games-lobby' });
   },
   selectRegion: (regionId) => set({ selectedRegion: regionId }),
   toggleMoveMode: () => set((s) => ({ moveMode: !s.moveMode, moveFrom: null, selectedFigures: [] })),
@@ -861,7 +861,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             set({ persistentGameId: data.id });
           }
         })
-        .catch(() => { /* silently ignore persistence errors */ });
+        .catch((err) => { console.error('[createGame] persistence error:', err); });
     }
   },
   setGameState: (state) => set({ gameState: state }),
