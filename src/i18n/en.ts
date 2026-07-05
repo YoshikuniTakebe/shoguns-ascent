@@ -44,6 +44,9 @@ export const en = {
   'phase.winter': 'WINTER',
   'game.turn': "{name}'s Turn",
   'game.hotseat': '[HOTSEAT]',
+  'game.online': 'Online',
+  'game.modeOnline': 'Online',
+  'game.modeHotseat': 'Hotseat',
   'game.waiting': '[WAITING]',
   'game.round': 'Round:',
 

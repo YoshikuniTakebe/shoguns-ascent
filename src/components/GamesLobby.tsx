@@ -43,18 +43,36 @@ export const GamesLobby = () => {
         }
 
         if (authToken) {
-          const res = await fetch(`${API_BASE}/api/games/my-games`, { headers });
-          const games: GameRecord[] = await res.json();
-          const active = games.filter((g) => g.status === 'active');
-          const finished = games.filter((g) => g.status === 'finished');
+          // Logged in: fetch user's online games + all hotseat games
+          const [myGamesRes, hotseatActiveRes, hotseatFinishedRes] = await Promise.all([
+            fetch(`${API_BASE}/api/games/my-games`, { headers }),
+            fetch(`${API_BASE}/api/games?status=active`),
+            fetch(`${API_BASE}/api/games?status=finished`),
+          ]);
+          const myGames: GameRecord[] = await myGamesRes.json();
+          const allActive: GameRecord[] = await hotseatActiveRes.json();
+          const allFinished: GameRecord[] = await hotseatFinishedRes.json();
+
+          // My online games (active)
+          const myActiveOnline = myGames.filter((g) => g.status === 'active');
+          const myFinishedOnline = myGames.filter((g) => g.status === 'finished');
+
+          // Hotseat games not already in my-games
+          const myGameIds = new Set(myGames.map(g => g.id));
+          const hotseatActive = allActive.filter(g => g.mode === 'hotseat' && !myGameIds.has(g.id));
+          const hotseatFinished = allFinished.filter(g => g.mode === 'hotseat' && !myGameIds.has(g.id));
+
+          // Combine active games
+          const allActiveGames = [...myActiveOnline, ...hotseatActive];
+          const allFinishedGames = [...myFinishedOnline, ...hotseatFinished];
 
           // Separate active games into "your turn" and "waiting"
           const currentUserId = authUser?.id || '';
           const yourTurn: GameRecord[] = [];
           const waiting: GameRecord[] = [];
 
-          for (const game of active) {
-            if (game.currentPlayerIndex != null && game.players[game.currentPlayerIndex]) {
+          for (const game of allActiveGames) {
+            if (game.mode === 'online' && game.currentPlayerIndex != null && game.players[game.currentPlayerIndex]) {
               const currentPlayer = game.players[game.currentPlayerIndex];
               if (currentPlayer.userId && currentPlayer.userId === currentUserId) {
                 yourTurn.push(game);
@@ -68,17 +86,20 @@ export const GamesLobby = () => {
 
           setYourTurnGames(yourTurn);
           setWaitingGames(waiting);
-          setFinishedGames(finished);
+          setFinishedGames(allFinishedGames);
         } else {
+          // Not logged in: show only hotseat games
           const [activeRes, finishedRes] = await Promise.all([
             fetch(`${API_BASE}/api/games?status=active`),
             fetch(`${API_BASE}/api/games?status=finished`),
           ]);
-          const active = await activeRes.json();
-          const finished = await finishedRes.json();
+          const active: GameRecord[] = await activeRes.json();
+          const finished: GameRecord[] = await finishedRes.json();
+          const hotseatActive = active.filter(g => g.mode === 'hotseat');
+          const hotseatFinished = finished.filter(g => g.mode === 'hotseat');
           setYourTurnGames([]);
-          setWaitingGames(active);
-          setFinishedGames(finished);
+          setWaitingGames(hotseatActive);
+          setFinishedGames(hotseatFinished);
         }
       } catch {
         // Server might not be running
@@ -181,6 +202,27 @@ export const GamesLobby = () => {
       }
     };
 
+    const modeIcon = game.mode === 'online' ? (
+      <span className="games-lobby-mode-badge games-lobby-mode-online" title={t('game.modeOnline')}>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <ellipse cx="12" cy="12" rx="4.5" ry="10" />
+          <path d="M2 12h20" />
+        </svg>
+        <span>{t('game.modeOnline')}</span>
+      </span>
+    ) : (
+      <span className="games-lobby-mode-badge games-lobby-mode-hotseat" title={t('game.modeHotseat')}>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+          <circle cx="8" cy="7" r="3" />
+          <circle cx="16" cy="7" r="3" />
+          <path d="M2 19c0-3 2.5-5 6-5s6 2 6 5" opacity="0.7" />
+          <path d="M10 19c0-3 2.5-5 6-5s6 2 6 5" opacity="0.7" />
+        </svg>
+        <span>{t('game.modeHotseat')}</span>
+      </span>
+    );
+
     return (
       <div
         key={game.id}
@@ -189,7 +231,10 @@ export const GamesLobby = () => {
       >
         <div className="games-lobby-card-header">
           <span className="games-lobby-card-gamename">{game.name}</span>
-          <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
+          <span className="games-lobby-card-header-right">
+            {modeIcon}
+            <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
+          </span>
         </div>
         <div className="games-lobby-card-body">
           <span className="games-lobby-card-clans">
@@ -274,12 +319,16 @@ export const GamesLobby = () => {
 
       {/* Action buttons */}
       <div className="games-lobby-actions">
-        <button className="games-lobby-create-btn" onClick={() => useGameStore.setState({ menuMode: 'online-create', screen: 'menu' })}>
-          {t('lobby.createNew')}
-        </button>
-        <button className="games-lobby-join-btn" onClick={() => useGameStore.setState({ menuMode: 'online-join', screen: 'menu' })}>
-          {t('lobby.joinExisting')}
-        </button>
+        {authToken && (
+          <>
+            <button className="games-lobby-create-btn" onClick={() => useGameStore.setState({ menuMode: 'online-create', screen: 'menu' })}>
+              {t('lobby.createNew')}
+            </button>
+            <button className="games-lobby-join-btn" onClick={() => useGameStore.setState({ menuMode: 'online-join', screen: 'menu' })}>
+              {t('lobby.joinExisting')}
+            </button>
+          </>
+        )}
         {isAdmin && (
           <button className="games-lobby-purge-btn" onClick={handlePurgeOrphans} disabled={purging}>
             {purging ? '...' : t('admin.purgeOrphans')}

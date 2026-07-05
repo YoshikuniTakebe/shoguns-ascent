@@ -23,7 +23,7 @@ const CLAN_POWERS: Record<string, string> = {
 };
 
 export const MainMenu = () => {
-  const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage, setUsername, isAuthenticated } = useGameStore();
+  const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage, setUsername, isAuthenticated, authUser, logout } = useGameStore();
   const t = useT();
   const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>(() => {
     const menuMode = useGameStore.getState().menuMode;
@@ -119,6 +119,25 @@ export const MainMenu = () => {
           ES
         </button>
       </div>
+      <div className="auth-buttons">
+        {!isAuthenticated ? (
+          <>
+            <button className="auth-btn" onClick={() => setScreen('auth')}>
+              {t('auth.login')}
+            </button>
+            <button className="auth-btn auth-btn-register" onClick={() => setScreen('auth')}>
+              {t('auth.registerButton')}
+            </button>
+          </>
+        ) : (
+          <span className="auth-user-info">
+            <span className="auth-username">{authUser?.username}</span>
+            <button className="auth-btn auth-btn-logout" onClick={logout}>
+              {t('auth.logout')}
+            </button>
+          </span>
+        )}
+      </div>
 
       <div className="menu-header">
         <img src={titleImg} alt="Noboru Taiyo" style={{ maxWidth: '600px', width: '100%', height: 'auto', objectFit: 'contain' }} />
@@ -139,20 +158,22 @@ export const MainMenu = () => {
             <span className="btn-text">{t('menu.hotseatMode')}</span>
             <span className="btn-desc">{t('menu.hotseatDesc')}</span>
           </button>
-          <button className="menu-btn" onClick={() => { if (!isAuthenticated) { setScreen('auth'); } else { setMode('online'); } }} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-            <span className="btn-icon">
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" />
-                <ellipse cx="12" cy="12" rx="4.5" ry="10" />
-                <path d="M2 12h20" />
-                <path d="M4 7h16" />
-                <path d="M4 17h16" />
-              </svg>
-            </span>
-            <span className="btn-text">{t('menu.onlineMode')}</span>
-            <span className="btn-desc">{t('menu.onlineDesc')}</span>
-          </button>
-          <button className="menu-btn" onClick={() => { if (!isAuthenticated) { setScreen('auth'); } else { setScreen('games-lobby'); } }} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          {isAuthenticated && (
+            <button className="menu-btn" onClick={() => setMode('online')} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              <span className="btn-icon">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" />
+                  <ellipse cx="12" cy="12" rx="4.5" ry="10" />
+                  <path d="M2 12h20" />
+                  <path d="M4 7h16" />
+                  <path d="M4 17h16" />
+                </svg>
+              </span>
+              <span className="btn-text">{t('menu.onlineMode')}</span>
+              <span className="btn-desc">{t('menu.onlineDesc')}</span>
+            </button>
+          )}
+          <button className="menu-btn" onClick={() => setScreen('games-lobby')} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <span className="btn-icon">
               <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
                 <rect x="3" y="3" width="7" height="7" rx="1" />

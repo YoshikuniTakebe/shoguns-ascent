@@ -46,6 +46,9 @@ export const es: Record<TranslationKey, string> = {
   'phase.winter': 'INVIERNO',
   'game.turn': 'Turno de {name}',
   'game.hotseat': '[HOTSEAT]',
+  'game.online': 'Online',
+  'game.modeOnline': 'Online',
+  'game.modeHotseat': 'Hotseat',
   'game.waiting': '[ESPERANDO]',
   'game.round': 'Ronda:',
 
