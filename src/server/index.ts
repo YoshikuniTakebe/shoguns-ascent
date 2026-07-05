@@ -272,12 +272,25 @@ function startLobbyGame(l: Lobby): void {
   );
   if (l.gameState) {
     // Match lobby players to game state players by clanId (game state is honor-sorted)
+    // Build a map from old auto-generated IDs to lobby player IDs
+    const idMap = new Map<string, string>();
     for (let i = 0; i < l.gameState.players.length; i++) {
       const gamePlayer = l.gameState.players[i];
       const lobbyPlayer = l.players.find(p => p.clanId === gamePlayer.clanId);
       if (lobbyPlayer) {
+        idMap.set(gamePlayer.id, lobbyPlayer.id);
         gamePlayer.id = lobbyPlayer.id;
         l.gameState.turnOrder[i] = lobbyPlayer.id;
+      }
+    }
+    // Update honorTrack to use lobby player IDs
+    l.gameState.honorTrack = l.gameState.honorTrack.map(pid => idMap.get(pid) || pid);
+    // Update figure owners in provinces to use lobby player IDs
+    for (const provinceId of Object.keys(l.gameState.provinces)) {
+      const province = l.gameState.provinces[provinceId];
+      for (const figure of province.figures) {
+        const newId = idMap.get(figure.owner);
+        if (newId) figure.owner = newId;
       }
     }
   }
