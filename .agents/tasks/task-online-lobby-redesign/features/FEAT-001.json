@@ -32,5 +32,5 @@
     "Run `npm run build` in /projects/sandbox/shoguns-ascent and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": "Build passes cleanly with npm run build (tsc + vite). No test framework in the project. The implementation adds CREATE_LOBBY, SELECT_CLAN server messages, updates broadcastLobby to include availableClans/config, splits MainMenu online mode into create/join sub-flows, and replaces the minimal lobby screen with a rich view showing clan badges. Auto-start triggers when all maxPlayers slots have a clan selected."
+  "findings": "Build passes cleanly with npm run build (tsc + vite). No test framework in the project. The implementation adds CREATE_LOBBY, SELECT_CLAN server messages, updates broadcastLobby to include availableClans/config, splits MainMenu online mode into create/join sub-flows, and replaces the minimal lobby screen with a rich view showing clan badges. Auto-start triggers when all maxPlayers slots have a clan selected. Review fixes applied: (1) host clan resets when removed from available clans via useEffect, (2) START_GAME validates all players have clans server-side and button is disabled client-side, (3) host disconnect deletes lobby and notifies players via LOBBY_CLOSED, (4) client resets lobbyState on disconnect when on lobby screen, (5) game-start logic extracted to shared startLobbyGame function."
 }

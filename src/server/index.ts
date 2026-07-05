@@ -261,6 +261,38 @@ function formatGame(game: { id: string; name: string; players_json: string; stat
   };
 }
 
+function startLobbyGame(l: Lobby): void {
+  const deckConfig = l.config?.deckConfig || { chosenDeck: 'random' as const, extraMonsters: 0 as const };
+  l.gameState = createInitialGameState(
+    l.players.map((p) => ({ name: p.name, clanId: p.clanId })),
+    'online',
+    l.host,
+    deckConfig as import('../types/game').DeckConfig
+  );
+  l.players.forEach((p, i) => {
+    if (l.gameState) {
+      l.gameState.players[i].id = p.id;
+      l.gameState.turnOrder[i] = p.id;
+    }
+  });
+  l.started = true;
+
+  // Persist game to database
+  const persistId = l.gameState.id || uuidv4();
+  l.persistentGameId = persistId;
+  saveGame(
+    persistId,
+    l.name,
+    l.players.map((p) => ({ name: p.name, clanId: p.clanId })),
+    'online'
+  );
+  saveSnapshot(persistId, l.gameState, 'Game started');
+
+  l.players.forEach((p) =>
+    p.ws.send(JSON.stringify({ type: 'GAME_START', state: l.gameState }))
+  );
+}
+
 wss.on('connection', (ws: WebSocket) => {
   const playerId = uuidv4();
   let currentLobbyId: string | null = null;
@@ -274,17 +306,24 @@ wss.on('connection', (ws: WebSocket) => {
       switch (data.type) {
         case 'CREATE_LOBBY': {
           const lobbyId = uuidv4();
+          const availableClans: string[] = data.availableClans || [];
+          const hostClanId: string = data.clanId || '';
           const config: LobbyConfig = {
-            availableClans: data.availableClans || [],
+            availableClans,
             deckConfig: data.deckConfig || { chosenDeck: 'random', extraMonsters: 0 },
             kamiMode: data.kamiMode || 'random',
             selectedKami: data.selectedKami,
           };
+          // Validate host clan is within available clans
+          if (availableClans.length > 0 && hostClanId && !availableClans.includes(hostClanId)) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'Host clan not in available clans' }));
+            return;
+          }
           const l: Lobby = {
             id: lobbyId,
             name: data.playerName ? `${data.playerName}'s game` : 'New Game',
             host: playerId,
-            players: [{ id: playerId, name: data.playerName || 'Host', clanId: data.clanId || '', ws }],
+            players: [{ id: playerId, name: data.playerName || 'Host', clanId: hostClanId, ws }],
             maxPlayers: data.maxPlayers || 5,
             gameState: null,
             started: false,
@@ -348,36 +387,7 @@ wss.on('connection', (ws: WebSocket) => {
           // Check if all players have selected a clan and lobby is full
           const allHaveClans = l.players.length >= l.maxPlayers && l.players.every(p => p.clanId !== '');
           if (allHaveClans) {
-            // Auto-start the game
-            const deckConfig = l.config?.deckConfig || { chosenDeck: 'random' as const, extraMonsters: 0 as const };
-            l.gameState = createInitialGameState(
-              l.players.map((p) => ({ name: p.name, clanId: p.clanId })),
-              'online',
-              l.host,
-              deckConfig as import('../types/game').DeckConfig
-            );
-            l.players.forEach((p, i) => {
-              if (l.gameState) {
-                l.gameState.players[i].id = p.id;
-                l.gameState.turnOrder[i] = p.id;
-              }
-            });
-            l.started = true;
-
-            // Persist game to database
-            const persistId = l.gameState.id || uuidv4();
-            l.persistentGameId = persistId;
-            saveGame(
-              persistId,
-              l.name,
-              l.players.map((p) => ({ name: p.name, clanId: p.clanId })),
-              'online'
-            );
-            saveSnapshot(persistId, l.gameState, 'Game started');
-
-            l.players.forEach((p) =>
-              p.ws.send(JSON.stringify({ type: 'GAME_START', state: l.gameState }))
-            );
+            startLobbyGame(l);
           }
           break;
         }
@@ -385,35 +395,12 @@ wss.on('connection', (ws: WebSocket) => {
         case 'START_GAME': {
           const l = lobbies.get(data.lobbyId || currentLobbyId || '');
           if (!l || l.host !== playerId || l.players.length < 2) return;
-          const deckConfig = l.config?.deckConfig || { chosenDeck: 'random' as const, extraMonsters: 0 as const };
-          l.gameState = createInitialGameState(
-            l.players.map((p) => ({ name: p.name, clanId: p.clanId })),
-            'online',
-            l.host,
-            deckConfig as import('../types/game').DeckConfig
-          );
-          l.players.forEach((p, i) => {
-            if (l.gameState) {
-              l.gameState.players[i].id = p.id;
-              l.gameState.turnOrder[i] = p.id;
-            }
-          });
-          l.started = true;
-
-          // Persist game to database
-          const persistId = l.gameState.id || uuidv4();
-          l.persistentGameId = persistId;
-          saveGame(
-            persistId,
-            l.name,
-            l.players.map((p) => ({ name: p.name, clanId: p.clanId })),
-            'online'
-          );
-          saveSnapshot(persistId, l.gameState, 'Game started');
-
-          l.players.forEach((p) =>
-            p.ws.send(JSON.stringify({ type: 'GAME_START', state: l.gameState }))
-          );
+          // Validate all players have a clan assigned
+          if (l.players.some(p => p.clanId === '')) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'All players must select a clan before starting' }));
+            return;
+          }
+          startLobbyGame(l);
           break;
         }
 
@@ -605,9 +592,19 @@ wss.on('connection', (ws: WebSocket) => {
     if (currentLobbyId) {
       const l = lobbies.get(currentLobbyId);
       if (l) {
-        l.players = l.players.filter((p) => p.id !== playerId);
-        if (l.players.length === 0) lobbies.delete(currentLobbyId);
-        else broadcastLobby(l);
+        if (l.host === playerId && !l.started) {
+          // Host disconnected - destroy the lobby and notify remaining players
+          l.players.forEach((p) => {
+            if (p.id !== playerId && p.ws.readyState === WebSocket.OPEN) {
+              p.ws.send(JSON.stringify({ type: 'LOBBY_CLOSED', message: 'Host disconnected' }));
+            }
+          });
+          lobbies.delete(currentLobbyId);
+        } else {
+          l.players = l.players.filter((p) => p.id !== playerId);
+          if (l.players.length === 0) lobbies.delete(currentLobbyId);
+          else broadcastLobby(l);
+        }
       }
     }
   });

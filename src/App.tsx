@@ -88,10 +88,14 @@ const LobbyScreen = () => {
 
       {isHost && (
         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-          <button className="btn-primary" onClick={() => {
-            if (ws && ws.readyState === WebSocket.OPEN)
-              ws.send(JSON.stringify({ type: 'START_GAME', lobbyId }));
-          }}>
+          <button
+            className="btn-primary"
+            disabled={players.some(p => p.clanId === '')}
+            onClick={() => {
+              if (ws && ws.readyState === WebSocket.OPEN)
+                ws.send(JSON.stringify({ type: 'START_GAME', lobbyId }));
+            }}
+          >
             {t('menu.start')}
           </button>
         </div>

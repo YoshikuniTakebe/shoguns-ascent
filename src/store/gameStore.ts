@@ -2612,12 +2612,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
         case 'GAME_START':
           set({ gameState: d.state, screen: 'game' });
           break;
+        case 'LOBBY_CLOSED':
+          set({ lobbyState: null, lobbyId: null, screen: 'menu' });
+          break;
         case 'ERROR':
           console.error('[WS] Server error:', d.message);
           break;
       }
     };
-    ws.onclose = () => set({ ws: null });
+    ws.onclose = () => {
+      const currentScreen = get().screen;
+      if (currentScreen === 'lobby') {
+        set({ ws: null, lobbyState: null, lobbyId: null, screen: 'menu' });
+      } else {
+        set({ ws: null });
+      }
+    };
     set({ ws });
   },
   sendAction: (action) => {

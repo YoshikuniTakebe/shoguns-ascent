@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, DECK_GROUPS, CLAN_INCOME, KAMI_DATA } from '../types/game';
 import type { DeckConfig, DeckName, KamiType } from '../types/game';
@@ -49,6 +49,14 @@ export const MainMenu = () => {
   const [createName, setCreateName] = useState('');
   const [createHostClan, setCreateHostClan] = useState('koi');
   const [createUrl, setCreateUrl] = useState(WS_BASE);
+
+  // Reset host clan selection when available clans change (issue: stale default)
+  const activeCreateClans = createClans.slice(0, createPc);
+  useEffect(() => {
+    if (activeCreateClans.length > 0 && !activeCreateClans.includes(createHostClan)) {
+      setCreateHostClan(activeCreateClans[0]);
+    }
+  }, [activeCreateClans.join(','), createHostClan]);
 
   const hasSolOrLuna = clans.slice(0, pc).some(id => id === 'sol' || id === 'luna');
 
