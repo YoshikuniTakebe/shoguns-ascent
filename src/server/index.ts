@@ -270,12 +270,17 @@ function startLobbyGame(l: Lobby): void {
     l.host,
     deckConfig as import('../types/game').DeckConfig
   );
-  l.players.forEach((p, i) => {
-    if (l.gameState) {
-      l.gameState.players[i].id = p.id;
-      l.gameState.turnOrder[i] = p.id;
+  if (l.gameState) {
+    // Match lobby players to game state players by clanId (game state is honor-sorted)
+    for (let i = 0; i < l.gameState.players.length; i++) {
+      const gamePlayer = l.gameState.players[i];
+      const lobbyPlayer = l.players.find(p => p.clanId === gamePlayer.clanId);
+      if (lobbyPlayer) {
+        gamePlayer.id = lobbyPlayer.id;
+        l.gameState.turnOrder[i] = lobbyPlayer.id;
+      }
     }
-  });
+  }
   l.started = true;
 
   // Persist game to database
