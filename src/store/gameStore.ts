@@ -247,12 +247,15 @@ interface GameStore {
   gameState: GameState | null;
   localPlayerId: string | null;
   username: string;
+  authToken: string | null;
+  authUser: { id: string; username: string; email: string } | null;
+  isAuthenticated: boolean;
   selectedRegion: string | null;
   moveMode: boolean;
   moveFrom: string | null;
   selectedFigures: string[];
   ws: WebSocket | null;
-  screen: 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay';
+  screen: 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay' | 'auth';
   lobbyId: string | null;
   currentMandateResolutionIndex: number;
   warTacticBidsSubmitted: boolean;
@@ -267,7 +270,7 @@ interface GameStore {
   setShowTrainModal: (show: boolean) => void;
 
   // UI actions
-  setScreen: (s: 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay') => void;
+  setScreen: (s: 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay' | 'auth') => void;
   exitGame: () => void;
   selectRegion: (id: string | null) => void;
   toggleMoveMode: () => void;
@@ -279,6 +282,12 @@ interface GameStore {
   setGameState: (s: GameState) => void;
   setLocalPlayerId: (id: string) => void;
   setUsername: (name: string) => void;
+
+  // Auth actions
+  login: (username: string, password: string) => Promise<void>;
+  register: (email: string, username: string, password: string) => Promise<void>;
+  logout: () => void;
+  checkAuth: () => Promise<void>;
 
   // Season Setup
   doSetupSeason: () => void;
@@ -462,6 +471,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   gameState: null,
   localPlayerId: null,
   username: localStorage.getItem('shoguns-ascent-username') || '',
+  authToken: localStorage.getItem('shoguns-ascent-authToken') || null,
+  authUser: (() => {
+    try {
+      const stored = localStorage.getItem('shoguns-ascent-authUser');
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
+  })(),
+  isAuthenticated: !!localStorage.getItem('shoguns-ascent-authToken'),
   selectedRegion: null,
   moveMode: false,
   moveFrom: null,
@@ -886,6 +903,91 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setUsername: (name) => {
     localStorage.setItem('shoguns-ascent-username', name);
     set({ username: name });
+  },
+
+  // --- Auth actions ---
+  login: async (username, password) => {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Login failed');
+    }
+    localStorage.setItem('shoguns-ascent-authToken', data.token);
+    localStorage.setItem('shoguns-ascent-authUser', JSON.stringify(data.user));
+    localStorage.setItem('shoguns-ascent-username', data.user.username);
+    set({
+      authToken: data.token,
+      authUser: data.user,
+      isAuthenticated: true,
+      username: data.user.username,
+      screen: 'menu',
+    });
+  },
+
+  register: async (email, username, password) => {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, username, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Registration failed');
+    }
+    localStorage.setItem('shoguns-ascent-authToken', data.token);
+    localStorage.setItem('shoguns-ascent-authUser', JSON.stringify(data.user));
+    localStorage.setItem('shoguns-ascent-username', data.user.username);
+    set({
+      authToken: data.token,
+      authUser: data.user,
+      isAuthenticated: true,
+      username: data.user.username,
+      screen: 'menu',
+    });
+  },
+
+  logout: () => {
+    localStorage.removeItem('shoguns-ascent-authToken');
+    localStorage.removeItem('shoguns-ascent-authUser');
+    set({
+      authToken: null,
+      authUser: null,
+      isAuthenticated: false,
+      screen: 'auth',
+    });
+  },
+
+  checkAuth: async () => {
+    const token = localStorage.getItem('shoguns-ascent-authToken');
+    if (!token) {
+      set({ authToken: null, authUser: null, isAuthenticated: false });
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        localStorage.removeItem('shoguns-ascent-authToken');
+        localStorage.removeItem('shoguns-ascent-authUser');
+        set({ authToken: null, authUser: null, isAuthenticated: false });
+        return;
+      }
+      const data = await res.json();
+      localStorage.setItem('shoguns-ascent-authUser', JSON.stringify(data.user));
+      set({
+        authToken: token,
+        authUser: data.user,
+        isAuthenticated: true,
+        username: data.user.username,
+      });
+    } catch {
+      set({ authToken: null, authUser: null, isAuthenticated: false });
+    }
   },
 
   // --- Season Setup ---

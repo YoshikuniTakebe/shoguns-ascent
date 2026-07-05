@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Redesign the Games Lobby UI to be similar to brass.xai.world/lobby style: show active games with whose turn it is, let players join their ongoing games, create new games, and show the authenticated user's identity. Add the player identity badge in the GameBoard header (between deck badge and turn indicator) showing the local player's clan shield and name in their color.",
+  "status": "pending",
+  "steps": [
+    "Redesign GamesLobby.tsx to have a lobby layout similar to brass.xai.world: a header with user info and logout button, a section for 'Your Active Games' (games where it is the user's turn highlighted prominently), a section for 'Other Active Games' (games where user participates but it is not their turn), and a 'Finished Games' section. Each game card shows: game name, players with clan shields, whose turn it is (highlighted), season/phase progress, last activity timestamp.",
+    "Add a 'Create Game' button in the lobby that navigates to the online game creation flow (existing MainMenu online-create mode).",
+    "Add a 'Join Game' section or button that allows joining an existing lobby by ID.",
+    "In the game card for active games, add a prominent 'Play' button when it is the user's turn, and a 'View' button when it is not their turn.",
+    "Ensure the GameBoard header already has the local player indicator (it does at line ~242 in GameBoard.tsx for online mode). Verify it appears between the deck badge and turn indicator correctly. If needed, adjust positioning so it reads: [Season/Phase] [Deck Badge] [Your Identity: ClanShield + Name] ... [Turn Indicator].",
+    "Add a user profile badge in the top-right of the lobby showing username and a logout option.",
+    "Update CSS in src/App.css for the redesigned lobby: card-based layout with the existing dark feudal theme, highlighted cards for 'your turn', proper responsive grid.",
+    "Update i18n keys in en.ts and es.ts for new lobby strings: 'lobby.yourTurn', 'lobby.yourGames', 'lobby.otherGames', 'lobby.play', 'lobby.view', 'lobby.createNew', 'lobby.joinExisting', 'lobby.loggedAs', 'lobby.noGamesYet'."
+  ],
+  "acceptance_criteria": [
+    "npm run build succeeds without errors",
+    "GamesLobby shows games separated by whose turn it is",
+    "Game cards display player clans, current turn indicator, and progress info",
+    "Create Game button exists and works",
+    "User identity is visible in the lobby header",
+    "GameBoard header shows the local player clan shield and name in online mode between deck badge and turn indicator"
+  ],
+  "verification": [
+    "Run `npm run build` and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import type { GameState } from '../types/game';
+import { v4 as uuidv4 } from 'uuid';
 
 let db: Database.Database;
 
@@ -43,6 +44,17 @@ export function initDatabase(): void {
     CREATE INDEX IF NOT EXISTS idx_snapshots_game_id ON snapshots(game_id);
     CREATE INDEX IF NOT EXISTS idx_snapshots_game_index ON snapshots(game_id, snapshot_index);
     CREATE INDEX IF NOT EXISTS idx_games_status ON games(status);
+
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE,
+      username TEXT UNIQUE,
+      password_hash TEXT,
+      created_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
   `);
 }
 
@@ -184,4 +196,40 @@ export function getLatestSnapshot(gameId: string): {
 } | undefined {
   const stmt = db.prepare(`SELECT * FROM snapshots WHERE game_id = ? ORDER BY snapshot_index DESC LIMIT 1`);
   return stmt.get(gameId) as any;
+}
+
+// --- User functions ---
+
+export interface DbUser {
+  id: string;
+  email: string;
+  username: string;
+  password_hash: string;
+  created_at: string;
+}
+
+export function createUser(email: string, username: string, passwordHash: string): DbUser {
+  const id = uuidv4();
+  const now = new Date().toISOString();
+  const stmt = db.prepare(`
+    INSERT INTO users (id, email, username, password_hash, created_at)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  stmt.run(id, email, username, passwordHash, now);
+  return { id, email, username, password_hash: passwordHash, created_at: now };
+}
+
+export function getUserByUsername(username: string): DbUser | undefined {
+  const stmt = db.prepare(`SELECT * FROM users WHERE username = ?`);
+  return stmt.get(username) as DbUser | undefined;
+}
+
+export function getUserByEmail(email: string): DbUser | undefined {
+  const stmt = db.prepare(`SELECT * FROM users WHERE email = ?`);
+  return stmt.get(email) as DbUser | undefined;
+}
+
+export function getUserById(id: string): DbUser | undefined {
+  const stmt = db.prepare(`SELECT * FROM users WHERE id = ?`);
+  return stmt.get(id) as DbUser | undefined;
 }

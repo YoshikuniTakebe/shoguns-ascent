@@ -401,3 +401,17 @@
 .clan-badge-btn{display:flex;flex-direction:column;align-items:center;gap:0.35rem;padding:0.75rem 1rem;background:var(--bg-dark);border:2px solid;border-radius:10px;cursor:pointer;transition:all 0.2s;min-width:80px}
 .clan-badge-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.4);filter:brightness(1.2)}
 .clan-badge-name{font-size:0.8rem;font-weight:bold;letter-spacing:0.03em}
+
+/* Auth Screen */
+.auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg-dark);padding:2rem}
+.auth-container{background:var(--bg-panel);border:1px solid var(--border-gold);border-radius:12px;padding:2.5rem;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,0.6)}
+.auth-title{color:var(--accent-gold);font-size:1.8rem;text-align:center;margin-bottom:1.5rem;letter-spacing:0.05em}
+.auth-form{display:flex;flex-direction:column;gap:1.25rem}
+.auth-field{display:flex;flex-direction:column;gap:0.4rem}
+.auth-field label{color:var(--text-secondary);font-size:0.9rem;letter-spacing:0.03em}
+.auth-field input{background:var(--bg-dark);border:1px solid var(--border-gold);border-radius:6px;padding:0.7rem 1rem;color:var(--text-primary);font-size:1rem;outline:none;transition:border-color 0.2s}
+.auth-field input:focus{border-color:var(--accent-gold);box-shadow:0 0 0 2px rgba(212,175,55,0.15)}
+.auth-error{background:rgba(220,50,50,0.15);border:1px solid rgba(220,50,50,0.4);border-radius:6px;padding:0.6rem 1rem;color:#ff6b6b;font-size:0.9rem;text-align:center}
+.auth-submit{margin-top:0.5rem;font-size:1rem;padding:0.8rem;width:100%}
+.auth-switch{background:none;border:none;color:var(--accent-gold);cursor:pointer;margin-top:1.25rem;font-size:0.9rem;text-align:center;display:block;width:100%;opacity:0.8;transition:opacity 0.2s}
+.auth-switch:hover{opacity:1;text-decoration:underline}

@@ -641,6 +641,20 @@ export const en = {
   'lobby.random': 'Random',
   'lobby.gameOfXPlayers': 'Game of {count} players',
   'lobby.turnOf': 'TURN OF',
+
+  // Auth
+  'auth.login': 'Login',
+  'auth.register': 'Register',
+  'auth.username': 'Username',
+  'auth.password': 'Password',
+  'auth.email': 'Email',
+  'auth.loginButton': 'Sign In',
+  'auth.registerButton': 'Create Account',
+  'auth.switchToRegister': "Don't have an account? Register",
+  'auth.switchToLogin': 'Already have an account? Login',
+  'auth.logout': 'Logout',
+  'auth.error': 'Authentication error',
+  'auth.success': 'Success',
 } as const;
 
 export type TranslationKey = keyof typeof en;

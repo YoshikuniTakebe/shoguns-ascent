@@ -643,4 +643,18 @@ export const es: Record<TranslationKey, string> = {
   'lobby.random': 'Aleatorio',
   'lobby.gameOfXPlayers': 'Partida de {count} jugadores',
   'lobby.turnOf': 'TURNO DE',
+
+  // Auth
+  'auth.login': 'Iniciar Sesion',
+  'auth.register': 'Registrarse',
+  'auth.username': 'Usuario',
+  'auth.password': 'Contrasena',
+  'auth.email': 'Correo electronico',
+  'auth.loginButton': 'Entrar',
+  'auth.registerButton': 'Crear Cuenta',
+  'auth.switchToRegister': 'No tienes cuenta? Registrate',
+  'auth.switchToLogin': 'Ya tienes cuenta? Inicia sesion',
+  'auth.logout': 'Cerrar Sesion',
+  'auth.error': 'Error de autenticacion',
+  'auth.success': 'Exito',
 };

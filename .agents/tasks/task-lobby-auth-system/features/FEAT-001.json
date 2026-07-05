@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add user authentication system (register/login) with SQLite backend and integrate it with the existing server. Create login/register UI screen. Users need email, username, and password. Passwords must be hashed. JWT tokens for session management. Add a 'users' table to the database.",
+  "status": "in_progress",
+  "steps": [
+    "Install bcryptjs and jsonwebtoken packages (npm install bcryptjs jsonwebtoken @types/bcryptjs @types/jsonwebtoken)",
+    "In src/server/database.ts, add a 'users' table with columns: id (TEXT PRIMARY KEY, uuid), email (TEXT UNIQUE), username (TEXT UNIQUE), password_hash (TEXT), created_at (TEXT). Add functions: createUser, getUserByUsername, getUserByEmail, getUserById.",
+    "Create src/server/auth.ts with JWT utilities: generateToken(userId), verifyToken(token). Use a SECRET from process.env or hardcoded default for now.",
+    "In src/server/index.ts, add REST endpoints: POST /api/auth/register (email, username, password - validates, hashes password, creates user, returns token+user), POST /api/auth/login (username, password - validates credentials, returns token+user), GET /api/auth/me (Authorization: Bearer token - returns user info).",
+    "Create src/components/AuthScreen.tsx with login/register forms matching the game's dark feudal Japanese visual style. Include fields for username, password (login) and email, username, password (register). Toggle between login/register modes. On success store token in localStorage and update gameStore.",
+    "In src/store/gameStore.ts, add auth state: authToken (string|null), authUser ({id, username, email}|null), isAuthenticated (boolean). Add actions: login, register, logout, checkAuth (reads token from localStorage on init). The username field in the store should be set from authUser.username on login.",
+    "In src/App.tsx, add a new screen 'auth' and redirect to it when user is not authenticated and tries to access online mode. Add the AuthScreen route.",
+    "In src/i18n/en.ts and es.ts, add translation keys for auth: 'auth.login', 'auth.register', 'auth.username', 'auth.password', 'auth.email', 'auth.loginButton', 'auth.registerButton', 'auth.switchToRegister', 'auth.switchToLogin', 'auth.logout', 'auth.error', 'auth.success'.",
+    "Add CSS styles for the auth screen in src/App.css matching the existing dark theme with gold accents."
+  ],
+  "acceptance_criteria": [
+    "npm run build succeeds without errors",
+    "POST /api/auth/register creates a user and returns a JWT token",
+    "POST /api/auth/login validates credentials and returns a JWT token",
+    "GET /api/auth/me returns user info when valid token is provided",
+    "AuthScreen component renders login/register forms",
+    "gameStore tracks auth state and persists token in localStorage"
+  ],
+  "verification": [
+    "Run `npm run build` and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

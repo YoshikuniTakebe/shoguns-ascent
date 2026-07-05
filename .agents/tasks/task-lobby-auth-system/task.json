@@ -1,0 +1,7 @@
+{
+  "task_id": "task-lobby-auth-system",
+  "task_description": "Implement a user authentication system (register/login with email, username, password) and redesign the games lobby to show the authenticated user's games, whose turn it is, and allow them to join/resume their games. Integrate auth with WebSocket connections so the server knows which user is playing. Add player identity badge in the GameBoard header.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

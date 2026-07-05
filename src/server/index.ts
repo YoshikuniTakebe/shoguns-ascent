@@ -39,7 +39,13 @@ import {
   getSnapshotByIndex,
   getSnapshotCount,
   getLatestSnapshot,
+  createUser,
+  getUserByUsername,
+  getUserByEmail,
+  getUserById,
 } from './database';
+import { generateToken, verifyToken } from './auth';
+import bcrypt from 'bcryptjs';
 
 const app = express();
 app.use(cors());
@@ -71,6 +77,99 @@ const lobbies = new Map<string, Lobby>();
 
 // Initialize the database
 initDatabase();
+
+// --- Auth endpoints ---
+
+app.post('/api/auth/register', async (req, res) => {
+  const { email, username, password } = req.body;
+
+  if (!email || !username || !password) {
+    res.status(400).json({ error: 'Email, username, and password are required' });
+    return;
+  }
+
+  if (username.length < 3) {
+    res.status(400).json({ error: 'Username must be at least 3 characters' });
+    return;
+  }
+
+  if (password.length < 6) {
+    res.status(400).json({ error: 'Password must be at least 6 characters' });
+    return;
+  }
+
+  const existingUsername = getUserByUsername(username);
+  if (existingUsername) {
+    res.status(409).json({ error: 'Username already taken' });
+    return;
+  }
+
+  const existingEmail = getUserByEmail(email);
+  if (existingEmail) {
+    res.status(409).json({ error: 'Email already registered' });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = createUser(email, username, passwordHash);
+  const token = generateToken(user.id);
+
+  res.json({
+    token,
+    user: { id: user.id, username: user.username, email: user.email },
+  });
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    res.status(400).json({ error: 'Username and password are required' });
+    return;
+  }
+
+  const user = getUserByUsername(username);
+  if (!user) {
+    res.status(401).json({ error: 'Invalid username or password' });
+    return;
+  }
+
+  const valid = await bcrypt.compare(password, user.password_hash);
+  if (!valid) {
+    res.status(401).json({ error: 'Invalid username or password' });
+    return;
+  }
+
+  const token = generateToken(user.id);
+
+  res.json({
+    token,
+    user: { id: user.id, username: user.username, email: user.email },
+  });
+});
+
+app.get('/api/auth/me', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyToken(token);
+  if (!payload) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
+  const user = getUserById(payload.userId);
+  if (!user) {
+    res.status(401).json({ error: 'User not found' });
+    return;
+  }
+
+  res.json({ user: { id: user.id, username: user.username, email: user.email } });
+});
 
 app.get('/api/lobbies', (_req, res) => {
   res.json(

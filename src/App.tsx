@@ -3,6 +3,7 @@ import { MainMenu } from './components/MainMenu';
 import { GameBoard } from './components/GameBoard';
 import { GamesLobby } from './components/GamesLobby';
 import { ReplayViewer } from './components/ReplayViewer';
+import { AuthScreen } from './components/AuthScreen';
 import { ClanShield } from './components/ClanShields';
 import { CLANS } from './types/game';
 import { useT } from './i18n';
@@ -113,6 +114,7 @@ const LobbyScreen = () => {
 
 const App = () => {
   const { screen } = useGameStore();
+  if (screen === 'auth') return <AuthScreen />;
   if (screen === 'lobby') return <LobbyScreen />;
   if (screen === 'game') return <GameBoard />;
   if (screen === 'games-lobby') return <GamesLobby />;

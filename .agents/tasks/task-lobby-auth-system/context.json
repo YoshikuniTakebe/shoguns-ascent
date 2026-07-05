@@ -1,0 +1,29 @@
+{
+  "project_type": "React + TypeScript + Vite board game with Express + WebSocket + SQLite backend",
+  "language": "TypeScript",
+  "build_system": "npm + Vite (frontend), tsx (backend). No Docker.",
+  "test_framework": "No test framework currently set up. Verification via build.",
+  "build_command": "npm run build",
+  "test_command": "npm run build (no test suite)",
+  "verification_instructions": "Run `npm run build` to ensure TypeScript compiles and Vite bundles without errors.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install && npm run build",
+  "environment_constraints": "OPEN_INTERNET - full network access available. Node v22.",
+  "contribution_requirements": "Push directly to main branch. No PR required.",
+  "key_patterns": "Zustand store (src/store/gameStore.ts) is the central state management. Components in src/components/. Server is Express+WebSocket in src/server/index.ts with SQLite via src/server/database.ts. i18n system with en.ts and es.ts. CSS in src/App.css (single large CSS file). All game types in src/types/game.ts. Config in src/config.ts exports API_BASE and WS_BASE derived from window.location.hostname:3001.",
+  "relevant_files": [
+    "src/server/index.ts",
+    "src/server/database.ts",
+    "src/store/gameStore.ts",
+    "src/App.tsx",
+    "src/components/GamesLobby.tsx",
+    "src/components/GameBoard.tsx",
+    "src/components/MainMenu.tsx",
+    "src/types/game.ts",
+    "src/config.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/App.css"
+  ],
+  "directory_structure": "src/ contains: App.tsx (routing), App.css (all styles), components/ (UI), store/gameStore.ts (Zustand), server/ (Express+WS+SQLite), types/ (game.ts), i18n/ (en.ts, es.ts, index.ts), utils/ (gameLogic.ts), config.ts, img/ (assets)"
+}
