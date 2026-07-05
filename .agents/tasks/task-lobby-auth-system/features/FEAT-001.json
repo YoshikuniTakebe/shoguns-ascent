@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Add user authentication system (register/login) with SQLite backend and integrate it with the existing server. Create login/register UI screen. Users need email, username, and password. Passwords must be hashed. JWT tokens for session management. Add a 'users' table to the database.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Install bcryptjs and jsonwebtoken packages (npm install bcryptjs jsonwebtoken @types/bcryptjs @types/jsonwebtoken)",
     "In src/server/database.ts, add a 'users' table with columns: id (TEXT PRIMARY KEY, uuid), email (TEXT UNIQUE), username (TEXT UNIQUE), password_hash (TEXT), created_at (TEXT). Add functions: createUser, getUserByUsername, getUserByEmail, getUserById.",
@@ -26,5 +26,5 @@
     "Run `npm run build` and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly. bcryptjs and jsonwebtoken installed successfully. The store screen type was updated to include 'auth'. Auth state is persisted in localStorage with keys shoguns-ascent-authToken and shoguns-ascent-authUser. The auth endpoints use async handlers for bcrypt operations."
 }
