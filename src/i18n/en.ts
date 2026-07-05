@@ -639,6 +639,7 @@ export const en = {
   'lobby.gameType': 'Game Type',
   'lobby.manual': 'Manual',
   'lobby.random': 'Random',
+  'lobby.gameOfXPlayers': 'Game of {count} players',
 } as const;
 
 export type TranslationKey = keyof typeof en;

@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "CSS and lobby waiting screen fixes: margin-top on .player-count-select in Aleatorio mode, show 'Partida de X jugadores' text in waiting screen, and hide Start button in Aleatorio mode (only show in Manual mode)",
+  "status": "in_progress",
+  "steps": [
+    "In src/App.css, add margin-top: 1rem to .player-count-select when in Aleatorio mode context. Since CSS alone cannot know the mode, this will be done via inline style in the component. The user wants the .player-count-select element to have margin-top: 1rem when Aleatorio is selected.",
+    "In src/components/MainMenu.tsx, add style={{ marginTop: '1rem' }} to the .player-count-select div that only renders when createMode === 'random' (the player count select only shows in random mode, so it always gets the margin).",
+    "In src/App.tsx LobbyScreen component, add text below the 'Esperando jugadores...' heading showing 'Partida de X jugadores' using lobbyState?.maxPlayers value.",
+    "In src/App.tsx LobbyScreen component, hide the Start button (the isHost block) when the lobby is in autoAssignClan mode (random mode). The lobbyState currently does not expose autoAssignClan info to the client. The server sends the lobby state via broadcastLobby function. Need to either: (a) detect random mode by checking if all players get auto-assigned clans, or (b) pass autoAssignClan in the lobby state from server to client.",
+    "In src/server/index.ts broadcastLobby function, add autoAssignClan: l.config?.autoAssignClan || false to the lobby state sent to clients.",
+    "In src/store/gameStore.ts, update the lobbyState type to include autoAssignClan?: boolean.",
+    "In src/App.tsx LobbyScreen, conditionally show the Start button only when lobbyState?.autoAssignClan is NOT true (manual mode)."
+  ],
+  "acceptance_criteria": [
+    "The .player-count-select in online-create mode (Aleatorio) has margin-top: 1rem",
+    "The LobbyScreen waiting room shows 'Partida de X jugadores' text below the main heading",
+    "The Start button is hidden in the LobbyScreen when autoAssignClan is true (Aleatorio mode)",
+    "The Start button is still visible when autoAssignClan is false (Manual mode)",
+    "npm run build succeeds without errors"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}

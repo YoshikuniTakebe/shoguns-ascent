@@ -391,7 +391,7 @@ export const MainMenu = () => {
 
           {/* Player count selector - only in random mode */}
           {createMode === 'random' && (
-            <div className="player-count-select">
+            <div className="player-count-select" style={{ marginTop: '1rem' }}>
               <label>{t('menu.players')}</label>
               <select value={createPc} onChange={e => {
                 const newPc = +e.target.value;

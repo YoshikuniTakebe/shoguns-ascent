@@ -641,4 +641,5 @@ export const es: Record<TranslationKey, string> = {
   'lobby.gameType': 'Tipo de partida',
   'lobby.manual': 'Manual',
   'lobby.random': 'Aleatorio',
+  'lobby.gameOfXPlayers': 'Partida de {count} jugadores',
 };

@@ -669,6 +669,7 @@ function broadcastLobby(l: Lobby) {
       availableClans: l.config?.availableClans || [],
       deckConfig: l.config?.deckConfig || null,
       kamiMode: l.config?.kamiMode || 'random',
+      autoAssignClan: l.config?.autoAssignClan || false,
     },
   };
   l.players.forEach((p) => {

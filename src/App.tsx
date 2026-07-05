@@ -25,6 +25,9 @@ const LobbyScreen = () => {
       <h2 style={{ color: 'var(--accent-gold)', fontSize: '2rem', marginBottom: '0.5rem' }}>
         {t('lobby.waitingForPlayers')}
       </h2>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+        {t('lobby.gameOfXPlayers', { count: lobbyState?.maxPlayers || '?' })}
+      </p>
 
       <div className="lobby-info-section">
         <p style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{t('lobby.gameId')}:</p>
@@ -86,7 +89,7 @@ const LobbyScreen = () => {
         </p>
       )}
 
-      {isHost && (
+      {isHost && lobbyState?.autoAssignClan !== true && (
         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
           <button
             className="btn-primary"

@@ -451,7 +451,7 @@ interface GameStore {
   connectWebSocket: (url: string, onOpen?: (ws: WebSocket) => void) => void;
   sendAction: (action: unknown) => void;
   setLobbyId: (id: string) => void;
-  lobbyState: { id: string; name: string; host: string; players: { id: string; name: string; clanId: string }[]; maxPlayers: number; started: boolean; availableClans: string[]; deckConfig: unknown; kamiMode: string } | null;
+  lobbyState: { id: string; name: string; host: string; players: { id: string; name: string; clanId: string }[]; maxPlayers: number; started: boolean; availableClans: string[]; deckConfig: unknown; kamiMode: string; autoAssignClan?: boolean } | null;
   sendCreateLobby: (params: { playerName: string; clanId: string; maxPlayers: number; availableClans: string[]; deckConfig: unknown; kamiMode: string; selectedKami?: string[] }) => void;
   sendSelectClan: (lobbyId: string, clanId: string) => void;
 }
