@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Redesign the online lobby system: the host creates a game, configures it (number of players, available clans, decks, etc.), picks their own clan, and gets a game ID. Other players use 'Join Game' to enter the game ID, see available clans in real-time (as badges with clan border color, seal at ~20x20px, and clan name), and pick one. When the last available clan is taken, the game starts automatically.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. SERVER: Update the Lobby interface in src/server/index.ts to include game configuration fields: availableClans (string[]), deckConfig (DeckConfig), kamiMode, selectedKami. The host sets these when creating the lobby.",
     "2. SERVER: Add a new WebSocket message type CREATE_LOBBY (client->server) that creates a lobby with config: { playerName, clanId (host's chosen clan), maxPlayers, availableClans (all clans for the game), deckConfig, kamiMode, selectedKami }. The host is auto-joined. Send back LOBBY_CREATED with lobbyId.",
@@ -32,5 +32,5 @@
     "Run `npm run build` in /projects/sandbox/shoguns-ascent and confirm zero errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly with npm run build (tsc + vite). No test framework in the project. The implementation adds CREATE_LOBBY, SELECT_CLAN server messages, updates broadcastLobby to include availableClans/config, splits MainMenu online mode into create/join sub-flows, and replaces the minimal lobby screen with a rich view showing clan badges. Auto-start triggers when all maxPlayers slots have a clan selected."
 }
