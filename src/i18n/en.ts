@@ -640,6 +640,7 @@ export const en = {
   'lobby.manual': 'Manual',
   'lobby.random': 'Random',
   'lobby.gameOfXPlayers': 'Game of {count} players',
+  'lobby.turnOf': 'TURN OF',
 } as const;
 
 export type TranslationKey = keyof typeof en;

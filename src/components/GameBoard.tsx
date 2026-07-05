@@ -239,6 +239,17 @@ export const GameBoard = () => {
               <span className="deck-indicator-text">{t(DECK_NAME_KEYS[gameState.activeDeckGroup] || gameState.activeDeckGroup as any)}</span>
             </div>
           )}
+          {gameState.mode === 'online' && (() => {
+            const localPlayer = gameState.players.find(p => p.id === localPlayerId);
+            if (!localPlayer) return null;
+            const localClan = CLANS.find(c => c.id === localPlayer.clanId);
+            return (
+              <div className="local-player-indicator" style={{ color: localClan?.color }}>
+                <ClanShield clanId={localPlayer.clanId} size={22} />
+                <span className="local-player-name">{localPlayer.name}</span>
+              </div>
+            );
+          })()}
         </div>
         <div className="turn-indicator">
           <ClanShield clanId={cp?.clanId || ''} size={28} />

@@ -110,6 +110,15 @@ export const GamesLobby = () => {
           ))}
         </span>
         <span className="games-lobby-card-progress">{getProgressPoint(game)}</span>
+        {type === 'active' && game.currentPlayerIndex != null && game.players[game.currentPlayerIndex] && (() => {
+          const currentPlayer = game.players[game.currentPlayerIndex!];
+          const clanColor = getClanColor(currentPlayer.clanId);
+          return (
+            <span className="games-lobby-card-turn" style={{ color: clanColor }}>
+              {t('lobby.turnOf')} <ClanShield clanId={currentPlayer.clanId} size={16} /> {currentPlayer.name}
+            </span>
+          );
+        })()}
         <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
       </div>
     );

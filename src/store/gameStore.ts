@@ -246,6 +246,7 @@ function determineTacticWinners(state: GameState, battle: { provinceId: string; 
 interface GameStore {
   gameState: GameState | null;
   localPlayerId: string | null;
+  username: string;
   selectedRegion: string | null;
   moveMode: boolean;
   moveFrom: string | null;
@@ -277,6 +278,7 @@ interface GameStore {
   createGame: (players: { name: string; clanId: string }[], mode: 'online' | 'hotseat', deckConfig?: DeckConfig) => void;
   setGameState: (s: GameState) => void;
   setLocalPlayerId: (id: string) => void;
+  setUsername: (name: string) => void;
 
   // Season Setup
   doSetupSeason: () => void;
@@ -459,6 +461,7 @@ interface GameStore {
 export const useGameStore = create<GameStore>((set, get) => ({
   gameState: null,
   localPlayerId: null,
+  username: localStorage.getItem('shoguns-ascent-username') || '',
   selectedRegion: null,
   moveMode: false,
   moveFrom: null,
@@ -779,9 +782,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (snapshots.length === 0) return;
       const lastSnapshot = snapshots[snapshots.length - 1];
       const gameState = lastSnapshot.state as GameState;
+      const storedUsername = get().username;
+      const matchedPlayer = storedUsername
+        ? gameState.players.find(p => p.name === storedUsername)
+        : null;
       set({
         gameState,
-        localPlayerId: gameState.players[0]?.id || null,
+        localPlayerId: matchedPlayer?.id || gameState.players[0]?.id || null,
         persistentGameId: gameId,
         screen: 'game',
       });
@@ -870,6 +877,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   setGameState: (state) => set({ gameState: state }),
   setLocalPlayerId: (id) => set({ localPlayerId: id }),
+  setUsername: (name) => {
+    localStorage.setItem('shoguns-ascent-username', name);
+    set({ username: name });
+  },
 
   // --- Season Setup ---
   doSetupSeason: () => {

@@ -23,7 +23,7 @@ const CLAN_POWERS: Record<string, string> = {
 };
 
 export const MainMenu = () => {
-  const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage } = useGameStore();
+  const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage, setUsername } = useGameStore();
   const t = useT();
   const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>('select');
   const [pc, setPc] = useState(3);
@@ -568,6 +568,8 @@ export const MainMenu = () => {
               className="btn-primary"
               disabled={createKamiMode === 'manual' && createSelectedKami.length !== 4}
               onClick={() => {
+                const playerName = createName || 'Host';
+                setUsername(playerName);
                 const deckConfig = {
                   chosenDeck: createDeck,
                   extraMonsters: createExtraMonsters,
@@ -579,7 +581,7 @@ export const MainMenu = () => {
                   connectWebSocket(createUrl, (ws) => {
                     ws.send(JSON.stringify({
                       type: 'CREATE_LOBBY',
-                      playerName: createName || 'Host',
+                      playerName,
                       clanId: createHostClan,
                       maxPlayers: createPc,
                       availableClans,
@@ -595,7 +597,7 @@ export const MainMenu = () => {
                   connectWebSocket(createUrl, (ws) => {
                     ws.send(JSON.stringify({
                       type: 'CREATE_LOBBY',
-                      playerName: createName || 'Host',
+                      playerName,
                       clanId: randomHostClan,
                       maxPlayers: createPc,
                       availableClans: randomClans,
@@ -630,8 +632,10 @@ export const MainMenu = () => {
             <button
               className="btn-primary"
               onClick={() => {
+                const playerName = oName || 'Player';
+                setUsername(playerName);
                 connectWebSocket(url, (ws) => {
-                  ws.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId: lid, playerName: oName || 'Player' }));
+                  ws.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId: lid, playerName }));
                   setLobbyId(lid);
                 });
               }}
