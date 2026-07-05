@@ -782,10 +782,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (snapshots.length === 0) return;
       const lastSnapshot = snapshots[snapshots.length - 1];
       const gameState = lastSnapshot.state as GameState;
+      // Prefer matching by stored playerId (WebSocket-assigned), fallback to username match
+      const storedPlayerId = localStorage.getItem('shoguns-ascent-playerId');
       const storedUsername = get().username;
-      const matchedPlayer = storedUsername
+      const matchedByPlayerId = storedPlayerId
+        ? gameState.players.find(p => p.id === storedPlayerId)
+        : null;
+      const matchedByName = storedUsername
         ? gameState.players.find(p => p.name === storedUsername)
         : null;
+      const matchedPlayer = matchedByPlayerId || matchedByName;
       set({
         gameState,
         localPlayerId: matchedPlayer?.id || gameState.players[0]?.id || null,
@@ -2609,6 +2615,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           set({ gameState: d.state });
           break;
         case 'PLAYER_ID':
+          localStorage.setItem('shoguns-ascent-playerId', d.playerId);
           set({ localPlayerId: d.playerId });
           break;
         case 'LOBBY_JOINED':

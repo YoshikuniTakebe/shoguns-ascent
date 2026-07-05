@@ -293,6 +293,13 @@ function startLobbyGame(l: Lobby): void {
         if (newId) figure.owner = newId;
       }
     }
+    // Update temple figures to use lobby player IDs (defensive for future safety)
+    for (const temple of l.gameState.temples) {
+      for (const fig of temple.figures) {
+        const newId = idMap.get(fig.playerId);
+        if (newId) fig.playerId = newId;
+      }
+    }
   }
   l.started = true;
 

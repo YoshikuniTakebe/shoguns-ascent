@@ -3312,48 +3312,78 @@ export function advanceTeaPlayer(state: GameState): GameState {
     return advancePhase(newState);
   }
 
-  // Move to next player following turnOrder, skipping players who cannot act
+  // Move to next player following turnOrder, skipping players who cannot act.
+  // Scan for the next valid player WITHOUT mutating teaTurnIndex inside the loop.
   const currentPlayer = newState.players[newState.currentPlayerIndex];
   const currentTurnOrderIdx = newState.turnOrder.indexOf(currentPlayer?.id ?? '');
   let nextTurnOrderIdx = (currentTurnOrderIdx + 1) % newState.turnOrder.length;
-  let nextPlayerId = newState.turnOrder[nextTurnOrderIdx];
-  let nextPlayerIdx = newState.players.findIndex(p => p.id === nextPlayerId);
+  let nextPlayerId = '';
+  let nextPlayerIdx = -1;
+  let scanned = 0;
+  let skippedCount = 0;
 
-  // Skip players who cannot act in tea (already allied or no possible partner)
-  let skipped = 0;
-  while (skipped < newState.players.length) {
+  while (scanned < newState.players.length) {
     nextPlayerId = newState.turnOrder[nextTurnOrderIdx];
     nextPlayerIdx = newState.players.findIndex(p => p.id === nextPlayerId);
     if (nextPlayerIdx >= 0 && canPlayerActInTea(newState, nextPlayerId)) {
+      // Found a valid player
       break;
     }
+    // This player is skipped
+    skippedCount++;
     nextTurnOrderIdx = (nextTurnOrderIdx + 1) % newState.turnOrder.length;
-    newState.teaTurnIndex += 1;
-    skipped++;
+    scanned++;
+  }
 
-    // If we've exhausted all players, no one can act - advance to politics
-    if (newState.teaTurnIndex >= newState.players.length) {
-      // Check for pending proposals before advancing
-      if (newState.allianceProposals.length > 0) {
-        const pendingTargets = newState.allianceProposals
-          .map(ap => ap.to)
-          .filter(toId => {
-            const targetPlayer = newState.players.find(p => p.id === toId);
-            return targetPlayer && targetPlayer.allies.length === 0;
-          });
+  // If we scanned all players without finding anyone who can act, advance the phase
+  if (scanned >= newState.players.length) {
+    // Before advancing, check for pending proposals
+    if (newState.allianceProposals.length > 0) {
+      const pendingTargets = newState.allianceProposals
+        .map(ap => ap.to)
+        .filter(toId => {
+          const targetPlayer = newState.players.find(p => p.id === toId);
+          return targetPlayer && targetPlayer.allies.length === 0;
+        });
 
-        if (pendingTargets.length > 0) {
-          const targetId = pendingTargets[0];
-          const targetIdx = newState.players.findIndex(p => p.id === targetId);
-          if (targetIdx >= 0) {
-            newState.currentPlayerIndex = targetIdx;
-            return newState;
-          }
+      if (pendingTargets.length > 0) {
+        const targetId = pendingTargets[0];
+        const targetIdx = newState.players.findIndex(p => p.id === targetId);
+        if (targetIdx >= 0) {
+          newState.currentPlayerIndex = targetIdx;
+          return newState;
         }
       }
-      newState.teaTurnIndex = 0;
-      return advancePhase(newState);
     }
+    newState.teaTurnIndex = 0;
+    return advancePhase(newState);
+  }
+
+  // Now apply the skipped count to teaTurnIndex after the scan completes
+  newState.teaTurnIndex += skippedCount;
+
+  // Check if after accounting for skipped players we have exhausted the round
+  if (newState.teaTurnIndex >= newState.players.length) {
+    // Check for pending proposals before advancing
+    if (newState.allianceProposals.length > 0) {
+      const pendingTargets = newState.allianceProposals
+        .map(ap => ap.to)
+        .filter(toId => {
+          const targetPlayer = newState.players.find(p => p.id === toId);
+          return targetPlayer && targetPlayer.allies.length === 0;
+        });
+
+      if (pendingTargets.length > 0) {
+        const targetId = pendingTargets[0];
+        const targetIdx = newState.players.findIndex(p => p.id === targetId);
+        if (targetIdx >= 0) {
+          newState.currentPlayerIndex = targetIdx;
+          return newState;
+        }
+      }
+    }
+    newState.teaTurnIndex = 0;
+    return advancePhase(newState);
   }
 
   newState.currentPlayerIndex = nextPlayerIdx >= 0 ? nextPlayerIdx : (newState.currentPlayerIndex + 1) % newState.players.length;
