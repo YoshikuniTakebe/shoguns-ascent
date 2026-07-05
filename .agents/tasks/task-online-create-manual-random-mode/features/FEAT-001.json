@@ -27,5 +27,5 @@
     "npm run build"
   ],
   "blocked_reason": null,
-  "findings": "Implementation complete. TypeScript and Vite build pass cleanly. The effectiveActiveClans variable is used for the useEffect that resets host clan. In manual mode, createPc is dynamically updated when clans are toggled. In random mode, randomClans state holds the shuffled subset."
+  "findings": "Implementation complete. TypeScript and Vite build pass cleanly. Review issues addressed: (1) randomClans initializer now uses createPc instead of hardcoded 3, (2) mode switch to Aleatorio only re-rolls when randomClans.length !== createPc, (3) server validates maxPlayers <= availableClans.length when autoAssignClan is true, (4) immediate GAME_START is intentional by design - not changed, (5) host selector dropdown now uses effectiveActiveClans consistently."
 }
