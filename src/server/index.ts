@@ -92,6 +92,13 @@ app.post('/api/auth/register', async (req, res) => {
     return;
   }
 
+  // Basic email format validation: must contain @ with a dot after it
+  const atIndex = email.indexOf('@');
+  if (atIndex < 1 || email.indexOf('.', atIndex) === -1) {
+    res.status(400).json({ error: 'Invalid email format' });
+    return;
+  }
+
   if (username.length < 3) {
     res.status(400).json({ error: 'Username must be at least 3 characters' });
     return;
@@ -365,10 +372,19 @@ function formatGame(game: { id: string; name: string; players_json: string; stat
       lastPhase = latest.phase;
     }
   }
+
+  // Enrich players with userId from game_players table
+  const basePlayers: { name: string; clanId: string }[] = JSON.parse(game.players_json);
+  const gamePlayers = getGamePlayersByGameId(game.id);
+  const enrichedPlayers = basePlayers.map((p) => {
+    const gp = gamePlayers.find((gp) => gp.clan_id === p.clanId);
+    return { name: p.name, clanId: p.clanId, userId: gp?.user_id || null };
+  });
+
   return {
     id: game.id,
     name: game.name,
-    players: JSON.parse(game.players_json),
+    players: enrichedPlayers,
     status: game.status,
     createdAt: game.created_at,
     updatedAt: game.updated_at,
@@ -464,6 +480,10 @@ wss.on('connection', (ws: WebSocket, req) => {
           authenticatedUsername = user.username;
           playerId = user.id; // Use user ID as player ID
         }
+      }
+      // Token was provided but verification failed - notify the client
+      if (!userId) {
+        ws.send(JSON.stringify({ type: 'AUTH_WARNING', message: 'Token is invalid or expired. You are connected as a guest.' }));
       }
     }
   } catch {

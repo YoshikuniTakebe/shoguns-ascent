@@ -61,7 +61,8 @@ export function initDatabase(): void {
       game_id TEXT REFERENCES games(id),
       user_id TEXT REFERENCES users(id),
       clan_id TEXT,
-      joined_at TEXT
+      joined_at TEXT,
+      UNIQUE(game_id, user_id)
     );
 
     CREATE INDEX IF NOT EXISTS idx_game_players_game_id ON game_players(game_id);
@@ -250,7 +251,7 @@ export function getUserById(id: string): DbUser | undefined {
 export function addGamePlayer(gameId: string, userId: string, clanId: string): void {
   const now = new Date().toISOString();
   const stmt = db.prepare(`
-    INSERT INTO game_players (game_id, user_id, clan_id, joined_at)
+    INSERT OR IGNORE INTO game_players (game_id, user_id, clan_id, joined_at)
     VALUES (?, ?, ?, ?)
   `);
   stmt.run(gameId, userId, clanId, now);

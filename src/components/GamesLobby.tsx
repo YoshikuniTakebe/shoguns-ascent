@@ -10,7 +10,7 @@ import titleImg from '../img/NoboruTaiyo.png';
 interface GameRecord {
   id: string;
   name: string;
-  players: { name: string; clanId: string }[];
+  players: { name: string; clanId: string; userId: string | null }[];
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -47,14 +47,14 @@ export const GamesLobby = () => {
           const finished = games.filter((g) => g.status === 'finished');
 
           // Separate active games into "your turn" and "waiting"
-          const username = authUser?.username || '';
+          const currentUserId = authUser?.id || '';
           const yourTurn: GameRecord[] = [];
           const waiting: GameRecord[] = [];
 
           for (const game of active) {
             if (game.currentPlayerIndex != null && game.players[game.currentPlayerIndex]) {
-              const currentPlayerName = game.players[game.currentPlayerIndex].name;
-              if (currentPlayerName === username) {
+              const currentPlayer = game.players[game.currentPlayerIndex];
+              if (currentPlayer.userId && currentPlayer.userId === currentUserId) {
                 yourTurn.push(game);
               } else {
                 waiting.push(game);
