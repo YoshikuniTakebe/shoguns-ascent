@@ -321,6 +321,11 @@ wss.on('connection', (ws: WebSocket) => {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Host clan not in available clans' }));
             return;
           }
+          // Validate maxPlayers does not exceed available clans when autoAssignClan is enabled
+          if (config.autoAssignClan && availableClans.length > 0 && (data.maxPlayers || 5) > availableClans.length) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'maxPlayers exceeds available clans count' }));
+            return;
+          }
           const l: Lobby = {
             id: lobbyId,
             name: data.playerName ? `${data.playerName}'s game` : 'New Game',

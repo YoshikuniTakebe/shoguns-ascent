@@ -50,7 +50,7 @@ export const MainMenu = () => {
   const [createHostClan, setCreateHostClan] = useState('koi');
   const [createUrl, setCreateUrl] = useState(WS_BASE);
   const [createMode, setCreateMode] = useState<'manual' | 'random'>('manual');
-  const [randomClans, setRandomClans] = useState<string[]>(() => shuffle(CLANS.map(c => c.id)).slice(0, 3));
+  const [randomClans, setRandomClans] = useState<string[]>(() => shuffle(CLANS.map(c => c.id)).slice(0, createPc));
 
   // Reset host clan selection when available clans change (issue: stale default)
   const effectiveActiveClans = createMode === 'manual' ? createClans.slice(0, createPc) : randomClans;
@@ -378,7 +378,10 @@ export const MainMenu = () => {
                 className={`deck-group-btn${createMode === 'random' ? ' active' : ''}`}
                 onClick={() => {
                   setCreateMode('random');
-                  setRandomClans(shuffle(CLANS.map(c => c.id)).slice(0, createPc));
+                  // Only re-roll if randomClans length doesn't match createPc (e.g., player count changed)
+                  if (randomClans.length !== createPc) {
+                    setRandomClans(shuffle(CLANS.map(c => c.id)).slice(0, createPc));
+                  }
                 }}
               >
                 &#127922; {t('lobby.random')}
@@ -465,7 +468,7 @@ export const MainMenu = () => {
                 </span>
               </div>
               <select value={createHostClan} onChange={e => setCreateHostClan(e.target.value)}>
-                {CLANS.filter(c => createClans.slice(0, createPc).includes(c.id)).map(c => (
+                {CLANS.filter(c => effectiveActiveClans.includes(c.id)).map(c => (
                   <option key={c.id} value={c.id} style={{ color: c.color }}>{c.name}</option>
                 ))}
               </select>
