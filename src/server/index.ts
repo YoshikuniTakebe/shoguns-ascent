@@ -264,8 +264,22 @@ wss.on('connection', (ws: WebSocket) => {
 
       switch (data.type) {
         case 'JOIN_LOBBY': {
-          const l = lobbies.get(data.lobbyId);
-          if (!l || l.started || l.players.length >= l.maxPlayers) {
+          let l = lobbies.get(data.lobbyId);
+          if (!l) {
+            // Auto-create lobby with the given ID
+            l = {
+              id: data.lobbyId,
+              name: data.lobbyId,
+              host: '',
+              players: [],
+              maxPlayers: 8,
+              gameState: null,
+              started: false,
+              persistentGameId: null,
+            };
+            lobbies.set(l.id, l);
+          }
+          if (l.started || l.players.length >= l.maxPlayers) {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Cannot join' }));
             return;
           }

@@ -325,15 +325,11 @@ export const MainMenu = () => {
             <button
               className="btn-primary"
               onClick={() => {
-                connectWebSocket(url);
-                setTimeout(() => {
-                  const { ws } = useGameStore.getState();
-                  if (ws) {
-                    ws.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId: lid, playerName: oName || 'Player', clanId: oClan }));
-                    setLobbyId(lid);
-                    setScreen('lobby');
-                  }
-                }, 1000);
+                connectWebSocket(url, (ws) => {
+                  ws.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId: lid, playerName: oName || 'Player', clanId: oClan }));
+                  setLobbyId(lid);
+                  setScreen('lobby');
+                });
               }}
             >
               {t('menu.join')}

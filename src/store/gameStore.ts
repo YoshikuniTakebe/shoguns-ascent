@@ -448,7 +448,7 @@ interface GameStore {
   resumeGame: (gameId: string) => Promise<void>;
 
   // Online
-  connectWebSocket: (url: string) => void;
+  connectWebSocket: (url: string, onOpen?: (ws: WebSocket) => void) => void;
   sendAction: (action: unknown) => void;
   setLobbyId: (id: string) => void;
 }
@@ -2585,8 +2585,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // --- Online ---
-  connectWebSocket: (url) => {
+  connectWebSocket: (url, onOpen) => {
     const ws = new WebSocket(url);
+    ws.onopen = () => { if (onOpen) onOpen(ws); };
     ws.onmessage = (e) => {
       const d = JSON.parse(e.data);
       switch (d.type) {
@@ -2601,6 +2602,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
           break;
         case 'GAME_START':
           set({ gameState: d.state, screen: 'game' });
+          break;
+        case 'ERROR':
+          console.error('[WS] Server error:', d.message);
           break;
       }
     };
