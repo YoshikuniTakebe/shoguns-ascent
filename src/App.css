@@ -387,6 +387,12 @@
 .games-lobby-play-btn:hover{background:linear-gradient(135deg,rgba(200,169,81,0.5),rgba(200,169,81,0.2));box-shadow:0 0 10px rgba(200,169,81,0.4)}
 .games-lobby-view-btn{background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.4);color:#3498db;padding:0.35rem 1rem;border-radius:5px;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.2s}
 .games-lobby-view-btn:hover{background:rgba(52,152,219,0.2);box-shadow:0 0 8px rgba(52,152,219,0.3)}
+.games-lobby-delete-btn{background:rgba(233,69,96,0.1);border:1px solid rgba(233,69,96,0.4);color:#e94560;padding:0.35rem 0.6rem;border-radius:5px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.2s;margin-left:0.4rem}
+.games-lobby-delete-btn:hover{background:rgba(233,69,96,0.25);box-shadow:0 0 8px rgba(233,69,96,0.4)}
+.games-lobby-purge-btn{background:rgba(233,69,96,0.1);border:1px solid rgba(233,69,96,0.5);color:#e94560;padding:0.5rem 1.2rem;border-radius:6px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.03em}
+.games-lobby-purge-btn:hover{background:rgba(233,69,96,0.25);box-shadow:0 0 10px rgba(233,69,96,0.4)}
+.games-lobby-purge-btn:disabled{opacity:0.5;cursor:not-allowed}
+.games-lobby-purge-result{text-align:center;color:var(--accent-gold);font-size:0.85rem;margin-top:0.5rem;font-weight:600}
 .games-lobby-back{margin-top:2rem}
 .games-lobby-card-playercount{display:flex;align-items:center;gap:0.3rem;font-size:0.85rem;color:#ffffff;font-weight:bold;white-space:nowrap}
 .game-name-header{font-style:italic;font-size:0.75rem;color:var(--accent-gold);margin-right:0.5rem;opacity:0.85}

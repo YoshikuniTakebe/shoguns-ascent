@@ -665,6 +665,13 @@ export const en = {
   'auth.logout': 'Logout',
   'auth.error': 'Authentication error',
   'auth.success': 'Success',
+
+  // Admin
+  'admin.deleteGame': 'Delete Game',
+  'admin.confirmDelete': 'Are you sure you want to delete this game?',
+  'admin.purgeOrphans': 'Purge Old Games',
+  'admin.confirmPurge': 'This will delete all games without assigned players. Continue?',
+  'admin.gamesPurged': 'game(s) purged',
 } as const;
 
 export type TranslationKey = keyof typeof en;

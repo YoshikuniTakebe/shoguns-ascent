@@ -31,6 +31,8 @@ export const GamesLobby = () => {
   const [waitingGames, setWaitingGames] = useState<GameRecord[]>([]);
   const [finishedGames, setFinishedGames] = useState<GameRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [purging, setPurging] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -89,6 +91,46 @@ export const GamesLobby = () => {
 
   const getClanColor = (clanId: string) => {
     return CLANS.find(c => c.id === clanId)?.color || '#fff';
+  };
+
+  const isAdmin = authUser?.isAdmin || false;
+
+  const handleDeleteGame = async (e: React.MouseEvent, gameId: string) => {
+    e.stopPropagation();
+    if (!confirm(t('admin.confirmDelete'))) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/games/${gameId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (res.ok) {
+        setYourTurnGames((prev) => prev.filter((g) => g.id !== gameId));
+        setWaitingGames((prev) => prev.filter((g) => g.id !== gameId));
+        setFinishedGames((prev) => prev.filter((g) => g.id !== gameId));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handlePurgeOrphans = async () => {
+    if (!confirm(t('admin.confirmPurge'))) return;
+    setPurging(true);
+    setPurgeResult(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/purge-orphan-games`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPurgeResult(`${data.purgedCount} ${t('admin.gamesPurged')}`);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setPurging(false);
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -192,6 +234,11 @@ export const GamesLobby = () => {
               {t('lobby.replay')}
             </button>
           )}
+          {isAdmin && (
+            <button className="games-lobby-delete-btn" onClick={(e) => handleDeleteGame(e, game.id)} title={t('admin.deleteGame')}>
+              ✕
+            </button>
+          )}
         </div>
       </div>
     );
@@ -233,7 +280,15 @@ export const GamesLobby = () => {
         <button className="games-lobby-join-btn" onClick={() => setScreen('menu')}>
           {t('lobby.joinExisting')}
         </button>
+        {isAdmin && (
+          <button className="games-lobby-purge-btn" onClick={handlePurgeOrphans} disabled={purging}>
+            {purging ? '...' : t('admin.purgeOrphans')}
+          </button>
+        )}
       </div>
+      {purgeResult && (
+        <div className="games-lobby-purge-result">{purgeResult}</div>
+      )}
 
       {/* Your Turn section */}
       {yourTurnGames.length > 0 && (

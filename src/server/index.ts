@@ -47,6 +47,8 @@ import {
   addGamePlayer,
   getGamesByUserId,
   getGamePlayersByGameId,
+  deleteGame,
+  purgeOrphanGames,
 } from './database';
 import { generateToken, verifyToken } from './auth';
 import bcrypt from 'bcryptjs';
@@ -127,7 +129,7 @@ app.post('/api/auth/register', async (req, res) => {
 
   res.json({
     token,
-    user: { id: user.id, username: user.username, email: user.email },
+    user: { id: user.id, username: user.username, email: user.email, isAdmin: !!user.is_admin },
   });
 });
 
@@ -155,7 +157,7 @@ app.post('/api/auth/login', async (req, res) => {
 
   res.json({
     token,
-    user: { id: user.id, username: user.username, email: user.email },
+    user: { id: user.id, username: user.username, email: user.email, isAdmin: !!user.is_admin },
   });
 });
 
@@ -179,7 +181,7 @@ app.get('/api/auth/me', (req, res) => {
     return;
   }
 
-  res.json({ user: { id: user.id, username: user.username, email: user.email } });
+  res.json({ user: { id: user.id, username: user.username, email: user.email, isAdmin: !!user.is_admin } });
 });
 
 app.get('/api/lobbies', (_req, res) => {
@@ -348,6 +350,62 @@ app.put('/api/games/:id/snapshot', (req, res) => {
   }
 
   res.json({ success: true });
+});
+
+// --- Admin endpoints ---
+
+app.delete('/api/games/:id', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyToken(token);
+  if (!payload) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
+  const user = getUserById(payload.userId);
+  if (!user || !user.is_admin) {
+    res.status(403).json({ error: 'Admin access required' });
+    return;
+  }
+
+  const game = getGameById(req.params.id);
+  if (!game) {
+    res.status(404).json({ error: 'Game not found' });
+    return;
+  }
+
+  deleteGame(req.params.id);
+  res.json({ success: true, message: 'Game deleted' });
+});
+
+app.post('/api/admin/purge-orphan-games', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyToken(token);
+  if (!payload) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
+  const user = getUserById(payload.userId);
+  if (!user || !user.is_admin) {
+    res.status(403).json({ error: 'Admin access required' });
+    return;
+  }
+
+  const count = purgeOrphanGames();
+  res.json({ success: true, purgedCount: count, message: `Purged ${count} orphan game(s)` });
 });
 
 function formatGame(game: { id: string; name: string; players_json: string; status: string; created_at: string; updated_at: string; mode: string; winner: string | null }) {

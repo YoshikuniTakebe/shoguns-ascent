@@ -667,4 +667,11 @@ export const es: Record<TranslationKey, string> = {
   'auth.logout': 'Cerrar Sesion',
   'auth.error': 'Error de autenticacion',
   'auth.success': 'Exito',
+
+  // Admin
+  'admin.deleteGame': 'Eliminar Partida',
+  'admin.confirmDelete': 'Seguro que quieres eliminar esta partida?',
+  'admin.purgeOrphans': 'Purgar Partidas Antiguas',
+  'admin.confirmPurge': 'Esto eliminara todas las partidas sin jugadores asignados. Continuar?',
+  'admin.gamesPurged': 'partida(s) purgada(s)',
 };

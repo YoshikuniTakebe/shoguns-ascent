@@ -50,7 +50,8 @@ export function initDatabase(): void {
       email TEXT UNIQUE,
       username TEXT UNIQUE,
       password_hash TEXT,
-      created_at TEXT
+      created_at TEXT,
+      is_admin INTEGER DEFAULT 0
     );
 
     CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
@@ -68,6 +69,12 @@ export function initDatabase(): void {
     CREATE INDEX IF NOT EXISTS idx_game_players_game_id ON game_players(game_id);
     CREATE INDEX IF NOT EXISTS idx_game_players_user_id ON game_players(user_id);
   `);
+
+  // Migration: add is_admin column if it doesn't exist (for existing databases)
+  const columns = db.pragma('table_info(users)') as { name: string }[];
+  if (!columns.some((col) => col.name === 'is_admin')) {
+    db.exec(`ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0`);
+  }
 }
 
 export function saveGame(
@@ -218,17 +225,24 @@ export interface DbUser {
   username: string;
   password_hash: string;
   created_at: string;
+  is_admin: number;
 }
 
 export function createUser(email: string, username: string, passwordHash: string): DbUser {
   const id = uuidv4();
   const now = new Date().toISOString();
+
+  // First registered user becomes admin automatically
+  const countStmt = db.prepare(`SELECT COUNT(*) as count FROM users`);
+  const countResult = countStmt.get() as { count: number };
+  const isAdmin = countResult.count === 0 ? 1 : 0;
+
   const stmt = db.prepare(`
-    INSERT INTO users (id, email, username, password_hash, created_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO users (id, email, username, password_hash, created_at, is_admin)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
-  stmt.run(id, email, username, passwordHash, now);
-  return { id, email, username, password_hash: passwordHash, created_at: now };
+  stmt.run(id, email, username, passwordHash, now, isAdmin);
+  return { id, email, username, password_hash: passwordHash, created_at: now, is_admin: isAdmin };
 }
 
 export function getUserByUsername(username: string): DbUser | undefined {
@@ -284,4 +298,40 @@ export function getGamePlayersByGameId(gameId: string): {
 }[] {
   const stmt = db.prepare(`SELECT game_id, user_id, clan_id, joined_at FROM game_players WHERE game_id = ?`);
   return stmt.all(gameId) as any[];
+}
+
+// --- Admin functions ---
+
+export function deleteGame(gameId: string): void {
+  const deleteSnapshots = db.prepare(`DELETE FROM snapshots WHERE game_id = ?`);
+  const deleteGamePlayers = db.prepare(`DELETE FROM game_players WHERE game_id = ?`);
+  const deleteGameStmt = db.prepare(`DELETE FROM games WHERE id = ?`);
+
+  const transaction = db.transaction(() => {
+    deleteSnapshots.run(gameId);
+    deleteGamePlayers.run(gameId);
+    deleteGameStmt.run(gameId);
+  });
+  transaction();
+}
+
+export function purgeOrphanGames(): number {
+  const orphanGames = db.prepare(`
+    SELECT g.id FROM games g
+    LEFT JOIN game_players gp ON g.id = gp.game_id
+    WHERE gp.id IS NULL
+  `).all() as { id: string }[];
+
+  const deleteSnapshots = db.prepare(`DELETE FROM snapshots WHERE game_id = ?`);
+  const deleteGameStmt = db.prepare(`DELETE FROM games WHERE id = ?`);
+
+  const transaction = db.transaction(() => {
+    for (const game of orphanGames) {
+      deleteSnapshots.run(game.id);
+      deleteGameStmt.run(game.id);
+    }
+  });
+  transaction();
+
+  return orphanGames.length;
 }

@@ -248,7 +248,7 @@ interface GameStore {
   localPlayerId: string | null;
   username: string;
   authToken: string | null;
-  authUser: { id: string; username: string; email: string } | null;
+  authUser: { id: string; username: string; email: string; isAdmin?: boolean } | null;
   isAuthenticated: boolean;
   selectedRegion: string | null;
   moveMode: boolean;
