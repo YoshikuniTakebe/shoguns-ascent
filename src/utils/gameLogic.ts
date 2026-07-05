@@ -131,6 +131,10 @@ export function createInitialGameState(
     };
   });
 
+  // Sort players by honor (lowest honor value = highest honor position = goes first)
+  // This ensures players[0] is always the first player in seat order
+  gamePlayers.sort((a, b) => a.honor - b.honor);
+
   // Place starting figures: 1 Daimyo + 1 Bushi + 1 Fortress in home province
   gamePlayers.forEach((player) => {
     const homeProvinceId = HOME_PROVINCES[player.clanId];

@@ -280,9 +280,10 @@ function startLobbyGame(l: Lobby): void {
       if (lobbyPlayer) {
         idMap.set(gamePlayer.id, lobbyPlayer.id);
         gamePlayer.id = lobbyPlayer.id;
-        l.gameState.turnOrder[i] = lobbyPlayer.id;
       }
     }
+    // Remap turnOrder using idMap (preserves honor-sorted order)
+    l.gameState.turnOrder = l.gameState.turnOrder.map(pid => idMap.get(pid) || pid);
     // Update honorTrack to use lobby player IDs
     l.gameState.honorTrack = l.gameState.honorTrack.map(pid => idMap.get(pid) || pid);
     // Update figure owners in provinces to use lobby player IDs
