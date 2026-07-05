@@ -23,7 +23,7 @@ const CLAN_POWERS: Record<string, string> = {
 };
 
 export const MainMenu = () => {
-  const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage, setUsername } = useGameStore();
+  const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage, setUsername, isAuthenticated } = useGameStore();
   const t = useT();
   const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>('select');
   const [pc, setPc] = useState(3);
@@ -132,7 +132,7 @@ export const MainMenu = () => {
             <span className="btn-text">{t('menu.hotseatMode')}</span>
             <span className="btn-desc">{t('menu.hotseatDesc')}</span>
           </button>
-          <button className="menu-btn" onClick={() => setMode('online')} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          <button className="menu-btn" onClick={() => { if (!isAuthenticated) { setScreen('auth'); } else { setMode('online'); } }} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <span className="btn-icon">
               <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="10" />
@@ -145,7 +145,7 @@ export const MainMenu = () => {
             <span className="btn-text">{t('menu.onlineMode')}</span>
             <span className="btn-desc">{t('menu.onlineDesc')}</span>
           </button>
-          <button className="menu-btn" onClick={() => setScreen('games-lobby')} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          <button className="menu-btn" onClick={() => { if (!isAuthenticated) { setScreen('auth'); } else { setScreen('games-lobby'); } }} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <span className="btn-icon">
               <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
                 <rect x="3" y="3" width="7" height="7" rx="1" />

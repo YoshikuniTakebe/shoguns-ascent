@@ -94,6 +94,14 @@ export const AuthScreen = () => {
         >
           {mode === 'login' ? t('auth.switchToRegister') : t('auth.switchToLogin')}
         </button>
+
+        <button
+          className="btn-secondary"
+          style={{ marginTop: '1rem' }}
+          onClick={() => useGameStore.setState({ screen: 'menu' })}
+        >
+          {t('menu.back')}
+        </button>
       </div>
     </div>
   );

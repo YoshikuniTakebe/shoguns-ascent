@@ -928,7 +928,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       authUser: data.user,
       isAuthenticated: true,
       username: data.user.username,
-      screen: 'menu',
+      screen: 'games-lobby',
     });
   },
 
@@ -950,7 +950,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       authUser: data.user,
       isAuthenticated: true,
       username: data.user.username,
-      screen: 'menu',
+      screen: 'games-lobby',
     });
   },
 

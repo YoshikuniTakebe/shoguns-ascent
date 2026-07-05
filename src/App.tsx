@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useGameStore } from './store/gameStore';
 import { MainMenu } from './components/MainMenu';
 import { GameBoard } from './components/GameBoard';
@@ -113,7 +114,12 @@ const LobbyScreen = () => {
 };
 
 const App = () => {
-  const { screen } = useGameStore();
+  const { screen, checkAuth } = useGameStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   if (screen === 'auth') return <AuthScreen />;
   if (screen === 'lobby') return <LobbyScreen />;
   if (screen === 'game') return <GameBoard />;
