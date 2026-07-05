@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Integrate authentication with WebSocket connections and game persistence. When connecting via WebSocket, authenticate with JWT token so the server knows which user is playing. Associate games with user IDs. Update the lobby system so each player in a game is linked to their user account. Update resumeGame to match by user ID instead of random player ID.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "In src/server/database.ts, add a 'game_players' table linking game_id to user_id with their clan selection. Add functions: addGamePlayer(gameId, userId, clanId), getGamesByUserId(userId), getGamePlayersByGameId(gameId).",
     "Modify the WebSocket connection handler in src/server/index.ts: accept a token query parameter on WebSocket connection (ws://host:3001?token=xxx). Verify the token and associate the connection with the user. If no valid token, still allow connection but mark as anonymous (for hotseat/spectating).",

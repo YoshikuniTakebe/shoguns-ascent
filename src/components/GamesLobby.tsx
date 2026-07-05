@@ -25,7 +25,7 @@ interface GameRecord {
 }
 
 export const GamesLobby = () => {
-  const { setScreen, resumeGame, loadReplayGame } = useGameStore();
+  const { setScreen, resumeGame, loadReplayGame, authToken } = useGameStore();
   const t = useT();
   const [activeGames, setActiveGames] = useState<GameRecord[]>([]);
   const [finishedGames, setFinishedGames] = useState<GameRecord[]>([]);
@@ -34,14 +34,28 @@ export const GamesLobby = () => {
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const [activeRes, finishedRes] = await Promise.all([
-          fetch(`${API_BASE}/api/games?status=active`),
-          fetch(`${API_BASE}/api/games?status=finished`),
-        ]);
-        const active = await activeRes.json();
-        const finished = await finishedRes.json();
-        setActiveGames(active);
-        setFinishedGames(finished);
+        const headers: Record<string, string> = {};
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
+        if (authToken) {
+          // Fetch only the user's games when authenticated
+          const res = await fetch(`${API_BASE}/api/games/my-games`, { headers });
+          const games = await res.json();
+          setActiveGames(games.filter((g: GameRecord) => g.status === 'active'));
+          setFinishedGames(games.filter((g: GameRecord) => g.status === 'finished'));
+        } else {
+          // Fallback: fetch all games when not authenticated
+          const [activeRes, finishedRes] = await Promise.all([
+            fetch(`${API_BASE}/api/games?status=active`),
+            fetch(`${API_BASE}/api/games?status=finished`),
+          ]);
+          const active = await activeRes.json();
+          const finished = await finishedRes.json();
+          setActiveGames(active);
+          setFinishedGames(finished);
+        }
       } catch {
         // Server might not be running
       } finally {
@@ -49,7 +63,7 @@ export const GamesLobby = () => {
       }
     };
     fetchGames();
-  }, []);
+  }, [authToken]);
 
   const getClanColor = (clanId: string) => {
     return CLANS.find(c => c.id === clanId)?.color || '#fff';

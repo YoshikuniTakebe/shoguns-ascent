@@ -799,16 +799,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (snapshots.length === 0) return;
       const lastSnapshot = snapshots[snapshots.length - 1];
       const gameState = lastSnapshot.state as GameState;
-      // Prefer matching by stored playerId (WebSocket-assigned), fallback to username match
+      // Prefer matching by authenticated user ID, fallback to stored playerId, then username
+      const authUser = get().authUser;
       const storedPlayerId = localStorage.getItem('shoguns-ascent-playerId');
       const storedUsername = get().username;
+      const matchedByAuthUser = authUser
+        ? gameState.players.find(p => p.id === authUser.id)
+        : null;
       const matchedByPlayerId = storedPlayerId
         ? gameState.players.find(p => p.id === storedPlayerId)
         : null;
       const matchedByName = storedUsername
         ? gameState.players.find(p => p.name === storedUsername)
         : null;
-      const matchedPlayer = matchedByPlayerId || matchedByName;
+      const matchedPlayer = matchedByAuthUser || matchedByPlayerId || matchedByName;
       set({
         gameState,
         localPlayerId: matchedPlayer?.id || gameState.players[0]?.id || null,
@@ -2708,7 +2712,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- Online ---
   connectWebSocket: (url, onOpen) => {
-    const ws = new WebSocket(url);
+    const { authToken } = get();
+    const wsUrl = authToken ? `${url}${url.includes('?') ? '&' : '?'}token=${authToken}` : url;
+    const ws = new WebSocket(wsUrl);
     ws.onopen = () => { if (onOpen) onOpen(ws); };
     ws.onmessage = (e) => {
       const d = JSON.parse(e.data);

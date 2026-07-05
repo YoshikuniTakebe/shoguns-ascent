@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
+import { URL } from 'url';
 import {
   createInitialGameState,
   breakAllAlliances,
@@ -43,6 +44,9 @@ import {
   getUserByUsername,
   getUserByEmail,
   getUserById,
+  addGamePlayer,
+  getGamesByUserId,
+  getGamePlayersByGameId,
 } from './database';
 import { generateToken, verifyToken } from './auth';
 import bcrypt from 'bcryptjs';
@@ -212,6 +216,24 @@ app.get('/api/games', (req, res) => {
     const all = [...getActiveGames(), ...getFinishedGames()];
     res.json(all.map(formatGame));
   }
+});
+
+app.get('/api/games/my-games', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+
+  const token = authHeader.slice(7);
+  const payload = verifyToken(token);
+  if (!payload) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
+  const games = getGamesByUserId(payload.userId);
+  res.json(games.map(formatGame));
 });
 
 app.get('/api/games/:id', (req, res) => {
@@ -414,13 +436,40 @@ function startLobbyGame(l: Lobby): void {
   );
   saveSnapshot(persistId, l.gameState, 'Game started');
 
+  // Persist player-to-game associations
+  for (const p of l.players) {
+    addGamePlayer(persistId, p.id, p.clanId);
+  }
+
   l.players.forEach((p) =>
     p.ws.send(JSON.stringify({ type: 'GAME_START', state: l.gameState }))
   );
 }
 
-wss.on('connection', (ws: WebSocket) => {
-  const playerId = uuidv4();
+wss.on('connection', (ws: WebSocket, req) => {
+  // Authenticate via token query parameter
+  let userId: string | null = null;
+  let authenticatedUsername: string | null = null;
+  let playerId = uuidv4();
+
+  try {
+    const reqUrl = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+    const token = reqUrl.searchParams.get('token');
+    if (token) {
+      const payload = verifyToken(token);
+      if (payload) {
+        const user = getUserById(payload.userId);
+        if (user) {
+          userId = user.id;
+          authenticatedUsername = user.username;
+          playerId = user.id; // Use user ID as player ID
+        }
+      }
+    }
+  } catch {
+    // Ignore URL parsing errors, continue as anonymous
+  }
+
   let currentLobbyId: string | null = null;
 
   ws.send(JSON.stringify({ type: 'PLAYER_ID', playerId }));
@@ -451,11 +500,12 @@ wss.on('connection', (ws: WebSocket) => {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'maxPlayers exceeds available clans count' }));
             return;
           }
+          const playerName = authenticatedUsername || data.playerName || 'Host';
           const l: Lobby = {
             id: lobbyId,
-            name: data.playerName ? `${data.playerName}'s game` : 'New Game',
+            name: playerName ? `${playerName}'s game` : 'New Game',
             host: playerId,
-            players: [{ id: playerId, name: data.playerName || 'Host', clanId: hostClanId, ws }],
+            players: [{ id: playerId, name: playerName, clanId: hostClanId, ws }],
             maxPlayers: data.maxPlayers || 5,
             gameState: null,
             started: false,
@@ -479,7 +529,8 @@ wss.on('connection', (ws: WebSocket) => {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Cannot join' }));
             return;
           }
-          const newPlayer = { id: playerId, name: data.playerName || `Player ${l.players.length + 1}`, clanId: '', ws };
+          const joinPlayerName = authenticatedUsername || data.playerName || `Player ${l.players.length + 1}`;
+          const newPlayer = { id: playerId, name: joinPlayerName, clanId: '', ws };
           l.players.push(newPlayer);
           currentLobbyId = l.id;
 

@@ -55,6 +55,17 @@ export function initDatabase(): void {
 
     CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+    CREATE TABLE IF NOT EXISTS game_players (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      game_id TEXT REFERENCES games(id),
+      user_id TEXT REFERENCES users(id),
+      clan_id TEXT,
+      joined_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_game_players_game_id ON game_players(game_id);
+    CREATE INDEX IF NOT EXISTS idx_game_players_user_id ON game_players(user_id);
   `);
 }
 
@@ -232,4 +243,44 @@ export function getUserByEmail(email: string): DbUser | undefined {
 export function getUserById(id: string): DbUser | undefined {
   const stmt = db.prepare(`SELECT * FROM users WHERE id = ?`);
   return stmt.get(id) as DbUser | undefined;
+}
+
+// --- Game Players functions ---
+
+export function addGamePlayer(gameId: string, userId: string, clanId: string): void {
+  const now = new Date().toISOString();
+  const stmt = db.prepare(`
+    INSERT INTO game_players (game_id, user_id, clan_id, joined_at)
+    VALUES (?, ?, ?, ?)
+  `);
+  stmt.run(gameId, userId, clanId, now);
+}
+
+export function getGamesByUserId(userId: string): {
+  id: string;
+  name: string;
+  players_json: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  mode: string;
+  winner: string | null;
+}[] {
+  const stmt = db.prepare(`
+    SELECT g.* FROM games g
+    INNER JOIN game_players gp ON g.id = gp.game_id
+    WHERE gp.user_id = ?
+    ORDER BY g.updated_at DESC
+  `);
+  return stmt.all(userId) as any[];
+}
+
+export function getGamePlayersByGameId(gameId: string): {
+  game_id: string;
+  user_id: string;
+  clan_id: string;
+  joined_at: string;
+}[] {
+  const stmt = db.prepare(`SELECT game_id, user_id, clan_id, joined_at FROM game_players WHERE game_id = ?`);
+  return stmt.all(gameId) as any[];
 }
