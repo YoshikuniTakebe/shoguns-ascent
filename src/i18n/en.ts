@@ -585,6 +585,16 @@ export const en = {
   'lobby.noFinishedGames': 'No finished games',
   'lobby.back': 'Back',
   'lobby.gamesLobby': 'Games Lobby',
+  'lobby.yourTurn': 'Your Turn',
+  'lobby.yourGames': 'Your Games',
+  'lobby.otherGames': 'Other Games',
+  'lobby.play': 'Play',
+  'lobby.view': 'View',
+  'lobby.createNew': 'Create Game',
+  'lobby.joinExisting': 'Join Game',
+  'lobby.loggedAs': 'Logged in as',
+  'lobby.noGamesYet': 'No active games yet',
+  'lobby.waiting': 'Waiting',
 
   // Replay Viewer
   'replay.title': 'Replay',

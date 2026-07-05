@@ -25,9 +25,10 @@ interface GameRecord {
 }
 
 export const GamesLobby = () => {
-  const { setScreen, resumeGame, loadReplayGame, authToken } = useGameStore();
+  const { setScreen, resumeGame, loadReplayGame, authToken, authUser, logout } = useGameStore();
   const t = useT();
-  const [activeGames, setActiveGames] = useState<GameRecord[]>([]);
+  const [yourTurnGames, setYourTurnGames] = useState<GameRecord[]>([]);
+  const [waitingGames, setWaitingGames] = useState<GameRecord[]>([]);
   const [finishedGames, setFinishedGames] = useState<GameRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,20 +41,41 @@ export const GamesLobby = () => {
         }
 
         if (authToken) {
-          // Fetch only the user's games when authenticated
           const res = await fetch(`${API_BASE}/api/games/my-games`, { headers });
-          const games = await res.json();
-          setActiveGames(games.filter((g: GameRecord) => g.status === 'active'));
-          setFinishedGames(games.filter((g: GameRecord) => g.status === 'finished'));
+          const games: GameRecord[] = await res.json();
+          const active = games.filter((g) => g.status === 'active');
+          const finished = games.filter((g) => g.status === 'finished');
+
+          // Separate active games into "your turn" and "waiting"
+          const username = authUser?.username || '';
+          const yourTurn: GameRecord[] = [];
+          const waiting: GameRecord[] = [];
+
+          for (const game of active) {
+            if (game.currentPlayerIndex != null && game.players[game.currentPlayerIndex]) {
+              const currentPlayerName = game.players[game.currentPlayerIndex].name;
+              if (currentPlayerName === username) {
+                yourTurn.push(game);
+              } else {
+                waiting.push(game);
+              }
+            } else {
+              waiting.push(game);
+            }
+          }
+
+          setYourTurnGames(yourTurn);
+          setWaitingGames(waiting);
+          setFinishedGames(finished);
         } else {
-          // Fallback: fetch all games when not authenticated
           const [activeRes, finishedRes] = await Promise.all([
             fetch(`${API_BASE}/api/games?status=active`),
             fetch(`${API_BASE}/api/games?status=finished`),
           ]);
           const active = await activeRes.json();
           const finished = await finishedRes.json();
-          setActiveGames(active);
+          setYourTurnGames([]);
+          setWaitingGames(active);
           setFinishedGames(finished);
         }
       } catch {
@@ -63,7 +85,7 @@ export const GamesLobby = () => {
       }
     };
     fetchGames();
-  }, [authToken]);
+  }, [authToken, authUser]);
 
   const getClanColor = (clanId: string) => {
     return CLANS.find(c => c.id === clanId)?.color || '#fff';
@@ -100,40 +122,77 @@ export const GamesLobby = () => {
     return `${seasonName} ${phaseCode}`.toUpperCase();
   };
 
-  const renderGameCard = (game: GameRecord, type: 'active' | 'finished') => {
-    const cardClass = type === 'active' ? 'games-lobby-card games-lobby-card-active' : 'games-lobby-card games-lobby-card-finished';
+  const renderGameCard = (game: GameRecord, type: 'your-turn' | 'waiting' | 'finished') => {
+    const cardClass = [
+      'games-lobby-card',
+      type === 'your-turn' ? 'games-lobby-card-your-turn' : '',
+      type === 'waiting' ? 'games-lobby-card-waiting' : '',
+      type === 'finished' ? 'games-lobby-card-finished' : '',
+    ].filter(Boolean).join(' ');
+
+    const handleAction = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (type === 'finished') {
+        loadReplayGame(game.id);
+      } else {
+        resumeGame(game.id);
+      }
+    };
+
     return (
       <div
         key={game.id}
         className={cardClass}
-        onClick={() => type === 'active' ? resumeGame(game.id) : loadReplayGame(game.id)}
+        onClick={() => type === 'finished' ? loadReplayGame(game.id) : resumeGame(game.id)}
       >
-        <span className="games-lobby-card-gamename">{game.name}</span>
-        <span className="games-lobby-card-playercount">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-          </svg>
-          <strong>{game.players.length}</strong>
-        </span>
-        <span className="games-lobby-card-clans">
-          {game.players.map((p, i) => (
-            <span key={i} className={`games-lobby-card-clan-entry${type === 'active' && game.currentPlayerIndex === i ? ' games-lobby-card-clan-entry-active' : ''}`}>
-              <ClanShield clanId={p.clanId} size={18} />
-              <span style={{ color: getClanColor(p.clanId) }}>{p.name}</span>
-            </span>
-          ))}
-        </span>
-        <span className="games-lobby-card-progress">{getProgressPoint(game)}</span>
-        {type === 'active' && game.currentPlayerIndex != null && game.players[game.currentPlayerIndex] && (() => {
-          const currentPlayer = game.players[game.currentPlayerIndex!];
-          const clanColor = getClanColor(currentPlayer.clanId);
-          return (
-            <span className="games-lobby-card-turn" style={{ color: clanColor }}>
-              {t('lobby.turnOf')} <ClanShield clanId={currentPlayer.clanId} size={16} /> {currentPlayer.name}
-            </span>
-          );
-        })()}
-        <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
+        <div className="games-lobby-card-header">
+          <span className="games-lobby-card-gamename">{game.name}</span>
+          <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
+        </div>
+        <div className="games-lobby-card-body">
+          <span className="games-lobby-card-clans">
+            {game.players.map((p, i) => (
+              <span
+                key={i}
+                className={`games-lobby-card-clan-entry${type !== 'finished' && game.currentPlayerIndex === i ? ' games-lobby-card-clan-entry-active' : ''}`}
+              >
+                <ClanShield clanId={p.clanId} size={18} />
+                <span style={{ color: getClanColor(p.clanId) }}>{p.name}</span>
+              </span>
+            ))}
+          </span>
+          <div className="games-lobby-card-info">
+            {game.lastSeason && (
+              <span className="games-lobby-card-progress">{getProgressPoint(game)}</span>
+            )}
+            {type !== 'finished' && game.currentPlayerIndex != null && game.players[game.currentPlayerIndex] && (() => {
+              const currentPlayer = game.players[game.currentPlayerIndex!];
+              const clanColor = getClanColor(currentPlayer.clanId);
+              return (
+                <span className="games-lobby-card-turn" style={{ color: clanColor }}>
+                  {t('lobby.turnOf')} <ClanShield clanId={currentPlayer.clanId} size={14} /> {currentPlayer.name}
+                </span>
+              );
+            })()}
+          </div>
+        </div>
+        <div className="games-lobby-card-actions">
+          {type === 'your-turn' && (
+            <button className="games-lobby-play-btn" onClick={handleAction}>
+              {t('lobby.play')}
+            </button>
+          )}
+          {type === 'waiting' && (
+            <button className="games-lobby-view-btn" onClick={handleAction}>
+              {t('lobby.view')}
+            </button>
+          )}
+          {type === 'finished' && (
+            <button className="games-lobby-view-btn" onClick={handleAction}>
+              {t('lobby.replay')}
+            </button>
+          )}
+        </div>
       </div>
     );
   };
@@ -148,22 +207,68 @@ export const GamesLobby = () => {
 
   return (
     <div className="games-lobby">
-      <img src={titleImg} alt="Noboru Taiyo" className="games-lobby-title-img" />
-      <h1 className="games-lobby-title">{t('lobby.title')}</h1>
-
-      <div className="games-lobby-section">
-        <h2 className="games-lobby-section-title">{t('lobby.activeGames')}</h2>
-        {activeGames.length === 0 ? (
-          <p className="games-lobby-empty">{t('lobby.noActiveGames')}</p>
-        ) : (
-          <div className="games-lobby-grid">
-            {activeGames.map(g => renderGameCard(g, 'active'))}
+      {/* Header with title and user profile */}
+      <div className="games-lobby-header">
+        <div className="games-lobby-header-left">
+          <img src={titleImg} alt="Noboru Taiyo" className="games-lobby-title-img" />
+          <h1 className="games-lobby-title">{t('lobby.title')}</h1>
+        </div>
+        {authUser && (
+          <div className="games-lobby-user-badge">
+            <span className="games-lobby-user-name">
+              {t('lobby.loggedAs')} <strong>{authUser.username}</strong>
+            </span>
+            <button className="games-lobby-logout-btn" onClick={logout}>
+              {t('auth.logout')}
+            </button>
           </div>
         )}
       </div>
 
+      {/* Action buttons */}
+      <div className="games-lobby-actions">
+        <button className="games-lobby-create-btn" onClick={() => setScreen('menu')}>
+          {t('lobby.createNew')}
+        </button>
+        <button className="games-lobby-join-btn" onClick={() => setScreen('menu')}>
+          {t('lobby.joinExisting')}
+        </button>
+      </div>
+
+      {/* Your Turn section */}
+      {yourTurnGames.length > 0 && (
+        <div className="games-lobby-section games-lobby-section-your-turn">
+          <h2 className="games-lobby-section-title games-lobby-section-title-your-turn">
+            {t('lobby.yourTurn')}
+            <span className="games-lobby-section-count">{yourTurnGames.length}</span>
+          </h2>
+          <div className="games-lobby-grid">
+            {yourTurnGames.map(g => renderGameCard(g, 'your-turn'))}
+          </div>
+        </div>
+      )}
+
+      {/* Waiting section */}
       <div className="games-lobby-section">
-        <h2 className="games-lobby-section-title">{t('lobby.finishedGames')}</h2>
+        <h2 className="games-lobby-section-title">
+          {t('lobby.waiting')}
+          {waitingGames.length > 0 && <span className="games-lobby-section-count">{waitingGames.length}</span>}
+        </h2>
+        {waitingGames.length === 0 ? (
+          <p className="games-lobby-empty">{t('lobby.noGamesYet')}</p>
+        ) : (
+          <div className="games-lobby-grid">
+            {waitingGames.map(g => renderGameCard(g, 'waiting'))}
+          </div>
+        )}
+      </div>
+
+      {/* Finished Games section */}
+      <div className="games-lobby-section">
+        <h2 className="games-lobby-section-title">
+          {t('lobby.finishedGames')}
+          {finishedGames.length > 0 && <span className="games-lobby-section-count">{finishedGames.length}</span>}
+        </h2>
         {finishedGames.length === 0 ? (
           <p className="games-lobby-empty">{t('lobby.noFinishedGames')}</p>
         ) : (
@@ -173,6 +278,7 @@ export const GamesLobby = () => {
         )}
       </div>
 
+      {/* Back button */}
       <div className="games-lobby-back">
         <button className="btn-secondary" onClick={() => setScreen('menu')}>
           {t('lobby.back')}

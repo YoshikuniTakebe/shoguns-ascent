@@ -587,6 +587,16 @@ export const es: Record<TranslationKey, string> = {
   'lobby.noFinishedGames': 'No hay partidas terminadas',
   'lobby.back': 'Volver',
   'lobby.gamesLobby': 'Sala de Partidas',
+  'lobby.yourTurn': 'Tu Turno',
+  'lobby.yourGames': 'Tus Partidas',
+  'lobby.otherGames': 'Otras Partidas',
+  'lobby.play': 'Jugar',
+  'lobby.view': 'Ver',
+  'lobby.createNew': 'Crear Partida',
+  'lobby.joinExisting': 'Unirse a Partida',
+  'lobby.loggedAs': 'Conectado como',
+  'lobby.noGamesYet': 'No hay partidas activas aun',
+  'lobby.waiting': 'Esperando',
 
   // Replay Viewer
   'replay.title': 'Repeticion',

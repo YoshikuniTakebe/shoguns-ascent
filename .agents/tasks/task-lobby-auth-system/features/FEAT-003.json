@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Redesign the Games Lobby UI to be similar to brass.xai.world/lobby style: show active games with whose turn it is, let players join their ongoing games, create new games, and show the authenticated user's identity. Add the player identity badge in the GameBoard header (between deck badge and turn indicator) showing the local player's clan shield and name in their color.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Redesign GamesLobby.tsx to have a lobby layout similar to brass.xai.world: a header with user info and logout button, a section for 'Your Active Games' (games where it is the user's turn highlighted prominently), a section for 'Other Active Games' (games where user participates but it is not their turn), and a 'Finished Games' section. Each game card shows: game name, players with clan shields, whose turn it is (highlighted), season/phase progress, last activity timestamp.",
     "Add a 'Create Game' button in the lobby that navigates to the online game creation flow (existing MainMenu online-create mode).",
