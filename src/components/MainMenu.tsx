@@ -23,7 +23,7 @@ const CLAN_POWERS: Record<string, string> = {
 };
 
 export const MainMenu = () => {
-  const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage, setUsername, isAuthenticated, authUser, logout } = useGameStore();
+  const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage, isAuthenticated, authUser, logout } = useGameStore();
   const t = useT();
   const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>(() => {
     const menuMode = useGameStore.getState().menuMode;
@@ -43,7 +43,7 @@ export const MainMenu = () => {
   const [kamiMode, setKamiMode] = useState<'random' | 'manual'>('random');
   const [selectedKami, setSelectedKami] = useState<KamiType[]>([]);
   const [url, setUrl] = useState(WS_BASE);
-  const [oName, setOName] = useState('');
+
   const [lid, setLid] = useState('');
 
   // Create game specific state
@@ -53,7 +53,7 @@ export const MainMenu = () => {
   const [createExtraMonsters, setCreateExtraMonsters] = useState<0 | 1 | 2>(0);
   const [createKamiMode, setCreateKamiMode] = useState<'random' | 'manual'>('random');
   const [createSelectedKami, setCreateSelectedKami] = useState<KamiType[]>([]);
-  const [createName, setCreateName] = useState('');
+
   const [createHostClan, setCreateHostClan] = useState('koi');
   const [createUrl, setCreateUrl] = useState(WS_BASE);
   const [createMode, setCreateMode] = useState<'manual' | 'random'>('manual');
@@ -388,8 +388,7 @@ export const MainMenu = () => {
           <div className="online-form">
             <label>{t('menu.server')}</label>
             <input value={createUrl} onChange={e => setCreateUrl(e.target.value)} />
-            <label>{t('menu.name')}</label>
-            <input value={createName} onChange={e => setCreateName(e.target.value)} placeholder="Your name" />
+
           </div>
 
           {/* Game Type selector - Manual / Aleatorio */}
@@ -596,8 +595,7 @@ export const MainMenu = () => {
               className="btn-primary"
               disabled={createKamiMode === 'manual' && createSelectedKami.length !== 4}
               onClick={() => {
-                const playerName = createName || 'Host';
-                setUsername(playerName);
+                const playerName = authUser?.username || 'Host';
                 const deckConfig = {
                   chosenDeck: createDeck,
                   extraMonsters: createExtraMonsters,
@@ -651,8 +649,7 @@ export const MainMenu = () => {
           <div className="online-form">
             <label>{t('menu.server')}</label>
             <input value={url} onChange={e => setUrl(e.target.value)} />
-            <label>{t('menu.name')}</label>
-            <input value={oName} onChange={e => setOName(e.target.value)} placeholder="Your name" />
+
             <label>{t('lobby.gameId')}</label>
             <input value={lid} onChange={e => setLid(e.target.value)} placeholder="Game ID" />
           </div>
@@ -660,8 +657,7 @@ export const MainMenu = () => {
             <button
               className="btn-primary"
               onClick={() => {
-                const playerName = oName || 'Player';
-                setUsername(playerName);
+                const playerName = authUser?.username || 'Player';
                 connectWebSocket(url, (ws) => {
                   ws.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId: lid, playerName }));
                   setLobbyId(lid);
