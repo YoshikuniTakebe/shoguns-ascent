@@ -3217,6 +3217,26 @@ export function advancePlayer(state: GameState): GameState {
 }
 
 /**
+ * Check if a player can still meaningfully act during the tea ceremony.
+ * A player can act if they have no ally AND at least one other player also has no ally
+ * (i.e., there is a potential alliance partner available).
+ */
+function canPlayerActInTea(state: GameState, playerId: string): boolean {
+  const player = state.players.find(p => p.id === playerId);
+  if (!player) return false;
+  // If the player already has an ally, they cannot propose/accept
+  if (player.allies.length > 0) return false;
+  // If there is a pending proposal TO this player, they can accept/reject
+  const hasIncomingProposal = state.allianceProposals.some(ap => ap.to === playerId);
+  if (hasIncomingProposal) return true;
+  // Check if there is at least one other unallied player to propose to
+  const hasUnalliedPartner = state.players.some(
+    p => p.id !== playerId && p.allies.length === 0
+  );
+  return hasUnalliedPartner;
+}
+
+/**
  * Advance the tea phase: increment teaTurnIndex, and when all players
  * have had their turn, auto-advance to politics phase.
  * If there are pending alliance proposals whose targets have not yet had
@@ -3292,12 +3312,50 @@ export function advanceTeaPlayer(state: GameState): GameState {
     return advancePhase(newState);
   }
 
-  // Move to next player following turnOrder
+  // Move to next player following turnOrder, skipping players who cannot act
   const currentPlayer = newState.players[newState.currentPlayerIndex];
   const currentTurnOrderIdx = newState.turnOrder.indexOf(currentPlayer?.id ?? '');
-  const nextTurnOrderIdx = (currentTurnOrderIdx + 1) % newState.turnOrder.length;
-  const nextPlayerId = newState.turnOrder[nextTurnOrderIdx];
-  const nextPlayerIdx = newState.players.findIndex(p => p.id === nextPlayerId);
+  let nextTurnOrderIdx = (currentTurnOrderIdx + 1) % newState.turnOrder.length;
+  let nextPlayerId = newState.turnOrder[nextTurnOrderIdx];
+  let nextPlayerIdx = newState.players.findIndex(p => p.id === nextPlayerId);
+
+  // Skip players who cannot act in tea (already allied or no possible partner)
+  let skipped = 0;
+  while (skipped < newState.players.length) {
+    nextPlayerId = newState.turnOrder[nextTurnOrderIdx];
+    nextPlayerIdx = newState.players.findIndex(p => p.id === nextPlayerId);
+    if (nextPlayerIdx >= 0 && canPlayerActInTea(newState, nextPlayerId)) {
+      break;
+    }
+    nextTurnOrderIdx = (nextTurnOrderIdx + 1) % newState.turnOrder.length;
+    newState.teaTurnIndex += 1;
+    skipped++;
+
+    // If we've exhausted all players, no one can act - advance to politics
+    if (newState.teaTurnIndex >= newState.players.length) {
+      // Check for pending proposals before advancing
+      if (newState.allianceProposals.length > 0) {
+        const pendingTargets = newState.allianceProposals
+          .map(ap => ap.to)
+          .filter(toId => {
+            const targetPlayer = newState.players.find(p => p.id === toId);
+            return targetPlayer && targetPlayer.allies.length === 0;
+          });
+
+        if (pendingTargets.length > 0) {
+          const targetId = pendingTargets[0];
+          const targetIdx = newState.players.findIndex(p => p.id === targetId);
+          if (targetIdx >= 0) {
+            newState.currentPlayerIndex = targetIdx;
+            return newState;
+          }
+        }
+      }
+      newState.teaTurnIndex = 0;
+      return advancePhase(newState);
+    }
+  }
+
   newState.currentPlayerIndex = nextPlayerIdx >= 0 ? nextPlayerIdx : (newState.currentPlayerIndex + 1) % newState.players.length;
   return newState;
 }
