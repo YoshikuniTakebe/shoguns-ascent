@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Add 'Tipo de partida' (Game Type) switch to the online-create screen with Manual/Aleatorio modes, refactoring the UI to support both flows in MainMenu.tsx, adding new i18n keys, and updating the server to handle random clan assignment for both host (on CREATE_LOBBY) and joiners (on JOIN_LOBBY).",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Add new i18n keys to src/i18n/en.ts and src/i18n/es.ts: 'lobby.gameType' (Game Type / Tipo de partida), 'lobby.manual' (Manual / Manual), 'lobby.random' (Random / Aleatorio).",
     "2. In src/components/MainMenu.tsx, add a new state variable: `const [createMode, setCreateMode] = useState<'manual' | 'random'>('manual');` alongside the existing online-create state variables.",
@@ -27,5 +27,5 @@
     "npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation complete. TypeScript and Vite build pass cleanly. The effectiveActiveClans variable is used for the useEffect that resets host clan. In manual mode, createPc is dynamically updated when clans are toggled. In random mode, randomClans state holds the shuffled subset."
 }
