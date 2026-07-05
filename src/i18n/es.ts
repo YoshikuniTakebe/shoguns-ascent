@@ -621,4 +621,21 @@ export const es: Record<TranslationKey, string> = {
   'trade.nonBinding': 'Trato no vinculante',
   'game.exit': 'Salir',
   'lobby.players': 'jugadores',
+
+  // Online Lobby
+  'lobby.createGame': 'Crear Partida',
+  'lobby.joinGame': 'Unirse a Partida',
+  'lobby.gameId': 'ID de Partida',
+  'lobby.waitingForPlayers': 'Esperando jugadores...',
+  'lobby.selectClan': 'Selecciona tu clan',
+  'lobby.clanTaken': 'Clan ocupado',
+  'lobby.availableClans': 'Clanes Disponibles',
+  'lobby.configuration': 'Configuracion',
+  'lobby.gameStarting': 'La partida comienza!',
+  'lobby.shareId': 'Comparte este ID con otros jugadores',
+  'lobby.connectedPlayers': 'Jugadores Conectados',
+  'lobby.hostWaiting': 'Esperando a que todos elijan clan...',
+  'lobby.noClanYet': 'Eligiendo...',
+  'lobby.createDesc': 'Configurar y crear una partida',
+  'lobby.joinDesc': 'Unirse a una partida existente',
 };

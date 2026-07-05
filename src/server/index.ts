@@ -47,6 +47,13 @@ app.use(express.json({ limit: '50mb' }));
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
+interface LobbyConfig {
+  availableClans: string[];
+  deckConfig: { chosenDeck: string; extraMonsters: 0 | 1 | 2; selectedKami?: string[] };
+  kamiMode: 'random' | 'manual';
+  selectedKami?: string[];
+}
+
 interface Lobby {
   id: string;
   name: string;
@@ -56,6 +63,7 @@ interface Lobby {
   gameState: GameState | null;
   started: boolean;
   persistentGameId: string | null;
+  config: LobbyConfig | null;
 }
 
 const lobbies = new Map<string, Lobby>();
@@ -86,6 +94,7 @@ app.post('/api/lobbies', (req, res) => {
     gameState: null,
     started: false,
     persistentGameId: null,
+    config: null,
   };
   lobbies.set(lobby.id, lobby);
   res.json({ id: lobby.id });
@@ -263,46 +272,125 @@ wss.on('connection', (ws: WebSocket) => {
       const data = JSON.parse(raw.toString());
 
       switch (data.type) {
+        case 'CREATE_LOBBY': {
+          const lobbyId = uuidv4();
+          const config: LobbyConfig = {
+            availableClans: data.availableClans || [],
+            deckConfig: data.deckConfig || { chosenDeck: 'random', extraMonsters: 0 },
+            kamiMode: data.kamiMode || 'random',
+            selectedKami: data.selectedKami,
+          };
+          const l: Lobby = {
+            id: lobbyId,
+            name: data.playerName ? `${data.playerName}'s game` : 'New Game',
+            host: playerId,
+            players: [{ id: playerId, name: data.playerName || 'Host', clanId: data.clanId || '', ws }],
+            maxPlayers: data.maxPlayers || 5,
+            gameState: null,
+            started: false,
+            persistentGameId: null,
+            config,
+          };
+          lobbies.set(lobbyId, l);
+          currentLobbyId = lobbyId;
+          ws.send(JSON.stringify({ type: 'LOBBY_CREATED', lobbyId }));
+          broadcastLobby(l);
+          break;
+        }
+
         case 'JOIN_LOBBY': {
-          let l = lobbies.get(data.lobbyId);
+          const l = lobbies.get(data.lobbyId);
           if (!l) {
-            // Auto-create lobby with the given ID
-            l = {
-              id: data.lobbyId,
-              name: data.lobbyId,
-              host: '',
-              players: [],
-              maxPlayers: 8,
-              gameState: null,
-              started: false,
-              persistentGameId: null,
-            };
-            lobbies.set(l.id, l);
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'Lobby not found' }));
+            return;
           }
           if (l.started || l.players.length >= l.maxPlayers) {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Cannot join' }));
             return;
           }
-          const clanId = data.clanId || 'koi';
-          if (l.players.some((p) => p.clanId === clanId)) {
-            ws.send(JSON.stringify({ type: 'ERROR', message: 'Clan already taken' }));
-            return;
-          }
-          l.players.push({ id: playerId, name: data.playerName || `Player ${l.players.length + 1}`, clanId, ws });
-          if (l.players.length === 1) l.host = playerId;
+          l.players.push({ id: playerId, name: data.playerName || `Player ${l.players.length + 1}`, clanId: '', ws });
           currentLobbyId = l.id;
           ws.send(JSON.stringify({ type: 'LOBBY_JOINED', lobbyId: l.id }));
           broadcastLobby(l);
           break;
         }
 
+        case 'SELECT_CLAN': {
+          const l = lobbies.get(data.lobbyId || currentLobbyId || '');
+          if (!l) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'Lobby not found' }));
+            return;
+          }
+          const clanId = data.clanId;
+          if (!clanId) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'No clan specified' }));
+            return;
+          }
+          // Validate clan is in available clans
+          if (l.config && l.config.availableClans.length > 0 && !l.config.availableClans.includes(clanId)) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'Clan not available' }));
+            return;
+          }
+          // Validate clan is not already taken
+          if (l.players.some(p => p.clanId === clanId)) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'Clan already taken' }));
+            return;
+          }
+          // Assign clan to the requesting player
+          const player = l.players.find(p => p.id === playerId);
+          if (!player) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'Player not in lobby' }));
+            return;
+          }
+          player.clanId = clanId;
+          broadcastLobby(l);
+
+          // Check if all players have selected a clan and lobby is full
+          const allHaveClans = l.players.length >= l.maxPlayers && l.players.every(p => p.clanId !== '');
+          if (allHaveClans) {
+            // Auto-start the game
+            const deckConfig = l.config?.deckConfig || { chosenDeck: 'random' as const, extraMonsters: 0 as const };
+            l.gameState = createInitialGameState(
+              l.players.map((p) => ({ name: p.name, clanId: p.clanId })),
+              'online',
+              l.host,
+              deckConfig as import('../types/game').DeckConfig
+            );
+            l.players.forEach((p, i) => {
+              if (l.gameState) {
+                l.gameState.players[i].id = p.id;
+                l.gameState.turnOrder[i] = p.id;
+              }
+            });
+            l.started = true;
+
+            // Persist game to database
+            const persistId = l.gameState.id || uuidv4();
+            l.persistentGameId = persistId;
+            saveGame(
+              persistId,
+              l.name,
+              l.players.map((p) => ({ name: p.name, clanId: p.clanId })),
+              'online'
+            );
+            saveSnapshot(persistId, l.gameState, 'Game started');
+
+            l.players.forEach((p) =>
+              p.ws.send(JSON.stringify({ type: 'GAME_START', state: l.gameState }))
+            );
+          }
+          break;
+        }
+
         case 'START_GAME': {
           const l = lobbies.get(data.lobbyId || currentLobbyId || '');
           if (!l || l.host !== playerId || l.players.length < 2) return;
+          const deckConfig = l.config?.deckConfig || { chosenDeck: 'random' as const, extraMonsters: 0 as const };
           l.gameState = createInitialGameState(
             l.players.map((p) => ({ name: p.name, clanId: p.clanId })),
             'online',
-            l.host
+            l.host,
+            deckConfig as import('../types/game').DeckConfig
           );
           l.players.forEach((p, i) => {
             if (l.gameState) {
@@ -554,6 +642,9 @@ function broadcastLobby(l: Lobby) {
       players: l.players.map((p) => ({ id: p.id, name: p.name, clanId: p.clanId })),
       maxPlayers: l.maxPlayers,
       started: l.started,
+      availableClans: l.config?.availableClans || [],
+      deckConfig: l.config?.deckConfig || null,
+      kamiMode: l.config?.kamiMode || 'random',
     },
   };
   l.players.forEach((p) => {

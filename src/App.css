@@ -391,3 +391,12 @@
 .replay-battle-controls{margin-top:0.25rem}
 .replay-battle-btn{padding:0.4rem 1rem;font-size:0.8rem;background:rgba(233,69,96,0.1);border-color:rgba(233,69,96,0.4)}
 .replay-battle-btn:hover:not(:disabled){border-color:var(--accent-red);background:rgba(233,69,96,0.2)}
+
+/* Online Lobby */
+.lobby-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1rem;padding:2rem}.lobby-screen h2{color:var(--accent-gold);font-size:2rem}.lobby-screen p{color:var(--text-secondary)}.lobby-screen code{background:var(--bg-panel);padding:0.3rem 0.6rem;border-radius:4px;color:var(--accent-gold)}
+.lobby-info-section{text-align:center;margin-bottom:1rem}
+.lobby-players-list{background:var(--bg-panel);border:1px solid var(--border-gold);border-radius:10px;padding:1.25rem;min-width:350px}
+.clan-badges-grid{display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center}
+.clan-badge-btn{display:flex;flex-direction:column;align-items:center;gap:0.35rem;padding:0.75rem 1rem;background:var(--bg-dark);border:2px solid;border-radius:10px;cursor:pointer;transition:all 0.2s;min-width:80px}
+.clan-badge-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.4);filter:brightness(1.2)}
+.clan-badge-name{font-size:0.8rem;font-weight:bold;letter-spacing:0.03em}

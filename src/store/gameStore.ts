@@ -451,6 +451,9 @@ interface GameStore {
   connectWebSocket: (url: string, onOpen?: (ws: WebSocket) => void) => void;
   sendAction: (action: unknown) => void;
   setLobbyId: (id: string) => void;
+  lobbyState: { id: string; name: string; host: string; players: { id: string; name: string; clanId: string }[]; maxPlayers: number; started: boolean; availableClans: string[]; deckConfig: unknown; kamiMode: string } | null;
+  sendCreateLobby: (params: { playerName: string; clanId: string; maxPlayers: number; availableClans: string[]; deckConfig: unknown; kamiMode: string; selectedKami?: string[] }) => void;
+  sendSelectClan: (lobbyId: string, clanId: string) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -2600,6 +2603,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
         case 'LOBBY_JOINED':
           set({ lobbyId: d.lobbyId, screen: 'lobby' });
           break;
+        case 'LOBBY_CREATED':
+          set({ lobbyId: d.lobbyId, screen: 'lobby' });
+          break;
+        case 'LOBBY_STATE':
+          set({ lobbyState: d.lobby });
+          break;
         case 'GAME_START':
           set({ gameState: d.state, screen: 'game' });
           break;
@@ -2618,4 +2627,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
   setLobbyId: (id) => set({ lobbyId: id }),
+  lobbyState: null,
+  sendCreateLobby: (params) => {
+    const { ws } = get();
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'CREATE_LOBBY', ...params }));
+    }
+  },
+  sendSelectClan: (lobbyId, clanId) => {
+    const { ws } = get();
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'SELECT_CLAN', lobbyId, clanId }));
+    }
+  },
 }));

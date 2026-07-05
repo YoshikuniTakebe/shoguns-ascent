@@ -1,0 +1,7 @@
+{
+  "task_id": "task-online-lobby-redesign",
+  "task_description": "Redesign the online lobby to support a host creating/configuring a game (player count, available clans, decks) and other players joining by game ID, selecting from available clans shown as visual badges (clan-colored border, 20x20px seal, name). When all clans are taken the game auto-starts. Real-time updates across all clients.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

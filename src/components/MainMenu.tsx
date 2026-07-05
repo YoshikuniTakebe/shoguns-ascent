@@ -25,7 +25,7 @@ const CLAN_POWERS: Record<string, string> = {
 export const MainMenu = () => {
   const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage } = useGameStore();
   const t = useT();
-  const [mode, setMode] = useState<'select' | 'hotseat' | 'online'>('select');
+  const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>('select');
   const [pc, setPc] = useState(3);
   const [names, setNames] = useState(
     Array.from({ length: 8 }, (_, i) => `Player ${i + 1}`)
@@ -37,8 +37,18 @@ export const MainMenu = () => {
   const [selectedKami, setSelectedKami] = useState<KamiType[]>([]);
   const [url, setUrl] = useState(WS_BASE);
   const [oName, setOName] = useState('');
-  const [oClan, setOClan] = useState('koi');
   const [lid, setLid] = useState('');
+
+  // Create game specific state
+  const [createPc, setCreatePc] = useState(3);
+  const [createClans, setCreateClans] = useState(CLANS.map(c => c.id));
+  const [createDeck, setCreateDeck] = useState<DeckName | 'random'>('random');
+  const [createExtraMonsters, setCreateExtraMonsters] = useState<0 | 1 | 2>(0);
+  const [createKamiMode, setCreateKamiMode] = useState<'random' | 'manual'>('random');
+  const [createSelectedKami, setCreateSelectedKami] = useState<KamiType[]>([]);
+  const [createName, setCreateName] = useState('');
+  const [createHostClan, setCreateHostClan] = useState('koi');
+  const [createUrl, setCreateUrl] = useState(WS_BASE);
 
   const hasSolOrLuna = clans.slice(0, pc).some(id => id === 'sol' || id === 'luna');
 
@@ -307,34 +317,240 @@ export const MainMenu = () => {
       {mode === 'online' && (
         <div className="setup-panel">
           <h2>{t('menu.onlineSetup')}</h2>
+          <div className="menu-options" style={{ marginBottom: 0 }}>
+            <button className="menu-btn" onClick={() => setMode('online-create')} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              <span className="btn-icon">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 8v8M8 12h8" />
+                </svg>
+              </span>
+              <span className="btn-text">{t('lobby.createGame')}</span>
+              <span className="btn-desc">{t('lobby.createDesc')}</span>
+            </button>
+            <button className="menu-btn" onClick={() => setMode('online-join')} style={{ backgroundImage: `url(${typeGameBgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              <span className="btn-icon">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" />
+                </svg>
+              </span>
+              <span className="btn-text">{t('lobby.joinGame')}</span>
+              <span className="btn-desc">{t('lobby.joinDesc')}</span>
+            </button>
+          </div>
+          <div className="setup-actions">
+            <button className="btn-secondary" onClick={() => setMode('select')}>{t('menu.back')}</button>
+          </div>
+        </div>
+      )}
+
+      {mode === 'online-create' && (
+        <div className="setup-panel">
+          <h2>{t('lobby.createGame')}</h2>
+          <div className="online-form">
+            <label>{t('menu.server')}</label>
+            <input value={createUrl} onChange={e => setCreateUrl(e.target.value)} />
+            <label>{t('menu.name')}</label>
+            <input value={createName} onChange={e => setCreateName(e.target.value)} placeholder="Your name" />
+          </div>
+          <div className="player-count-select">
+            <label>{t('menu.players')}</label>
+            <select value={createPc} onChange={e => setCreatePc(+e.target.value)}>
+              {[2, 3, 4, 5, 6, 7, 8].map(n => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
+          <div className="player-setup-list">
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{t('lobby.availableClans')}</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              {CLANS.map(c => {
+                const isSelected = createClans.slice(0, createPc).includes(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    className={`deck-group-btn${isSelected ? ' active' : ''}`}
+                    style={{ borderColor: isSelected ? c.color : undefined, color: isSelected ? c.color : undefined }}
+                    onClick={() => {
+                      const current = createClans.slice(0, createPc);
+                      if (current.includes(c.id)) {
+                        if (current.length <= 2) return;
+                        const filtered = current.filter(id => id !== c.id);
+                        const rest = CLANS.map(cl => cl.id).filter(id => !filtered.includes(id));
+                        setCreateClans([...filtered, ...rest]);
+                        if (filtered.length < createPc) setCreatePc(filtered.length);
+                      } else {
+                        if (current.length >= createPc) {
+                          const newActive = [...current.slice(0, createPc - 1), c.id];
+                          const rest = CLANS.map(cl => cl.id).filter(id => !newActive.includes(id));
+                          setCreateClans([...newActive, ...rest]);
+                        } else {
+                          const newActive = [...current, c.id];
+                          const rest = CLANS.map(cl => cl.id).filter(id => !newActive.includes(id));
+                          setCreateClans([...newActive, ...rest]);
+                        }
+                      }
+                    }}
+                  >
+                    <ClanShield clanId={c.id} size={16} /> {c.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="online-form">
+            <label>{t('menu.clan')} (Host)</label>
+            <select value={createHostClan} onChange={e => setCreateHostClan(e.target.value)}>
+              {CLANS.filter(c => createClans.slice(0, createPc).includes(c.id)).map(c => (
+                <option key={c.id} value={c.id} style={{ color: c.color }}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="deck-config-section">
+            <h3>{t('deck.config')}</h3>
+            <div className="deck-group-selector">
+              <label className="deck-config-label">{t('deck.group')}</label>
+              <div className="deck-group-options">
+                <button
+                  className={`deck-group-btn${createDeck === 'random' ? ' active' : ''}`}
+                  onClick={() => setCreateDeck('random')}
+                >
+                  &#127922; {t('deck.random')}
+                </button>
+                {DECK_GROUPS.map(g => (
+                  <button
+                    key={g}
+                    className={`deck-group-btn${createDeck === g ? ' active' : ''}`}
+                    onClick={() => setCreateDeck(g)}
+                  >
+                    {DECK_ICONS[g]} {t(DECK_NAME_KEYS[g])}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="deck-monsters-selector">
+              <label className="deck-config-label">{t('deck.extraMonsters')}</label>
+              <div className="deck-monster-options">
+                {([0, 1, 2] as const).map(n => (
+                  <button
+                    key={n}
+                    className={`deck-monster-btn${createExtraMonsters === n ? ' active' : ''}`}
+                    onClick={() => setCreateExtraMonsters(n)}
+                  >
+                    {n === 0 ? t('deck.none') : n}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="kami-config-section">
+            <h3>{t('kami.config')}</h3>
+            <div className="kami-mode-selector">
+              <button
+                className={`deck-group-btn${createKamiMode === 'random' ? ' active' : ''}`}
+                onClick={() => setCreateKamiMode('random')}
+              >
+                &#127922; {t('kami.random')}
+              </button>
+              <button
+                className={`deck-group-btn${createKamiMode === 'manual' ? ' active' : ''}`}
+                onClick={() => setCreateKamiMode('manual')}
+              >
+                &#9998; {t('kami.manual')}
+              </button>
+            </div>
+            {createKamiMode === 'manual' && (
+              <div className="kami-selection-panel">
+                <span className="kami-selection-counter">
+                  {createSelectedKami.length}/4 {t('kami.selected')}
+                </span>
+                <div className="kami-selection-grid">
+                  {KAMI_DATA.map(kami => {
+                    const isSelected = createSelectedKami.includes(kami.type);
+                    return (
+                      <button
+                        key={kami.type}
+                        className={`kami-select-btn${isSelected ? ' selected' : ''}`}
+                        onClick={() => {
+                          setCreateSelectedKami(prev => {
+                            if (prev.includes(kami.type)) return prev.filter(k => k !== kami.type);
+                            if (prev.length >= 4) return prev;
+                            return [...prev, kami.type];
+                          });
+                        }}
+                        title={kami.effect}
+                      >
+                        {isSelected && (
+                          <span className="kami-select-order">{createSelectedKami.indexOf(kami.type) + 1}</span>
+                        )}
+                        <span className="kami-select-name">{kami.name}</span>
+                        <span className="kami-select-effect">{kami.effect}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="setup-actions">
+            <button
+              className="btn-primary"
+              disabled={createKamiMode === 'manual' && createSelectedKami.length !== 4}
+              onClick={() => {
+                const availableClans = createClans.slice(0, createPc);
+                const deckConfig = {
+                  chosenDeck: createDeck,
+                  extraMonsters: createExtraMonsters,
+                  selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
+                };
+                connectWebSocket(createUrl, (ws) => {
+                  ws.send(JSON.stringify({
+                    type: 'CREATE_LOBBY',
+                    playerName: createName || 'Host',
+                    clanId: createHostClan,
+                    maxPlayers: createPc,
+                    availableClans,
+                    deckConfig,
+                    kamiMode: createKamiMode,
+                    selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
+                  }));
+                });
+              }}
+            >
+              {t('lobby.createGame')}
+            </button>
+            <button className="btn-secondary" onClick={() => setMode('online')}>{t('menu.back')}</button>
+          </div>
+        </div>
+      )}
+
+      {mode === 'online-join' && (
+        <div className="setup-panel">
+          <h2>{t('lobby.joinGame')}</h2>
           <div className="online-form">
             <label>{t('menu.server')}</label>
             <input value={url} onChange={e => setUrl(e.target.value)} />
             <label>{t('menu.name')}</label>
             <input value={oName} onChange={e => setOName(e.target.value)} placeholder="Your name" />
-            <label>{t('menu.clan')}</label>
-            <select value={oClan} onChange={e => setOClan(e.target.value)}>
-              {CLANS.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <label>{t('menu.lobbyId')}</label>
-            <input value={lid} onChange={e => setLid(e.target.value)} placeholder="Lobby ID" />
+            <label>{t('lobby.gameId')}</label>
+            <input value={lid} onChange={e => setLid(e.target.value)} placeholder="Game ID" />
           </div>
           <div className="setup-actions">
             <button
               className="btn-primary"
               onClick={() => {
                 connectWebSocket(url, (ws) => {
-                  ws.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId: lid, playerName: oName || 'Player', clanId: oClan }));
+                  ws.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId: lid, playerName: oName || 'Player' }));
                   setLobbyId(lid);
-                  setScreen('lobby');
                 });
               }}
             >
               {t('menu.join')}
             </button>
-            <button className="btn-secondary" onClick={() => setMode('select')}>{t('menu.back')}</button>
+            <button className="btn-secondary" onClick={() => setMode('online')}>{t('menu.back')}</button>
           </div>
         </div>
       )}

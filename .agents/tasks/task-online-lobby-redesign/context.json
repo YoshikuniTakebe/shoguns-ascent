@@ -1,0 +1,27 @@
+{
+  "project_type": "React+Vite+Zustand frontend with Express+WebSocket+SQLite backend (board game)",
+  "language": "TypeScript",
+  "build_system": "Vite for frontend, tsx for server, npm for package management",
+  "test_framework": "No test framework currently in the project",
+  "build_command": "npm run build",
+  "test_command": "npm run build",
+  "verification_instructions": "Run npm run build to verify TypeScript compilation passes with no errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "No test runner installed. Verification is via TypeScript compilation (npm run build).",
+  "contribution_requirements": "Work directly on main branch",
+  "key_patterns": "Zustand store (src/store/gameStore.ts) manages all game and UI state. WebSocket messages are JSON with a 'type' field. Server broadcasts LOBBY_STATE to all lobby players when state changes. CLANS array in src/types/game.ts defines all 8 clans with id/name/color/initialHonor. ClanShield component renders clan seal images at a given size. DeckConfig interface defines deck/monster/kami configuration. i18n via src/i18n/ with en.ts and es.ts translation files.",
+  "relevant_files": [
+    "src/server/index.ts",
+    "src/store/gameStore.ts",
+    "src/components/MainMenu.tsx",
+    "src/App.tsx",
+    "src/App.css",
+    "src/config.ts",
+    "src/types/game.ts",
+    "src/components/ClanShields.tsx",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts"
+  ],
+  "directory_structure": "src/components/ - React components, src/store/ - Zustand store, src/server/ - Express+WS server, src/types/ - TypeScript types and game constants, src/i18n/ - translations, src/img/ - clan seal images, src/utils/ - game logic"
+}

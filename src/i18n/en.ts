@@ -619,6 +619,23 @@ export const en = {
   'trade.nonBinding': 'Non-binding deal',
   'game.exit': 'Exit',
   'lobby.players': 'players',
+
+  // Online Lobby
+  'lobby.createGame': 'Create Game',
+  'lobby.joinGame': 'Join Game',
+  'lobby.gameId': 'Game ID',
+  'lobby.waitingForPlayers': 'Waiting for players...',
+  'lobby.selectClan': 'Select your clan',
+  'lobby.clanTaken': 'Clan taken',
+  'lobby.availableClans': 'Available Clans',
+  'lobby.configuration': 'Configuration',
+  'lobby.gameStarting': 'Game starting!',
+  'lobby.shareId': 'Share this ID with other players',
+  'lobby.connectedPlayers': 'Connected Players',
+  'lobby.hostWaiting': 'Waiting for all players to pick a clan...',
+  'lobby.noClanYet': 'Choosing...',
+  'lobby.createDesc': 'Configure and host a game',
+  'lobby.joinDesc': 'Join an existing game',
 } as const;
 
 export type TranslationKey = keyof typeof en;

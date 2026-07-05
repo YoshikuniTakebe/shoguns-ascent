@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Redesign the online lobby system: the host creates a game, configures it (number of players, available clans, decks, etc.), picks their own clan, and gets a game ID. Other players use 'Join Game' to enter the game ID, see available clans in real-time (as badges with clan border color, seal at ~20x20px, and clan name), and pick one. When the last available clan is taken, the game starts automatically.",
+  "status": "in_progress",
+  "steps": [
+    "1. SERVER: Update the Lobby interface in src/server/index.ts to include game configuration fields: availableClans (string[]), deckConfig (DeckConfig), kamiMode, selectedKami. The host sets these when creating the lobby.",
+    "2. SERVER: Add a new WebSocket message type CREATE_LOBBY (client->server) that creates a lobby with config: { playerName, clanId (host's chosen clan), maxPlayers, availableClans (all clans for the game), deckConfig, kamiMode, selectedKami }. The host is auto-joined. Send back LOBBY_CREATED with lobbyId.",
+    "3. SERVER: Modify JOIN_LOBBY to no longer auto-create a lobby. If lobby doesn't exist, send ERROR. Remove clanId from JOIN_LOBBY - player just joins without a clan initially. Send LOBBY_JOINED and broadcastLobby.",
+    "4. SERVER: Add new WebSocket message SELECT_CLAN (client->server): { lobbyId, clanId }. Validate the clan is in availableClans, not already taken by another player. If valid, assign the clan to the player and broadcastLobby. If all non-host players have selected a clan (i.e., all availableClans are taken / all slots filled), auto-start the game (same logic as START_GAME).",
+    "5. SERVER: Update broadcastLobby to include availableClans, deckConfig, and which clans are already taken (players array with their clanId, some may have clanId='' if not yet chosen).",
+    "6. CLIENT STORE: In src/store/gameStore.ts, add lobbyState to the store (to hold the full lobby info received via LOBBY_STATE messages). Handle LOBBY_STATE messages in the WebSocket onmessage handler to update this state. Also handle LOBBY_CREATED message.",
+    "7. CLIENT STORE: Add a sendCreateLobby action and a sendSelectClan action that send the appropriate WS messages.",
+    "8. CLIENT MainMenu: Split the online mode into two sub-modes: 'create' and 'join'. 'Create' shows a full configuration panel (similar to hotseat): player count, available clans picker, deck config, kami config, host name, host clan selection. On submit, connect WS and send CREATE_LOBBY. 'Join' shows: server URL, player name, game ID input. On submit, connect WS and send JOIN_LOBBY.",
+    "9. CLIENT App.tsx lobby screen: Replace the minimal lobby screen with a rich lobby view. For the HOST: show lobby ID prominently, show connected players and their chosen clans, show a waiting message. For JOINERS: show available clans as visually attractive badges (border color = clan color, clan seal image at 20x20px via ClanShield, clan name below). Clicking a badge sends SELECT_CLAN. Already-taken clans disappear in real-time (LOBBY_STATE updates). When the last clan is taken, server auto-starts and sends GAME_START.",
+    "10. CSS: Add styles in src/App.css for the new lobby components: .lobby-config-panel, .clan-badge (border with clan color, flex column with ClanShield image and name), .clan-badges-grid, .lobby-players-list, .lobby-info-section.",
+    "11. i18n: Add translation keys for new UI text in src/i18n/en.ts and src/i18n/es.ts: lobby.createGame, lobby.joinGame, lobby.gameId, lobby.waitingForPlayers, lobby.selectClan, lobby.clanTaken, lobby.availableClans, lobby.configuration, lobby.gameStarting, etc."
+  ],
+  "acceptance_criteria": [
+    "Running npm run build succeeds with no TypeScript errors",
+    "The server handles CREATE_LOBBY messages and creates a configured lobby, responding with LOBBY_CREATED",
+    "The server handles SELECT_CLAN messages, validates clan availability, assigns clans, and broadcasts updated LOBBY_STATE",
+    "When all available clan slots are filled, the server auto-starts the game and sends GAME_START to all players",
+    "The client MainMenu shows two online sub-options: Create Game and Join Game",
+    "The Create Game flow lets the host configure players, clans, decks, kami, and creates the lobby",
+    "The Join Game flow lets a player enter a game ID and join",
+    "The lobby screen shows available clans as badges with clan-colored border, 20x20px seal, and clan name",
+    "Available clans update in real-time across all connected clients when someone picks a clan",
+    "Taken clans disappear from the selection UI for other players"
+  ],
+  "verification": [
+    "Run `npm run build` in /projects/sandbox/shoguns-ascent and confirm zero errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
