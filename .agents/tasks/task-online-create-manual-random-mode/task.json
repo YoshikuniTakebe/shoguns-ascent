@@ -1,0 +1,7 @@
+{
+  "task_id": "task-online-create-manual-random-mode",
+  "task_description": "Add Manual/Random game type toggle to the online-create screen. Manual mode lets players pick clans interactively (player count auto-calculated from selected clans). Random mode randomly assigns clans based on player count, with no host clan selection. Server auto-assigns clans to joining players in random mode.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

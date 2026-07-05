@@ -52,6 +52,7 @@ interface LobbyConfig {
   deckConfig: { chosenDeck: string; extraMonsters: 0 | 1 | 2; selectedKami?: string[] };
   kamiMode: 'random' | 'manual';
   selectedKami?: string[];
+  autoAssignClan?: boolean;
 }
 
 interface Lobby {
@@ -313,6 +314,7 @@ wss.on('connection', (ws: WebSocket) => {
             deckConfig: data.deckConfig || { chosenDeck: 'random', extraMonsters: 0 },
             kamiMode: data.kamiMode || 'random',
             selectedKami: data.selectedKami,
+            autoAssignClan: data.autoAssignClan || false,
           };
           // Validate host clan is within available clans
           if (availableClans.length > 0 && hostClanId && !availableClans.includes(hostClanId)) {
@@ -347,10 +349,30 @@ wss.on('connection', (ws: WebSocket) => {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Cannot join' }));
             return;
           }
-          l.players.push({ id: playerId, name: data.playerName || `Player ${l.players.length + 1}`, clanId: '', ws });
+          const newPlayer = { id: playerId, name: data.playerName || `Player ${l.players.length + 1}`, clanId: '', ws };
+          l.players.push(newPlayer);
           currentLobbyId = l.id;
+
+          // Auto-assign clan if autoAssignClan is enabled
+          if (l.config?.autoAssignClan) {
+            const takenClans = l.players.filter(p => p.clanId !== '').map(p => p.clanId);
+            const availableForAssign = (l.config.availableClans || []).filter(c => !takenClans.includes(c));
+            if (availableForAssign.length > 0) {
+              const randomIndex = Math.floor(Math.random() * availableForAssign.length);
+              newPlayer.clanId = availableForAssign[randomIndex];
+            }
+          }
+
           ws.send(JSON.stringify({ type: 'LOBBY_JOINED', lobbyId: l.id }));
           broadcastLobby(l);
+
+          // Check if all players have clans and lobby is full, then start game
+          if (l.config?.autoAssignClan) {
+            const allHaveClans = l.players.length >= l.maxPlayers && l.players.every(p => p.clanId !== '');
+            if (allHaveClans) {
+              startLobbyGame(l);
+            }
+          }
           break;
         }
 

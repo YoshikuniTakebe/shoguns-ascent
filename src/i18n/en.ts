@@ -636,6 +636,9 @@ export const en = {
   'lobby.noClanYet': 'Choosing...',
   'lobby.createDesc': 'Configure and host a game',
   'lobby.joinDesc': 'Join an existing game',
+  'lobby.gameType': 'Game Type',
+  'lobby.manual': 'Manual',
+  'lobby.random': 'Random',
 } as const;
 
 export type TranslationKey = keyof typeof en;

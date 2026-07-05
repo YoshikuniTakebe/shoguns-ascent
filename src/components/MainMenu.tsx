@@ -49,14 +49,16 @@ export const MainMenu = () => {
   const [createName, setCreateName] = useState('');
   const [createHostClan, setCreateHostClan] = useState('koi');
   const [createUrl, setCreateUrl] = useState(WS_BASE);
+  const [createMode, setCreateMode] = useState<'manual' | 'random'>('manual');
+  const [randomClans, setRandomClans] = useState<string[]>(() => shuffle(CLANS.map(c => c.id)).slice(0, 3));
 
   // Reset host clan selection when available clans change (issue: stale default)
-  const activeCreateClans = createClans.slice(0, createPc);
+  const effectiveActiveClans = createMode === 'manual' ? createClans.slice(0, createPc) : randomClans;
   useEffect(() => {
-    if (activeCreateClans.length > 0 && !activeCreateClans.includes(createHostClan)) {
-      setCreateHostClan(activeCreateClans[0]);
+    if (effectiveActiveClans.length > 0 && !effectiveActiveClans.includes(createHostClan)) {
+      setCreateHostClan(effectiveActiveClans[0]);
     }
-  }, [activeCreateClans.join(','), createHostClan]);
+  }, [effectiveActiveClans.join(','), createHostClan]);
 
   const hasSolOrLuna = clans.slice(0, pc).some(id => id === 'sol' || id === 'luna');
 
@@ -361,59 +363,114 @@ export const MainMenu = () => {
             <label>{t('menu.name')}</label>
             <input value={createName} onChange={e => setCreateName(e.target.value)} placeholder="Your name" />
           </div>
-          <div className="player-count-select">
-            <label>{t('menu.players')}</label>
-            <select value={createPc} onChange={e => setCreatePc(+e.target.value)}>
-              {[2, 3, 4, 5, 6, 7, 8].map(n => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
+
+          {/* Game Type selector - Manual / Aleatorio */}
+          <div className="deck-config-section">
+            <h3>{t('lobby.gameType')}</h3>
+            <div className="kami-mode-selector">
+              <button
+                className={`deck-group-btn${createMode === 'manual' ? ' active' : ''}`}
+                onClick={() => setCreateMode('manual')}
+              >
+                &#9998; {t('lobby.manual')}
+              </button>
+              <button
+                className={`deck-group-btn${createMode === 'random' ? ' active' : ''}`}
+                onClick={() => {
+                  setCreateMode('random');
+                  setRandomClans(shuffle(CLANS.map(c => c.id)).slice(0, createPc));
+                }}
+              >
+                &#127922; {t('lobby.random')}
+              </button>
+            </div>
           </div>
+
+          {/* Player count selector - only in random mode */}
+          {createMode === 'random' && (
+            <div className="player-count-select">
+              <label>{t('menu.players')}</label>
+              <select value={createPc} onChange={e => {
+                const newPc = +e.target.value;
+                setCreatePc(newPc);
+                setRandomClans(shuffle(CLANS.map(c => c.id)).slice(0, newPc));
+              }}>
+                {[2, 3, 4, 5, 6, 7, 8].map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Clan configuration */}
           <div className="player-setup-list">
             <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{t('lobby.availableClans')}</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {CLANS.map(c => {
-                const isSelected = createClans.slice(0, createPc).includes(c.id);
-                return (
-                  <button
-                    key={c.id}
-                    className={`deck-group-btn${isSelected ? ' active' : ''}`}
-                    style={{ borderColor: isSelected ? c.color : undefined, color: isSelected ? c.color : undefined }}
-                    onClick={() => {
-                      const current = createClans.slice(0, createPc);
-                      if (current.includes(c.id)) {
-                        if (current.length <= 2) return;
-                        const filtered = current.filter(id => id !== c.id);
-                        const rest = CLANS.map(cl => cl.id).filter(id => !filtered.includes(id));
-                        setCreateClans([...filtered, ...rest]);
-                        if (filtered.length < createPc) setCreatePc(filtered.length);
-                      } else {
-                        if (current.length >= createPc) {
-                          const newActive = [...current.slice(0, createPc - 1), c.id];
-                          const rest = CLANS.map(cl => cl.id).filter(id => !newActive.includes(id));
-                          setCreateClans([...newActive, ...rest]);
+              {createMode === 'manual' ? (
+                // Manual mode: interactive clan toggles
+                CLANS.map(c => {
+                  const isSelected = createClans.slice(0, createPc).includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      className={`deck-group-btn${isSelected ? ' active' : ''}`}
+                      style={{ borderColor: isSelected ? c.color : undefined, color: isSelected ? c.color : undefined }}
+                      onClick={() => {
+                        const current = createClans.slice(0, createPc);
+                        if (current.includes(c.id)) {
+                          if (current.length <= 2) return;
+                          const filtered = current.filter(id => id !== c.id);
+                          const rest = CLANS.map(cl => cl.id).filter(id => !filtered.includes(id));
+                          setCreateClans([...filtered, ...rest]);
+                          setCreatePc(filtered.length);
                         } else {
                           const newActive = [...current, c.id];
                           const rest = CLANS.map(cl => cl.id).filter(id => !newActive.includes(id));
                           setCreateClans([...newActive, ...rest]);
+                          setCreatePc(newActive.length);
                         }
-                      }
-                    }}
-                  >
-                    <ClanShield clanId={c.id} size={16} /> {c.name}
-                  </button>
-                );
-              })}
+                      }}
+                    >
+                      <ClanShield clanId={c.id} size={16} /> {c.name}
+                    </button>
+                  );
+                })
+              ) : (
+                // Random mode: non-interactive badges
+                randomClans.map(clanId => {
+                  const clan = CLANS.find(c => c.id === clanId);
+                  if (!clan) return null;
+                  return (
+                    <span
+                      key={clan.id}
+                      className="deck-group-btn active"
+                      style={{ borderColor: clan.color, color: clan.color, cursor: 'default', pointerEvents: 'none' }}
+                    >
+                      <ClanShield clanId={clan.id} size={16} /> {clan.name}
+                    </span>
+                  );
+                })
+              )}
             </div>
           </div>
-          <div className="online-form">
-            <label>{t('menu.clan')} (Host)</label>
-            <select value={createHostClan} onChange={e => setCreateHostClan(e.target.value)}>
-              {CLANS.filter(c => createClans.slice(0, createPc).includes(c.id)).map(c => (
-                <option key={c.id} value={c.id} style={{ color: c.color }}>{c.name}</option>
-              ))}
-            </select>
-          </div>
+
+          {/* Host clan selector - only in manual mode */}
+          {createMode === 'manual' && (
+            <div className="online-form">
+              <label>{t('menu.clan')} (Host)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <ClanShield clanId={createHostClan} size={24} />
+                <span style={{ fontWeight: 'bold', color: CLANS.find(c => c.id === createHostClan)?.color || '#fff' }}>
+                  {CLANS.find(c => c.id === createHostClan)?.name || ''}
+                </span>
+              </div>
+              <select value={createHostClan} onChange={e => setCreateHostClan(e.target.value)}>
+                {CLANS.filter(c => createClans.slice(0, createPc).includes(c.id)).map(c => (
+                  <option key={c.id} value={c.id} style={{ color: c.color }}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="deck-config-section">
             <h3>{t('deck.config')}</h3>
@@ -508,24 +565,44 @@ export const MainMenu = () => {
               className="btn-primary"
               disabled={createKamiMode === 'manual' && createSelectedKami.length !== 4}
               onClick={() => {
-                const availableClans = createClans.slice(0, createPc);
                 const deckConfig = {
                   chosenDeck: createDeck,
                   extraMonsters: createExtraMonsters,
                   selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
                 };
-                connectWebSocket(createUrl, (ws) => {
-                  ws.send(JSON.stringify({
-                    type: 'CREATE_LOBBY',
-                    playerName: createName || 'Host',
-                    clanId: createHostClan,
-                    maxPlayers: createPc,
-                    availableClans,
-                    deckConfig,
-                    kamiMode: createKamiMode,
-                    selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
-                  }));
-                });
+
+                if (createMode === 'manual') {
+                  const availableClans = createClans.slice(0, createPc);
+                  connectWebSocket(createUrl, (ws) => {
+                    ws.send(JSON.stringify({
+                      type: 'CREATE_LOBBY',
+                      playerName: createName || 'Host',
+                      clanId: createHostClan,
+                      maxPlayers: createPc,
+                      availableClans,
+                      deckConfig,
+                      kamiMode: createKamiMode,
+                      selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
+                      autoAssignClan: false,
+                    }));
+                  });
+                } else {
+                  // Random mode: pick a random host clan from the random list
+                  const randomHostClan = randomClans[Math.floor(Math.random() * randomClans.length)];
+                  connectWebSocket(createUrl, (ws) => {
+                    ws.send(JSON.stringify({
+                      type: 'CREATE_LOBBY',
+                      playerName: createName || 'Host',
+                      clanId: randomHostClan,
+                      maxPlayers: createPc,
+                      availableClans: randomClans,
+                      deckConfig,
+                      kamiMode: createKamiMode,
+                      selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
+                      autoAssignClan: true,
+                    }));
+                  });
+                }
               }}
             >
               {t('lobby.createGame')}

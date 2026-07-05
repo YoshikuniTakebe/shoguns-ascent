@@ -638,4 +638,7 @@ export const es: Record<TranslationKey, string> = {
   'lobby.noClanYet': 'Eligiendo...',
   'lobby.createDesc': 'Configurar y crear una partida',
   'lobby.joinDesc': 'Unirse a una partida existente',
+  'lobby.gameType': 'Tipo de partida',
+  'lobby.manual': 'Manual',
+  'lobby.random': 'Aleatorio',
 };

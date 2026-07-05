@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add 'Tipo de partida' (Game Type) switch to the online-create screen with Manual/Aleatorio modes, refactoring the UI to support both flows in MainMenu.tsx, adding new i18n keys, and updating the server to handle random clan assignment for both host (on CREATE_LOBBY) and joiners (on JOIN_LOBBY).",
+  "status": "in_progress",
+  "steps": [
+    "1. Add new i18n keys to src/i18n/en.ts and src/i18n/es.ts: 'lobby.gameType' (Game Type / Tipo de partida), 'lobby.manual' (Manual / Manual), 'lobby.random' (Random / Aleatorio).",
+    "2. In src/components/MainMenu.tsx, add a new state variable: `const [createMode, setCreateMode] = useState<'manual' | 'random'>('manual');` alongside the existing online-create state variables.",
+    "3. In the online-create section of MainMenu.tsx (mode === 'online-create'), add a 'Tipo de partida' section ABOVE the existing player-count-select. This section should have two buttons side by side ('Manual' and 'Aleatorio') styled as a switch (using the existing deck-group-btn pattern with active class toggling).",
+    "4. MANUAL mode changes: (a) Remove the player count dropdown entirely - the number of players is now automatically the count of selected (active) clans. (b) The clan toggle buttons remain interactive as they are now. (c) Replace the host clan dropdown selector with a display showing the ClanShield seal + clan name in bold, using the clan's color. The dropdown still works for selection, but the display format should show '<ClanShield> <bold clan name in clan color>'. Keep the <select> but style the label area to show the clan shield and colored bold name. (d) When clans are toggled, if the selected createHostClan is no longer in the active clans, auto-select the first available clan.",
+    "5. RANDOM mode changes: (a) Show the player count selector (2-8) as it was before. (b) When player count changes, randomly pick that many clans from CLANS using the shuffle() function and display them as non-interactive badges (same visual style but without onClick handlers, perhaps using a 'disabled' or non-button approach). (c) Remove the 'Clan: (Host)' section entirely in random mode. (d) Store the randomly-selected clan list in state for use when creating the lobby.",
+    "6. Update the CREATE_LOBBY button onClick handler: In MANUAL mode, behave as before (send createHostClan, availableClans = selected clans, maxPlayers = selected clans count). In RANDOM mode, pick a random clan from the randomly-generated available list for the host (using shuffle or random index), then send the CREATE_LOBBY message with that random host clan, the random available clans, and maxPlayers = createPc.",
+    "7. In src/server/index.ts, add an `autoAssignClan` boolean field to the LobbyConfig interface. When this field is true in the lobby config, modify the JOIN_LOBBY handler to auto-assign a random available clan to the joining player (pick randomly from config.availableClans that are not already taken by existing players). The CREATE_LOBBY handler should accept this new field from the client message.",
+    "8. Update the CREATE_LOBBY message sent from the client: in RANDOM mode, include `autoAssignClan: true` in the message payload. In MANUAL mode, include `autoAssignClan: false` (or omit it, defaulting to false on the server).",
+    "9. In the server JOIN_LOBBY handler, when autoAssignClan is true: after adding the player to the lobby, immediately assign them a random clan from the remaining available clans (those in config.availableClans not already assigned to any player). Then broadcastLobby. If all players have clans and the lobby is full, start the game automatically (same logic as SELECT_CLAN success path)."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compilation passes with `npx tsc --noEmit`",
+    "Vite build succeeds with `npm run build`",
+    "The online-create screen shows a 'Tipo de partida' toggle with Manual/Aleatorio buttons above the clan configuration",
+    "In Manual mode: no player count dropdown, player count = number of selected clans, host clan selector shows ClanShield + bold colored name",
+    "In Random mode: player count dropdown is shown, available clans are randomly generated (non-interactive badges), no host clan selector, host gets random clan on create",
+    "Server auto-assigns random clans to joining players when autoAssignClan is true"
+  ],
+  "verification": [
+    "npx tsc --noEmit",
+    "npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

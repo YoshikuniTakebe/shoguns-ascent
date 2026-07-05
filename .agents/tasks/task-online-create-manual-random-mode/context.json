@@ -1,0 +1,24 @@
+{
+  "project_type": "React+Vite frontend with Express+WebSocket+SQLite backend",
+  "language": "TypeScript",
+  "build_system": "Vite for frontend, tsx for server, npm scripts",
+  "test_framework": "No test framework configured",
+  "build_command": "npm run build",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "Run `npx tsc --noEmit` to check for type errors. Run `npm run build` to verify Vite build succeeds.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "No test framework. Verification is TypeScript compilation and Vite build.",
+  "contribution_requirements": "Work directly on main branch.",
+  "key_patterns": "i18n uses useT() hook with keys defined in src/i18n/en.ts (source of truth for TranslationKey type) and src/i18n/es.ts. MainMenu.tsx uses state variables for online-create mode. Server uses LobbyConfig interface with availableClans. CLANS array has 8 clans. shuffle() from utils/gameLogic is available.",
+  "relevant_files": [
+    "src/components/MainMenu.tsx",
+    "src/server/index.ts",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts",
+    "src/i18n/index.ts",
+    "src/utils/gameLogic.ts",
+    "src/types/game.ts"
+  ],
+  "directory_structure": "src/components/ - React components; src/server/ - Express+WS server; src/i18n/ - translations; src/utils/ - game logic; src/types/ - TypeScript types"
+}
