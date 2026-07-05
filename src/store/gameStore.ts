@@ -256,6 +256,7 @@ interface GameStore {
   selectedFigures: string[];
   ws: WebSocket | null;
   screen: 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay' | 'auth';
+  menuMode: 'select' | 'online' | 'online-create' | 'online-join' | null;
   lobbyId: string | null;
   currentMandateResolutionIndex: number;
   warTacticBidsSubmitted: boolean;
@@ -485,6 +486,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   selectedFigures: [],
   ws: null,
   screen: 'menu',
+  menuMode: null,
   lobbyId: null,
   currentMandateResolutionIndex: 0,
   warTacticBidsSubmitted: false,

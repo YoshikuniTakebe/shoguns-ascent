@@ -274,10 +274,10 @@ export const GamesLobby = () => {
 
       {/* Action buttons */}
       <div className="games-lobby-actions">
-        <button className="games-lobby-create-btn" onClick={() => setScreen('menu')}>
+        <button className="games-lobby-create-btn" onClick={() => useGameStore.setState({ menuMode: 'online-create', screen: 'menu' })}>
           {t('lobby.createNew')}
         </button>
-        <button className="games-lobby-join-btn" onClick={() => setScreen('menu')}>
+        <button className="games-lobby-join-btn" onClick={() => useGameStore.setState({ menuMode: 'online-join', screen: 'menu' })}>
           {t('lobby.joinExisting')}
         </button>
         {isAdmin && (

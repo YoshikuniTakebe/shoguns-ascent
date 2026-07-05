@@ -25,7 +25,14 @@ const CLAN_POWERS: Record<string, string> = {
 export const MainMenu = () => {
   const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage, setUsername, isAuthenticated } = useGameStore();
   const t = useT();
-  const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>('select');
+  const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>(() => {
+    const menuMode = useGameStore.getState().menuMode;
+    if (menuMode) {
+      useGameStore.setState({ menuMode: null });
+      return menuMode;
+    }
+    return 'select';
+  });
   const [pc, setPc] = useState(3);
   const [names, setNames] = useState(
     Array.from({ length: 8 }, (_, i) => `Player ${i + 1}`)
