@@ -7,6 +7,7 @@ import { ClanShield } from './ClanShields';
 import { HonorIcon, CoinIcon } from './Icons';
 import { useT } from '../i18n';
 import { shuffle } from '../utils/gameLogic';
+import { WS_BASE } from '../config';
 import titleImg from '../img/NoboruTaiyo.png';
 import typeGameBgImg from '../img/type_game_bg.png';
 
@@ -34,7 +35,7 @@ export const MainMenu = () => {
   const [extraMonsters, setExtraMonsters] = useState<0 | 1 | 2>(0);
   const [kamiMode, setKamiMode] = useState<'random' | 'manual'>('random');
   const [selectedKami, setSelectedKami] = useState<KamiType[]>([]);
-  const [url, setUrl] = useState('ws://localhost:3001');
+  const [url, setUrl] = useState(WS_BASE);
   const [oName, setOName] = useState('');
   const [oClan, setOClan] = useState('koi');
   const [lid, setLid] = useState('');

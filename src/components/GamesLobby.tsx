@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { API_BASE } from '../config';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { CLANS } from '../types/game';
@@ -34,8 +35,8 @@ export const GamesLobby = () => {
     const fetchGames = async () => {
       try {
         const [activeRes, finishedRes] = await Promise.all([
-          fetch('http://localhost:3001/api/games?status=active'),
-          fetch('http://localhost:3001/api/games?status=finished'),
+          fetch(`${API_BASE}/api/games?status=active`),
+          fetch(`${API_BASE}/api/games?status=finished`),
         ]);
         const active = await activeRes.json();
         const finished = await finishedRes.json();

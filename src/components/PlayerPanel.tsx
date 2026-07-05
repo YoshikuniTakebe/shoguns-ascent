@@ -64,9 +64,14 @@ function computeReserveTotals(player: Player, gameState: GameState) {
   const effectiveShintoTotal = shintoTotal + shintoMonstersOwned;
 
   // Fortresses
+  const FORTRESS_MONSTER_IDS = ['sp-fukurokuju'];
+  const fortressMonstersOwned = monsterCards.filter(c => FORTRESS_MONSTER_IDS.includes(c.id)).length;
+  const fortressMonstersInReserve = monsterCardsInReserve.filter(c => FORTRESS_MONSTER_IDS.includes(c.id)).length;
+
   const fortressesOnMap = allMapFigures.filter(f => f.type === 'fortress').length;
   const fortressesReserve = player.fortresses;
-  const fortressesTotal = fortressesOnMap + fortressesReserve;
+  const effectiveFortressReserve = fortressesReserve + fortressMonstersInReserve;
+  const effectiveFortressTotal = fortressesOnMap + fortressesReserve + fortressMonstersOwned;
 
   // Daimyo
   const daimyoReserve = player.hasDaimyo ? 1 : 0;
@@ -78,7 +83,7 @@ function computeReserveTotals(player: Player, gameState: GameState) {
   return {
     bushi: { reserve: bushiReserve, total: bushiTotal },
     shinto: { reserve: effectiveShintoReserve, total: effectiveShintoTotal },
-    fortresses: { reserve: fortressesReserve, total: fortressesTotal },
+    fortresses: { reserve: effectiveFortressReserve, total: effectiveFortressTotal },
     daimyo: { reserve: effectiveDaimyoReserve, total: effectiveDaimyoTotal },
     monsters: { reserve: monstersInReserve, total: totalMonsters },
   };

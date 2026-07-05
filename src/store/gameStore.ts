@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { GameState, MandateType, DeckConfig, SeasonCard, BattleResolutionData, Hostage } from '../types/game';
 import { WAR_TACTICS, SEASON_CARDS_DATA } from '../types/game';
+import { API_BASE } from '../config';
 import {
   createInitialGameState,
   setupSeason,
@@ -679,7 +680,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   saveSnapshot: () => {
     const { persistentGameId, gameState } = get();
     if (!persistentGameId || !gameState) return;
-    return fetch(`http://localhost:3001/api/games/${persistentGameId}/snapshot`, {
+    return fetch(`${API_BASE}/api/games/${persistentGameId}/snapshot`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ state: gameState }),
@@ -690,8 +691,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   loadReplayGame: async (gameId) => {
     try {
       const [gameRes, snapshotsRes] = await Promise.all([
-        fetch(`http://localhost:3001/api/games/${gameId}`),
-        fetch(`http://localhost:3001/api/games/${gameId}/snapshots`),
+        fetch(`${API_BASE}/api/games/${gameId}`),
+        fetch(`${API_BASE}/api/games/${gameId}/snapshots`),
       ]);
       const game = await gameRes.json();
       const snapshots = await snapshotsRes.json();
@@ -770,7 +771,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   resumeGame: async (gameId) => {
     try {
-      const snapshotsRes = await fetch(`http://localhost:3001/api/games/${gameId}/snapshots`);
+      const snapshotsRes = await fetch(`${API_BASE}/api/games/${gameId}/snapshots`);
       const snapshots = await snapshotsRes.json();
       if (snapshots.length === 0) return;
       const lastSnapshot = snapshots[snapshots.length - 1];
@@ -824,7 +825,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (persistentGameId) {
         await get().saveSnapshot();
       } else if (gameState) {
-        const res = await fetch('http://localhost:3001/api/games/save-hotseat', {
+        const res = await fetch(`${API_BASE}/api/games/save-hotseat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ state: gameState }),
@@ -850,7 +851,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameState: state, localPlayerId: state.players[0].id, screen: 'game', persistentGameId: null });
     // Persist hotseat games
     if (mode === 'hotseat') {
-      fetch('http://localhost:3001/api/games/save-hotseat', {
+      fetch(`${API_BASE}/api/games/save-hotseat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ state }),
