@@ -266,6 +266,16 @@ export const ActionPanel = () => {
                 </button>
               </>
             )}
+
+            {/* Trade button - always available during tea */}
+            <button
+              className="btn-secondary trade-btn"
+              onClick={() => setTradeModalOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', marginTop: '0.7rem', padding: '0.5rem', borderColor: '#c8a951' }}
+            >
+              <HandshakeIcon size={22} color="#c8a951" />
+              <span style={{ fontWeight: 'bold', color: '#c8a951', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('trade.button')}</span>
+            </button>
           </div>
         );
       })()}
@@ -439,8 +449,7 @@ export const ActionPanel = () => {
           <h4>{t('actions.politics', { current: gameState.politicsMandateCount + 1, total: gameState.maxMandates })}</h4>
           <p className="phase-description">{t('actions.politicsDesc')}</p>
 
-          {/* Trade button - only in hotseat mode */}
-          {gameState.mode === 'hotseat' && (
+          {/* Trade button */}
           <button
             className="btn-secondary trade-btn"
             onClick={() => setTradeModalOpen(true)}
@@ -449,7 +458,6 @@ export const ActionPanel = () => {
             <HandshakeIcon size={22} color="#c8a951" />
             <span style={{ fontWeight: 'bold', color: '#c8a951', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('trade.button')}</span>
           </button>
-          )}
 
           {/* Train mandate active - show skip option */}
           {gameState.trainMandateActive && (() => {
@@ -853,6 +861,16 @@ export const ActionPanel = () => {
             <p className="phase-description">
               {t('actions.waitingFor', { name: '' })} <span style={{ color: cpClan?.color, fontWeight: 'bold' }}>{cp?.name || ''}</span>
             </p>
+            {gameState.mode === 'online' && (
+              <button
+                className="btn-secondary trade-btn"
+                onClick={() => setTradeModalOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', marginBottom: '0.7rem', padding: '0.5rem', borderColor: '#c8a951' }}
+              >
+                <HandshakeIcon size={22} color="#c8a951" />
+                <span style={{ fontWeight: 'bold', color: '#c8a951', textTransform: 'uppercase', letterSpacing: '1px' }}>{t('trade.button')}</span>
+              </button>
+            )}
           </div>
         );
       })()}

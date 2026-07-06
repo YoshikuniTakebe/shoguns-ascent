@@ -2728,8 +2728,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameState: ns, ...detectWarTransitionWithPopup(ns), ...detectKamiPopupPending(ns), ...(gameState.mode === 'hotseat' && (ns.currentPhase === 'tea' || (gameState.currentPhase === 'tea' && ns.currentPhase === 'politics')) ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
   },
 
-  // --- Turn Popup (hotseat mandate transitions) ---
-  dismissTurnPopup: () => set({ turnPopupPlayer: null }),
+  // --- Turn Popup (hotseat mandate transitions + online politics) ---
+  dismissTurnPopup: () => {
+    const { gameState, localPlayerId, ws } = get();
+    set({ turnPopupPlayer: null });
+    // For online politics: after dismissing turn popup, draw mandate tiles for this player
+    if (ws && gameState && gameState.mode === 'online' && gameState.currentPhase === 'politics' && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && !gameState.harvestMandateActive && !gameState.trainMandateActive) {
+      get().sendAction({ type: 'DRAW_MANDATE_TILES', playerId: localPlayerId });
+    }
+  },
 
   // --- Kami Phase Popup ---
   dismissKamiPhasePopup: () => {
@@ -2761,9 +2768,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
     ws.onmessage = (e) => {
       const d = JSON.parse(e.data);
       switch (d.type) {
-        case 'GAME_STATE':
-          set({ gameState: d.state });
+        case 'GAME_STATE': {
+          const state = d.state;
+          let newTurnPopup: string | null = null;
+          if (state.mode === 'online' && state.currentPhase === 'politics') {
+            const noResolution = !state.trainMandateActive && !state.marshalMandateActive && !state.recruitMandateActive && !state.betrayMandateActive && !state.harvestMandateActive;
+            const mandateResolutionActive = state.marshalMandateActive || state.recruitMandateActive || state.betrayMandateActive || state.harvestMandateActive;
+            if (noResolution && state.drawnMandates.length === 0 && !state.mandateChoicePhase) {
+              newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
+            } else if (mandateResolutionActive && !state.trainMandateActive) {
+              newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
+            }
+          }
+          set({ gameState: state, turnPopupPlayer: newTurnPopup });
           break;
+        }
         case 'PLAYER_ID':
           localStorage.setItem('shoguns-ascent-playerId', d.playerId);
           set({ localPlayerId: d.playerId });
