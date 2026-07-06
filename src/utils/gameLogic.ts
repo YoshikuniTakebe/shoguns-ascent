@@ -266,6 +266,7 @@ export function createInitialGameState(
     lastMandateIssuerId: null,
     gameOver: false,
     tradeOffers: [],
+    teaReadyPlayers: [],
     teaOptedOut: [],
     log: ['Juego iniciado! Estación: Primavera'],
     logHistory: {},
@@ -306,6 +307,7 @@ export function setupSeason(state: GameState, season: Season): GameState {
     currentPhase: 'tea' as const,
     currentPlayerIndex: firstPlayerIdx >= 0 ? firstPlayerIdx : 0,
     teaTurnIndex: 0,
+    teaReadyPlayers: [],
     logHistory: archivedHistory,
     log: [`Preparación de Estación: ${({ spring: 'Primavera', summer: 'Verano', autumn: 'Otoño', winter: 'Invierno' } as Record<string, string>)[season] || season}`],
   };

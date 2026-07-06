@@ -292,6 +292,7 @@ interface GameStore {
 
   // Season Setup
   doSetupSeason: () => void;
+  doTeaReady: () => void;
 
   // Tea Ceremony
   doBreakAlliances: () => void;
@@ -1010,6 +1011,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     const ns = setupSeason(gameState, gameState.currentSeason);
     set({ gameState: ns, ...(gameState.mode === 'hotseat' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
+  },
+
+  doTeaReady: () => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState || !localPlayerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'TEA_READY', playerId: localPlayerId });
+    }
   },
 
   // --- Tea Ceremony ---

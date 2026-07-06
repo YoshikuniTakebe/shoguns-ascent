@@ -368,6 +368,8 @@ export const es: Record<TranslationKey, string> = {
 
   // Turn Popup
   'game.turnPopupAccept': 'Aceptar',
+  'game.teaReadyTitle': 'Empezar la Ceremonia del Te',
+  'game.teaReadyWaiting': '{ready}/{total} listos',
 
   // War Tokens Modal
   'warTokens.title': 'Losetas de Provincia de Guerra',

@@ -105,7 +105,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady } = useGameStore();
   const t = useT();
 
   const [isDragging, setIsDragging] = useState(false);
@@ -617,6 +617,41 @@ export const GameBoard = () => {
       {selectedRegion && !moveMode && !recruitMode && !betrayMode && !monsterPlacementMode && !buildFortressMode && (
         <RegionDetailModal regionId={selectedRegion} onClose={() => selectRegion(null)} />
       )}
+
+      {/* Tea Ready Popup (online seasonSetup) */}
+      {gameState.mode === 'online' && gameState.currentPhase === 'seasonSetup' && localPlayerId && !(gameState.teaReadyPlayers || []).includes(localPlayerId) && (() => {
+        const localPlayer = gameState.players.find(p => p.id === localPlayerId);
+        if (!localPlayer) return null;
+        const clanColor = CLANS.find(c => c.id === localPlayer.clanId)?.color;
+        return (
+          <div className="monster-placement-popup" style={{ zIndex: 1200 }}>
+            <div className="monster-placement-popup-content" style={{
+              borderColor: clanColor,
+              backgroundImage: `url(${popupBgImg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              aspectRatio: '3/2',
+              width: '500px',
+              maxWidth: '90vw',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{ marginTop: '5px', filter: 'drop-shadow(rgb(-3, 1, 20) 1px -1px 2px)' }}>
+                <ClanShield clanId={localPlayer.clanId} size={173} />
+              </div>
+              <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem', textShadow: '-1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333', marginTop: '-20px' }}>
+                {localPlayer.name}
+              </p>
+              <h4 style={{ color: '#fff', margin: '8px 0', textAlign: 'center' }}>{t('game.teaReadyTitle')}</h4>
+              <button className="monster-placement-btn" onClick={doTeaReady} style={{ fontSize: '1.02rem', padding: '0.68rem 2.12rem', marginTop: '-11px' }}>
+                {t('game.turnPopupAccept')}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Turn Popup (hotseat mandate transitions) */}
       {turnPopupPlayer && gameState.mode === 'hotseat' && !gameState.trainMandateActive && !gameState.kamiResolutionActive && gameState.currentPhase !== 'war' && (() => {

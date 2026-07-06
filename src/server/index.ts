@@ -893,6 +893,22 @@ wss.on('connection', (ws: WebSocket, req) => {
           break;
         }
 
+        case 'TEA_READY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const pid = data.playerId as string;
+          if (!pid) return;
+          if (!l.gameState.teaReadyPlayers.includes(pid)) {
+            l.gameState = { ...l.gameState, teaReadyPlayers: [...l.gameState.teaReadyPlayers, pid] };
+          }
+          // Check if all players are ready
+          if (l.gameState.teaReadyPlayers.length >= l.gameState.players.length) {
+            l.gameState = setupSeason(l.gameState, l.gameState.currentSeason);
+          }
+          broadcastState(l);
+          break;
+        }
+
         case 'RESOLVE_KAMI': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;

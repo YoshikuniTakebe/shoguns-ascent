@@ -73,10 +73,16 @@ export const ActionPanel = () => {
               <span style={{ color: seasonColor, fontWeight: 'bold', fontSize: '1.2em' }}>{t(`season.${gameState.currentSeason}` as TranslationKey)}</span>
             </div>
             <p className="phase-description">{t('actions.seasonSetupDesc')}</p>
-            {isMyTurn && (
-              <button className="btn-primary advance-btn" onClick={doSetupSeason}>
-                {t('actions.beginSeason')}
-              </button>
+            {gameState.mode === 'online' ? (
+              <p style={{ color: '#aaa', fontSize: '0.95rem', marginTop: '0.5rem' }}>
+                {t('game.teaReadyWaiting', { ready: String((gameState.teaReadyPlayers || []).length), total: String(gameState.players.length) })}
+              </p>
+            ) : (
+              isMyTurn && (
+                <button className="btn-primary advance-btn" onClick={doSetupSeason}>
+                  {t('actions.beginSeason')}
+                </button>
+              )
             )}
           </div>
         );

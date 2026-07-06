@@ -366,6 +366,8 @@ export const en = {
 
   // Turn Popup
   'game.turnPopupAccept': 'Accept',
+  'game.teaReadyTitle': 'Start the Tea Ceremony',
+  'game.teaReadyWaiting': '{ready}/{total} ready',
 
   // War Tokens Modal
   'warTokens.title': 'War Province Tokens',
