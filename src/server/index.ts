@@ -1289,10 +1289,7 @@ wss.on('connection', (ws: WebSocket, req) => {
 
           // If no winner, auto-advance
           if (!currentTemple.winnerId) {
-            let s = advanceKamiResolution(l.gameState);
-            if (!s.kamiResolutionActive) {
-              s = advancePlayer(s);
-            }
+            const s = advanceKamiResolution(l.gameState);
             l.gameState = s;
             broadcastState(l);
             break;
@@ -1310,9 +1307,6 @@ wss.on('connection', (ws: WebSocket, req) => {
 
           // Auto reward applied - advance to next temple
           s = advanceKamiResolution(s);
-          if (!s.kamiResolutionActive) {
-            s = advancePlayer(s);
-          }
           l.gameState = s;
           broadcastState(l);
           break;
@@ -1346,10 +1340,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
           const ns = { ...l.gameState, fujinMovesRemaining: 0 };
-          let s = advanceKamiResolution(ns);
-          if (!s.kamiResolutionActive) {
-            s = advancePlayer(s);
-          }
+          const s = advanceKamiResolution(ns);
           l.gameState = s;
           broadcastState(l);
           break;
@@ -1411,9 +1402,6 @@ wss.on('connection', (ws: WebSocket, req) => {
 
           let s: GameState = { ...l.gameState, raijinPlacementDone: false };
           s = advanceKamiResolution(s);
-          if (!s.kamiResolutionActive) {
-            s = advancePlayer(s);
-          }
           l.gameState = s;
           broadcastState(l);
           break;
@@ -1434,9 +1422,6 @@ wss.on('connection', (ws: WebSocket, req) => {
           let s = ryujinBuyCardFn(l.gameState, currentTemple.winnerId, cardId);
           s = { ...s, ryujinBuyActive: false };
           s = advanceKamiResolution(s);
-          if (!s.kamiResolutionActive) {
-            s = advancePlayer(s);
-          }
           l.gameState = s;
           broadcastState(l);
           break;
@@ -1454,9 +1439,6 @@ wss.on('connection', (ws: WebSocket, req) => {
             log: [...l.gameState.log, 'Recompensa de Ryujin saltada'],
           };
           s = advanceKamiResolution(s);
-          if (!s.kamiResolutionActive) {
-            s = advancePlayer(s);
-          }
           l.gameState = s;
           broadcastState(l);
           break;
