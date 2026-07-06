@@ -725,6 +725,12 @@ wss.on('connection', (ws: WebSocket, req) => {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Cannot draw mandate tiles outside of politics phase' }));
             return;
           }
+          // Validate that the requesting player is the current player
+          const currentPlayer = l.gameState.players[l.gameState.currentPlayerIndex];
+          if (currentPlayer && currentPlayer.id !== playerId) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'It is not your turn to draw mandate tiles' }));
+            return;
+          }
           l.gameState = drawMandateTiles(l.gameState);
           broadcastState(l);
           break;
@@ -888,6 +894,8 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'SETUP_SEASON': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          // In online mode, require all players to be ready before starting the season
+          if (l.gameState.mode === 'online' && l.gameState.teaReadyPlayers.length < l.gameState.players.length) return;
           l.gameState = setupSeason(l.gameState, l.gameState.currentSeason);
           broadcastState(l);
           break;
@@ -896,10 +904,9 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'TEA_READY': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
-          const pid = data.playerId as string;
-          if (!pid) return;
-          if (!l.gameState.teaReadyPlayers.includes(pid)) {
-            l.gameState = { ...l.gameState, teaReadyPlayers: [...l.gameState.teaReadyPlayers, pid] };
+          if (!playerId) return;
+          if (!l.gameState.teaReadyPlayers.includes(playerId)) {
+            l.gameState = { ...l.gameState, teaReadyPlayers: [...l.gameState.teaReadyPlayers, playerId] };
           }
           // Check if all players are ready
           if (l.gameState.teaReadyPlayers.length >= l.gameState.players.length) {

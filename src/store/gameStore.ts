@@ -407,6 +407,7 @@ interface GameStore {
 
   // Turn Popup (hotseat mandate transitions)
   turnPopupPlayer: string | null;
+  turnPopupDismissedForIndex: number | null;
   dismissTurnPopup: () => void;
 
   // Kami Phase Popup
@@ -514,6 +515,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   komainuPrayPlayerId: null,
   komainuPrayCardId: null,
   turnPopupPlayer: null,
+  turnPopupDismissedForIndex: null,
   jinmenjuSummonActive: false,
   tradeModalOpen: false,
   persistentGameId: null,
@@ -2731,7 +2733,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // --- Turn Popup (hotseat mandate transitions + online politics) ---
   dismissTurnPopup: () => {
     const { gameState, localPlayerId, ws } = get();
-    set({ turnPopupPlayer: null });
+    set({ turnPopupPlayer: null, turnPopupDismissedForIndex: gameState?.currentPlayerIndex ?? null });
     // For online politics: after dismissing turn popup, draw mandate tiles for this player
     if (ws && gameState && gameState.mode === 'online' && gameState.currentPhase === 'politics' && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && !gameState.harvestMandateActive && !gameState.trainMandateActive) {
       get().sendAction({ type: 'DRAW_MANDATE_TILES', playerId: localPlayerId });
@@ -2771,16 +2773,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
         case 'GAME_STATE': {
           const state = d.state;
           let newTurnPopup: string | null = null;
+          const { turnPopupDismissedForIndex } = get();
           if (state.mode === 'online' && state.currentPhase === 'politics') {
             const noResolution = !state.trainMandateActive && !state.marshalMandateActive && !state.recruitMandateActive && !state.betrayMandateActive && !state.harvestMandateActive;
-            const mandateResolutionActive = state.marshalMandateActive || state.recruitMandateActive || state.betrayMandateActive || state.harvestMandateActive;
             if (noResolution && state.drawnMandates.length === 0 && !state.mandateChoicePhase) {
-              newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
-            } else if (mandateResolutionActive && !state.trainMandateActive) {
-              newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
+              // Only show the popup if it wasn't already dismissed for this player's turn
+              if (turnPopupDismissedForIndex !== state.currentPlayerIndex) {
+                newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
+              }
             }
+            // During mandate resolution, don't re-show the popup - the player already dismissed it
           }
-          set({ gameState: state, turnPopupPlayer: newTurnPopup });
+          // Reset dismissed tracking when the current player index changes
+          const dismissedIdx = (turnPopupDismissedForIndex !== null && turnPopupDismissedForIndex !== state.currentPlayerIndex) ? null : turnPopupDismissedForIndex;
+          set({ gameState: state, turnPopupPlayer: newTurnPopup, turnPopupDismissedForIndex: dismissedIdx });
           break;
         }
         case 'PLAYER_ID':
