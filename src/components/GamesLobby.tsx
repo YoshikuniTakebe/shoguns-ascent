@@ -37,7 +37,7 @@ export const GamesLobby = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
   const [passwordGames, setPasswordGames] = useState<Set<string>>(new Set());
-  const [modeFilter, setModeFilter] = useState<'online' | 'hotseat'>('online');
+  const [modeFilter, setModeFilter] = useState<'online' | 'hotseat'>(authToken ? 'online' : 'hotseat');
 
   useEffect(() => {
     const fetchGames = async () => {
