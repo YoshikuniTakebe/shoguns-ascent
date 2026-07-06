@@ -88,7 +88,7 @@
 .monster-placement-btn.secondary{background:linear-gradient(135deg,#4a5568,#2d3748);color:var(--text-primary)}
 .monster-placement-btn.secondary:hover{box-shadow:0 0 12px rgba(74,85,104,0.5)}
 .monster-placement-popup-buttons{display:flex;gap:0.75rem;justify-content:center}
-.komainu-pray-overlay{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:10px;padding:0.8rem 1.5rem;z-index:900;box-shadow:0 0 20px rgba(200,169,81,0.4);animation:pulse-monster 1.5s infinite}
+.komainu-pray-overlay{position:fixed;top:auto;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:10px;padding:0.8rem 1.5rem;z-index:900;box-shadow:0 0 20px rgba(200,169,81,0.4);animation:pulse-monster 1.5s infinite}
 .komainu-pray-overlay span{color:var(--accent-gold);font-size:1rem;font-weight:bold}.komainu-target{animation:pulse-monster 1s infinite;cursor:pointer !important}
 .kami-action-overlay{display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:10px;padding:0.8rem 1.5rem;margin:0.5rem auto;max-width:700px;white-space:nowrap;box-shadow:0 0 20px rgba(200,169,81,0.4);animation:pulse-monster 1.5s infinite;z-index:50}
 .kami-action-overlay span{color:var(--accent-gold);font-size:1rem;font-weight:bold}
