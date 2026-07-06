@@ -44,13 +44,25 @@ const MANDATE_IMAGES: Record<MandateType, string> = {
  * Each mandate tile has a feudal Japanese illustration style.
  */
 export const PoliticsTrack = () => {
-  const { gameState, showTrainModal, setShowTrainModal, monsterPlacementPopupVisible, monsterPlacementMode, komainuChoiceVisible, monsterNoPlacementPopupVisible } = useGameStore();
+  const { gameState, showTrainModal, setShowTrainModal, monsterPlacementPopupVisible, monsterPlacementMode, komainuChoiceVisible, monsterNoPlacementPopupVisible, localPlayerId } = useGameStore();
   const [showSeasonCards, setShowSeasonCards] = useState(false);
 
   // Auto-open the season cards modal when trainMandateActive becomes true
+  // In online mode, only open for the current train resolution player
   useEffect(() => {
     if (gameState?.trainMandateActive) {
-      setShowSeasonCards(true);
+      if (gameState.mode === 'online') {
+        const currentResolutionPlayer = gameState.trainResolutionOrder?.[gameState.trainResolutionIndex];
+        if (currentResolutionPlayer === localPlayerId) {
+          setShowSeasonCards(true);
+        } else {
+          // Not this player's turn - close if open
+          setShowSeasonCards(false);
+        }
+      } else {
+        // Hotseat mode - keep existing behavior
+        setShowSeasonCards(true);
+      }
     } else if (gameState?.ryujinBuyActive && gameState?.kamiResolutionStep === 'interactive') {
       // Only open for Ryujin when in interactive step (not while showing popup)
       setShowSeasonCards(true);
@@ -58,7 +70,7 @@ export const PoliticsTrack = () => {
       // Auto-close when train mandate completes
       setShowSeasonCards(false);
     }
-  }, [gameState?.trainMandateActive, gameState?.ryujinBuyActive, gameState?.kamiResolutionStep]);
+  }, [gameState?.trainMandateActive, gameState?.ryujinBuyActive, gameState?.kamiResolutionStep, gameState?.trainResolutionIndex, gameState?.mode, localPlayerId]);
 
   // Close the modal when monster placement is active
   useEffect(() => {

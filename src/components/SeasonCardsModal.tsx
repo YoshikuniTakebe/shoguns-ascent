@@ -45,7 +45,7 @@ interface SeasonCardsModalProps {
 }
 
 export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
-  const { gameState, doBuySeasonCard, doSkipTrainPurchase, doRyujinBuyCard, doRyujinSkip } = useGameStore();
+  const { gameState, doBuySeasonCard, doSkipTrainPurchase, doRyujinBuyCard, doRyujinSkip, localPlayerId } = useGameStore();
   const t = useT();
   const [confirmCard, setConfirmCard] = useState<SeasonCard | null>(null);
   const [zoomedCard, setZoomedCard] = useState<SeasonCard | null>(null);
@@ -71,6 +71,12 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   const isInteractiveMode = isTrainMode || isRyujinMode;
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const currentClan = currentPlayer ? CLANS.find(c => c.id === currentPlayer.clanId) : null;
+
+  // In online train mode, check if the local player is the current resolution player
+  const isOnlineTrainMode = isTrainMode && gameState.mode === 'online';
+  const isLocalPlayerTrainTurn = isOnlineTrainMode
+    ? gameState.trainResolutionOrder?.[gameState.trainResolutionIndex] === localPlayerId
+    : true; // In hotseat, always allow interaction
 
   // In Ryujin mode, the "current player" is the kami winner
   const ryujinPlayer = isRyujinMode
@@ -172,7 +178,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   };
 
   // Show player turn indicator if in train mode and player hasn't confirmed yet (NOT for Ryujin)
-  const showPlayerIndicator = isTrainMode && !isRyujinMode && !playerConfirmed;
+  // In online mode, only show this for the local player whose turn it is
+  const showPlayerIndicator = isTrainMode && !isRyujinMode && !playerConfirmed && isLocalPlayerTrainTurn;
 
   const seasonColors: Record<string, string> = {
     spring: '#FFB7C5',
@@ -255,7 +262,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
         <div className="season-card-grid">
           {currentSeasonCards.map((card) => {
             const affordable = isInteractiveMode ? canBuyCard(card) : true;
-            const interactable = isInteractiveMode && (isRyujinMode || playerConfirmed) && affordable;
+            const interactable = isInteractiveMode && (isRyujinMode || (playerConfirmed && isLocalPlayerTrainTurn)) && affordable;
             const effectiveCost = getEffectiveCost(card);
             return (
               <div
@@ -327,8 +334,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
           })}
         </div>
 
-        {/* Skip purchase button - visible in train mode when player has confirmed, or in ryujin mode */}
-        {((isTrainMode && playerConfirmed) || isRyujinMode) && (
+        {/* Skip purchase button - visible in train mode when player has confirmed and it's their turn, or in ryujin mode */}
+        {((isTrainMode && playerConfirmed && isLocalPlayerTrainTurn) || isRyujinMode) && (
           <div style={{ textAlign: 'center', marginTop: '16px', paddingBottom: '12px' }}>
             <button
               className="btn-secondary"

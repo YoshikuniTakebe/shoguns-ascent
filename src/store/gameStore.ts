@@ -2799,6 +2799,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           let newTurnPopup: string | null = null;
           const { turnPopupDismissedForIndex, localPlayerId: lpId } = get();
           const prevPlayerIndex = get().gameState?.currentPlayerIndex;
+          const prevTrainResolutionIndex = get().gameState?.trainResolutionIndex;
           if (state.mode === 'online' && state.currentPhase === 'politics') {
             const noResolution = !state.trainMandateActive && !state.marshalMandateActive && !state.recruitMandateActive && !state.betrayMandateActive && !state.harvestMandateActive;
             if (noResolution && state.drawnMandates.length === 0 && !state.mandateChoicePhase) {
@@ -2807,9 +2808,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
               }
             }
-            // During mandate resolution (except harvest which has its own popup), show turn popup when currentPlayerIndex changes
-            const mandateActive = state.trainMandateActive || state.marshalMandateActive || state.recruitMandateActive || state.betrayMandateActive;
-            if (mandateActive && prevPlayerIndex !== undefined && prevPlayerIndex !== null && state.currentPlayerIndex !== prevPlayerIndex) {
+            // During train mandate resolution: show turn popup when trainResolutionIndex changes and it's the local player's turn
+            if (state.trainMandateActive) {
+              const currentTrainPlayer = state.trainResolutionOrder?.[state.trainResolutionIndex];
+              if (currentTrainPlayer === lpId) {
+                // Show popup if trainResolutionIndex changed or if this is the first broadcast with trainMandateActive
+                if (prevTrainResolutionIndex !== undefined && prevTrainResolutionIndex !== null && state.trainResolutionIndex !== prevTrainResolutionIndex) {
+                  newTurnPopup = lpId;
+                } else if (prevPlayerIndex !== undefined && prevPlayerIndex !== null && state.currentPlayerIndex !== prevPlayerIndex) {
+                  newTurnPopup = lpId;
+                }
+              }
+            }
+            // During other mandate resolution (marshal, recruit, betray), show turn popup when currentPlayerIndex changes
+            const otherMandateActive = state.marshalMandateActive || state.recruitMandateActive || state.betrayMandateActive;
+            if (otherMandateActive && prevPlayerIndex !== undefined && prevPlayerIndex !== null && state.currentPlayerIndex !== prevPlayerIndex) {
               const newCurrentPlayerId = state.players[state.currentPlayerIndex]?.id;
               if (newCurrentPlayerId && newCurrentPlayerId === lpId) {
                 newTurnPopup = newCurrentPlayerId;

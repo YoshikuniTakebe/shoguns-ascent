@@ -987,6 +987,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const { cardId } = data.payload || {};
           if (!cardId) return;
+          // Validate that the player is the current train resolution player
+          if (l.gameState.trainMandateActive) {
+            const expectedPlayer = l.gameState.trainResolutionOrder[l.gameState.trainResolutionIndex];
+            if (data.playerId !== expectedPlayer) return;
+          }
           let s = buySeasonCard(l.gameState, data.playerId, cardId);
           // Check if the bought card is a monster
           const boughtCard = s.players.find(p => p.id === data.playerId)?.seasonCards.find(c => c.id === cardId);
@@ -1118,6 +1123,11 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'SKIP_TRAIN_PURCHASE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          // Validate that the player is the current train resolution player
+          if (l.gameState.trainMandateActive) {
+            const expectedPlayer = l.gameState.trainResolutionOrder[l.gameState.trainResolutionIndex];
+            if (data.playerId !== expectedPlayer) return;
+          }
           let s = skipTrainPurchase(l.gameState);
           if (!s.trainMandateActive) {
             s = advancePlayer(s);
