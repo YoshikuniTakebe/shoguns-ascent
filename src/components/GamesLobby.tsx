@@ -37,6 +37,7 @@ export const GamesLobby = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
   const [passwordGames, setPasswordGames] = useState<Set<string>>(new Set());
+  const [modeFilter, setModeFilter] = useState<'online' | 'hotseat'>('online');
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -409,15 +410,42 @@ export const GamesLobby = () => {
         <div className="games-lobby-purge-result">{purgeResult}</div>
       )}
 
+      {/* Mode filter toggle */}
+      <div className="games-lobby-mode-filter">
+        <button
+          className={`games-lobby-mode-filter-btn ${modeFilter === 'online' ? 'active' : ''}`}
+          onClick={() => setModeFilter('online')}
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <ellipse cx="12" cy="12" rx="4.5" ry="10" />
+            <path d="M2 12h20" />
+          </svg>
+          {t('game.modeOnline')}
+        </button>
+        <button
+          className={`games-lobby-mode-filter-btn ${modeFilter === 'hotseat' ? 'active' : ''}`}
+          onClick={() => setModeFilter('hotseat')}
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <circle cx="8" cy="7" r="3" />
+            <circle cx="16" cy="7" r="3" />
+            <path d="M2 19c0-3 2.5-5 6-5s6 2 6 5" opacity="0.7" />
+            <path d="M10 19c0-3 2.5-5 6-5s6 2 6 5" opacity="0.7" />
+          </svg>
+          {t('game.modeHotseat')}
+        </button>
+      </div>
+
       {/* Your Turn section */}
-      {yourTurnGames.length > 0 && (
+      {yourTurnGames.filter(g => g.mode === modeFilter).length > 0 && (
         <div className="games-lobby-section games-lobby-section-your-turn">
           <h2 className="games-lobby-section-title games-lobby-section-title-your-turn">
             {t('lobby.yourTurn')}
-            <span className="games-lobby-section-count">{yourTurnGames.length}</span>
+            <span className="games-lobby-section-count">{yourTurnGames.filter(g => g.mode === modeFilter).length}</span>
           </h2>
           <div className="games-lobby-grid">
-            {yourTurnGames.map(g => renderGameCard(g, 'your-turn'))}
+            {yourTurnGames.filter(g => g.mode === modeFilter).map(g => renderGameCard(g, 'your-turn'))}
           </div>
         </div>
       )}
@@ -426,13 +454,13 @@ export const GamesLobby = () => {
       <div className="games-lobby-section">
         <h2 className="games-lobby-section-title">
           {t('lobby.waiting')}
-          {waitingGames.length > 0 && <span className="games-lobby-section-count">{waitingGames.length}</span>}
+          {waitingGames.filter(g => g.mode === modeFilter).length > 0 && <span className="games-lobby-section-count">{waitingGames.filter(g => g.mode === modeFilter).length}</span>}
         </h2>
-        {waitingGames.length === 0 ? (
+        {waitingGames.filter(g => g.mode === modeFilter).length === 0 ? (
           <p className="games-lobby-empty">{t('lobby.noGamesYet')}</p>
         ) : (
           <div className="games-lobby-grid">
-            {waitingGames.map(g => renderGameCard(g, 'waiting'))}
+            {waitingGames.filter(g => g.mode === modeFilter).map(g => renderGameCard(g, 'waiting'))}
           </div>
         )}
       </div>
@@ -441,13 +469,13 @@ export const GamesLobby = () => {
       <div className="games-lobby-section">
         <h2 className="games-lobby-section-title">
           {t('lobby.finishedGames')}
-          {finishedGames.length > 0 && <span className="games-lobby-section-count">{finishedGames.length}</span>}
+          {finishedGames.filter(g => g.mode === modeFilter).length > 0 && <span className="games-lobby-section-count">{finishedGames.filter(g => g.mode === modeFilter).length}</span>}
         </h2>
-        {finishedGames.length === 0 ? (
+        {finishedGames.filter(g => g.mode === modeFilter).length === 0 ? (
           <p className="games-lobby-empty">{t('lobby.noFinishedGames')}</p>
         ) : (
           <div className="games-lobby-grid">
-            {finishedGames.map(g => renderGameCard(g, 'finished'))}
+            {finishedGames.filter(g => g.mode === modeFilter).map(g => renderGameCard(g, 'finished'))}
           </div>
         )}
       </div>

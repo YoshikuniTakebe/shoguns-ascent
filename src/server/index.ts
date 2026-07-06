@@ -746,8 +746,14 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const mandate = data.payload?.mandate;
           if (!mandate) return;
-          let s = chooseMandateTile(l.gameState, mandate, data.playerId);
-          if (!s.betrayMandateActive && !s.trainMandateActive && !s.marshalMandateActive && !s.recruitMandateActive && !s.harvestMandateActive) {
+          // Validate that the requesting player is the current player
+          const choosingPlayer = l.gameState.players[l.gameState.currentPlayerIndex];
+          if (choosingPlayer && choosingPlayer.id !== playerId) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'It is not your turn to choose a mandate' }));
+            return;
+          }
+          let s = chooseMandateTile(l.gameState, mandate, playerId);
+          if (!s.lotoChoicePhase && !s.betrayMandateActive && !s.trainMandateActive && !s.marshalMandateActive && !s.recruitMandateActive && !s.harvestMandateActive) {
             s = advancePlayer(s);
           }
           l.gameState = s;

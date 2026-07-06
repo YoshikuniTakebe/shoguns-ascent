@@ -625,7 +625,7 @@ export const GameBoard = () => {
         const clanColor = CLANS.find(c => c.id === localPlayer.clanId)?.color;
         return (
           <div className="monster-placement-popup" style={{ zIndex: 1200 }}>
-            <div className="monster-placement-popup-content" style={{
+            <div className="tea-ready-popup-content" style={{
               borderColor: clanColor,
               backgroundImage: `url(${popupBgImg})`,
               backgroundSize: 'cover',

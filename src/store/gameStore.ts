@@ -870,7 +870,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       if (persistentGameId) {
         await get().saveSnapshot();
-      } else if (gameState) {
+      } else if (gameState && gameState.mode === 'hotseat') {
         const res = await fetch(`${API_BASE}/api/games/save-hotseat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1097,8 +1097,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws } = get();
     if (!gameState) return;
     if (gameState.currentPhase !== 'politics') return;
-    if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'DRAW_MANDATE_TILES', playerId: get().localPlayerId });
+    if (gameState.mode === 'online') {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        get().sendAction({ type: 'DRAW_MANDATE_TILES', playerId: get().localPlayerId });
+      }
       return;
     }
     set({ gameState: drawMandateTiles(gameState) });
@@ -1109,8 +1111,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const cp = getCurrentPlayer(gameState);
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid || gameState.currentPhase !== 'politics') return;
-    if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'CHOOSE_MANDATE', playerId: apid, payload: { mandate } });
+    if (gameState.mode === 'online') {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        get().sendAction({ type: 'CHOOSE_MANDATE', playerId: apid, payload: { mandate } });
+      }
       return;
     }
     const ns = chooseMandateTile(gameState, mandate, apid);
@@ -1137,8 +1141,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const cp = getCurrentPlayer(gameState);
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid || gameState.currentPhase !== 'politics') return;
-    if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'LOTO_CHOOSE_ACTUAL_MANDATE', playerId: apid, payload: { mandate } });
+    if (gameState.mode === 'online') {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        get().sendAction({ type: 'LOTO_CHOOSE_ACTUAL_MANDATE', playerId: apid, payload: { mandate } });
+      }
       return;
     }
     const ns = lotoChooseActualMandate(gameState, mandate, apid);
@@ -2816,7 +2822,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           set({ lobbyState: d.lobby });
           break;
         case 'GAME_START':
-          set({ gameState: d.state, screen: 'game', turnPopupPlayer: null, turnPopupDismissedForIndex: null });
+          set({ gameState: d.state, screen: 'game', turnPopupPlayer: null, turnPopupDismissedForIndex: null, persistentGameId: d.state?.id || null });
           break;
         case 'LOBBY_CLOSED':
           set({ lobbyState: null, lobbyId: null, screen: 'menu' });

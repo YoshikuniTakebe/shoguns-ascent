@@ -80,7 +80,9 @@
 @keyframes pulse-monster{0%,100%{box-shadow:0 0 15px rgba(218,165,32,0.3)}50%{box-shadow:0 0 25px rgba(218,165,32,0.7)}}
 .monster-placement-popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:1000}
 .monster-placement-popup-content{background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:12px;padding:1.5rem 2rem;text-align:center;max-width:400px;box-shadow:0 0 30px rgba(200,169,81,0.3)}
-.monster-placement-popup-content p{color:var(--text-primary);font-size:1rem;margin-bottom:0;line-height:1.4}
+.tea-ready-popup-content{background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:12px;padding:1.5rem 2rem;text-align:center;max-width:400px;box-shadow:0 0 30px rgba(200,169,81,0.3)}
+.monster-placement-popup-content p{color:var(--text-primary);font-size:1rem;margin-bottom:1.4rem;line-height:1.4}
+.tea-ready-popup-content p{color:var(--text-primary);font-size:1rem;margin-bottom:0;line-height:1.4}
 .monster-placement-btn{background:linear-gradient(135deg,#DAA520,#B8860B);color:#1a1a2e;border:none;padding:0.6rem 1.5rem;border-radius:6px;font-weight:bold;font-size:0.9rem;cursor:pointer;transition:all 0.2s}
 .monster-placement-btn:hover{transform:scale(1.05);box-shadow:0 0 12px rgba(218,165,32,0.5)}
 .monster-placement-btn.secondary{background:linear-gradient(135deg,#4a5568,#2d3748);color:var(--text-primary)}
@@ -356,7 +358,13 @@
 .games-lobby-user-name strong{color:var(--accent-gold)}
 .games-lobby-logout-btn{background:rgba(233,69,96,0.15);border:1px solid var(--accent-red);color:var(--accent-red);padding:0.3rem 0.7rem;border-radius:4px;font-size:0.75rem;cursor:pointer;transition:all 0.2s}
 .games-lobby-logout-btn:hover{background:rgba(233,69,96,0.3);box-shadow:0 0 8px rgba(233,69,96,0.3)}
-.games-lobby-actions{display:flex;gap:1rem;margin-bottom:2rem;width:100%;max-width:1100px}
+.games-lobby-actions{display:flex;gap:1rem;margin-bottom:1rem;width:100%;max-width:1100px}
+.games-lobby-mode-filter{display:flex;gap:0;margin-bottom:2rem;width:100%;max-width:1100px}
+.games-lobby-mode-filter-btn{display:flex;align-items:center;gap:0.4rem;padding:0.5rem 1.2rem;border:1px solid var(--border-gold);background:rgba(15,52,96,0.2);color:var(--text-secondary);font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+.games-lobby-mode-filter-btn:first-child{border-radius:6px 0 0 6px;border-right:none}
+.games-lobby-mode-filter-btn:last-child{border-radius:0 6px 6px 0}
+.games-lobby-mode-filter-btn.active{background:linear-gradient(135deg,rgba(200,169,81,0.25),rgba(200,169,81,0.1));color:var(--accent-gold);border-color:var(--accent-gold)}
+.games-lobby-mode-filter-btn:hover:not(.active){background:rgba(200,169,81,0.08);color:var(--accent-cream)}
 .games-lobby-create-btn,.games-lobby-join-btn{padding:0.6rem 1.5rem;border-radius:6px;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;border:1px solid var(--border-gold)}
 .games-lobby-create-btn{background:linear-gradient(135deg,rgba(200,169,81,0.2),rgba(200,169,81,0.05));color:var(--accent-gold)}
 .games-lobby-create-btn:hover{background:linear-gradient(135deg,rgba(200,169,81,0.35),rgba(200,169,81,0.15));box-shadow:0 0 12px rgba(200,169,81,0.3)}
