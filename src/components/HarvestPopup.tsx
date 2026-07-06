@@ -11,7 +11,7 @@ export const HarvestPopup = () => {
   const t = useT();
 
   // Track whether the initial "all players received" popup has been dismissed for each player
-  // Key: playerId whose coin popup has been confirmed
+  // Key: playerId whose coin popup has been confirmed (used in hotseat mode only)
   const [coinConfirmedForPlayer, setCoinConfirmedForPlayer] = useState<string | null>(null);
 
   // Reset when harvestMandateActive changes (new harvest cycle)
@@ -28,9 +28,6 @@ export const HarvestPopup = () => {
 
   const isOnline = gameState.mode === 'online';
   const currentAcknowledgingPlayerId = gameState.harvestCurrentPlayerId;
-
-  // Determine if the current coin popup has been shown for the current player
-  const coinPopupShownForCurrentPlayer = coinConfirmedForPlayer === currentAcknowledgingPlayerId;
 
   // In online mode: if the local player is NOT the current acknowledging player, show waiting message
   if (isOnline && currentAcknowledgingPlayerId && currentAcknowledgingPlayerId !== localPlayerId) {
@@ -49,10 +46,10 @@ export const HarvestPopup = () => {
   }
 
   // Show the initial confirmation popup before province rewards for the current player
-  // In online mode: show per-player (keyed by harvestCurrentPlayerId)
-  // In hotseat mode: show once at the beginning (index 0)
+  // In online mode: use server-driven harvestCoinAcknowledged field
+  // In hotseat mode: use local coinConfirmedForPlayer state
   const shouldShowCoinPopup = isOnline
-    ? !coinPopupShownForCurrentPlayer
+    ? !gameState.harvestCoinAcknowledged
     : gameState.harvestResolutionIndex === 0 && coinConfirmedForPlayer === null;
 
   if (shouldShowCoinPopup) {
@@ -73,7 +70,13 @@ export const HarvestPopup = () => {
             </div>
           </div>
           <button className="btn-primary harvest-popup-btn" onClick={() => {
-            setCoinConfirmedForPlayer(currentAcknowledgingPlayerId || '__hotseat__');
+            if (isOnline) {
+              // In online mode, send acknowledgment to server
+              doAcknowledgeHarvest();
+            } else {
+              // In hotseat mode, just track locally
+              setCoinConfirmedForPlayer(currentAcknowledgingPlayerId || '__hotseat__');
+            }
           }}>
             {t('harvest.accept')}
           </button>

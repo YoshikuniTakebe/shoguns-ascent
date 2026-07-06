@@ -257,6 +257,8 @@ export function createInitialGameState(
     harvestPlayerRewards: [],
     harvestPopupVisible: false,
     harvestCurrentPlayerId: null,
+    harvestAllPlayersOrder: [],
+    harvestCoinAcknowledged: false,
     kamiResolutionActive: false,
     kamiResolutionTemples: [],
     kamiResolutionIndex: 0,
@@ -1144,19 +1146,30 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
     }
   });
 
-  // If there are rewards to show, set up interactive popup flow
-  if (harvestPlayerRewards.length > 0) {
-    // Reorder rewards grouped by player in seat/turn order
-    const orderedRewards: typeof harvestPlayerRewards = [];
-    for (const playerId of newState.turnOrder) {
-      const playerRewards = harvestPlayerRewards.filter(r => r.playerId === playerId);
-      orderedRewards.push(...playerRewards);
-    }
-    // Add any rewards for players not in turnOrder (edge case)
-    const inTurnOrder = new Set(newState.turnOrder);
-    const remaining = harvestPlayerRewards.filter(r => !inTurnOrder.has(r.playerId));
-    orderedRewards.push(...remaining);
+  // Reorder province rewards grouped by player in seat/turn order
+  const orderedRewards: typeof harvestPlayerRewards = [];
+  for (const playerId of newState.turnOrder) {
+    const playerRewards = harvestPlayerRewards.filter(r => r.playerId === playerId);
+    orderedRewards.push(...playerRewards);
+  }
+  // Add any rewards for players not in turnOrder (edge case)
+  const inTurnOrder = new Set(newState.turnOrder);
+  const remaining = harvestPlayerRewards.filter(r => !inTurnOrder.has(r.playerId));
+  orderedRewards.push(...remaining);
 
+  // In online mode: ALWAYS set up interactive flow for ALL players so each sees the +1 coin popup.
+  // In hotseat mode: only set up the flow if there are province rewards (coin popup is shown locally).
+  if (newState.mode === 'online') {
+    newState.harvestMandateActive = true;
+    newState.harvestResolutionOrder = orderedRewards.map(r => r.playerId);
+    newState.harvestResolutionIndex = 0;
+    newState.harvestPlayerRewards = orderedRewards;
+    newState.harvestPopupVisible = true;
+    newState.harvestAllPlayersOrder = [...newState.turnOrder];
+    newState.harvestCurrentPlayerId = newState.turnOrder[0];
+    newState.harvestCoinAcknowledged = false;
+  } else if (orderedRewards.length > 0) {
+    // Hotseat: only show popup if there are province rewards
     newState.harvestMandateActive = true;
     newState.harvestResolutionOrder = orderedRewards.map(r => r.playerId);
     newState.harvestResolutionIndex = 0;
@@ -1164,6 +1177,7 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
     newState.harvestPopupVisible = true;
     newState.harvestCurrentPlayerId = orderedRewards[0].playerId;
   } else {
+    // Hotseat with no province rewards
     if (harvesters.length > 1) {
       const allyPlayer = newState.players.find((p) => p.id === issuer.allies[0]);
       newState.log = [...newState.log, `Cosecha resuelta para ${issuer.name} y aliado ${allyPlayer?.name ?? ''}`];
@@ -1178,9 +1192,79 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
 /**
  * Advance harvest resolution: grant rewards for the current harvest entry and move to next.
  * When all entries are processed, clear harvest state.
+ * 
+ * In online mode with harvestAllPlayersOrder set, the flow is:
+ * 1. Each player first acknowledges the base +1 coin (harvestCoinAcknowledged = false -> true)
+ * 2. Then their province rewards are shown one by one (if any)
+ * 3. Then the next player in harvestAllPlayersOrder takes their turn
  */
 export function advanceHarvestResolution(state: GameState): GameState {
   const newState: GameState = { ...state, players: state.players.map((p) => ({ ...p })), log: [...state.log] };
+
+  // Online mode with all-players flow
+  if (newState.harvestAllPlayersOrder.length > 0) {
+    const currentPlayerId = newState.harvestCurrentPlayerId;
+
+    if (!newState.harvestCoinAcknowledged) {
+      // Player just acknowledged the base +1 coin popup
+      newState.harvestCoinAcknowledged = true;
+
+      // Check if this player has province rewards
+      const playerRewards = newState.harvestPlayerRewards.filter(r => r.playerId === currentPlayerId);
+      if (playerRewards.length > 0) {
+        // Find the first reward index for this player in the ordered list
+        const firstIdx = newState.harvestPlayerRewards.findIndex(r => r.playerId === currentPlayerId);
+        newState.harvestResolutionIndex = firstIdx;
+        // Stay on this player to show province rewards
+        return newState;
+      } else {
+        // No province rewards - advance to next player
+        return advanceToNextHarvestPlayer(newState);
+      }
+    } else {
+      // Player is acknowledging a province reward
+      const idx = newState.harvestResolutionIndex;
+      const entry = newState.harvestPlayerRewards[idx];
+
+      if (entry) {
+        const player = newState.players.find((p) => p.id === entry.playerId);
+        if (player) {
+          const rewards = entry.rewards;
+          if (rewards.vp) player.victoryPoints += rewards.vp;
+          if (rewards.coins) player.coins += rewards.coins;
+          if (rewards.ronin) player.ronin += rewards.ronin;
+          if (rewards.honor) {
+            const currentIdx = newState.honorTrack.indexOf(player.id);
+            if (currentIdx > 0) {
+              newState.honorTrack = [...newState.honorTrack];
+              newState.honorTrack.splice(currentIdx, 1);
+              newState.honorTrack.splice(currentIdx - 1, 0, player.id);
+            }
+          }
+          const provinceName = newState.provinces[entry.provinceId]?.name || entry.provinceId;
+          const rewardParts: string[] = [];
+          if (rewards.vp) rewardParts.push(`${rewards.vp} PV`);
+          if (rewards.coins) rewardParts.push(`${rewards.coins} monedas`);
+          if (rewards.ronin) rewardParts.push(`${rewards.ronin} ronin`);
+          if (rewards.honor) rewardParts.push(`${rewards.honor} honor`);
+          newState.log = [...newState.log, `${player.name} obtiene recompensa de ${provinceName}: ${rewardParts.join(', ')}`];
+        }
+      }
+
+      // Check if there are more province rewards for the current player
+      const nextIdx = idx + 1;
+      if (nextIdx < newState.harvestPlayerRewards.length && newState.harvestPlayerRewards[nextIdx].playerId === currentPlayerId) {
+        // More rewards for same player
+        newState.harvestResolutionIndex = nextIdx;
+        return newState;
+      } else {
+        // No more rewards for this player - advance to next player
+        return advanceToNextHarvestPlayer(newState);
+      }
+    }
+  }
+
+  // Hotseat / legacy mode: original logic (iterate through harvestPlayerRewards)
   const idx = newState.harvestResolutionIndex;
   const entry = newState.harvestPlayerRewards[idx];
 
@@ -1219,6 +1303,8 @@ export function advanceHarvestResolution(state: GameState): GameState {
     newState.harvestPlayerRewards = [];
     newState.harvestPopupVisible = false;
     newState.harvestCurrentPlayerId = null;
+    newState.harvestAllPlayersOrder = [];
+    newState.harvestCoinAcknowledged = false;
   } else {
     newState.harvestResolutionIndex = nextIdx;
     newState.harvestPopupVisible = true;
@@ -1230,6 +1316,35 @@ export function advanceHarvestResolution(state: GameState): GameState {
   }
 
   return newState;
+}
+
+/**
+ * Helper: advance to the next player in harvestAllPlayersOrder.
+ * If no more players, clear harvest state.
+ */
+function advanceToNextHarvestPlayer(state: GameState): GameState {
+  const currentPlayerId = state.harvestCurrentPlayerId;
+  const currentIdx = state.harvestAllPlayersOrder.indexOf(currentPlayerId || '');
+  const nextPlayerIdx = currentIdx + 1;
+
+  if (nextPlayerIdx >= state.harvestAllPlayersOrder.length) {
+    // All players have been processed - clear harvest state
+    state.harvestMandateActive = false;
+    state.harvestResolutionOrder = [];
+    state.harvestResolutionIndex = 0;
+    state.harvestPlayerRewards = [];
+    state.harvestPopupVisible = false;
+    state.harvestCurrentPlayerId = null;
+    state.harvestAllPlayersOrder = [];
+    state.harvestCoinAcknowledged = false;
+  } else {
+    // Move to next player
+    state.harvestCurrentPlayerId = state.harvestAllPlayersOrder[nextPlayerIdx];
+    state.harvestCoinAcknowledged = false;
+    state.harvestPopupVisible = true;
+  }
+
+  return state;
 }
 
 function executeBetray(state: GameState, issuerId: string): GameState {
