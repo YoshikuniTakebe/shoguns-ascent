@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Implement the correct online War Phase flow with ready-checks: (1) Zorro places bushis first (server handler needed), (2) War summary popup with ready-check (all players must accept before continuing), (3) Sequential battles with proper acknowledgment flow - no battle provinces show 'turno de' popup to relevant player, allied players see who wins by force with both accepting, real battles have simultaneous bidding, (4) War phase summary as a modal popup (not sidebar) with ready-check.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Step 1 - Add warPhaseReadyPlayers to GameState type in src/types/game.ts. Add it to the GameState interface and initialize it as empty array in createInitialGameState in gameLogic.ts.",
     "Step 2 - Add server handlers for Zorro placement online: In src/server/index.ts add 'ZORRO_PLACE_BUSHI' handler (validates placement, places bushi in province, decrements remaining, broadcasts) and 'ZORRO_SKIP_PLACEMENT' handler (ends zorro placement, updates battle participants, broadcasts). Follow the pattern of the existing doZorroPlaceBushi/doZorroSkipPlacement logic in gameStore.ts.",
@@ -29,5 +29,5 @@
     "Run npm run build and confirm it passes"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implemented successfully. Added server handlers for Zorro placement, war phase ready-check, battle result acceptance, and war summary ready-check. Updated store to send server messages in online mode. Added GAME_STATE handler detection for war phase transitions. Added war summary popup as a portal modal. Both hotseat and online flows show the war summary popup after all battles. Build passes cleanly."
 }
