@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Fix HARVEST bug: Implement per-player sequential harvest flow for online mode. Each player goes through ALL their rewards one by one (including the initial coin popup), then the next player in seat order does the same. Only the currently-acknowledging player can see and dismiss the popups. Other players wait.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/types/game.ts GameState interface: Add a new field `harvestCurrentPlayerId?: string | null` - tracks which player is currently acknowledging their rewards in online mode.",
     "2. In src/utils/gameLogic.ts executeHarvest function (~line 1013): After computing harvestPlayerRewards, reorder them to be grouped by player in seat order (turnOrder). Currently rewards are ordered by province. Regroup: for each player in turnOrder, collect all their rewards in sequence. Set harvestCurrentPlayerId to the first player who has rewards.",
@@ -29,5 +29,5 @@
     "npx vite build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implemented per-player sequential harvest flow. Rewards are grouped by player in turnOrder. harvestCurrentPlayerId tracks whose turn it is. Server validates only that player can acknowledge. HarvestPopup shows waiting message to non-active players and per-player coin popup at the start of each player sequence. Province name was already displayed in existing code. The hotseat mode still works with the original flow (single coin popup at index 0)."
 }
