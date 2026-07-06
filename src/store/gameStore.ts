@@ -426,6 +426,10 @@ interface GameStore {
   undoMandateState: GameState | null;
   doUndoMandate: () => void;
 
+  // Marshal pending moves/fortresses for online buffering
+  marshalPendingMoves: { fromProvinceId: string; toProvinceId: string; figureIds: string[] }[];
+  marshalPendingFortresses: { provinceId: string }[];
+
   // Map peek during bidding
   biddingMapPeek: boolean;
   setBiddingMapPeek: (v: boolean) => void;
@@ -837,6 +841,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   undoMandateState: null,
+  marshalPendingMoves: [],
+  marshalPendingFortresses: [],
   doUndoMandate: () => {
     const { undoMandateState } = get();
     if (!undoMandateState) return;
@@ -851,6 +857,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       betrayMonsterSelectionVisible: false,
       betrayMonsterSelectionProvinceId: null,
       betrayMonsterSelectionFigureId: null,
+      marshalPendingMoves: [],
+      marshalPendingFortresses: [],
     });
   },
   kamiPhasePopupVisible: false,
@@ -1324,7 +1332,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws } = get();
     if (!gameState) return;
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'SKIP_MARSHAL_TURN', playerId: get().localPlayerId });
+      const { marshalPendingMoves, marshalPendingFortresses } = get();
+      get().sendAction({
+        type: 'SKIP_MARSHAL_TURN',
+        playerId: get().localPlayerId,
+        payload: { moves: marshalPendingMoves, fortresses: marshalPendingFortresses },
+      });
+      set({ marshalPendingMoves: [], marshalPendingFortresses: [], undoMandateState: null, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false });
       return;
     }
     let ns = skipMarshalTurn(gameState);
@@ -1351,6 +1365,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
     if (ws && gameState.mode === 'online') {
+      // During marshal mandate, apply fortress locally instead of sending to server
+      if (gameState.marshalMandateActive) {
+        const ns = buildFortress(gameState, apid, provinceId);
+        set({ gameState: ns, buildFortressMode: false, marshalPendingFortresses: [...get().marshalPendingFortresses, { provinceId }] });
+        return;
+      }
       get().sendAction({ type: 'BUILD_FORTRESS', playerId: apid, payload: { provinceId } });
       set({ buildFortressMode: false });
       return;
@@ -2825,6 +2845,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     if (ws && gameState.mode === 'online') {
+      // During marshal mandate, apply moves locally instead of sending to server
+      if (gameState.marshalMandateActive) {
+        const ns = moveForces(gameState, apid, fromProvinceId, toProvinceId, figureIds);
+        if (ns.marshalMandateActive) {
+          set({ gameState: ns, moveFrom: null, selectedFigures: [], marshalPendingMoves: [...get().marshalPendingMoves, { fromProvinceId, toProvinceId, figureIds }] });
+        } else {
+          set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [], marshalPendingMoves: [...get().marshalPendingMoves, { fromProvinceId, toProvinceId, figureIds }] });
+        }
+        return;
+      }
       get().sendAction({ type: 'MOVE_FIGURE', playerId: apid, payload: { fromProvinceId, toProvinceId, figureIds } });
       return;
     }
@@ -2958,9 +2988,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
               uiResets.moveFrom = null;
               uiResets.selectedFigures = [];
               uiResets.buildFortressMode = false;
+              uiResets.undoMandateState = null;
+              uiResets.marshalPendingMoves = [];
+              uiResets.marshalPendingFortresses = [];
             }
             if (!state.betrayMandateActive) {
               uiResets.betrayMode = false;
+            }
+          }
+
+          // For online marshal: save undoMandateState when it's this player's marshal turn
+          // Only set when we receive a fresh state from the server (not from local modifications)
+          if (state.mode === 'online' && state.marshalMandateActive && lpId) {
+            const currentMarshalPlayerId = state.marshalResolutionOrder?.[state.marshalResolutionIndex];
+            if (currentMarshalPlayerId === lpId) {
+              // Only set undoMandateState if we don't already have one (avoid overwriting during local moves)
+              const existingUndo = get().undoMandateState;
+              if (!existingUndo) {
+                uiResets.undoMandateState = JSON.parse(JSON.stringify(state));
+                uiResets.marshalPendingMoves = [];
+                uiResets.marshalPendingFortresses = [];
+              }
             }
           }
 
@@ -2969,7 +3017,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
           const monsterPlacementInProgress = !!(currentMonsterCard || currentMonsterMode || currentKomainuPray || currentMonsterPopup || currentKomainuChoice || currentNoPlacementPopup);
           const finalTurnPopup = monsterPlacementInProgress ? null : newTurnPopup;
 
-          set({ gameState: state, turnPopupPlayer: finalTurnPopup, turnPopupDismissedForIndex: dismissedIdx, ...uiResets });
+          // During online marshal, if local player has pending moves/fortresses, don't overwrite local state with server state
+          const suppressGameStateUpdate = state.mode === 'online' && state.marshalMandateActive && lpId &&
+            state.marshalResolutionOrder?.[state.marshalResolutionIndex] === lpId &&
+            get().undoMandateState !== null && (get().marshalPendingMoves.length > 0 || get().marshalPendingFortresses.length > 0);
+
+          if (suppressGameStateUpdate) {
+            // Keep local gameState (with pending moves applied), only update non-gameState fields
+            set({ turnPopupPlayer: finalTurnPopup, turnPopupDismissedForIndex: dismissedIdx, ...uiResets });
+          } else {
+            set({ gameState: state, turnPopupPlayer: finalTurnPopup, turnPopupDismissedForIndex: dismissedIdx, ...uiResets });
+          }
           break;
         }
         case 'PLAYER_ID':

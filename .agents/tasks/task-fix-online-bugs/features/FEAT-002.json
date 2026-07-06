@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix MARSHAL bug: In online mode, moves are sent immediately to server with no undo capability. The fix: buffer moves locally during marshal mandate, provide undo (revert to state at turn start), and only commit to server when Terminar (end turn) is clicked. Same for fortress building - buffer locally, include in undo scope.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "1. In src/store/gameStore.ts GAME_STATE handler (~line 2797): When receiving a state where marshalMandateActive=true and the current marshal resolution player is the localPlayer, save undoMandateState as a deep copy of the received state. This gives us the 'start of marshal turn' snapshot for undo. Add this logic: check if state.marshalMandateActive && marshalResolutionOrder[marshalResolutionIndex] === localPlayerId, then set undoMandateState to JSON.parse(JSON.stringify(state)).",
     "2. In src/store/gameStore.ts doMoveForces (~line 2705): For online mode during marshalMandateActive, do NOT send MOVE_FIGURE to server. Instead, apply moveForces() locally (same as hotseat path). Remove the early return for online mode when marshalMandateActive is true. The existing hotseat logic after the early-return already does `const ns = moveForces(...)` and sets state - this will now also apply to online marshal.",

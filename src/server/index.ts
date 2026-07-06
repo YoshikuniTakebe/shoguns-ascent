@@ -1091,7 +1091,26 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'SKIP_MARSHAL_TURN': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
-          let s = skipMarshalTurn(l.gameState);
+          let s = l.gameState;
+
+          // Replay buffered moves and fortresses from the client payload
+          const { moves, fortresses } = data.payload || {};
+          if (moves && Array.isArray(moves)) {
+            for (const move of moves) {
+              if (move.fromProvinceId && move.toProvinceId && move.figureIds) {
+                s = moveForces(s, data.playerId, move.fromProvinceId, move.toProvinceId, move.figureIds);
+              }
+            }
+          }
+          if (fortresses && Array.isArray(fortresses)) {
+            for (const fort of fortresses) {
+              if (fort.provinceId) {
+                s = buildFortress(s, data.playerId, fort.provinceId);
+              }
+            }
+          }
+
+          s = skipMarshalTurn(s);
           if (!s.marshalMandateActive) {
             s = advancePlayer(s);
           }
