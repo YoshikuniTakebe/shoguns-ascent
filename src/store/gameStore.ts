@@ -2067,8 +2067,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
     if (!currentTemple) return;
 
-    // If no winner (empty temple), auto-advance without showing anything interactive
-    if (!currentTemple.winnerId) {
+    // If no winner and no forces (truly empty temple), auto-advance
+    if (!currentTemple.winnerId && currentTemple.forces.length === 0) {
       let ns = advanceKamiResolution(gameState);
       if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
         if (ns.kamiSummaryVisible) {
@@ -2082,7 +2082,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
-    // Apply the reward for the current temple
+    // Apply the reward for the current temple (winnerId will be computed dynamically if null)
     let ns = resolveCurrentKamiReward(gameState);
 
     // If the reward is interactive (step changed to 'interactive'), wait for player input

@@ -1707,49 +1707,75 @@ export function resolveCurrentKamiReward(state: GameState): GameState {
   const currentTemple = state.kamiResolutionTemples[state.kamiResolutionIndex];
   if (!currentTemple) return state;
 
-  // No winner - nothing to apply
-  if (!currentTemple.winnerId) {
-    return state;
+  // If winnerId was not pre-computed (deferred), compute it now using the current honorTrack
+  let winnerId = currentTemple.winnerId;
+  let newState = { ...state };
+  if (!winnerId && currentTemple.forces.length > 0) {
+    const temple = newState.temples[currentTemple.templeIndex];
+    const { winnerId: computedWinnerId } = computeTempleWinner(temple.figures, newState.honorTrack, newState.players);
+    winnerId = computedWinnerId;
+    // Store the computed winnerId back into the temple data for display
+    const updatedTemples = [...newState.kamiResolutionTemples];
+    const updatedTemple = { ...updatedTemples[newState.kamiResolutionIndex], winnerId };
+
+    // Compute susanoo VP if applicable
+    if (currentTemple.kamiType === 'susanoo' && winnerId) {
+      let fortressCount = 0;
+      Object.values(newState.provinces).forEach((province) => {
+        fortressCount += province.figures.filter(
+          (f) => f.owner === winnerId && f.type === 'fortress'
+        ).length;
+      });
+      updatedTemple.susanooVPGained = fortressCount;
+    }
+
+    updatedTemples[newState.kamiResolutionIndex] = updatedTemple;
+    newState = { ...newState, kamiResolutionTemples: updatedTemples, kamiResolutionCurrentPlayerId: winnerId };
   }
 
-  const { kamiType, winnerId } = currentTemple;
+  // No winner - nothing to apply
+  if (!winnerId) {
+    return newState;
+  }
+
+  const { kamiType } = currentTemple;
 
   // For interactive kami types, set the interactive flags
   if (kamiType === 'fujin') {
     return {
-      ...state,
+      ...newState,
       kamiResolutionStep: 'interactive',
       fujinMovesRemaining: 2,
-      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} puede realizar hasta 2 Movimientos (Fujin)`],
+      log: [...newState.log, `${newState.players.find(p => p.id === winnerId)?.name || ''} puede realizar hasta 2 Movimientos (Fujin)`],
     };
   }
   if (kamiType === 'raijin') {
-    const player = state.players.find(p => p.id === winnerId);
+    const player = newState.players.find(p => p.id === winnerId);
     if (player && player.bushi > 0) {
       return {
-        ...state,
+        ...newState,
         kamiResolutionStep: 'interactive',
         raijinPlacementActive: true,
-        log: [...state.log, `${player.name} puede Invocar 1 Bushi en cualquier Provincia (Raijin)`],
+        log: [...newState.log, `${player.name} puede Invocar 1 Bushi en cualquier Provincia (Raijin)`],
       };
     }
     // No bushi in reserve - treat as auto (skip)
     return {
-      ...state,
-      log: [...state.log, `${player?.name || ''} no tiene Bushi en reserva (Raijin - sin efecto)`],
+      ...newState,
+      log: [...newState.log, `${player?.name || ''} no tiene Bushi en reserva (Raijin - sin efecto)`],
     };
   }
   if (kamiType === 'ryujin') {
     return {
-      ...state,
+      ...newState,
       kamiResolutionStep: 'interactive',
       ryujinBuyActive: true,
-      log: [...state.log, `${state.players.find(p => p.id === winnerId)?.name || ''} puede adquirir una Carta de Estación (Ryujin)`],
+      log: [...newState.log, `${newState.players.find(p => p.id === winnerId)?.name || ''} puede adquirir una Carta de Estación (Ryujin)`],
     };
   }
 
   // Auto rewards - apply via resolveKamiAbility
-  let newState = resolveKamiAbility(state, kamiType, winnerId);
+  newState = resolveKamiAbility(newState, kamiType, winnerId);
 
   // Sol clan tiebreak bonus (same logic as resolveKamiTurn)
   const temple = newState.temples[currentTemple.templeIndex];
@@ -1804,11 +1830,39 @@ export function advanceKamiResolution(state: GameState): GameState {
   }
 
   // Move to the next temple
+  const nextTemple = state.kamiResolutionTemples[nextIndex];
+  let nextWinnerId = nextTemple?.winnerId || null;
+
+  // Compute winner dynamically for the next temple using current honorTrack
+  let updatedTemples = state.kamiResolutionTemples;
+  if (nextTemple && !nextWinnerId && nextTemple.forces.length > 0) {
+    const temple = state.temples[nextTemple.templeIndex];
+    const { winnerId: computedWinnerId } = computeTempleWinner(temple.figures, state.honorTrack, state.players);
+    nextWinnerId = computedWinnerId;
+    // Store back into temple data for display
+    updatedTemples = [...state.kamiResolutionTemples];
+    const updatedNextTemple: typeof nextTemple = { ...nextTemple, winnerId: nextWinnerId };
+
+    // Compute susanoo VP if applicable
+    if (nextTemple.kamiType === 'susanoo' && nextWinnerId) {
+      let fortressCount = 0;
+      Object.values(state.provinces).forEach((province) => {
+        fortressCount += province.figures.filter(
+          (f) => f.owner === nextWinnerId && f.type === 'fortress'
+        ).length;
+      });
+      updatedNextTemple.susanooVPGained = fortressCount;
+    }
+
+    updatedTemples[nextIndex] = updatedNextTemple;
+  }
+
   return {
     ...state,
+    kamiResolutionTemples: updatedTemples,
     kamiResolutionIndex: nextIndex,
     kamiResolutionStep: 'showing',
-    kamiResolutionCurrentPlayerId: state.kamiResolutionTemples[nextIndex]?.winnerId || null,
+    kamiResolutionCurrentPlayerId: nextWinnerId,
     fujinMovesRemaining: 0,
     raijinPlacementActive: false,
     ryujinBuyActive: false,
@@ -3307,41 +3361,25 @@ export function advancePlayer(state: GameState): GameState {
     const kamiResolutionTemples: KamiResolutionTemple[] = [];
 
     for (const temple of sortedTemples) {
-      const { winnerId, forces } = computeTempleWinner(temple.figures, newState.honorTrack, newState.players);
+      const { forces } = computeTempleWinner(temple.figures, newState.honorTrack, newState.players);
       const kamiData = KAMI_DATA.find(k => k.type === temple.kamiType);
 
       // Skip empty temples (no figures = no winner, no need to show popup)
-      if (!winnerId && forces.length === 0) {
+      if (forces.length === 0) {
         newState.log = [...newState.log, `Santuario ${temple.position} (${kamiData?.name || temple.kamiType}) - sin figuras, saltado`];
         continue;
       }
 
-      // Determine reward text
-      let reward = '';
-      if (winnerId) {
-        reward = kamiData?.effect || '';
-      }
-
-      // Compute susanoo VP if applicable
-      let susanooVPGained: number | undefined;
-      if (temple.kamiType === 'susanoo' && winnerId) {
-        let fortressCount = 0;
-        Object.values(newState.provinces).forEach((province) => {
-          fortressCount += province.figures.filter(
-            (f) => f.owner === winnerId && f.type === 'fortress'
-          ).length;
-        });
-        susanooVPGained = fortressCount;
-      }
-
+      // Do NOT pre-compute winnerId here. It will be computed dynamically when the temple
+      // is resolved, using the CURRENT honorTrack at that moment (important for tiebreaking
+      // after Amaterasu moves the winner to position 0).
       const templeIndex = newState.temples.findIndex(t => t.id === temple.id);
       kamiResolutionTemples.push({
         templeIndex,
         kamiType: temple.kamiType,
-        winnerId,
-        reward,
+        winnerId: null,
+        reward: kamiData?.effect || '',
         forces,
-        ...(susanooVPGained !== undefined ? { susanooVPGained } : {}),
       });
     }
 
@@ -3361,7 +3399,31 @@ export function advancePlayer(state: GameState): GameState {
     newState.kamiResolutionTemples = kamiResolutionTemples;
     newState.kamiResolutionIndex = 0;
     newState.kamiResolutionStep = 'showing';
-    newState.kamiResolutionCurrentPlayerId = kamiResolutionTemples[0]?.winnerId || null;
+    // Compute the winner for the first temple dynamically using the current honorTrack
+    const firstTemple = kamiResolutionTemples[0];
+    let firstWinnerId: string | null = null;
+    if (firstTemple && firstTemple.forces.length > 0) {
+      const { winnerId: computedWinnerId } = computeTempleWinner(
+        newState.temples[firstTemple.templeIndex].figures,
+        newState.honorTrack,
+        newState.players
+      );
+      firstWinnerId = computedWinnerId;
+      // Store computed winnerId back into the temple data
+      kamiResolutionTemples[0] = { ...firstTemple, winnerId: firstWinnerId };
+
+      // Compute susanoo VP if applicable
+      if (firstTemple.kamiType === 'susanoo' && firstWinnerId) {
+        let fortressCount = 0;
+        Object.values(newState.provinces).forEach((province) => {
+          fortressCount += province.figures.filter(
+            (f) => f.owner === firstWinnerId && f.type === 'fortress'
+          ).length;
+        });
+        kamiResolutionTemples[0] = { ...kamiResolutionTemples[0], susanooVPGained: fortressCount };
+      }
+    }
+    newState.kamiResolutionCurrentPlayerId = firstWinnerId;
     newState.kamiResolutionNextPlayerIndex = advanceToNextInSeating(referenceIdx);
     newState.log = [...newState.log, '--- Turno Kami ---'];
     return newState;

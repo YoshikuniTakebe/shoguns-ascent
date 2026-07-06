@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix Kami honor tiebreaker bug: When winners are pre-computed in the kami resolution setup loop (gameLogic.ts ~line 3308), ALL temple winners are calculated upfront using the initial honorTrack. But when Amaterasu is resolved (moving winner to top of honor track), subsequent sanctuaries should use the UPDATED honor positions for tiebreaking. The fix is to NOT pre-compute winnerId during the setup loop - instead, compute winnerId lazily when each temple is actually resolved (in resolveCurrentKamiReward or when acknowledging). Also fix the figure sizes: Bushi Sol 0.95->0.92, Daimyo Libelula 1.02->1.06, Daimyo Zorro 0.97->0.95.",
+  "status": "in_progress",
+  "steps": [
+    "In src/utils/gameLogic.ts, find the kami resolution setup loop (around line 3305-3345) where computeTempleWinner is called for each temple and the results are stored in kamiResolutionTemples. Change it so that winnerId is set to null initially (deferred computation) and forces are still pre-computed for display purposes only. Add a new field like 'winnerDeferred: true' or simply leave winnerId null for temples that have forces (contested).",
+    "In src/utils/gameLogic.ts, modify resolveCurrentKamiReward (around line 1705) to compute the winner dynamically using computeTempleWinner with the CURRENT state.honorTrack when the temple is actually being resolved. If currentTemple.winnerId is null but currentTemple.forces.length > 0, call computeTempleWinner to determine the actual winner at resolution time. Store the computed winnerId back into the temple data for display.",
+    "In src/server/index.ts, in the ACKNOWLEDGE_KAMI_REWARD handler (around line 1308), update logic to handle the case where winnerId might be null initially (deferred) and gets computed on-the-fly during resolution.",
+    "Update the advanceKamiResolution function to set kamiResolutionCurrentPlayerId based on dynamically computed winnerId when advancing (it currently reads from pre-computed winnerId).",
+    "In the kami resolution setup, update kamiResolutionCurrentPlayerId for the first temple to be computed dynamically as well.",
+    "In src/components/RegionDetailModal.tsx, update FIGURE_SIZE_OVERRIDES: change 'bushi-sol' from 0.95 to 0.92, 'daimyo-libelula' from 1.02 to 1.06, 'daimyo-zorro' from 0.97 to 0.95.",
+    "Run npm run build to verify everything compiles."
+  ],
+  "acceptance_criteria": [
+    "When Amaterasu resolves and moves a player to top of honor track, subsequent sanctuary ties use the updated honor positions",
+    "The kami resolution flow still works correctly for all kami types (auto rewards, interactive rewards like fujin/raijin/ryujin)",
+    "The kamiResolutionCurrentPlayerId is correctly set for each temple during resolution",
+    "Figure sizes updated: bushi-sol=0.92, daimyo-libelula=1.06, daimyo-zorro=0.95",
+    "npm run build passes without errors"
+  ],
+  "verification": [
+    "Run npm run build and confirm it passes"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

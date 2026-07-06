@@ -1,0 +1,27 @@
+{
+  "project_type": "React + TypeScript board game adaptation with Express 5 + WebSocket server",
+  "language": "TypeScript",
+  "build_system": "Vite + tsx for server",
+  "test_framework": "No test framework configured",
+  "build_command": "npm run build",
+  "test_command": "npm run build (no test runner, validation is build-only)",
+  "verification_instructions": "Run npm run build to verify TypeScript compiles and Vite bundles successfully",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install (already done, node_modules exists)",
+  "environment_constraints": "Open internet available. No test runner configured. Server runs with npx tsx src/server/index.ts on port 3001.",
+  "contribution_requirements": "Push directly to main branch",
+  "key_patterns": "Zustand store with gameState. Server handlers use case statements with broadcastState(l). Ready-check pattern: array of playerIds who accepted, broadcast when all ready. Online flow: client sends action via ws, server mutates gameState and broadcasts. createPortal(jsx, document.body) for global modals. CSS in single App.css file.",
+  "relevant_files": [
+    "src/utils/gameLogic.ts",
+    "src/server/index.ts",
+    "src/store/gameStore.ts",
+    "src/types/game.ts",
+    "src/components/GameBoard.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/components/RegionDetailModal.tsx",
+    "src/components/BattleBiddingOverlay.tsx",
+    "src/i18n/es.ts",
+    "src/i18n/en.ts"
+  ],
+  "directory_structure": "src/utils/gameLogic.ts (3699 lines, all game logic functions), src/server/index.ts (1543 lines, Express+WS server), src/store/gameStore.ts (3226 lines, Zustand store + WS handlers), src/types/game.ts (types/constants), src/components/ (all React components), src/i18n/ (translations)"
+}

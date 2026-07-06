@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Implement the correct online War Phase flow with ready-checks: (1) Zorro places bushis first (server handler needed), (2) War summary popup with ready-check (all players must accept before continuing), (3) Sequential battles with proper acknowledgment flow - no battle provinces show 'turno de' popup to relevant player, allied players see who wins by force with both accepting, real battles have simultaneous bidding, (4) War phase summary as a modal popup (not sidebar) with ready-check.",
+  "status": "pending",
+  "steps": [
+    "Step 1 - Add warPhaseReadyPlayers to GameState type in src/types/game.ts. Add it to the GameState interface and initialize it as empty array in createInitialGameState in gameLogic.ts.",
+    "Step 2 - Add server handlers for Zorro placement online: In src/server/index.ts add 'ZORRO_PLACE_BUSHI' handler (validates placement, places bushi in province, decrements remaining, broadcasts) and 'ZORRO_SKIP_PLACEMENT' handler (ends zorro placement, updates battle participants, broadcasts). Follow the pattern of the existing doZorroPlaceBushi/doZorroSkipPlacement logic in gameStore.ts.",
+    "Step 3 - Add WAR_PHASE_READY server handler: When a player sends WAR_PHASE_READY, add them to warPhaseReadyPlayers array. When all players have accepted, call resolveUncontestedBattles on the state, clear warPhaseReadyPlayers, and broadcast. This replaces the current local-only dismissWarPhasePopup flow for online mode.",
+    "Step 4 - Update the store (gameStore.ts) for online war: In doZorroPlaceBushi and doZorroSkipPlacement, if online mode, send action via ws instead of applying locally. In dismissWarPhasePopup, if online mode, send WAR_PHASE_READY action via ws instead of resolving locally.",
+    "Step 5 - Update the GAME_STATE handler in gameStore.ts to detect when zorroPlacementActive becomes false (war summary phase) and show warPhasePopupVisible. Also detect when warPhaseReadyPlayers reaches all players (transition to battles starting) and set battleStepPhase to 'popup'.",
+    "Step 6 - For the sequential battle flow online, the existing SUBMIT_WAR_BIDS already handles simultaneous bidding. For uncontested/allied battles, the current resolveUncontestedBattles already marks them. The client-side BattlePanel already shows popups for each battle step. Ensure the online GAME_STATE handler properly tracks battle progression and shows appropriate popups (turno de for uncontested, result popup for allies).",
+    "Step 7 - Add a War Phase Summary popup as a modal (not sidebar): After all battles are resolved, show a war summary popup with results. Add warSummaryVisible and warSummaryReadyPlayers to GameState. Add WAR_SUMMARY_READY server handler (same pattern as KAMI_SUMMARY_READY). When all accept, advance to cleanup phase.",
+    "Step 8 - Update GameBoard.tsx to render the war summary popup using createPortal. Show battle results (winner per province, tokens awarded). Add the Accept button that sends WAR_SUMMARY_READY.",
+    "Step 9 - Add i18n translations for new war flow messages in src/i18n/es.ts and src/i18n/en.ts.",
+    "Step 10 - Run npm run build to verify everything compiles."
+  ],
+  "acceptance_criteria": [
+    "In online mode, Zorro places bushis before the war summary popup appears",
+    "War summary popup requires all players to accept before battles begin",
+    "Uncontested battles show turno de popup to the relevant player",
+    "Allied battles show result popup to both involved players, both must accept",
+    "Real battles have simultaneous bidding (all players see bidding screen at same time)",
+    "After battle resolution, result popup shown to all involved, all must accept before next battle",
+    "War phase summary shown as a modal popup after all battles, all must accept to continue",
+    "npm run build passes without errors"
+  ],
+  "verification": [
+    "Run npm run build and confirm it passes"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-kami-honor-war-flow-figures",
+  "task_description": "Fix Kami honor tiebreaker bug (winners pre-computed with stale honor track), implement correct online War Phase flow (Zorro first, then war summary with ready-check, sequential battles with acknowledgment, war summary popup), and adjust figure sizes.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}
