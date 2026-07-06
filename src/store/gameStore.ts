@@ -2817,8 +2817,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
             if (state.trainMandateActive) {
               const currentTrainPlayer = state.trainResolutionOrder?.[state.trainResolutionIndex];
               if (currentTrainPlayer === lpId) {
-                // Show popup if trainResolutionIndex changed or if this is the first broadcast with trainMandateActive
-                if (prevTrainResolutionIndex !== undefined && prevTrainResolutionIndex !== null && state.trainResolutionIndex !== prevTrainResolutionIndex) {
+                // First trigger: trainMandateActive just became true (was false/undefined before)
+                if (!prevGameState?.trainMandateActive) {
+                  newTurnPopup = lpId;
+                } else if (prevTrainResolutionIndex !== undefined && prevTrainResolutionIndex !== null && state.trainResolutionIndex !== prevTrainResolutionIndex) {
+                  // Subsequent triggers: trainResolutionIndex changed
                   newTurnPopup = lpId;
                 } else if (prevPlayerIndex !== undefined && prevPlayerIndex !== null && state.currentPlayerIndex !== prevPlayerIndex) {
                   newTurnPopup = lpId;

@@ -52,13 +52,15 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   const [playerConfirmed, setPlayerConfirmed] = useState(false);
   const [lightMode, setLightMode] = useState(false);
   const lastTrainIndexRef = useRef<number>(-1);
+  const [purchasePending, setPurchasePending] = useState(false);
 
-  // Reset playerConfirmed when the train resolution index changes (new player's turn)
+  // Reset playerConfirmed and purchasePending when the train resolution index changes (new player's turn)
   const trainResIdx = gameState?.trainResolutionIndex ?? -1;
   useEffect(() => {
     if (trainResIdx !== lastTrainIndexRef.current) {
       lastTrainIndexRef.current = trainResIdx;
       setPlayerConfirmed(false);
+      setPurchasePending(false);
       setConfirmCard(null);
     }
   }, [trainResIdx]);
@@ -156,7 +158,9 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
         doBuySeasonCard(confirmCard.id);
       }
       setConfirmCard(null);
-      setPlayerConfirmed(false);
+      // Mark purchase as pending to prevent further interaction until server responds
+      // playerConfirmed and purchasePending are reset when trainResolutionIndex changes
+      setPurchasePending(true);
     }
   };
 
@@ -170,7 +174,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
     } else {
       doSkipTrainPurchase();
     }
-    setPlayerConfirmed(false);
+    // Mark purchase as pending to prevent further interaction until server responds
+    setPurchasePending(true);
   };
 
   const handlePlayerAccept = () => {
@@ -179,7 +184,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
 
   // Show player turn indicator if in train mode and player hasn't confirmed yet (NOT for Ryujin)
   // In online mode, only show this for the local player whose turn it is
-  const showPlayerIndicator = isTrainMode && !isRyujinMode && !playerConfirmed && isLocalPlayerTrainTurn;
+  // Don't show if a purchase is pending (waiting for server response)
+  const showPlayerIndicator = isTrainMode && !isRyujinMode && !playerConfirmed && !purchasePending && isLocalPlayerTrainTurn;
 
   const seasonColors: Record<string, string> = {
     spring: '#FFB7C5',
@@ -262,7 +268,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
         <div className="season-card-grid">
           {currentSeasonCards.map((card) => {
             const affordable = isInteractiveMode ? canBuyCard(card) : true;
-            const interactable = isInteractiveMode && (isRyujinMode || (playerConfirmed && isLocalPlayerTrainTurn)) && affordable;
+            const interactable = isInteractiveMode && (isRyujinMode || (playerConfirmed && isLocalPlayerTrainTurn && !purchasePending)) && affordable;
             const effectiveCost = getEffectiveCost(card);
             return (
               <div
@@ -335,7 +341,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
         </div>
 
         {/* Skip purchase button - visible in train mode when player has confirmed and it's their turn, or in ryujin mode */}
-        {((isTrainMode && playerConfirmed && isLocalPlayerTrainTurn) || isRyujinMode) && (
+        {((isTrainMode && playerConfirmed && isLocalPlayerTrainTurn && !purchasePending) || isRyujinMode) && (
           <div style={{ textAlign: 'center', marginTop: '16px', paddingBottom: '12px' }}>
             <button
               className="btn-secondary"
