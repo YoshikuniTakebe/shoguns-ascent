@@ -945,6 +945,34 @@ wss.on('connection', (ws: WebSocket, req) => {
           break;
         }
 
+        case 'KAMI_PHASE_READY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          if (!l.gameState.kamiReadyPlayers.includes(playerId)) {
+            l.gameState = { ...l.gameState, kamiReadyPlayers: [...l.gameState.kamiReadyPlayers, playerId] };
+          }
+          if (l.gameState.kamiReadyPlayers.length >= l.gameState.players.length) {
+            l.gameState = { ...l.gameState, kamiResolutionActive: true, kamiPhasePopupPending: false, kamiReadyPlayers: [] };
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'KAMI_SUMMARY_READY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          if (!l.gameState.kamiSummaryReadyPlayers.includes(playerId)) {
+            l.gameState = { ...l.gameState, kamiSummaryReadyPlayers: [...l.gameState.kamiSummaryReadyPlayers, playerId] };
+          }
+          if (l.gameState.kamiSummaryReadyPlayers.length >= l.gameState.players.length) {
+            l.gameState = { ...l.gameState, kamiSummaryVisible: false, kamiSummaryData: [], kamiSummaryReadyPlayers: [] };
+          }
+          broadcastState(l);
+          break;
+        }
+
         case 'RESOLVE_KAMI': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;

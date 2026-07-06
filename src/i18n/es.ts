@@ -358,6 +358,12 @@ export const es: Record<TranslationKey, string> = {
   'kami.phaseStart.title': 'Comienza la Fase Kami',
   'kami.phaseStart.description': 'Los santuarios se resolveran de izquierda a derecha. El jugador con mas fuerza Sintoista en cada santuario gana la recompensa del Kami.',
   'kami.phaseStart.accept': 'Aceptar',
+  'kami.phaseStart.waiting': '{count}/{total} listos',
+  'kami.summary.title': 'Resumen Fase Kami',
+  'kami.summary.orphaned': 'Huerfano - Sin ganador',
+  'kami.summary.accept': 'Aceptar',
+  'kami.summary.waiting': '{count}/{total} listos',
+  'kami.summary.winner': '{name} gana',
 
   // War Phase Popup
   'war.phaseStart.title': 'Comienza la Fase de Guerra',

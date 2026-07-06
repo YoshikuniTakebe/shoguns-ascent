@@ -356,6 +356,12 @@ export const en = {
   'kami.phaseStart.title': 'Kami Phase Begins',
   'kami.phaseStart.description': 'Shrines will now be resolved from left to right. The player with the most Shinto force in each shrine wins the Kami reward.',
   'kami.phaseStart.accept': 'Accept',
+  'kami.phaseStart.waiting': '{count}/{total} ready',
+  'kami.summary.title': 'Kami Phase Summary',
+  'kami.summary.orphaned': 'Orphaned - No winner',
+  'kami.summary.accept': 'Accept',
+  'kami.summary.waiting': '{count}/{total} ready',
+  'kami.summary.winner': '{name} wins',
 
   // War Phase Popup
   'war.phaseStart.title': 'War Phase Begins',

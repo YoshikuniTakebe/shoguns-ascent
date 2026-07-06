@@ -276,6 +276,10 @@ export function createInitialGameState(
     tradeOffers: [],
     teaReadyPlayers: [],
     teaOptedOut: [],
+    kamiReadyPlayers: [],
+    kamiSummaryVisible: false,
+    kamiSummaryReadyPlayers: [],
+    kamiSummaryData: [],
     log: ['Juego iniciado! Estación: Primavera'],
     logHistory: {},
     hostId,
@@ -1771,6 +1775,8 @@ export function advanceKamiResolution(state: GameState): GameState {
 
   // All temples resolved
   if (nextIndex >= state.kamiResolutionTemples.length) {
+    // Save temple data for summary before clearing
+    const summaryData = [...state.kamiResolutionTemples];
     let newState: GameState = {
       ...state,
       kamiResolutionActive: false,
@@ -1781,6 +1787,9 @@ export function advanceKamiResolution(state: GameState): GameState {
       fujinMovesRemaining: 0,
       raijinPlacementActive: false,
       ryujinBuyActive: false,
+      kamiSummaryVisible: true,
+      kamiSummaryData: summaryData,
+      kamiSummaryReadyPlayers: [],
     };
     newState.log = [...newState.log, '--- Fin Turno Kami ---'];
 

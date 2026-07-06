@@ -257,6 +257,10 @@ export interface GameState {
   lotoDiscardedMandate?: MandateType | null;
   lastMandateIssuerId: string | null;
   kamiPhasePopupPending?: boolean;
+  kamiReadyPlayers: string[];
+  kamiSummaryVisible: boolean;
+  kamiSummaryReadyPlayers: string[];
+  kamiSummaryData: KamiResolutionTemple[];
   gameOver: boolean;
   winner?: string;
   teaReadyPlayers: string[];

@@ -416,6 +416,9 @@ interface GameStore {
   kamiPhasePopupVisible: boolean;
   kamiPendingTemples: GameState['kamiResolutionTemples'] | null;
   dismissKamiPhasePopup: () => void;
+  doKamiPhaseReady: () => void;
+  doKamiSummaryReady: () => void;
+  kamiTurnPopupShownForIndex: number | null;
 
   // War Phase Popup
   warPhasePopupVisible: boolean;
@@ -2068,7 +2071,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!currentTemple.winnerId) {
       let ns = advanceKamiResolution(gameState);
       if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
-        set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+        if (ns.kamiSummaryVisible) {
+          set({ gameState: ns });
+        } else {
+          set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+        }
       } else {
         set({ gameState: ns, ...detectWarTransitionWithPopup(ns) });
       }
@@ -2096,9 +2103,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Auto reward applied - advance to next temple
     ns = advanceKamiResolution(ns);
 
-    // If resolution just finished and we are in hotseat, show turn popup for next player
+    // If resolution just finished and we are in hotseat, show turn popup for next player (only if no summary pending)
     if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
-      set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+      if (ns.kamiSummaryVisible) {
+        // Summary popup will show - don't show turn popup yet
+        set({ gameState: ns });
+      } else {
+        set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+      }
     } else {
       set({ gameState: ns, ...detectWarTransitionWithPopup(ns) });
     }
@@ -2110,9 +2122,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     let ns = advanceKamiResolution(gameState);
 
-    // If resolution just finished and we are in hotseat, show turn popup for next player
+    // If resolution just finished and we are in hotseat, show turn popup for next player (only if no summary pending)
     if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
-      set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [], turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+      if (ns.kamiSummaryVisible) {
+        set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [] });
+      } else {
+        set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [], turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+      }
     } else {
       set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [], ...detectWarTransitionWithPopup(ns) });
     }
@@ -2949,7 +2965,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   dismissKamiPhasePopup: () => {
     const { gameState, kamiPendingTemples } = get();
     if (!gameState || !kamiPendingTemples) return;
-    // Now activate kami resolution with the pending temples data
+    if (gameState.mode === 'online') {
+      // Online: send ready signal and wait for all players
+      get().sendAction({ type: 'KAMI_PHASE_READY', playerId: get().localPlayerId });
+      return;
+    }
+    // Hotseat: directly activate
     const ns: GameState = {
       ...gameState,
       kamiResolutionActive: true,
@@ -2957,6 +2978,32 @@ export const useGameStore = create<GameStore>((set, get) => ({
     };
     set({ gameState: ns, kamiPhasePopupVisible: false, kamiPendingTemples: null });
   },
+
+  doKamiPhaseReady: () => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState || !localPlayerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'KAMI_PHASE_READY', playerId: localPlayerId });
+    }
+  },
+
+  doKamiSummaryReady: () => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState || !localPlayerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'KAMI_SUMMARY_READY', playerId: localPlayerId });
+    } else {
+      // Hotseat: directly clear summary and show turn popup for next player
+      const ns: GameState = { ...gameState, kamiSummaryVisible: false, kamiSummaryData: [], kamiSummaryReadyPlayers: [] };
+      if (ns.currentPhase === 'politics' && !ns.kamiResolutionActive) {
+        set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
+      } else {
+        set({ gameState: ns });
+      }
+    }
+  },
+
+  kamiTurnPopupShownForIndex: null,
 
   // --- War Phase Popup ---
   dismissWarPhasePopup: () => {
@@ -2987,7 +3034,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
           if (state.mode === 'online' && state.currentPhase === 'politics') {
             const noResolution = !state.trainMandateActive && !state.marshalMandateActive && !state.recruitMandateActive && !state.betrayMandateActive && !state.harvestMandateActive;
-            if (noResolution && state.drawnMandates.length === 0 && !state.mandateChoicePhase) {
+            if (noResolution && state.drawnMandates.length === 0 && !state.mandateChoicePhase && !state.kamiResolutionActive && !state.kamiSummaryVisible && !state.kamiPhasePopupPending) {
               // Only show the popup if it wasn't already dismissed for this player's turn
               // Use the potentially-reset dismissedIdx so popup fires after mandate resolution ends and advancePlayer changes currentPlayerIndex
               if (dismissedIdx !== state.currentPlayerIndex) {
@@ -3049,7 +3096,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           // Force show turn popup when a mandate just ended and no mandate is active now
           const prevMandateWasActive = prevGameState?.trainMandateActive || prevGameState?.marshalMandateActive || prevGameState?.recruitMandateActive || prevGameState?.betrayMandateActive || prevGameState?.harvestMandateActive;
           const noMandateNow = !state.trainMandateActive && !state.marshalMandateActive && !state.recruitMandateActive && !state.betrayMandateActive && !state.harvestMandateActive;
-          if (prevMandateWasActive && noMandateNow && state.drawnMandates.length === 0 && !state.mandateChoicePhase) {
+          if (prevMandateWasActive && noMandateNow && state.drawnMandates.length === 0 && !state.mandateChoicePhase && !state.kamiResolutionActive && !state.kamiSummaryVisible && !state.kamiPhasePopupPending) {
             newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
             uiResets.turnPopupDismissedForIndex = null;
           }
@@ -3074,6 +3121,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
           if (state.kamiPhasePopupPending && !state.kamiResolutionActive && !get().kamiPhasePopupVisible && !get().gameState?.kamiResolutionActive) {
             uiResets.kamiPhasePopupVisible = true;
             uiResets.kamiPendingTemples = state.kamiResolutionTemples;
+          }
+
+          // When kamiResolutionActive becomes true and we are in online mode: hide kami phase popup
+          if (state.kamiResolutionActive && !state.kamiPhasePopupPending) {
+            uiResets.kamiPhasePopupVisible = false;
+            uiResets.kamiPendingTemples = null;
+          }
+
+          // Kami Resolution: show "Turno de" popup for the sanctuary winner
+          if (state.mode === 'online' && state.kamiResolutionActive && state.kamiResolutionStep === 'showing' && lpId) {
+            const currentKamiWinner = state.kamiResolutionCurrentPlayerId;
+            const prevKamiIndex = prevGameState?.kamiResolutionIndex;
+            const prevKamiActive = prevGameState?.kamiResolutionActive;
+            const { kamiTurnPopupShownForIndex } = get();
+            // Show turn popup when: kami resolution just started OR index changed
+            if (currentKamiWinner && currentKamiWinner === lpId) {
+              if (!prevKamiActive || prevKamiIndex !== state.kamiResolutionIndex || kamiTurnPopupShownForIndex !== state.kamiResolutionIndex) {
+                newTurnPopup = lpId;
+                uiResets.kamiTurnPopupShownForIndex = state.kamiResolutionIndex;
+              }
+            }
+          }
+
+          // When kamiSummaryVisible becomes false after being true: show turn popup for mandate selector
+          if (state.mode === 'online' && prevGameState?.kamiSummaryVisible && !state.kamiSummaryVisible) {
+            newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
+            uiResets.turnPopupDismissedForIndex = null;
+            uiResets.kamiTurnPopupShownForIndex = null;
           }
 
           // If monster placement is in progress, suppress turn popup to avoid interference

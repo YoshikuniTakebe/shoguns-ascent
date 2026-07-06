@@ -15,6 +15,7 @@ import { PoliticsTrack } from './PoliticsTrack';
 import { RegionDetailModal } from './RegionDetailModal';
 import { HarvestPopup } from './HarvestPopup';
 import { KamiResolutionPopup } from './KamiResolutionPopup';
+import { KamiSummaryPopup } from './KamiSummaryPopup';
 import { TradeModal } from './TradeModal';
 import { TradeOfferPopup } from './TradeOfferPopup';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, UndoIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, FistIcon } from './Icons';
@@ -654,7 +655,7 @@ export const GameBoard = () => {
       })()}
 
       {/* Turn Popup (hotseat mandate transitions + online politics) */}
-      {turnPopupPlayer && (gameState.mode === 'hotseat' || (gameState.mode === 'online' && turnPopupPlayer === localPlayerId)) && !gameState.kamiResolutionActive && gameState.currentPhase !== 'war' && (() => {
+      {turnPopupPlayer && (gameState.mode === 'hotseat' || (gameState.mode === 'online' && turnPopupPlayer === localPlayerId)) && gameState.currentPhase !== 'war' && (() => {
         const popupPlayer = gameState.players.find(p => p.id === turnPopupPlayer);
         if (!popupPlayer) return null;
         const clanColor = CLANS.find(c => c.id === popupPlayer.clanId)?.color;
@@ -693,6 +694,9 @@ export const GameBoard = () => {
       {/* Kami Resolution Popup */}
       <KamiResolutionPopup />
 
+      {/* Kami Summary Popup */}
+      <KamiSummaryPopup />
+
       {/* Kami Phase Start Popup */}
       {kamiPhasePopupVisible && (
         <div className="harvest-popup-backdrop">
@@ -730,9 +734,15 @@ export const GameBoard = () => {
               })()}
             </p>
             <div style={{ textAlign: 'center' }}>
-              <button className="btn-primary harvest-popup-btn" onClick={dismissKamiPhasePopup} style={{ borderColor: '#9B59B6' }}>
-                {t('kami.phaseStart.accept')}
-              </button>
+              {gameState.mode === 'online' && localPlayerId && gameState.kamiReadyPlayers?.includes(localPlayerId) ? (
+                <p style={{ color: '#9B59B6', fontSize: '1rem', fontWeight: 'bold' }}>
+                  {t('kami.phaseStart.waiting', { count: String(gameState.kamiReadyPlayers.length), total: String(gameState.players.length) })}
+                </p>
+              ) : (
+                <button className="btn-primary harvest-popup-btn" onClick={dismissKamiPhasePopup} style={{ borderColor: '#9B59B6' }}>
+                  {t('kami.phaseStart.accept')}
+                </button>
+              )}
             </div>
           </div>
         </div>
