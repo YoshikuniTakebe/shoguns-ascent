@@ -10,6 +10,10 @@ import {
   DECK_GROUPS, CLAN_INCOME, SEASON_CARDS_DATA,
 } from '../types/game';
 
+// Safe check for Vite's import.meta.env.DEV that works in both
+// browser (Vite) and Node.js (tsx) environments.
+const IS_DEV = typeof import.meta !== 'undefined' && !!import.meta.env?.DEV;
+
 // ============================================================
 // Utility Functions
 // ============================================================
@@ -951,7 +955,7 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
     log: [...state.log, `${player.name} compra ${card.name} por ${effectiveCost} monedas${isDiscounted ? ' (con descuento)' : ''}`],
   };
 
-  if (import.meta.env.DEV) {
+  if (IS_DEV) {
     console.log('[buySeasonCard]', { playerId, cardId, cardName: card.name, newSeasonCards: newState.players.find(p => p.id === playerId)?.seasonCards.map(c => c.id) });
   }
 
@@ -2940,7 +2944,7 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
       if (hasCard(cardIds, 'au-path-of-the-dragon')) {
         figForce += 3; // Daimyo +3 force
       }
-      if (import.meta.env.DEV) {
+      if (IS_DEV) {
         console.log('[calculateForce] daimyo check:', { playerId, cardIds: [...cardIds], hasLion: hasCard(cardIds, 'sp-path-of-the-lion'), figForce });
       }
     }
