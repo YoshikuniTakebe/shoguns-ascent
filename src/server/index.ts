@@ -61,7 +61,7 @@ import { generateToken, verifyToken } from './auth';
 import bcrypt from 'bcryptjs';
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: true, credentials: true, methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 app.use(express.json({ limit: '50mb' }));
 const server = createServer(app);
 const wss = new WebSocketServer({ server });

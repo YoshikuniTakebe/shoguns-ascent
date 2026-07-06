@@ -3,14 +3,14 @@ import { useGameStore } from '../store/gameStore';
 import { useT } from '../i18n';
 
 export const AuthScreen = () => {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const { login, register, authInitialMode } = useGameStore();
+  const [mode, setMode] = useState<'login' | 'register'>(authInitialMode);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login, register } = useGameStore();
   const t = useT();
 
   const handleSubmit = async (e: React.FormEvent) => {

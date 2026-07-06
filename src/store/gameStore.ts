@@ -256,6 +256,8 @@ interface GameStore {
   selectedFigures: string[];
   ws: WebSocket | null;
   screen: 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay' | 'auth';
+  authInitialMode: 'login' | 'register';
+  setAuthInitialMode: (mode: 'login' | 'register') => void;
   menuMode: 'select' | 'online' | 'online-create' | 'online-join' | null;
   lobbyId: string | null;
   currentMandateResolutionIndex: number;
@@ -492,6 +494,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   selectedFigures: [],
   ws: null,
   screen: 'menu',
+  authInitialMode: 'login',
   menuMode: null,
   lobbyId: null,
   currentMandateResolutionIndex: 0,
@@ -865,6 +868,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- UI Actions ---
   setScreen: (screen) => set({ screen }),
+  setAuthInitialMode: (mode) => set({ authInitialMode: mode }),
   exitGame: async () => {
     const { persistentGameId, gameState } = get();
     try {

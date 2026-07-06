@@ -23,7 +23,7 @@ const CLAN_POWERS: Record<string, string> = {
 };
 
 export const MainMenu = () => {
-  const { createGame, connectWebSocket, setLobbyId, setScreen, language, setLanguage, isAuthenticated, authUser, logout } = useGameStore();
+  const { createGame, connectWebSocket, setLobbyId, setScreen, setAuthInitialMode, language, setLanguage, isAuthenticated, authUser, logout } = useGameStore();
   const t = useT();
   const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>(() => {
     const menuMode = useGameStore.getState().menuMode;
@@ -123,10 +123,10 @@ export const MainMenu = () => {
       <div className="auth-buttons">
         {!isAuthenticated ? (
           <>
-            <button className="auth-btn" onClick={() => setScreen('auth')}>
+            <button className="auth-btn" onClick={() => { setAuthInitialMode('login'); setScreen('auth'); }}>
               {t('auth.login')}
             </button>
-            <button className="auth-btn auth-btn-register" onClick={() => setScreen('auth')}>
+            <button className="auth-btn auth-btn-register" onClick={() => { setAuthInitialMode('register'); setScreen('auth'); }}>
               {t('auth.registerButton')}
             </button>
           </>
