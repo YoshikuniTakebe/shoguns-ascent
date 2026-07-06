@@ -369,6 +369,11 @@ export const en = {
   'war.phaseStart.noBonuses': 'No war upgrade bonuses active.',
   'war.phaseStart.accept': 'Accept',
 
+  // War Summary Popup (end of war phase)
+  'war.summary.title': 'War Phase Summary',
+  'war.summary.discarded': 'Discarded',
+  'war.summary.accept': 'Accept',
+
   // Rule violations
   'rule.invalidMove': 'Invalid move',
 

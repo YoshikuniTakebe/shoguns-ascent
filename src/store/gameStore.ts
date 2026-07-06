@@ -425,6 +425,13 @@ interface GameStore {
   warPhaseUpgradeSummary: { playerName: string; clanId: string; bonuses: { cardName: string; resource: string; amount: number }[] }[];
   dismissWarPhasePopup: () => void;
 
+  // War Summary Popup (end of war phase)
+  warSummaryVisible: boolean;
+  dismissWarSummaryPopup: () => void;
+
+  // Battle result acceptance for online mode
+  doAcceptBattleResultOnline: () => void;
+
   // Undo mandate state
   undoMandateState: GameState | null;
   doUndoMandate: () => void;
@@ -868,6 +875,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   kamiPendingTemples: null,
   warPhasePopupVisible: false,
   warPhaseUpgradeSummary: [],
+  warSummaryVisible: false,
   biddingMapPeek: false,
   setBiddingMapPeek: (peek) => set({ biddingMapPeek: peek }),
   language: (localStorage.getItem('shoguns-ascent-language') as 'en' | 'es') || 'es',
@@ -2389,9 +2397,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doZorroPlaceBushi: (provinceId: string) => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState) return;
     if (!gameState.zorroPlacementActive || !gameState.zorroPlacementPlayerId) return;
+
+    // Online mode: send to server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'ZORRO_PLACE_BUSHI', playerId: get().localPlayerId, payload: { provinceId } });
+      return;
+    }
 
     const zorroPlayer = gameState.players.find(p => p.id === gameState.zorroPlacementPlayerId);
     if (!zorroPlayer) return;
@@ -2441,9 +2455,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doZorroSkipPlacement: () => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState) return;
     if (!gameState.zorroPlacementActive) return;
+
+    // Online mode: send to server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'ZORRO_SKIP_PLACEMENT', playerId: get().localPlayerId });
+      return;
+    }
 
     const zorroId = gameState.zorroPlacementPlayerId;
     let ns: GameState = {
@@ -2780,11 +2800,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameState: ns, battleStepPhase: 'result', selectedHostageTarget: null });
   },
   doAcceptBattlePopup: () => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState) return;
 
     // If showing a battle result, dismiss it and move to popup for the next battle
     if (get().battleStepPhase === 'result') {
+      // Online mode: send acceptance to server and wait for broadcast
+      if (ws && gameState.mode === 'online') {
+        get().sendAction({ type: 'BATTLE_RESULT_ACCEPTED', playerId: get().localPlayerId });
+        return;
+      }
+      // Check if all battles are now resolved
+      const allResolved = gameState.activeBattles.every(b => b.resolved || b.uncontested);
+      if (allResolved) {
+        set({ battleStepPhase: null, battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null, warSummaryVisible: true });
+        return;
+      }
       set({ battleStepPhase: 'popup', battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null });
       return;
     }
@@ -2798,6 +2829,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const battle = gameState.activeBattles[currentBattleIndex];
 
     if (battle.uncontested) {
+      // Online mode: send acceptance to server - it manages battle resolution state
+      if (ws && gameState.mode === 'online') {
+        get().sendAction({ type: 'BATTLE_RESULT_ACCEPTED', playerId: get().localPlayerId });
+        return;
+      }
       // Mark uncontested battle as resolved (user accepted the popup)
       const province = gameState.provinces[battle.provinceId];
       const battleNumber = currentBattleIndex + 1;
@@ -2812,6 +2848,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       newLog.push(`--- Batalla ${battleNumber} resuelta ---`);
       const updatedBattles = [...gameState.activeBattles];
       updatedBattles[currentBattleIndex] = { ...battle, resolved: true };
+      // Check if this was the last battle
+      const allNowResolved = updatedBattles.every(b => b.resolved || b.uncontested);
+      if (allNowResolved) {
+        set({
+          gameState: { ...gameState, activeBattles: updatedBattles, log: newLog },
+          battleStepPhase: null,
+          battleCurrentBiddingIndex: 0,
+          warSummaryVisible: true,
+        });
+        return;
+      }
       set({
         gameState: { ...gameState, activeBattles: updatedBattles, log: newLog },
         battleStepPhase: 'popup',
@@ -3007,10 +3054,44 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- War Phase Popup ---
   dismissWarPhasePopup: () => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState) return;
+
+    // Online mode: send WAR_PHASE_READY to server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'WAR_PHASE_READY', playerId: get().localPlayerId });
+      set({ warPhasePopupVisible: false, warPhaseUpgradeSummary: [] });
+      return;
+    }
+
     const updatedState = resolveUncontestedBattles(gameState);
     set({ gameState: updatedState, warPhasePopupVisible: false, warPhaseUpgradeSummary: [], battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+  },
+
+  // --- War Summary Popup (end of all battles) ---
+  dismissWarSummaryPopup: () => {
+    const { gameState, ws } = get();
+    if (!gameState) return;
+
+    // Online mode: send WAR_SUMMARY_READY to server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'WAR_SUMMARY_READY', playerId: get().localPlayerId });
+      set({ warSummaryVisible: false });
+      return;
+    }
+
+    // Hotseat: advance to cleanup phase directly
+    const ns = advancePhase(gameState);
+    set({ gameState: ns, warSummaryVisible: false, battleStepPhase: null });
+  },
+
+  // --- Battle Result Acceptance for Online ---
+  doAcceptBattleResultOnline: () => {
+    const { gameState, ws } = get();
+    if (!gameState) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'BATTLE_RESULT_ACCEPTED', playerId: get().localPlayerId });
+    }
   },
 
   // --- Online ---
@@ -3149,6 +3230,56 @@ export const useGameStore = create<GameStore>((set, get) => ({
             newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
             uiResets.turnPopupDismissedForIndex = null;
             uiResets.kamiTurnPopupShownForIndex = null;
+          }
+
+          // --- Online War Phase detection ---
+          if (state.mode === 'online' && state.currentPhase === 'war') {
+            // When war phase just started and no Zorro placement, show war phase popup directly
+            const prevPhase = prevGameState?.currentPhase;
+            if (prevPhase !== 'war' && !state.zorroPlacementActive) {
+              uiResets.warPhasePopupVisible = true;
+              uiResets.warPhaseUpgradeSummary = computeWarUpgradeSummary(state);
+            }
+
+            // When Zorro placement ends (zorroPlacementActive becomes false), show war phase popup
+            const prevZorroActive = prevGameState?.zorroPlacementActive;
+            if (prevZorroActive && !state.zorroPlacementActive) {
+              uiResets.warPhasePopupVisible = true;
+              uiResets.warPhaseUpgradeSummary = computeWarUpgradeSummary(state);
+            }
+
+            // When warPhaseReadyPlayers clears (all accepted war summary), start battle flow
+            const prevWarPhaseReady = prevGameState?.warPhaseReadyPlayers?.length || 0;
+            if (prevWarPhaseReady > 0 && (state.warPhaseReadyPlayers?.length || 0) === 0 && !state.zorroPlacementActive) {
+              // War phase popup accepted by all - start battles
+              uiResets.warPhasePopupVisible = false;
+              uiResets.warPhaseUpgradeSummary = [];
+              uiResets.battleStepPhase = 'popup';
+              uiResets.battleCurrentBiddingIndex = 0;
+            }
+
+            // When battleResultReadyPlayers clears (all accepted battle result), advance to next battle popup
+            const prevBattleReady = prevGameState?.battleResultReadyPlayers?.length || 0;
+            if (prevBattleReady > 0 && (state.battleResultReadyPlayers?.length || 0) === 0) {
+              // Check if all battles are now resolved - if so, show war summary instead
+              const allBattlesResolved = state.activeBattles?.length > 0 && state.activeBattles.every((b: { resolved?: boolean; uncontested?: boolean }) => b.resolved || b.uncontested);
+              if (allBattlesResolved) {
+                uiResets.warSummaryVisible = true;
+                uiResets.battleStepPhase = null;
+              } else {
+                uiResets.battleStepPhase = 'popup';
+                uiResets.battleCurrentBiddingIndex = 0;
+                uiResets.battleResolutionData = null;
+                uiResets.selectedHostageTarget = null;
+              }
+            }
+
+            // Detect battle just resolved (server resolved via SUBMIT_WAR_BIDS): show result
+            const prevResolvedCount = prevGameState?.activeBattles?.filter((b: { resolved?: boolean; uncontested?: boolean }) => b.resolved && !b.uncontested).length || 0;
+            const currentResolvedCount = state.activeBattles?.filter((b: { resolved?: boolean; uncontested?: boolean }) => b.resolved && !b.uncontested).length || 0;
+            if (currentResolvedCount > prevResolvedCount && prevBattleReady === 0) {
+              uiResets.battleStepPhase = 'result';
+            }
           }
 
           // If monster placement is in progress, suppress turn popup to avoid interference

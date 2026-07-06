@@ -35,6 +35,8 @@ import {
   resolveCurrentKamiReward,
   advanceKamiResolution,
   ryujinBuyCard as ryujinBuyCardFn,
+  resolveUncontestedBattles,
+  calculateForce,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 import {
@@ -985,6 +987,144 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           l.gameState = initiateWarPhase(l.gameState);
+          broadcastState(l);
+          break;
+        }
+
+        case 'ZORRO_PLACE_BUSHI': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.zorroPlacementActive) return;
+          if (data.playerId !== l.gameState.zorroPlacementPlayerId) return;
+          const { provinceId: zpProvinceId } = data.payload || {};
+          if (!zpProvinceId) return;
+
+          const zorroPlayer = l.gameState.players.find(p => p.id === data.playerId);
+          if (!zorroPlayer) return;
+
+          // Validate: province must be a battle province where Zorro has no figures
+          const isBattleProvince = l.gameState.warProvinceSlots.some(s => s.provinceId === zpProvinceId);
+          if (!isBattleProvince) return;
+          const zpProvince = l.gameState.provinces[zpProvinceId];
+          if (!zpProvince) return;
+          const hasOwnFigure = zpProvince.figures.some(f => f.owner === data.playerId && f.type !== 'fortress');
+          if (hasOwnFigure) return;
+          if (zorroPlayer.bushi <= 0) return;
+          if (l.gameState.zorroPlacementsRemaining <= 0) return;
+
+          // Place bushi
+          const newPlayers = l.gameState.players.map(p => {
+            if (p.id === data.playerId) return { ...p, bushi: p.bushi - 1 };
+            return p;
+          });
+          const newFigure = { type: 'bushi' as const, owner: data.playerId, id: `fig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` };
+          const newProvinces = {
+            ...l.gameState.provinces,
+            [zpProvinceId]: { ...zpProvince, figures: [...zpProvince.figures, newFigure] },
+          };
+          const newRemaining = l.gameState.zorroPlacementsRemaining - 1;
+          l.gameState = {
+            ...l.gameState,
+            players: newPlayers,
+            provinces: newProvinces,
+            zorroPlacementsRemaining: newRemaining,
+            log: [...l.gameState.log, `${zorroPlayer.name} (Zorro) coloca 1 Bushi en ${zpProvince.name}`],
+          };
+          broadcastState(l);
+          break;
+        }
+
+        case 'ZORRO_SKIP_PLACEMENT': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.zorroPlacementActive) return;
+          if (data.playerId !== l.gameState.zorroPlacementPlayerId) return;
+
+          const zorroId = l.gameState.zorroPlacementPlayerId;
+          let zpState: GameState = {
+            ...l.gameState,
+            zorroPlacementActive: false,
+            zorroPlacementPlayerId: null,
+            zorroPlacementsRemaining: 0,
+          };
+
+          // Update battle participants to include Zorro in provinces where they now have figures
+          if (zorroId) {
+            zpState = {
+              ...zpState,
+              activeBattles: zpState.activeBattles.map(b => {
+                const prov = zpState.provinces[b.provinceId];
+                const hasFigures = prov?.figures.some(f => f.owner === zorroId);
+                if (hasFigures && !b.participants.includes(zorroId)) {
+                  const participants = [...b.participants, zorroId].sort((a, bb) => {
+                    const aIdx = zpState.turnOrder.indexOf(a);
+                    const bIdx = zpState.turnOrder.indexOf(bb);
+                    return aIdx - bIdx;
+                  });
+                  return { ...b, participants, uncontested: false, winner: undefined };
+                }
+                return b;
+              }),
+            };
+          }
+          l.gameState = zpState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'WAR_PHASE_READY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          if (!l.gameState.warPhaseReadyPlayers.includes(playerId)) {
+            l.gameState = { ...l.gameState, warPhaseReadyPlayers: [...l.gameState.warPhaseReadyPlayers, playerId] };
+          }
+          if (l.gameState.warPhaseReadyPlayers.length >= l.gameState.players.length) {
+            // All players accepted war summary - resolve uncontested battles and clear
+            l.gameState = resolveUncontestedBattles(l.gameState);
+            l.gameState = { ...l.gameState, warPhaseReadyPlayers: [] };
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'BATTLE_RESULT_ACCEPTED': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          if (!l.gameState.battleResultReadyPlayers.includes(playerId)) {
+            l.gameState = { ...l.gameState, battleResultReadyPlayers: [...l.gameState.battleResultReadyPlayers, playerId] };
+          }
+          // Check if all players have accepted
+          if (l.gameState.battleResultReadyPlayers.length >= l.gameState.players.length) {
+            // Find current unresolved battle and mark it resolved if it's uncontested
+            const currentBattleIndex = l.gameState.activeBattles.findIndex(b => !b.resolved);
+            if (currentBattleIndex !== -1) {
+              const battle = l.gameState.activeBattles[currentBattleIndex];
+              if (battle.uncontested) {
+                const updatedBattles = [...l.gameState.activeBattles];
+                updatedBattles[currentBattleIndex] = { ...battle, resolved: true };
+                l.gameState = { ...l.gameState, activeBattles: updatedBattles };
+              }
+            }
+            l.gameState = { ...l.gameState, battleResultReadyPlayers: [] };
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'WAR_SUMMARY_READY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          if (!l.gameState.warSummaryReadyPlayers.includes(playerId)) {
+            l.gameState = { ...l.gameState, warSummaryReadyPlayers: [...l.gameState.warSummaryReadyPlayers, playerId] };
+          }
+          if (l.gameState.warSummaryReadyPlayers.length >= l.gameState.players.length) {
+            // All players accepted war summary - advance to cleanup phase
+            l.gameState = advancePhase(l.gameState);
+            l.gameState = { ...l.gameState, warSummaryVisible: false, warSummaryReadyPlayers: [] };
+          }
           broadcastState(l);
           break;
         }

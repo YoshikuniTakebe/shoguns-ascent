@@ -274,6 +274,10 @@ export interface GameState {
     distributed: number;
     sharePerLoser: number;
   } | null;
+  warPhaseReadyPlayers: string[];
+  warSummaryVisible: boolean;
+  warSummaryReadyPlayers: string[];
+  battleResultReadyPlayers: string[];
   log: string[];
   logHistory: { [season: string]: string[] };
   hostId?: string;

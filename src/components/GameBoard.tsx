@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, type ReactNode, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCES_DATA, type DeckName } from '../types/game';
 import { RegionCard } from './RegionCard';
@@ -106,7 +107,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady } = useGameStore();
   const t = useT();
 
   const [isDragging, setIsDragging] = useState(false);
@@ -838,6 +839,54 @@ export const GameBoard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* War Summary Popup (after all battles resolved) */}
+      {warSummaryVisible && gameState && createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card" style={{ maxWidth: '500px', minWidth: '320px' }}>
+            <h3 style={{ color: '#DC143C', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                <path d="M4 4l16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M20 4l-16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="12" cy="12" r="1.5" fill="var(--accent-red)" opacity="0.6"/>
+              </svg>
+              <span>{t('war.summary.title')}</span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                <path d="M4 4l16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M20 4l-16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="12" cy="12" r="1.5" fill="var(--accent-red)" opacity="0.6"/>
+              </svg>
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
+              {gameState.activeBattles.map((battle, idx) => {
+                const province = gameState.provinces[battle.provinceId];
+                const winner = battle.winner ? gameState.players.find(p => p.id === battle.winner) : null;
+                const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
+                return (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', borderRadius: '6px', background: winner ? `${winnerClan?.color || '#666'}15` : 'rgba(255,255,255,0.05)', border: `1px solid ${winnerClan?.color || '#444'}33` }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '0.8rem', opacity: 0.6, minWidth: '20px' }}>#{idx + 1}</span>
+                    <span style={{ flex: 1, fontSize: '0.9rem' }}>{province?.name || battle.provinceId}</span>
+                    {winner ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <ClanShield clanId={winner.clanId} size={18} />
+                        <span style={{ color: winnerClan?.color, fontWeight: 'bold', fontSize: '0.85rem' }}>{winner.name}</span>
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.8rem', opacity: 0.5, fontStyle: 'italic' }}>{t('war.summary.discarded')}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <button className="btn-primary battle-popup-accept" onClick={dismissWarSummaryPopup} style={{ borderColor: '#DC143C' }}>
+                {t('war.summary.accept')}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Trade Modal */}

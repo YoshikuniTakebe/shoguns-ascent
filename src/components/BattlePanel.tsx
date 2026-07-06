@@ -451,6 +451,7 @@ export const BattlePanel = () => {
     biddingMapPeek,
     setBiddingMapPeek,
     warPhasePopupVisible,
+    warSummaryVisible,
   } = useGameStore();
   const t = useT();
 
@@ -470,6 +471,9 @@ export const BattlePanel = () => {
 
   // --- WAR PHASE POPUP: suppress battle popups while war summary is visible ---
   if (warPhasePopupVisible) return null;
+
+  // --- WAR SUMMARY POPUP: suppress battle popups while war summary is visible ---
+  if (warSummaryVisible) return null;
 
   // --- COIN DISTRIBUTION POPUP: show when winner must allocate remainder coins ---
   if (gameState.coinDistributionPending) {
@@ -854,6 +858,8 @@ export const BattlePanel = () => {
 
   // All battles resolved - war complete
   if (currentBattleIndex === -1) {
+    // In online mode, the war summary popup handles the end of war flow
+    if (gameState.mode === 'online') return null;
     return (
       <div className="battle-panel">
         <h3>{t('battle.warComplete')}</h3>

@@ -280,6 +280,10 @@ export function createInitialGameState(
     kamiSummaryVisible: false,
     kamiSummaryReadyPlayers: [],
     kamiSummaryData: [],
+    warPhaseReadyPlayers: [],
+    warSummaryVisible: false,
+    warSummaryReadyPlayers: [],
+    battleResultReadyPlayers: [],
     log: ['Juego iniciado! Estación: Primavera'],
     logHistory: {},
     hostId,
@@ -1951,6 +1955,10 @@ export function initiateWarPhase(state: GameState): GameState {
     ...state,
     currentPhase: 'war' as const,
     activeBattles: [],
+    warPhaseReadyPlayers: [],
+    warSummaryVisible: false,
+    warSummaryReadyPlayers: [],
+    battleResultReadyPlayers: [],
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], seasonCards: [...p.seasonCards] })),
     log: [...state.log, '=== Comienza la Fase de Guerra ==='],
   };
@@ -2736,6 +2744,10 @@ export function cleanupSeason(state: GameState): GameState {
     trainResolutionIndex: 0,
     trainMandateIssuerId: null,
     teaTurnIndex: 0,
+    warPhaseReadyPlayers: [],
+    warSummaryVisible: false,
+    warSummaryReadyPlayers: [],
+    battleResultReadyPlayers: [],
     log: [...state.log, 'Limpieza: Ronin y monedas descartados, Shinto devueltos de los santuarios'],
   };
 
