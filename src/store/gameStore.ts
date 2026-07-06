@@ -3004,6 +3004,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
             }
           }
 
+          // Force show turn popup when a mandate just ended and no mandate is active now
+          const prevMandateWasActive = prevGameState?.trainMandateActive || prevGameState?.marshalMandateActive || prevGameState?.recruitMandateActive || prevGameState?.betrayMandateActive || prevGameState?.harvestMandateActive;
+          const noMandateNow = !state.trainMandateActive && !state.marshalMandateActive && !state.recruitMandateActive && !state.betrayMandateActive && !state.harvestMandateActive;
+          if (prevMandateWasActive && noMandateNow && state.drawnMandates.length === 0 && !state.mandateChoicePhase) {
+            newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
+            uiResets.turnPopupDismissedForIndex = null;
+          }
+
           // For online marshal: save undoMandateState when it's this player's marshal turn
           // Only set when we receive a fresh state from the server (not from local modifications)
           if (state.mode === 'online' && state.marshalMandateActive && lpId) {
