@@ -631,6 +631,11 @@ export const en = {
   'trade.reject': 'Reject',
   'trade.nonBinding': 'Non-binding deal',
   'game.exit': 'Exit',
+  'game.password': 'Password',
+  'game.passwordOptional': 'Password (optional)',
+  'game.enterPassword': 'Enter game password',
+  'game.wrongPassword': 'Incorrect password',
+  'game.passwordProtected': 'Password protected',
   'lobby.players': 'players',
 
   // Online Lobby

@@ -633,6 +633,11 @@ export const es: Record<TranslationKey, string> = {
   'trade.reject': 'Rechazar',
   'trade.nonBinding': 'Trato no vinculante',
   'game.exit': 'Salir',
+  'game.password': 'Contrasena',
+  'game.passwordOptional': 'Contrasena (opcional)',
+  'game.enterPassword': 'Introduce la contrasena de la partida',
+  'game.wrongPassword': 'Contrasena incorrecta',
+  'game.passwordProtected': 'Protegido con contrasena',
   'lobby.players': 'jugadores',
 
   // Online Lobby

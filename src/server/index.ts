@@ -49,6 +49,7 @@ import {
   getGamePlayersByGameId,
   deleteGame,
   purgeOrphanGames,
+  getGamePasswordHash,
 } from './database';
 import { generateToken, verifyToken } from './auth';
 import bcrypt from 'bcryptjs';
@@ -310,7 +311,7 @@ app.get('/api/games/:id/snapshot-count', (req, res) => {
 // --- Hotseat persistence endpoints ---
 
 app.post('/api/games/save-hotseat', (req, res) => {
-  const { state } = req.body as { state: GameState };
+  const { state, password } = req.body as { state: GameState; password?: string };
   if (!state) {
     res.status(400).json({ error: 'Missing state in request body' });
     return;
@@ -320,7 +321,7 @@ app.post('/api/games/save-hotseat', (req, res) => {
   const gameName = state.gameName || `Hotseat - ${players.map((p) => p.name).join(' vs ')}`;
   const status = state.gameOver ? 'finished' : 'active';
 
-  saveGame(gameId, gameName, players, 'hotseat', status);
+  saveGame(gameId, gameName, players, 'hotseat', status, password);
   saveSnapshot(gameId, state, 'Hotseat save');
 
   if (state.gameOver) {
@@ -328,6 +329,26 @@ app.post('/api/games/save-hotseat', (req, res) => {
   }
 
   res.json({ id: gameId });
+});
+
+app.get('/api/games/:id/has-password', (req, res) => {
+  const hash = getGamePasswordHash(req.params.id);
+  res.json({ hasPassword: !!hash });
+});
+
+app.post('/api/games/:id/verify-password', async (req, res) => {
+  const { password } = req.body as { password: string };
+  if (!password) {
+    res.status(400).json({ error: 'Missing password' });
+    return;
+  }
+  const hash = getGamePasswordHash(req.params.id);
+  if (!hash) {
+    res.json({ valid: true });
+    return;
+  }
+  const valid = await bcrypt.compare(password, hash);
+  res.json({ valid });
 });
 
 app.put('/api/games/:id/snapshot', (req, res) => {

@@ -33,6 +33,10 @@ export const GamesLobby = () => {
   const [loading, setLoading] = useState(true);
   const [purging, setPurging] = useState(false);
   const [purgeResult, setPurgeResult] = useState<string | null>(null);
+  const [passwordModal, setPasswordModal] = useState<{ gameId: string } | null>(null);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+  const [passwordGames, setPasswordGames] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -109,6 +113,59 @@ export const GamesLobby = () => {
     };
     fetchGames();
   }, [authToken, authUser]);
+
+  // Check which hotseat games have passwords
+  useEffect(() => {
+    const allGames = [...yourTurnGames, ...waitingGames];
+    const hotseatGames = allGames.filter(g => g.mode === 'hotseat');
+    if (hotseatGames.length === 0) return;
+    const checkPasswords = async () => {
+      const pwSet = new Set<string>();
+      await Promise.all(
+        hotseatGames.map(async (g) => {
+          try {
+            const res = await fetch(`${API_BASE}/api/games/${g.id}/has-password`);
+            const data = await res.json();
+            if (data.hasPassword) pwSet.add(g.id);
+          } catch { /* ignore */ }
+        })
+      );
+      setPasswordGames(pwSet);
+    };
+    checkPasswords();
+  }, [yourTurnGames, waitingGames]);
+
+  const handleResumeGame = async (gameId: string, mode: string) => {
+    if (mode === 'hotseat' && passwordGames.has(gameId)) {
+      setPasswordModal({ gameId });
+      setPasswordInput('');
+      setPasswordError(false);
+      return;
+    }
+    resumeGame(gameId);
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!passwordModal) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/games/${passwordModal.gameId}/verify-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passwordInput }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setPasswordModal(null);
+        setPasswordInput('');
+        setPasswordError(false);
+        resumeGame(passwordModal.gameId);
+      } else {
+        setPasswordError(true);
+      }
+    } catch {
+      setPasswordError(true);
+    }
+  };
 
   const getClanColor = (clanId: string) => {
     return CLANS.find(c => c.id === clanId)?.color || '#fff';
@@ -198,7 +255,7 @@ export const GamesLobby = () => {
       if (type === 'finished') {
         loadReplayGame(game.id);
       } else {
-        resumeGame(game.id);
+        handleResumeGame(game.id, game.mode);
       }
     };
 
@@ -227,10 +284,20 @@ export const GamesLobby = () => {
       <div
         key={game.id}
         className={cardClass}
-        onClick={() => type === 'finished' ? loadReplayGame(game.id) : resumeGame(game.id)}
+        onClick={() => type === 'finished' ? loadReplayGame(game.id) : handleResumeGame(game.id, game.mode)}
       >
         <div className="games-lobby-card-header">
-          <span className="games-lobby-card-gamename">{game.name}</span>
+          <span className="games-lobby-card-gamename">
+            {passwordGames.has(game.id) && (
+              <span className="games-lobby-lock-icon" title={t('game.passwordProtected')}>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" fill="none" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              </span>
+            )}
+            {game.name}
+          </span>
           <span className="games-lobby-card-header-right">
             {modeIcon}
             <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
@@ -388,6 +455,31 @@ export const GamesLobby = () => {
           {t('lobby.back')}
         </button>
       </div>
+
+      {/* Password modal */}
+      {passwordModal && (
+        <div className="password-modal-overlay" onClick={() => setPasswordModal(null)}>
+          <div className="password-modal" onClick={e => e.stopPropagation()}>
+            <h3>{t('game.enterPassword')}</h3>
+            <input
+              type="password"
+              className="password-modal-input"
+              value={passwordInput}
+              onChange={e => { setPasswordInput(e.target.value); setPasswordError(false); }}
+              onKeyDown={e => { if (e.key === 'Enter') handlePasswordSubmit(); }}
+              autoFocus
+              placeholder={t('game.password')}
+            />
+            {passwordError && (
+              <p className="password-modal-error">{t('game.wrongPassword')}</p>
+            )}
+            <div className="password-modal-actions">
+              <button className="btn-primary" onClick={handlePasswordSubmit}>{t('lobby.resume')}</button>
+              <button className="btn-secondary" onClick={() => setPasswordModal(null)}>{t('lobby.back')}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

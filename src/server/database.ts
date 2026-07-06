@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import type { GameState } from '../types/game';
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
 
 let db: Database.Database;
 
@@ -75,6 +76,12 @@ export function initDatabase(): void {
   if (!columns.some((col) => col.name === 'is_admin')) {
     db.exec(`ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0`);
   }
+
+  // Migration: add password_hash column to games table if it doesn't exist
+  const gamesColumns = db.pragma('table_info(games)') as { name: string }[];
+  if (!gamesColumns.some((col) => col.name === 'password_hash')) {
+    db.exec(`ALTER TABLE games ADD COLUMN password_hash TEXT`);
+  }
 }
 
 export function saveGame(
@@ -82,14 +89,19 @@ export function saveGame(
   name: string,
   players: { name: string; clanId: string }[],
   mode: string,
-  status: string = 'active'
+  status: string = 'active',
+  password?: string
 ): void {
   const now = new Date().toISOString();
+  let passwordHash: string | null = null;
+  if (password) {
+    passwordHash = bcrypt.hashSync(password, 10);
+  }
   const stmt = db.prepare(`
-    INSERT OR REPLACE INTO games (id, name, players_json, status, created_at, updated_at, mode, winner)
-    VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+    INSERT OR REPLACE INTO games (id, name, players_json, status, created_at, updated_at, mode, winner, password_hash)
+    VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)
   `);
-  stmt.run(id, name, JSON.stringify(players), status, now, now, mode);
+  stmt.run(id, name, JSON.stringify(players), status, now, now, mode, passwordHash);
 }
 
 export function updateGameStatus(id: string, status: string, winner?: string): void {
@@ -139,6 +151,12 @@ export function getGameById(id: string): {
 } | undefined {
   const stmt = db.prepare(`SELECT * FROM games WHERE id = ?`);
   return stmt.get(id) as any;
+}
+
+export function getGamePasswordHash(gameId: string): string | null {
+  const stmt = db.prepare(`SELECT password_hash FROM games WHERE id = ?`);
+  const result = stmt.get(gameId) as { password_hash: string | null } | undefined;
+  return result?.password_hash || null;
 }
 
 export function getActiveGames(): {

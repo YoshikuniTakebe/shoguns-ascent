@@ -279,7 +279,7 @@ interface GameStore {
   setSelectedFigures: (ids: string[]) => void;
 
   // Game lifecycle
-  createGame: (players: { name: string; clanId: string }[], mode: 'online' | 'hotseat', deckConfig?: DeckConfig) => void;
+  createGame: (players: { name: string; clanId: string }[], mode: 'online' | 'hotseat', deckConfig?: DeckConfig, password?: string) => void;
   setGameState: (s: GameState) => void;
   setLocalPlayerId: (id: string) => void;
   setUsername: (name: string) => void;
@@ -885,7 +885,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setSelectedFigures: (ids) => set({ selectedFigures: ids }),
 
   // --- Game Lifecycle ---
-  createGame: (players, mode, deckConfig) => {
+  createGame: (players, mode, deckConfig, password) => {
     const state = createInitialGameState(players, mode, undefined, deckConfig);
     set({ gameState: state, localPlayerId: state.players[0].id, screen: 'game', persistentGameId: null });
     // Persist hotseat games
@@ -893,7 +893,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       fetch(`${API_BASE}/api/games/save-hotseat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state }),
+        body: JSON.stringify({ state, password: password || undefined }),
       })
         .then(res => res.json())
         .then(data => {

@@ -42,6 +42,7 @@ export const MainMenu = () => {
   const [extraMonsters, setExtraMonsters] = useState<0 | 1 | 2>(0);
   const [kamiMode, setKamiMode] = useState<'random' | 'manual'>('random');
   const [selectedKami, setSelectedKami] = useState<KamiType[]>([]);
+  const [hotseatPassword, setHotseatPassword] = useState('');
   const [url, setUrl] = useState(WS_BASE);
 
   const [lid, setLid] = useState('');
@@ -245,6 +246,17 @@ export const MainMenu = () => {
             })}
           </div>
 
+          <div className="hotseat-password-section">
+            <label className="deck-config-label">{t('game.passwordOptional')}</label>
+            <input
+              type="password"
+              className="hotseat-password-input"
+              value={hotseatPassword}
+              onChange={e => setHotseatPassword(e.target.value)}
+              placeholder={t('game.password')}
+            />
+          </div>
+
           <div className="deck-config-section">
             <h3>{t('deck.config')}</h3>
             <div className="deck-group-selector">
@@ -341,7 +353,8 @@ export const MainMenu = () => {
                 createGame(
                   Array.from({ length: pc }, (_, i) => ({ name: names[i], clanId: clans[i] })),
                   'hotseat',
-                  getDeckConfig()
+                  getDeckConfig(),
+                  hotseatPassword || undefined
                 )
               }
             >
