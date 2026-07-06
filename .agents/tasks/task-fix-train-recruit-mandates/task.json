@@ -1,0 +1,14 @@
+{
+  "task_id": "task-fix-train-recruit-mandates",
+  "task_description": "Fix the TRAIN mandate flow (modal visibility, server validation, turn advancement) and RECRUIT mandate cleanup (UI state reset, player advancement after mandate ends)",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "skipped",
+    "docker_build": "skipped",
+    "summary": "TypeScript compiles cleanly (npx tsc --noEmit), Vite build succeeds. No test framework in project."
+  }
+}

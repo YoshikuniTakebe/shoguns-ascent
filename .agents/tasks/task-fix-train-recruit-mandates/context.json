@@ -1,0 +1,23 @@
+{
+  "project_type": "React+Vite frontend with Express 5 + WebSocket backend board game",
+  "language": "TypeScript",
+  "build_system": "Vite for frontend, tsx for backend server",
+  "test_framework": "No test framework found - manual verification only",
+  "build_command": "npm run build",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "1. Run npx tsc --noEmit to check TypeScript compilation. 2. Run npm run build to ensure Vite builds successfully.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "No automated test suite available. Verification is limited to TypeScript type checking and Vite build.",
+  "contribution_requirements": "None documented",
+  "key_patterns": "Zustand store (src/store/gameStore.ts) manages all game state. Online multiplayer uses WebSocket messages between client and server. Server broadcasts full game state to all clients after each action. Client-local UI state (recruitMode, moveMode, etc.) is separate from game state and must be manually reset. The GAME_STATE handler in the store is the single point where online state arrives and local UI flags should be synchronized.",
+  "relevant_files": [
+    "src/server/index.ts",
+    "src/store/gameStore.ts",
+    "src/components/PoliticsTrack.tsx",
+    "src/components/SeasonCardsModal.tsx",
+    "src/components/GameBoard.tsx",
+    "src/utils/gameLogic.ts"
+  ],
+  "directory_structure": "src/components/ - React components, src/store/ - Zustand store, src/server/ - Express+WS server, src/utils/ - game logic functions, src/types/ - TypeScript types"
+}

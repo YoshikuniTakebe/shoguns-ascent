@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix RECRUIT mandate cleanup: reset client UI modes when mandates end and ensure player advancement shows turn popup",
+  "status": "completed",
+  "steps": [
+    "1. In src/store/gameStore.ts GAME_STATE handler (~line 2821): Before the final set() call, build a stateUpdates object. Check if the incoming state has mandates that are now inactive (state.mode === 'online'). Reset local UI flags accordingly: if !state.recruitMandateActive, set recruitMode: false. If !state.marshalMandateActive, set moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false. If !state.betrayMandateActive, set betrayMode: false. Include these in the set() call.",
+    "2. In the same GAME_STATE handler: When a mandate was previously active (get().gameState had recruitMandateActive/marshalMandateActive/betrayMandateActive === true) and the new state has it false AND noResolution is true (meaning no mandates are active anymore), ensure turnPopupDismissedForIndex is reset to null so the turn popup can show for the new current player. The existing logic to show turn popup when noResolution && drawnMandates.length === 0 should then fire correctly.",
+    "3. Verify that the existing turn popup condition (noResolution && state.drawnMandates.length === 0 && !state.mandateChoicePhase && turnPopupDismissedForIndex !== state.currentPlayerIndex) correctly triggers after recruit mandate ends and advancePlayer() has been called on the server, changing currentPlayerIndex."
+  ],
+  "acceptance_criteria": [
+    "After recruit mandate ends, the map returns to normal (no transparent province containers)",
+    "After recruit mandate ends, the game advances to the next player and shows the turn popup",
+    "After marshal mandate ends, moveMode/buildFortressMode/moveFrom/selectedFigures are all reset",
+    "After betray mandate ends, betrayMode is reset",
+    "The next player can properly choose a new mandate after the previous mandate resolves",
+    "TypeScript compiles without errors (npx tsc --noEmit)"
+  ],
+  "verification": [
+    "npx tsc --noEmit",
+    "npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "Fix implemented in GAME_STATE handler of gameStore.ts. Two changes: (1) Moved dismissedIdx computation before the turn popup logic so that when currentPlayerIndex changes after mandate resolution, the dismissed tracking is reset to null BEFORE the noResolution popup check uses it. This ensures the turn popup fires for the new player. (2) Added uiResets object that resets recruitMode, moveMode, moveFrom, selectedFigures, buildFortressMode, and betrayMode based on which mandates are no longer active. The resets are spread into the final set() call. Both tsc --noEmit and npm run build pass cleanly."
+}

@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix TRAIN mandate flow: server-side validation, client-side modal gating, and proper turn advancement",
+  "status": "completed",
+  "steps": [
+    "1. In src/server/index.ts BUY_CARD handler (~line 985): Add validation that data.playerId matches l.gameState.trainResolutionOrder[l.gameState.trainResolutionIndex]. If it does not match, return early without processing. This prevents any non-current player from buying cards.",
+    "2. In src/server/index.ts SKIP_TRAIN_PURCHASE handler (~line 1118): Add the same validation - check that data.playerId matches l.gameState.trainResolutionOrder[l.gameState.trainResolutionIndex]. Return early if mismatch.",
+    "3. In src/components/PoliticsTrack.tsx: Modify the useEffect that auto-opens showSeasonCards when trainMandateActive is true. Add localPlayerId from the store. In online mode, only open the modal if the local player is the current player in the train resolution (i.e., gameState.trainResolutionOrder[gameState.trainResolutionIndex] === localPlayerId). For hotseat mode, keep existing behavior.",
+    "4. In src/components/SeasonCardsModal.tsx: Add localPlayerId from the store. In train mode (isTrainMode && gameState.mode === 'online'), add a check: if localPlayerId !== gameState.trainResolutionOrder[gameState.trainResolutionIndex], do NOT show the interactive player indicator, do NOT show buy buttons, and do NOT show skip button. The modal can still be viewed (as read-only) if user manually opens it via the button, but all interactive elements should be hidden for non-current players.",
+    "5. In src/store/gameStore.ts GAME_STATE handler (~line 2795): When trainMandateActive is true in online mode, check if the local player is the current train resolution player (state.trainResolutionOrder[state.trainResolutionIndex] === lpId). If NOT, ensure the turn popup is NOT shown for this player. If YES, set newTurnPopup to the local player's ID so they see the 'choose card' flow. Also, when trainMandateActive transitions from true to false, any lingering train-related UI state should be cleaned up.",
+    "6. In src/components/PoliticsTrack.tsx: When trainMandateActive becomes false (the else branch of the useEffect), auto-close showSeasonCards. When the trainResolutionIndex changes and the new resolution player is the local player, auto-open showSeasonCards for that player only."
+  ],
+  "acceptance_criteria": [
+    "Server rejects BUY_CARD from a player who is not the current train resolution player",
+    "Server rejects SKIP_TRAIN_PURCHASE from a player who is not the current train resolution player",
+    "In online mode, SeasonCardsModal only opens automatically for the player whose turn it is to buy",
+    "In online mode, only the current train resolution player sees the Accept button, Buy buttons, and Skip button",
+    "After a player buys a card or skips, the modal closes for them and opens for the next player in resolution order",
+    "Players who are not currently buying see a waiting/non-interactive state (no buy/skip buttons)",
+    "The turn popup shows for the correct player before they see the cards modal",
+    "TypeScript compiles without errors (npx tsc --noEmit)"
+  ],
+  "verification": [
+    "npx tsc --noEmit",
+    "npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "All changes compile cleanly. The fix gates the train mandate flow on both server and client. Server validates player identity before processing BUY_CARD and SKIP_TRAIN_PURCHASE. Client only shows the cards modal and interactive elements to the player whose turn it is according to trainResolutionOrder[trainResolutionIndex]. The GAME_STATE handler now tracks trainResolutionIndex changes separately from currentPlayerIndex to correctly trigger turn popups for train resolution. Additional fix: added explicit first-player train popup trigger when trainMandateActive first becomes true. Added purchasePending flag to prevent accept-button flicker and double-buy between sending action and server response."
+}
