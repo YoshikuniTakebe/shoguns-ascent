@@ -1237,8 +1237,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- Skip Train Purchase ---
   doSkipTrainPurchase: () => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'SKIP_TRAIN_PURCHASE', playerId: get().localPlayerId });
+      return;
+    }
     let ns = skipTrainPurchase(gameState);
     // If train mandate is now resolved (all players done), advance to next mandate turn
     if (!ns.trainMandateActive) {
@@ -1335,7 +1339,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameState: ns });
   },
   doRecruitPlaceTempleShinto: (templeId: string) => {
-    const { gameState, localPlayerId, recruitFigureType } = get();
+    const { gameState, localPlayerId, recruitFigureType, ws } = get();
     if (!gameState || !localPlayerId) return;
     if (recruitFigureType !== 'shinto') return;
     if (!gameState.recruitMandateActive) return;
@@ -1344,6 +1348,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const cp = getCurrentPlayer(gameState);
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
+
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RECRUIT_PLACE_TEMPLE_SHINTO', playerId: apid, payload: { templeId } });
+      return;
+    }
 
     const player = gameState.players.find(p => p.id === apid);
     if (!player || player.shinto <= 0) return;
@@ -1510,8 +1519,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- Harvest Acknowledgement ---
   doAcknowledgeHarvest: () => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState || !gameState.harvestMandateActive) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'ACKNOWLEDGE_HARVEST', playerId: get().localPlayerId });
+      return;
+    }
     let ns = advanceHarvestResolution(gameState);
     if (!ns.harvestMandateActive) {
       // Harvest fully resolved, advance player
@@ -2803,7 +2816,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           set({ lobbyState: d.lobby });
           break;
         case 'GAME_START':
-          set({ gameState: d.state, screen: 'game' });
+          set({ gameState: d.state, screen: 'game', turnPopupPlayer: null, turnPopupDismissedForIndex: null });
           break;
         case 'LOBBY_CLOSED':
           set({ lobbyState: null, lobbyId: null, screen: 'menu' });

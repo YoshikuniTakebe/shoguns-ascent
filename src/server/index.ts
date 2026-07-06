@@ -27,6 +27,11 @@ import {
   betraySelectFigure,
   skipBetrayTurn,
   shouldEndTeaPhase,
+  recruitPlaceFigure,
+  skipRecruitTurn,
+  skipTrainPurchase,
+  advanceHarvestResolution,
+  lotoChooseActualMandate,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 import {
@@ -1007,6 +1012,106 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           let s = skipBetrayTurn(l.gameState);
           s = advancePlayer(s);
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RECRUIT_PLACE_FIGURE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const { provinceId, figureType } = data.payload || {};
+          if (!provinceId || !figureType) return;
+          l.gameState = recruitPlaceFigure(l.gameState, data.playerId, provinceId, figureType);
+          broadcastState(l);
+          break;
+        }
+
+        case 'RECRUIT_PLACE_TEMPLE_SHINTO': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const { templeId } = data.payload || {};
+          if (!templeId) return;
+          // Place shinto in temple during recruit mandate
+          if (!l.gameState.recruitMandateActive) return;
+          if (l.gameState.recruitPlacementsRemaining <= 0) return;
+          const recruitPlayer = l.gameState.players.find(p => p.id === data.playerId);
+          if (!recruitPlayer || recruitPlayer.shinto <= 0) return;
+          const templeIndex = l.gameState.temples.findIndex(t => t.id === templeId);
+          if (templeIndex === -1) return;
+          const temple = l.gameState.temples[templeIndex];
+          // Luna clan power: max 2 shinto per temple
+          if (recruitPlayer.clanId === 'luna') {
+            const shintoInTemple = temple.figures.filter(f => f.playerId === data.playerId).length;
+            if (shintoInTemple >= 2) return;
+          }
+          const figureId = Math.random().toString(36).substring(2, 10);
+          const updatedTemples = [...l.gameState.temples];
+          updatedTemples[templeIndex] = {
+            ...temple,
+            figures: [...temple.figures, { playerId: data.playerId, figureId }],
+          };
+          const updatedPlayers = l.gameState.players.map(p => {
+            if (p.id === data.playerId) return { ...p, shinto: Math.max(0, p.shinto - 1) };
+            return p;
+          });
+          l.gameState = {
+            ...l.gameState,
+            temples: updatedTemples,
+            players: updatedPlayers,
+            recruitPlacementsRemaining: l.gameState.recruitPlacementsRemaining - 1,
+            log: [...l.gameState.log, `${recruitPlayer.name} coloca un shinto en santuario`],
+          };
+          broadcastState(l);
+          break;
+        }
+
+        case 'SKIP_RECRUIT_TURN': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          let s = skipRecruitTurn(l.gameState);
+          if (!s.recruitMandateActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'SKIP_TRAIN_PURCHASE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          let s = skipTrainPurchase(l.gameState);
+          if (!s.trainMandateActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'ACKNOWLEDGE_HARVEST': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.harvestMandateActive) return;
+          let s = advanceHarvestResolution(l.gameState);
+          if (!s.harvestMandateActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'LOTO_CHOOSE_ACTUAL_MANDATE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const { mandate: lotoMandate } = data.payload || {};
+          if (!lotoMandate) return;
+          let s = lotoChooseActualMandate(l.gameState, lotoMandate, data.playerId);
+          if (!s.betrayMandateActive && !s.trainMandateActive && !s.marshalMandateActive && !s.recruitMandateActive && !s.harvestMandateActive) {
+            s = advancePlayer(s);
+          }
           l.gameState = s;
           broadcastState(l);
           break;

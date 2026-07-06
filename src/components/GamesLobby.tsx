@@ -112,6 +112,9 @@ export const GamesLobby = () => {
       }
     };
     fetchGames();
+    // Poll every 15 seconds to keep the list in sync across clients
+    const interval = setInterval(fetchGames, 15000);
+    return () => clearInterval(interval);
   }, [authToken, authUser]);
 
   // Check which hotseat games have passwords

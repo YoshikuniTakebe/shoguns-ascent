@@ -638,13 +638,13 @@ export const GameBoard = () => {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <div style={{ marginTop: '5px', filter: 'drop-shadow(rgb(-3, 1, 20) 1px -1px 2px)' }}>
+              <div style={{ marginTop: '13px', filter: 'drop-shadow(rgb(-3, 1, 20) 1px -1px 2px)' }}>
                 <ClanShield clanId={localPlayer.clanId} size={173} />
               </div>
               <p style={{ color: clanColor, fontWeight: 'bold', fontSize: '1.3rem', textShadow: '-1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333', marginTop: '-20px' }}>
                 {localPlayer.name}
               </p>
-              <h4 style={{ color: '#fff', margin: '8px 0', textAlign: 'center' }}>{t('game.teaReadyTitle')}</h4>
+              <h4 style={{ color: '#fff', margin: '0px 0px', textAlign: 'center', marginBottom: '15px' }}>{t('game.teaReadyTitle')}</h4>
               <button className="monster-placement-btn" onClick={doTeaReady} style={{ fontSize: '1.02rem', padding: '0.68rem 2.12rem', marginTop: '-11px' }}>
                 {t('game.turnPopupAccept')}
               </button>

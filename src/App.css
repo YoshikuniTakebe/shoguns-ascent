@@ -80,7 +80,7 @@
 @keyframes pulse-monster{0%,100%{box-shadow:0 0 15px rgba(218,165,32,0.3)}50%{box-shadow:0 0 25px rgba(218,165,32,0.7)}}
 .monster-placement-popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:1000}
 .monster-placement-popup-content{background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:12px;padding:1.5rem 2rem;text-align:center;max-width:400px;box-shadow:0 0 30px rgba(200,169,81,0.3)}
-.monster-placement-popup-content p{color:var(--text-primary);font-size:1rem;margin-bottom:1.4rem;line-height:1.4}
+.monster-placement-popup-content p{color:var(--text-primary);font-size:1rem;margin-bottom:0;line-height:1.4}
 .monster-placement-btn{background:linear-gradient(135deg,#DAA520,#B8860B);color:#1a1a2e;border:none;padding:0.6rem 1.5rem;border-radius:6px;font-weight:bold;font-size:0.9rem;cursor:pointer;transition:all 0.2s}
 .monster-placement-btn:hover{transform:scale(1.05);box-shadow:0 0 12px rgba(218,165,32,0.5)}
 .monster-placement-btn.secondary{background:linear-gradient(135deg,#4a5568,#2d3748);color:var(--text-primary)}
