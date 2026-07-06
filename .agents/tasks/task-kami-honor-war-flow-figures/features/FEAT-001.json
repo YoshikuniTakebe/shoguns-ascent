@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix Kami honor tiebreaker bug: When winners are pre-computed in the kami resolution setup loop (gameLogic.ts ~line 3308), ALL temple winners are calculated upfront using the initial honorTrack. But when Amaterasu is resolved (moving winner to top of honor track), subsequent sanctuaries should use the UPDATED honor positions for tiebreaking. The fix is to NOT pre-compute winnerId during the setup loop - instead, compute winnerId lazily when each temple is actually resolved (in resolveCurrentKamiReward or when acknowledging). Also fix the figure sizes: Bushi Sol 0.95->0.92, Daimyo Libelula 1.02->1.06, Daimyo Zorro 0.97->0.95.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/utils/gameLogic.ts, find the kami resolution setup loop (around line 3305-3345) where computeTempleWinner is called for each temple and the results are stored in kamiResolutionTemples. Change it so that winnerId is set to null initially (deferred computation) and forces are still pre-computed for display purposes only. Add a new field like 'winnerDeferred: true' or simply leave winnerId null for temples that have forces (contested).",
     "In src/utils/gameLogic.ts, modify resolveCurrentKamiReward (around line 1705) to compute the winner dynamically using computeTempleWinner with the CURRENT state.honorTrack when the temple is actually being resolved. If currentTemple.winnerId is null but currentTemple.forces.length > 0, call computeTempleWinner to determine the actual winner at resolution time. Store the computed winnerId back into the temple data for display.",
@@ -23,5 +23,5 @@
     "Run npm run build and confirm it passes"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Fix implemented successfully. winnerId is now deferred (null) in setup loop and computed dynamically in resolveCurrentKamiReward and advanceKamiResolution using the current honorTrack. Server handler, gameStore hotseat handler, and figure sizes all updated. Build passes cleanly."
 }
