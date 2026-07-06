@@ -261,6 +261,7 @@ export function createInitialGameState(
     kamiResolutionTemples: [],
     kamiResolutionIndex: 0,
     kamiResolutionStep: null,
+    kamiResolutionCurrentPlayerId: null,
     kamiResolutionNextPlayerIndex: 0,
     fujinMovesRemaining: 0,
     raijinPlacementActive: false,
@@ -1661,6 +1662,7 @@ export function advanceKamiResolution(state: GameState): GameState {
       kamiResolutionTemples: [],
       kamiResolutionIndex: 0,
       kamiResolutionStep: null,
+      kamiResolutionCurrentPlayerId: null,
       fujinMovesRemaining: 0,
       raijinPlacementActive: false,
       ryujinBuyActive: false,
@@ -1682,6 +1684,7 @@ export function advanceKamiResolution(state: GameState): GameState {
     ...state,
     kamiResolutionIndex: nextIndex,
     kamiResolutionStep: 'showing',
+    kamiResolutionCurrentPlayerId: state.kamiResolutionTemples[nextIndex]?.winnerId || null,
     fujinMovesRemaining: 0,
     raijinPlacementActive: false,
     ryujinBuyActive: false,
@@ -3234,6 +3237,7 @@ export function advancePlayer(state: GameState): GameState {
     newState.kamiResolutionTemples = kamiResolutionTemples;
     newState.kamiResolutionIndex = 0;
     newState.kamiResolutionStep = 'showing';
+    newState.kamiResolutionCurrentPlayerId = kamiResolutionTemples[0]?.winnerId || null;
     newState.kamiResolutionNextPlayerIndex = advanceToNextInSeating(referenceIdx);
     newState.log = [...newState.log, '--- Turno Kami ---'];
     return newState;

@@ -242,6 +242,7 @@ export interface GameState {
   kamiResolutionTemples: KamiResolutionTemple[];
   kamiResolutionIndex: number;
   kamiResolutionStep: 'showing' | 'interactive' | null;
+  kamiResolutionCurrentPlayerId?: string | null;
   kamiResolutionNextPlayerIndex: number;
   fujinMovesRemaining: number;
   raijinPlacementActive: boolean;

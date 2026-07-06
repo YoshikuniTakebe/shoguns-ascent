@@ -350,6 +350,7 @@ export const en = {
   'kami.resolution.ryujinBuy': 'Buy a Season Card',
   'kami.resolution.templeOf': 'Shrine {number}',
   'kami.resolution.susanooVP': 'Gains {vp} VP ({fortresses} Fortresses on map)',
+  'kami.resolution.waitingFor': 'Waiting for {name} to resolve shrine',
 
   // Kami Phase Popup
   'kami.phaseStart.title': 'Kami Phase Begins',

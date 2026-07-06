@@ -352,6 +352,7 @@ export const es: Record<TranslationKey, string> = {
   'kami.resolution.ryujinBuy': 'Compra una carta de Estacion',
   'kami.resolution.templeOf': 'Santuario {number}',
   'kami.resolution.susanooVP': 'Gana {vp} PV ({fortresses} Fortalezas en mapa)',
+  'kami.resolution.waitingFor': 'Esperando a que {name} resuelva el santuario',
 
   // Kami Phase Popup
   'kami.phaseStart.title': 'Comienza la Fase Kami',

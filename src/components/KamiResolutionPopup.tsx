@@ -35,6 +35,7 @@ const KAMI_PALETTES: Record<KamiType, { primary: string; secondary: string; glow
 
 export const KamiResolutionPopup = () => {
   const { gameState, doAcknowledgeKamiReward } = useGameStore();
+  const localPlayerId = useGameStore(s => s.localPlayerId);
   const t = useT();
 
   if (!gameState || !gameState.kamiResolutionActive || gameState.kamiResolutionStep !== 'showing') {
@@ -43,6 +44,25 @@ export const KamiResolutionPopup = () => {
 
   const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
   if (!currentTemple) return null;
+
+  const isOnline = gameState.mode === 'online';
+  const currentPlayerId = gameState.kamiResolutionCurrentPlayerId;
+
+  // In online mode: if the local player is NOT the current resolving player, show waiting message
+  if (isOnline && currentPlayerId && currentPlayerId !== localPlayerId) {
+    const waitingPlayer = gameState.players.find(p => p.id === currentPlayerId);
+    const waitingClan = waitingPlayer ? CLANS.find(c => c.id === waitingPlayer.clanId) : null;
+    return (
+      <div className="harvest-popup-backdrop">
+        <div className="harvest-popup" style={{ borderColor: waitingClan?.color || '#c8a951' }}>
+          <h3 className="harvest-popup-title" style={{ color: waitingClan?.color || '#c8a951', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <ClanShield clanId={waitingPlayer?.clanId || ''} size={24} />
+            {t('kami.resolution.waitingFor' as TranslationKey, { name: waitingPlayer?.name || '' })}
+          </h3>
+        </div>
+      </div>
+    );
+  }
 
   const kamiData = KAMI_DATA.find(k => k.type === currentTemple.kamiType);
   const palette = KAMI_PALETTES[currentTemple.kamiType];

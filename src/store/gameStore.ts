@@ -2052,8 +2052,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doAcknowledgeKamiReward: () => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState || !gameState.kamiResolutionActive) return;
+
+    // In online mode, send the action to the server and let it handle the logic
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'ACKNOWLEDGE_KAMI_REWARD', playerId: get().localPlayerId });
+      return;
+    }
 
     const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
     if (!currentTemple) return;
@@ -2117,8 +2123,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   raijinPrePlaceState: null,
 
   doFujinMove: (fromProvinceId: string, toProvinceId: string, figureIds: string[]) => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState || !gameState.kamiResolutionActive || gameState.fujinMovesRemaining <= 0) return;
+
+    // In online mode, send the action to the server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'FUJIN_MOVE', playerId: get().localPlayerId, payload: { fromProvinceId, toProvinceId, figureIds } });
+      return;
+    }
 
     const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
     if (!currentTemple || !currentTemple.winnerId) return;
@@ -2157,8 +2169,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doFujinDone: () => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState || !gameState.kamiResolutionActive) return;
+
+    // In online mode, send the action to the server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'FUJIN_DONE', playerId: get().localPlayerId });
+      return;
+    }
 
     const ns: GameState = { ...gameState, fujinMovesRemaining: 0 };
     const advanced = advanceKamiResolution(ns);
@@ -2171,8 +2189,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doRaijinPlace: (provinceId: string) => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState || !gameState.kamiResolutionActive || !gameState.raijinPlacementActive) return;
+
+    // In online mode, send the action to the server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RAIJIN_PLACE', playerId: get().localPlayerId, payload: { provinceId } });
+      return;
+    }
 
     const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
     if (!currentTemple || !currentTemple.winnerId) return;
@@ -2218,8 +2242,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doRaijinConfirm: () => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState || !gameState.raijinPlacementDone) return;
+
+    // In online mode, send the action to the server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RAIJIN_CONFIRM', playerId: get().localPlayerId });
+      return;
+    }
 
     let ns: GameState = { ...gameState, raijinPlacementDone: false };
     ns = advanceKamiResolution(ns);
@@ -2238,8 +2268,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doRyujinBuyCard: (cardId: string) => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState || !gameState.kamiResolutionActive || !gameState.ryujinBuyActive) return;
+
+    // In online mode, send the action to the server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RYUJIN_BUY', playerId: get().localPlayerId, payload: { cardId } });
+      return;
+    }
 
     const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
     if (!currentTemple || !currentTemple.winnerId) return;
@@ -2290,8 +2326,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doRyujinSkip: () => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState || !gameState.kamiResolutionActive || !gameState.ryujinBuyActive) return;
+
+    // In online mode, send the action to the server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RYUJIN_SKIP', playerId: get().localPlayerId });
+      return;
+    }
 
     let ns: GameState = {
       ...gameState,

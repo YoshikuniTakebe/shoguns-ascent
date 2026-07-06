@@ -32,6 +32,9 @@ import {
   advanceTrainResolution,
   advanceHarvestResolution,
   lotoChooseActualMandate,
+  resolveCurrentKamiReward,
+  advanceKamiResolution,
+  ryujinBuyCard as ryujinBuyCardFn,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 import {
@@ -1267,6 +1270,191 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!lotoMandate) return;
           let s = lotoChooseActualMandate(l.gameState, lotoMandate, data.playerId);
           if (!s.betrayMandateActive && !s.trainMandateActive && !s.marshalMandateActive && !s.recruitMandateActive && !s.harvestMandateActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'ACKNOWLEDGE_KAMI_REWARD': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.kamiResolutionActive) return;
+          // Validate that the acknowledging player is the one whose turn it is
+          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+
+          const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
+          if (!currentTemple) return;
+
+          // If no winner, auto-advance
+          if (!currentTemple.winnerId) {
+            let s = advanceKamiResolution(l.gameState);
+            if (!s.kamiResolutionActive) {
+              s = advancePlayer(s);
+            }
+            l.gameState = s;
+            broadcastState(l);
+            break;
+          }
+
+          // Apply the reward for the current temple
+          let s = resolveCurrentKamiReward(l.gameState);
+
+          // If the reward is interactive, keep state and wait for player input
+          if (s.kamiResolutionStep === 'interactive') {
+            l.gameState = s;
+            broadcastState(l);
+            break;
+          }
+
+          // Auto reward applied - advance to next temple
+          s = advanceKamiResolution(s);
+          if (!s.kamiResolutionActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'FUJIN_MOVE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.kamiResolutionActive || l.gameState.fujinMovesRemaining <= 0) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+
+          const { fromProvinceId, toProvinceId, figureIds } = data.payload || {};
+          if (!fromProvinceId || !toProvinceId || !figureIds) return;
+
+          const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
+          if (!currentTemple || !currentTemple.winnerId) return;
+
+          const moved = moveForces(l.gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds);
+          if (moved === l.gameState) return; // validation failed
+
+          const remaining = moved.fujinMovesRemaining - 1;
+          l.gameState = { ...moved, fujinMovesRemaining: remaining };
+          broadcastState(l);
+          break;
+        }
+
+        case 'FUJIN_DONE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.kamiResolutionActive) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+
+          const ns = { ...l.gameState, fujinMovesRemaining: 0 };
+          let s = advanceKamiResolution(ns);
+          if (!s.kamiResolutionActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RAIJIN_PLACE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.kamiResolutionActive || !l.gameState.raijinPlacementActive) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+
+          const { provinceId } = data.payload || {};
+          if (!provinceId) return;
+
+          const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
+          if (!currentTemple || !currentTemple.winnerId) return;
+
+          const player = l.gameState.players.find(p => p.id === currentTemple.winnerId);
+          if (!player || player.bushi <= 0) return;
+
+          const province = l.gameState.provinces[provinceId];
+          if (!province) return;
+
+          const figureId = Math.random().toString(36).substring(2, 10);
+          const newFigure = { type: 'bushi' as const, owner: currentTemple.winnerId, id: figureId };
+
+          const updatedProvinces = {
+            ...l.gameState.provinces,
+            [provinceId]: {
+              ...province,
+              figures: [...province.figures, newFigure],
+            },
+          };
+
+          const updatedPlayers = l.gameState.players.map(p => {
+            if (p.id === currentTemple.winnerId) {
+              return { ...p, bushi: Math.max(0, p.bushi - 1) };
+            }
+            return p;
+          });
+
+          l.gameState = {
+            ...l.gameState,
+            provinces: updatedProvinces,
+            players: updatedPlayers,
+            raijinPlacementActive: false,
+            raijinPlacementDone: true,
+            log: [...l.gameState.log, `${player.name} invoca un Bushi en ${province.name} (Raijin)`],
+          };
+          broadcastState(l);
+          break;
+        }
+
+        case 'RAIJIN_CONFIRM': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.raijinPlacementDone) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+
+          let s: GameState = { ...l.gameState, raijinPlacementDone: false };
+          s = advanceKamiResolution(s);
+          if (!s.kamiResolutionActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RYUJIN_BUY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.kamiResolutionActive || !l.gameState.ryujinBuyActive) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+
+          const { cardId } = data.payload || {};
+          if (!cardId) return;
+
+          const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
+          if (!currentTemple || !currentTemple.winnerId) return;
+
+          let s = ryujinBuyCardFn(l.gameState, currentTemple.winnerId, cardId);
+          s = { ...s, ryujinBuyActive: false };
+          s = advanceKamiResolution(s);
+          if (!s.kamiResolutionActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RYUJIN_SKIP': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.kamiResolutionActive || !l.gameState.ryujinBuyActive) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+
+          let s: GameState = {
+            ...l.gameState,
+            ryujinBuyActive: false,
+            log: [...l.gameState.log, 'Recompensa de Ryujin saltada'],
+          };
+          s = advanceKamiResolution(s);
+          if (!s.kamiResolutionActive) {
             s = advancePlayer(s);
           }
           l.gameState = s;
