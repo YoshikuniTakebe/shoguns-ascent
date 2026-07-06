@@ -2797,14 +2797,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
         case 'GAME_STATE': {
           const state = d.state;
           let newTurnPopup: string | null = null;
-          const { turnPopupDismissedForIndex, localPlayerId: lpId } = get();
-          const prevPlayerIndex = get().gameState?.currentPlayerIndex;
-          const prevTrainResolutionIndex = get().gameState?.trainResolutionIndex;
+          const { turnPopupDismissedForIndex, localPlayerId: lpId, gameState: prevGameState } = get();
+          const prevPlayerIndex = prevGameState?.currentPlayerIndex;
+          const prevTrainResolutionIndex = prevGameState?.trainResolutionIndex;
+
+          // Reset dismissed tracking when the current player index changes (compute early so popup logic uses the correct value)
+          const dismissedIdx = (turnPopupDismissedForIndex !== null && turnPopupDismissedForIndex !== state.currentPlayerIndex) ? null : turnPopupDismissedForIndex;
+
           if (state.mode === 'online' && state.currentPhase === 'politics') {
             const noResolution = !state.trainMandateActive && !state.marshalMandateActive && !state.recruitMandateActive && !state.betrayMandateActive && !state.harvestMandateActive;
             if (noResolution && state.drawnMandates.length === 0 && !state.mandateChoicePhase) {
               // Only show the popup if it wasn't already dismissed for this player's turn
-              if (turnPopupDismissedForIndex !== state.currentPlayerIndex) {
+              // Use the potentially-reset dismissedIdx so popup fires after mandate resolution ends and advancePlayer changes currentPlayerIndex
+              if (dismissedIdx !== state.currentPlayerIndex) {
                 newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
               }
             }
@@ -2829,9 +2834,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
               }
             }
           }
-          // Reset dismissed tracking when the current player index changes
-          const dismissedIdx = (turnPopupDismissedForIndex !== null && turnPopupDismissedForIndex !== state.currentPlayerIndex) ? null : turnPopupDismissedForIndex;
-          set({ gameState: state, turnPopupPlayer: newTurnPopup, turnPopupDismissedForIndex: dismissedIdx });
+
+          // Build UI state resets for online mode: clean up client-local flags when mandates are no longer active
+          const uiResets: Record<string, unknown> = {};
+          if (state.mode === 'online') {
+            if (!state.recruitMandateActive) {
+              uiResets.recruitMode = false;
+            }
+            if (!state.marshalMandateActive) {
+              uiResets.moveMode = false;
+              uiResets.moveFrom = null;
+              uiResets.selectedFigures = [];
+              uiResets.buildFortressMode = false;
+            }
+            if (!state.betrayMandateActive) {
+              uiResets.betrayMode = false;
+            }
+          }
+
+          set({ gameState: state, turnPopupPlayer: newTurnPopup, turnPopupDismissedForIndex: dismissedIdx, ...uiResets });
           break;
         }
         case 'PLAYER_ID':
