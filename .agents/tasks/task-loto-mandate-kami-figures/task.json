@@ -1,7 +1,7 @@
 {
   "task_id": "task-loto-mandate-kami-figures",
   "task_description": "Fix kami phase popup not triggering in online mode, update Loto clan hidden mandate tile to show actual mandate color (border + dot), and adjust bushi-loto and bushi-tortuga figure sizes",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001"],
   "blocked_reason": null
 }

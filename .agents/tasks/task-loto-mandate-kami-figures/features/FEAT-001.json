@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix kami phase popup not triggering in online mode, update Loto mandate tile visuals, and adjust figure sizes",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/store/gameStore.ts, inside the GAME_STATE case handler, after the block that handles 'For online marshal: save undoMandateState...' (around line 3027), add kami phase popup detection for online mode: if state.kamiPhasePopupPending is true and state.kamiResolutionActive is falsy, set uiResets.kamiPhasePopupVisible = true and uiResets.kamiPendingTemples = state.kamiResolutionTemples. This mirrors what detectKamiPopupPending does for hotseat.",
     "In src/components/PoliticsTrack.tsx, in the hidden mandate rendering block (the if (mandate.hidden) branch around line 125), change borderColor from '#4a3a6a' to MANDATE_COLORS[mandate.type] so the tile border reflects the actual mandate type.",
@@ -22,5 +22,5 @@
     "Run 'npx vite build' and confirm successful build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes compiled cleanly with tsc -b and vite build succeeded on first attempt. No type errors."
 }
