@@ -1235,6 +1235,8 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.harvestMandateActive) return;
+          // Validate that the acknowledging player is the one whose turn it is
+          if (l.gameState.harvestCurrentPlayerId && data.playerId !== l.gameState.harvestCurrentPlayerId) return;
           let s = advanceHarvestResolution(l.gameState);
           if (!s.harvestMandateActive) {
             s = advancePlayer(s);

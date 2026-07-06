@@ -332,6 +332,7 @@ export const en = {
   'harvest.allPlayersReceived': 'All players have received',
   'harvest.received': '{name} has received:',
   'harvest.accept': 'Accept',
+  'harvest.waitingFor': 'Waiting for {name} to accept rewards',
 
   // Kami Resolution
   'kami.resolution.title': 'Kami Resolution',

@@ -237,6 +237,7 @@ export interface GameState {
   harvestResolutionIndex: number;
   harvestPlayerRewards: { playerId: string; provinceId: string; rewards: { vp?: number; coins?: number; ronin?: number; honor?: number } }[];
   harvestPopupVisible: boolean;
+  harvestCurrentPlayerId?: string | null;
   kamiResolutionActive: boolean;
   kamiResolutionTemples: KamiResolutionTemple[];
   kamiResolutionIndex: number;

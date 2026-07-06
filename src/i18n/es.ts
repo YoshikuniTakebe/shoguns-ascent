@@ -334,6 +334,7 @@ export const es: Record<TranslationKey, string> = {
   'harvest.allPlayersReceived': 'Todos los jugadores han recibido',
   'harvest.received': '{name} ha recibido:',
   'harvest.accept': 'Aceptar',
+  'harvest.waitingFor': 'Esperando a que {name} acepte sus recompensas',
 
   // Kami Resolution
   'kami.resolution.title': 'Resolucion Kami',

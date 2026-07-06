@@ -7,29 +7,73 @@ import { useT } from '../i18n';
 
 export const HarvestPopup = () => {
   const { gameState, doAcknowledgeHarvest, turnPopupPlayer } = useGameStore();
+  const localPlayerId = useGameStore(s => s.localPlayerId);
   const t = useT();
 
-  // Track whether the initial "all players received" popup has been dismissed
-  const [initialConfirmed, setInitialConfirmed] = useState(false);
+  // Track whether the initial "all players received" popup has been dismissed for each player
+  // Key: playerId whose coin popup has been confirmed
+  const [coinConfirmedForPlayer, setCoinConfirmedForPlayer] = useState<string | null>(null);
 
   // Reset when harvestMandateActive changes (new harvest cycle)
   useEffect(() => {
     if (!gameState?.harvestMandateActive) {
-      setInitialConfirmed(false);
+      setCoinConfirmedForPlayer(null);
     }
   }, [gameState?.harvestMandateActive]);
+
+  // Reset coin popup state when harvestCurrentPlayerId changes (new player's turn)
+  useEffect(() => {
+    if (gameState?.harvestCurrentPlayerId && gameState.harvestCurrentPlayerId !== coinConfirmedForPlayer) {
+      // A new player is now acknowledging - they need to see their coin popup first
+      // Only reset if coinConfirmedForPlayer doesn't match the current player
+      // (This ensures when the player changes, coin popup shows again)
+    }
+  }, [gameState?.harvestCurrentPlayerId]);
 
   if (!gameState || !gameState.harvestPopupVisible || !gameState.harvestMandateActive) return null;
 
   // Don't show harvest popup while turn popup is still displayed - let turn popup show first
   if (turnPopupPlayer) return null;
 
-  // Show the initial confirmation popup before province rewards
-  if (gameState.harvestResolutionIndex === 0 && !initialConfirmed) {
+  const isOnline = gameState.mode === 'online';
+  const currentAcknowledgingPlayerId = gameState.harvestCurrentPlayerId;
+
+  // Determine if the current coin popup has been shown for the current player
+  const coinPopupShownForCurrentPlayer = coinConfirmedForPlayer === currentAcknowledgingPlayerId;
+
+  // In online mode: if the local player is NOT the current acknowledging player, show waiting message
+  if (isOnline && currentAcknowledgingPlayerId && currentAcknowledgingPlayerId !== localPlayerId) {
+    const waitingPlayer = gameState.players.find(p => p.id === currentAcknowledgingPlayerId);
+    const waitingClan = waitingPlayer ? CLANS.find(c => c.id === waitingPlayer.clanId) : null;
     return (
       <div className="harvest-popup-backdrop">
-        <div className="harvest-popup" style={{ borderColor: '#c8a951' }}>
-          <h3 className="harvest-popup-title" style={{ color: '#c8a951' }}>
+        <div className="harvest-popup" style={{ borderColor: waitingClan?.color || '#c8a951' }}>
+          <h3 className="harvest-popup-title" style={{ color: waitingClan?.color || '#c8a951', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <ClanShield clanId={waitingPlayer?.clanId || ''} size={24} />
+            {t('harvest.waitingFor', { name: waitingPlayer?.name || '' })}
+          </h3>
+        </div>
+      </div>
+    );
+  }
+
+  // Show the initial confirmation popup before province rewards for the current player
+  // In online mode: show per-player (keyed by harvestCurrentPlayerId)
+  // In hotseat mode: show once at the beginning (index 0)
+  const shouldShowCoinPopup = isOnline
+    ? !coinPopupShownForCurrentPlayer
+    : gameState.harvestResolutionIndex === 0 && coinConfirmedForPlayer === null;
+
+  if (shouldShowCoinPopup) {
+    const acknowledgingPlayer = isOnline
+      ? gameState.players.find(p => p.id === currentAcknowledgingPlayerId)
+      : null;
+    const acknowledgingClan = acknowledgingPlayer ? CLANS.find(c => c.id === acknowledgingPlayer.clanId) : null;
+
+    return (
+      <div className="harvest-popup-backdrop">
+        <div className="harvest-popup" style={{ borderColor: acknowledgingClan?.color || '#c8a951' }}>
+          <h3 className="harvest-popup-title" style={{ color: acknowledgingClan?.color || '#c8a951' }}>
             {t('harvest.allPlayersReceived')}
           </h3>
           <div className="harvest-popup-rewards">
@@ -37,7 +81,9 @@ export const HarvestPopup = () => {
               <CoinIcon size={40} color="#DAA520" />
             </div>
           </div>
-          <button className="btn-primary harvest-popup-btn" onClick={() => setInitialConfirmed(true)}>
+          <button className="btn-primary harvest-popup-btn" onClick={() => {
+            setCoinConfirmedForPlayer(currentAcknowledgingPlayerId || '__hotseat__');
+          }}>
             {t('harvest.accept')}
           </button>
         </div>

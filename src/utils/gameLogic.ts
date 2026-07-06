@@ -256,6 +256,7 @@ export function createInitialGameState(
     harvestResolutionIndex: 0,
     harvestPlayerRewards: [],
     harvestPopupVisible: false,
+    harvestCurrentPlayerId: null,
     kamiResolutionActive: false,
     kamiResolutionTemples: [],
     kamiResolutionIndex: 0,
@@ -1144,11 +1145,23 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
 
   // If there are rewards to show, set up interactive popup flow
   if (harvestPlayerRewards.length > 0) {
+    // Reorder rewards grouped by player in seat/turn order
+    const orderedRewards: typeof harvestPlayerRewards = [];
+    for (const playerId of newState.turnOrder) {
+      const playerRewards = harvestPlayerRewards.filter(r => r.playerId === playerId);
+      orderedRewards.push(...playerRewards);
+    }
+    // Add any rewards for players not in turnOrder (edge case)
+    const inTurnOrder = new Set(newState.turnOrder);
+    const remaining = harvestPlayerRewards.filter(r => !inTurnOrder.has(r.playerId));
+    orderedRewards.push(...remaining);
+
     newState.harvestMandateActive = true;
-    newState.harvestResolutionOrder = harvestPlayerRewards.map(r => r.playerId);
+    newState.harvestResolutionOrder = orderedRewards.map(r => r.playerId);
     newState.harvestResolutionIndex = 0;
-    newState.harvestPlayerRewards = harvestPlayerRewards;
+    newState.harvestPlayerRewards = orderedRewards;
     newState.harvestPopupVisible = true;
+    newState.harvestCurrentPlayerId = orderedRewards[0].playerId;
   } else {
     if (harvesters.length > 1) {
       const allyPlayer = newState.players.find((p) => p.id === issuer.allies[0]);
@@ -1204,9 +1217,15 @@ export function advanceHarvestResolution(state: GameState): GameState {
     newState.harvestResolutionIndex = 0;
     newState.harvestPlayerRewards = [];
     newState.harvestPopupVisible = false;
+    newState.harvestCurrentPlayerId = null;
   } else {
     newState.harvestResolutionIndex = nextIdx;
     newState.harvestPopupVisible = true;
+    // Update harvestCurrentPlayerId if the next reward belongs to a different player
+    const nextEntry = newState.harvestPlayerRewards[nextIdx];
+    if (nextEntry && nextEntry.playerId !== entry?.playerId) {
+      newState.harvestCurrentPlayerId = nextEntry.playerId;
+    }
   }
 
   return newState;
