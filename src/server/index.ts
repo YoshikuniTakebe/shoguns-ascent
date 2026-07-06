@@ -1030,6 +1030,37 @@ wss.on('connection', (ws: WebSocket, req) => {
             zorroPlacementsRemaining: newRemaining,
             log: [...l.gameState.log, `${zorroPlayer.name} (Zorro) coloca 1 Bushi en ${zpProvince.name}`],
           };
+
+          // Auto-end Zorro placement when remaining reaches 0
+          if (newRemaining === 0) {
+            const zorroId = l.gameState.zorroPlacementPlayerId;
+            l.gameState = {
+              ...l.gameState,
+              zorroPlacementActive: false,
+              zorroPlacementPlayerId: null,
+              zorroPlacementsRemaining: 0,
+            };
+            // Update battle participants to include Zorro in provinces where they now have figures
+            if (zorroId) {
+              l.gameState = {
+                ...l.gameState,
+                activeBattles: l.gameState.activeBattles.map(b => {
+                  const prov = l.gameState!.provinces[b.provinceId];
+                  const hasFigures = prov?.figures.some(f => f.owner === zorroId);
+                  if (hasFigures && !b.participants.includes(zorroId)) {
+                    const participants = [...b.participants, zorroId].sort((a, bb) => {
+                      const aIdx = l.gameState!.turnOrder.indexOf(a);
+                      const bIdx = l.gameState!.turnOrder.indexOf(bb);
+                      return aIdx - bIdx;
+                    });
+                    return { ...b, participants, uncontested: false, winner: undefined };
+                  }
+                  return b;
+                }),
+              };
+            }
+          }
+
           broadcastState(l);
           break;
         }
@@ -1108,6 +1139,11 @@ wss.on('connection', (ws: WebSocket, req) => {
               }
             }
             l.gameState = { ...l.gameState, battleResultReadyPlayers: [] };
+            // After clearing ready players, check if ALL battles are now resolved - set warSummaryVisible on server
+            const allBattlesResolved = l.gameState.activeBattles.length > 0 && l.gameState.activeBattles.every(b => b.resolved || b.uncontested);
+            if (allBattlesResolved) {
+              l.gameState = { ...l.gameState, warSummaryVisible: true };
+            }
           }
           broadcastState(l);
           break;

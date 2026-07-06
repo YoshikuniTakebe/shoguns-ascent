@@ -3274,6 +3274,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
               }
             }
 
+            // Reconnection support: if server has warSummaryVisible=true but client doesn't, show it
+            if (state.warSummaryVisible && !get().warSummaryVisible) {
+              uiResets.warSummaryVisible = true;
+              uiResets.battleStepPhase = null;
+            }
+
             // Detect battle just resolved (server resolved via SUBMIT_WAR_BIDS): show result
             const prevResolvedCount = prevGameState?.activeBattles?.filter((b: { resolved?: boolean; uncontested?: boolean }) => b.resolved && !b.uncontested).length || 0;
             const currentResolvedCount = state.activeBattles?.filter((b: { resolved?: boolean; uncontested?: boolean }) => b.resolved && !b.uncontested).length || 0;
