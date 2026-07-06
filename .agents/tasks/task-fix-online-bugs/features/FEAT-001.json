@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix TRAIN bug: Monster card placement flow does not trigger in online mode. When BUY_CARD is sent for a monster card, the client early-returns without showing the Komainu choice or monster placement popup. The fix: after sending BUY_CARD in online mode, do NOT return. Instead, apply buySeasonCard locally just like hotseat AND trigger the placement UI (Komainu choice, monster placement popup, Luna no-province check). Then after placement is complete (doPlaceMonster, doKomainuPlaceAtTemple, etc.), send a new MONSTER_PLACED message to the server with the final placement info (provinceId or templeId). The server must handle MONSTER_PLACED by placing the figure, advancing trainResolutionIndex, calling advanceTrainResolution, and broadcasting. Also remove the current server BUY_CARD special case for monsters that broadcasts without advancing - since the client now handles both BUY_CARD (for non-monsters on server) and MONSTER_PLACED separately.",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/store/gameStore.ts doBuySeasonCard (~line 1175): Remove the early return for online mode. Instead, FIRST send the BUY_CARD action to server (so server records the purchase), THEN continue to the monster detection logic below (same as hotseat). The key change: remove the `return;` after sendAction for BUY_CARD when the card is a monster. For non-monster cards, keep the early return.",
+    "2. In src/store/gameStore.ts doBuySeasonCard: After the sendAction for online mode, apply buySeasonCard locally (let ns = buySeasonCard(gameState, apid, cardId)), then check if the card is a monster. If yes, proceed with the existing monster placement UI logic (Komainu choice, Luna check, etc.) - this code already exists below. If not a monster, return (server handles advancement).",
+    "3. In src/store/gameStore.ts doPlaceMonster (~line 1590): After placing the monster locally AND after the train resolution advancement logic, add online mode handling: if (ws && gameState.mode === 'online'), send a new action { type: 'MONSTER_PLACED', playerId, payload: { cardId: monsterPlacementCard.id, provinceId } }. Do NOT advance train locally for online - let server do it. Instead, just reset the UI state (monsterPlacementMode, monsterPlacementCard, etc.) and let the next GAME_STATE from server update the game.",
+    "4. Similarly in doKomainuChoosePray/doKomainuPlaceAtTemple: After placement at temple, if online mode, send { type: 'MONSTER_PLACED', playerId, payload: { cardId, templeId } } and let server handle the train advancement. Reset local UI state without advancing train locally.",
+    "5. In cancelMonsterPlacement / monsterNoPlacementPopupVisible dismiss: If monster goes to reserve (Luna no valid province), send { type: 'MONSTER_PLACED', playerId, payload: { cardId, reserve: true } } in online mode.",
+    "6. In src/server/index.ts: Add a new case 'MONSTER_PLACED' handler. It receives { cardId, provinceId?, templeId?, reserve? }. Based on payload: place figure in province, or place at temple, or add to reserve. Then advance trainResolutionIndex, call advanceTrainResolution, conditionally advancePlayer, and broadcast.",
+    "7. In src/server/index.ts BUY_CARD handler: Change the monster-card branch. Currently it broadcasts without advancing. Instead, for monster cards, just update the state with buySeasonCard result (purchase recorded) and broadcast. Do NOT advance - that happens when MONSTER_PLACED arrives. The current code already does this correctly (l.gameState = s; broadcastState(l); for monsters), so no change needed there.",
+    "8. Handle the GAME_STATE reception in the store: When a GAME_STATE arrives and trainMandateActive is still true after a BUY_CARD (monster case), the client should NOT clear the monster placement UI state. Add a condition in the GAME_STATE handler uiResets: if monsterPlacementCard is currently set (placement in progress), do NOT reset train-related UI."
+  ],
+  "acceptance_criteria": [
+    "When buying a monster card in online mode, the Komainu/Hotei choice popup appears (choose map vs pray)",
+    "When buying a regular monster card in online mode, the placement popup appears asking where to place it",
+    "Luna clan no-valid-province check works in online mode",
+    "After monster placement completes, the server advances train resolution and broadcasts updated state",
+    "The game does not get stuck after buying a monster card in online mode",
+    "TypeScript compiles without errors (npx tsc --noEmit)"
+  ],
+  "verification": [
+    "npx tsc --noEmit",
+    "npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

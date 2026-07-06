@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Fix HARVEST bug: Implement per-player sequential harvest flow for online mode. Each player goes through ALL their rewards one by one (including the initial coin popup), then the next player in seat order does the same. Only the currently-acknowledging player can see and dismiss the popups. Other players wait.",
+  "status": "pending",
+  "steps": [
+    "1. In src/types/game.ts GameState interface: Add a new field `harvestCurrentPlayerId?: string | null` - tracks which player is currently acknowledging their rewards in online mode.",
+    "2. In src/utils/gameLogic.ts executeHarvest function (~line 1013): After computing harvestPlayerRewards, reorder them to be grouped by player in seat order (turnOrder). Currently rewards are ordered by province. Regroup: for each player in turnOrder, collect all their rewards in sequence. Set harvestCurrentPlayerId to the first player who has rewards.",
+    "3. In src/utils/gameLogic.ts advanceHarvestResolution function (~line 1168): After incrementing harvestResolutionIndex, check if the next reward entry belongs to a different player than the current one. If so, update harvestCurrentPlayerId to the new player's ID. This way the field always reflects whose turn it is to acknowledge.",
+    "4. In src/components/HarvestPopup.tsx: For online mode, check if the current acknowledging player (gameState.harvestCurrentPlayerId) matches localPlayerId. If not, show a 'waiting for [player name] to accept rewards' message instead of the reward popup. If yes, show the reward popup as normal.",
+    "5. In src/components/HarvestPopup.tsx: The initial 'all players received 1 coin' popup should also be shown per-player. Instead of one global popup, show it as the FIRST popup for EACH player's sequence. Modify the logic: track whether the coin popup has been shown for the current player. When harvestResolutionIndex changes to a new player's first reward AND it's the local player's turn, show the coin popup first before their province rewards.",
+    "6. In src/server/index.ts ACKNOWLEDGE_HARVEST handler: Add validation that the acknowledging player (data.playerId) matches the gameState.harvestCurrentPlayerId. If not, ignore the message (prevent other players from advancing someone else's rewards).",
+    "7. In src/components/HarvestPopup.tsx: Ensure the province name is displayed for each reward. Looking at the existing code, province name IS already displayed (line ~67: province && <p>...). Confirm this works and the PROVINCES_DATA lookup matches. The user asked 'ya no recuerdo si estamos mostrando esa info' - verify it is shown.",
+    "8. In src/store/gameStore.ts doAcknowledgeHarvest: For online mode, include the acknowledging player's ID in the ACKNOWLEDGE_HARVEST payload (already sent as playerId from get().localPlayerId). No change needed here.",
+    "9. Add i18n keys for the waiting message: 'harvest.waitingFor' in both en.ts and es.ts (e.g., 'Waiting for {name} to accept rewards' / 'Esperando a que {name} acepte sus recompensas')."
+  ],
+  "acceptance_criteria": [
+    "Harvest rewards are grouped by player in seat order (turnOrder), not interleaved by province",
+    "Each player sees the coin popup first, then their province rewards in sequence",
+    "Only the currently-acknowledging player sees the Accept button and can interact",
+    "Other players see a waiting message with the acknowledging player's name",
+    "Server validates that only the correct player can send ACKNOWLEDGE_HARVEST",
+    "Province name is displayed in each reward popup",
+    "After one player finishes all rewards, the next player in turn order begins their sequence",
+    "TypeScript compiles without errors (npx tsc --noEmit)"
+  ],
+  "verification": [
+    "npx tsc --noEmit",
+    "npx vite build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

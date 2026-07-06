@@ -1171,7 +1171,62 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
     if (ws && gameState.mode === 'online') {
+      // Send BUY_CARD to server so the purchase is recorded
       get().sendAction({ type: 'BUY_CARD', playerId: apid, payload: { cardId } });
+      // Apply buySeasonCard locally to check if it's a monster
+      const nsOnline = buySeasonCard(gameState, apid, cardId);
+      const boughtCardOnline = nsOnline.players.find(p => p.id === apid)?.seasonCards.find(c => c.id === cardId);
+      if (boughtCardOnline && boughtCardOnline.cardType === 'monster') {
+        // Monster card: run the placement UI locally (server will wait for MONSTER_PLACED)
+        if (boughtCardOnline.id === 'sp-komainu' || boughtCardOnline.id === 'su-hotei') {
+          set({
+            gameState: nsOnline,
+            monsterPlacementCard: boughtCardOnline,
+            monsterPlacementPlayerId: apid,
+            komainuChoiceVisible: true,
+            monsterPlacementPopupVisible: false,
+            monsterPlacementMode: false,
+          });
+        } else {
+          // Luna clan: check if there's a valid province BEFORE showing placement popup
+          const placingPlayerOnline = nsOnline.players.find(p => p.id === apid);
+          if (placingPlayerOnline && placingPlayerOnline.clanId === 'luna') {
+            if (!lunaHasValidProvince(nsOnline, apid)) {
+              // No valid province: monster goes to reserve directly
+              const updatedPlayersOnline = nsOnline.players.map(p => {
+                if (p.id !== apid) return p;
+                return { ...p, monsters: p.monsters + 1 };
+              });
+              const nsUpdatedOnline: GameState = {
+                ...nsOnline,
+                players: updatedPlayersOnline,
+                log: [...nsOnline.log, `Luna: no hay provincia valida para colocar monstruo - ${boughtCardOnline.name} se queda en reserva`],
+              };
+              set({
+                gameState: nsUpdatedOnline,
+                monsterPlacementCard: boughtCardOnline,
+                monsterPlacementPlayerId: apid,
+                monsterPlacementPopupVisible: false,
+                monsterNoPlacementPopupVisible: true,
+                monsterPlacementMode: false,
+                komainuChoiceVisible: false,
+              });
+              return;
+            }
+          }
+          // Show popup asking where to place the monster
+          set({
+            gameState: nsOnline,
+            monsterPlacementCard: boughtCardOnline,
+            monsterPlacementPlayerId: apid,
+            monsterPlacementPopupVisible: true,
+            monsterPlacementMode: false,
+            komainuChoiceVisible: false,
+          });
+        }
+        return;
+      }
+      // Non-monster card in online mode: server handles advancement, just return
       return;
     }
     let ns = buySeasonCard(gameState, apid, cardId);
@@ -1642,6 +1697,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
+    // Online mode: send MONSTER_PLACED to server and reset UI (server handles train advancement)
+    const { ws } = get();
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'MONSTER_PLACED', playerId: monsterPlacementPlayerId, payload: { cardId: monsterPlacementCard.id, provinceId } });
+      set({
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+      return;
+    }
+
     // Advance train resolution
     ns = {
       ...ns,
@@ -1794,6 +1863,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
+    // Online mode: send MONSTER_PLACED to server and reset UI (server handles train advancement)
+    const { ws } = get();
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'MONSTER_PLACED', playerId: komainuPrayPlayerId, payload: { cardId: komainuPrayCardId, templeId, replaceFigureId } });
+      set({
+        komainuPrayMode: false,
+        komainuPrayPlayerId: null,
+        komainuPrayCardId: null as string | null,
+        monsterPlacementPlayerId: null,
+      });
+      return;
+    }
+
     ns = {
       ...ns,
       trainResolutionIndex: gameState.trainResolutionIndex + 1,
@@ -1831,8 +1913,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   cancelMonsterPlacement: () => {
-    const { gameState, monsterPlacementPlayerId } = get();
+    const { gameState, monsterPlacementPlayerId, monsterPlacementCard, ws } = get();
     if (!gameState || !monsterPlacementPlayerId) return;
+
+    // Online mode: send MONSTER_PLACED with reserve: true to server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'MONSTER_PLACED', playerId: monsterPlacementPlayerId, payload: { cardId: monsterPlacementCard?.id, reserve: true } });
+      set({
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+      return;
+    }
 
     // Cancel placement - advance train without placing
     let ns: GameState = {
@@ -1867,8 +1962,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   dismissMonsterNoPlacement: () => {
-    const { gameState } = get();
+    const { gameState, monsterPlacementCard, monsterPlacementPlayerId, ws } = get();
     if (!gameState) return;
+
+    // Online mode: send MONSTER_PLACED with reserve: true to server
+    if (ws && gameState.mode === 'online' && monsterPlacementPlayerId) {
+      get().sendAction({ type: 'MONSTER_PLACED', playerId: monsterPlacementPlayerId, payload: { cardId: monsterPlacementCard?.id, reserve: true } });
+      set({
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        monsterNoPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+      return;
+    }
 
     // Advance train resolution after showing the popup
     let ns: GameState = {
@@ -2855,7 +2964,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
             }
           }
 
-          set({ gameState: state, turnPopupPlayer: newTurnPopup, turnPopupDismissedForIndex: dismissedIdx, ...uiResets });
+          // If monster placement is in progress, suppress turn popup to avoid interference
+          const { monsterPlacementCard: currentMonsterCard, monsterPlacementMode: currentMonsterMode, komainuPrayMode: currentKomainuPray, monsterPlacementPopupVisible: currentMonsterPopup, komainuChoiceVisible: currentKomainuChoice, monsterNoPlacementPopupVisible: currentNoPlacementPopup } = get();
+          const monsterPlacementInProgress = !!(currentMonsterCard || currentMonsterMode || currentKomainuPray || currentMonsterPopup || currentKomainuChoice || currentNoPlacementPopup);
+          const finalTurnPopup = monsterPlacementInProgress ? null : newTurnPopup;
+
+          set({ gameState: state, turnPopupPlayer: finalTurnPopup, turnPopupDismissedForIndex: dismissedIdx, ...uiResets });
           break;
         }
         case 'PLAYER_ID':

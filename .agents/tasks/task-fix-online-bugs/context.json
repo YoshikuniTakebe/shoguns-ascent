@@ -1,0 +1,26 @@
+{
+  "project_type": "TypeScript full-stack board game - React+Vite frontend with Zustand store, Express 5 + WebSocket backend",
+  "language": "TypeScript",
+  "build_system": "npm with Vite for frontend, tsx for server. No test framework configured.",
+  "test_framework": "None configured (no test files found)",
+  "build_command": "npx tsc -b && npx vite build",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "1. Run npx tsc --noEmit to verify no type errors. 2. Run npx vite build to verify frontend builds.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install already done",
+  "environment_constraints": "No test framework. Verification is TypeScript compilation only.",
+  "contribution_requirements": "Commit directly to main branch.",
+  "key_patterns": "The Zustand store (gameStore.ts) is the central client state. Online mode uses WebSocket: client sends actions via sendAction(), server processes and broadcasts GAME_STATE to all clients. gameLogic.ts has pure functions that take/return GameState. For online mode, most actions early-return after sendAction, but some (like monster placement) require client-side interactive UI before finalizing on server.",
+  "relevant_files": [
+    "src/store/gameStore.ts",
+    "src/server/index.ts",
+    "src/utils/gameLogic.ts",
+    "src/types/game.ts",
+    "src/components/HarvestPopup.tsx",
+    "src/components/ActionPanel.tsx",
+    "src/components/SeasonCardsModal.tsx",
+    "src/i18n/en.ts",
+    "src/i18n/es.ts"
+  ],
+  "directory_structure": "src/store/gameStore.ts (~2915 lines) - Zustand store with all client actions. src/server/index.ts (~1235 lines) - Express+WS server with all message handlers. src/utils/gameLogic.ts (~3552 lines) - Pure game logic functions. src/types/game.ts (~512 lines) - Type definitions. src/components/ - React components including ActionPanel, HarvestPopup."
+}

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-fix-online-bugs",
+  "task_description": "Fix three online multiplayer bugs: (1) TRAIN - monster card placement UI not triggering, (2) MARSHAL - moves sent immediately with no undo/buffer, (3) HARVEST - rewards should be sequential per-player with per-player coin popup",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

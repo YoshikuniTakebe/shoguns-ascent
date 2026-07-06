@@ -1013,6 +1013,81 @@ wss.on('connection', (ws: WebSocket, req) => {
           break;
         }
 
+        case 'MONSTER_PLACED': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const { cardId, provinceId, templeId, replaceFigureId, reserve } = data.payload || {};
+          if (!cardId) return;
+          let s = l.gameState;
+
+          if (templeId) {
+            // Komainu/Hotei placed at temple as shinto
+            const templeIndex = s.temples.findIndex(t => t.id === templeId);
+            if (templeIndex === -1) return;
+            const temple = s.temples[templeIndex];
+            const figureId = Math.random().toString(36).substring(2, 10);
+
+            let updatedFigures = [...temple.figures];
+            let updatedPlayers = s.players;
+
+            // Hotei replacement logic
+            if (replaceFigureId) {
+              const replacedFigure = temple.figures.find(f => f.figureId === replaceFigureId && f.playerId !== data.playerId);
+              if (replacedFigure) {
+                updatedFigures = updatedFigures.filter(f => f.figureId !== replaceFigureId);
+                updatedPlayers = s.players.map(p => {
+                  if (p.id !== replacedFigure.playerId) return p;
+                  return { ...p, shinto: p.shinto + 1 };
+                });
+              }
+            }
+
+            updatedFigures = [...updatedFigures, { playerId: data.playerId, figureId }];
+            const updatedTemples = [...s.temples];
+            updatedTemples[templeIndex] = { ...temple, figures: updatedFigures };
+
+            s = {
+              ...s,
+              players: updatedPlayers,
+              temples: updatedTemples,
+              log: [...s.log, `Komainu/Hotei colocado como shinto en santuario`],
+            };
+          } else if (provinceId) {
+            // Monster placed in province
+            const province = s.provinces[provinceId];
+            if (!province) return;
+            const figureId = Math.random().toString(36).substring(2, 10);
+            const newFigure = { type: 'monster' as const, owner: data.playerId, id: figureId, monsterCardId: cardId };
+            s = {
+              ...s,
+              provinces: {
+                ...s.provinces,
+                [provinceId]: {
+                  ...province,
+                  figures: [...province.figures, newFigure],
+                },
+              },
+              log: [...s.log, `Monstruo colocado en ${province.name}`],
+            };
+          } else if (reserve) {
+            // Monster goes to reserve (Luna no valid province or cancel)
+            s = {
+              ...s,
+              log: [...s.log, `Monstruo enviado a reserva`],
+            };
+          }
+
+          // Advance train resolution
+          s = { ...s, trainResolutionIndex: s.trainResolutionIndex + 1 };
+          s = advanceTrainResolution(s);
+          if (!s.trainMandateActive) {
+            s = advancePlayer(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
         case 'SKIP_MARSHAL_TURN': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
