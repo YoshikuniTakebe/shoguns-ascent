@@ -685,9 +685,22 @@ wss.on('connection', (ws: WebSocket, req) => {
           break;
         }
 
+        case 'TEA_ADVANCE_PLAYER': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'tea') return;
+          l.gameState = advancePlayer(l.gameState);
+          broadcastState(l);
+          break;
+        }
+
         case 'DRAW_MANDATE_TILES': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'politics') {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'Cannot draw mandate tiles outside of politics phase' }));
+            return;
+          }
           l.gameState = drawMandateTiles(l.gameState);
           broadcastState(l);
           break;
@@ -737,6 +750,10 @@ wss.on('connection', (ws: WebSocket, req) => {
           const { toPlayerId, fromPlayerId, accept } = data.payload || {};
           if (accept && fromPlayerId) {
             l.gameState = acceptAlliance(l.gameState, fromPlayerId, data.playerId);
+            // After accepting an alliance during tea phase, advance the player's turn
+            if (l.gameState.currentPhase === 'tea') {
+              l.gameState = advancePlayer(l.gameState);
+            }
           } else if (toPlayerId) {
             l.gameState = proposeAlliance(l.gameState, data.playerId, toPlayerId);
           }

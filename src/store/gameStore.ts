@@ -2681,8 +2681,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     get().saveSnapshot();
   },
   doAdvancePlayer: () => {
-    const { gameState } = get();
+    const { gameState, ws, localPlayerId } = get();
     if (!gameState) return;
+    // In online mode during tea phase, send to server and let broadcast handle state update
+    if (ws && gameState.mode === 'online' && gameState.currentPhase === 'tea') {
+      get().sendAction({ type: 'TEA_ADVANCE_PLAYER', playerId: localPlayerId });
+      return;
+    }
     const ns = advancePlayer(gameState);
     // Detect war phase transition and set up battle step phase for hotseat
     set({ gameState: ns, ...detectWarTransitionWithPopup(ns), ...detectKamiPopupPending(ns), ...(gameState.mode === 'hotseat' && (ns.currentPhase === 'tea' || (gameState.currentPhase === 'tea' && ns.currentPhase === 'politics')) ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
