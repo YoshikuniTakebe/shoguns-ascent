@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix kami phase popup not triggering in online mode, update Loto mandate tile visuals, and adjust figure sizes",
+  "status": "in_progress",
+  "steps": [
+    "In src/store/gameStore.ts, inside the GAME_STATE case handler, after the block that handles 'For online marshal: save undoMandateState...' (around line 3027), add kami phase popup detection for online mode: if state.kamiPhasePopupPending is true and state.kamiResolutionActive is falsy, set uiResets.kamiPhasePopupVisible = true and uiResets.kamiPendingTemples = state.kamiResolutionTemples. This mirrors what detectKamiPopupPending does for hotseat.",
+    "In src/components/PoliticsTrack.tsx, in the hidden mandate rendering block (the if (mandate.hidden) branch around line 125), change borderColor from '#4a3a6a' to MANDATE_COLORS[mandate.type] so the tile border reflects the actual mandate type.",
+    "In the same hidden mandate div, add a colored dot indicator in the bottom-right corner. Add a child div with inline styles: position:'absolute', bottom:'4px', right:'4px', width:'10px', height:'10px', borderRadius:'50%', backgroundColor: MANDATE_COLORS[mandate.type], border:'1px solid rgba(255,255,255,0.3)'. The parent div already has position:relative via the .politics-track-slot CSS class.",
+    "In src/components/RegionDetailModal.tsx, change the FIGURE_SIZE_OVERRIDES entry for 'bushi-loto' from 0.84 to 0.75, and change 'bushi-tortuga' from 1.00 to 1.04."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compilation passes without errors (tsc -b)",
+    "Vite build completes successfully",
+    "In PoliticsTrack.tsx, hidden Loto mandate tiles use MANDATE_COLORS[mandate.type] for borderColor instead of hardcoded '#4a3a6a'",
+    "In PoliticsTrack.tsx, hidden Loto mandate tiles contain a colored dot div positioned bottom-right with the mandate color",
+    "In gameStore.ts GAME_STATE handler, kamiPhasePopupVisible is set to true in uiResets when state.kamiPhasePopupPending is true and kamiResolutionActive is not active",
+    "In RegionDetailModal.tsx, bushi-loto override is 0.75 and bushi-tortuga override is 1.04"
+  ],
+  "verification": [
+    "Run 'npx tsc -b' and confirm zero errors",
+    "Run 'npx vite build' and confirm successful build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -128,7 +128,7 @@ export const PoliticsTrack = () => {
             key={`slot-${slotIndex}`}
             className="politics-track-slot filled hidden-mandate"
             style={{
-              borderColor: '#4a3a6a',
+              borderColor: MANDATE_COLORS[mandate.type],
               backgroundImage: `url(${SecretLotusImg})`,
               backgroundSize: 'contain',
               backgroundPosition: 'center',
@@ -141,6 +141,16 @@ export const PoliticsTrack = () => {
                 {playerName}
               </span>
             )}
+            <div style={{
+              position: 'absolute',
+              bottom: '4px',
+              right: '4px',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: MANDATE_COLORS[mandate.type],
+              border: '1px solid rgba(255,255,255,0.3)'
+            }} />
           </div>
         );
       }

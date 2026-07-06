@@ -3027,6 +3027,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
             }
           }
 
+          // Detect kami phase popup pending for online
+          if (state.kamiPhasePopupPending && !state.kamiResolutionActive) {
+            uiResets.kamiPhasePopupVisible = true;
+            uiResets.kamiPendingTemples = state.kamiResolutionTemples;
+          }
+
           // If monster placement is in progress, suppress turn popup to avoid interference
           const { monsterPlacementCard: currentMonsterCard, monsterPlacementMode: currentMonsterMode, komainuPrayMode: currentKomainuPray, monsterPlacementPopupVisible: currentMonsterPopup, komainuChoiceVisible: currentKomainuChoice, monsterNoPlacementPopupVisible: currentNoPlacementPopup } = get();
           const monsterPlacementInProgress = !!(currentMonsterCard || currentMonsterMode || currentKomainuPray || currentMonsterPopup || currentKomainuChoice || currentNoPlacementPopup);

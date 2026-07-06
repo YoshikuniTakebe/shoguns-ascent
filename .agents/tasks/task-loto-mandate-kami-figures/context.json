@@ -1,0 +1,21 @@
+{
+  "project_type": "React+Vite frontend with Express 5 + WebSocket backend",
+  "language": "TypeScript",
+  "build_system": "Vite for frontend, tsx for server",
+  "test_framework": "No test framework found",
+  "build_command": "npx tsc -b && npx vite build",
+  "test_command": "npx tsc -b",
+  "verification_instructions": "Run tsc -b to typecheck. Run vite build to confirm frontend builds.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install already done",
+  "environment_constraints": "No test runner; use TypeScript compilation as validation",
+  "contribution_requirements": "Commit directly to main",
+  "key_patterns": "Zustand store in src/store/gameStore.ts manages all game state. UI components in src/components/. Game logic in src/utils/gameLogic.ts. CSS in src/App.css (minified single-line). MANDATE_COLORS constant defined in PoliticsTrack.tsx. Online state sync via GAME_STATE WebSocket message handler in gameStore.ts. The .politics-track-slot CSS class already has position:relative.",
+  "relevant_files": [
+    "src/components/PoliticsTrack.tsx",
+    "src/store/gameStore.ts",
+    "src/components/RegionDetailModal.tsx",
+    "src/App.css"
+  ],
+  "directory_structure": "src/components/ - React UI components, src/store/ - Zustand store, src/utils/ - game logic, src/server/ - Express+WS backend, src/types/ - TypeScript types"
+}

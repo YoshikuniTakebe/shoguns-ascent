@@ -14,8 +14,8 @@ import { renderCardEffect } from '../utils/renderCardEffect';
 const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'sp-jorogumo': 0.85,
   'daimyo-tortuga': 1.20,
-  'bushi-tortuga': 1.00,
-  'bushi-loto': 0.84,
+  'bushi-tortuga': 1.04,
+  'bushi-loto': 0.75,
   'daimyo-loto': 0.80,
   'sp-oni-of-skulls': 1.30,
   'daimyo-koi': 0.98,
