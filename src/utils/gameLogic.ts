@@ -266,6 +266,7 @@ export function createInitialGameState(
     lastMandateIssuerId: null,
     gameOver: false,
     tradeOffers: [],
+    teaOptedOut: [],
     log: ['Juego iniciado! Estación: Primavera'],
     logHistory: {},
     hostId,
@@ -341,6 +342,9 @@ export function setupSeason(state: GameState, season: Season): GameState {
 
   // Break all alliances for tea ceremony
   newState = breakAllAlliances(newState);
+
+  // Reset tea opt-outs for the new season
+  newState.teaOptedOut = [];
 
   newState.log = [...newState.log, `Fichas de guerra colocadas en ${selectedProvinces.length} provincias`, 'Comienza la Fase de Ceremonia del Té'];
 
@@ -3222,22 +3226,39 @@ export function advancePlayer(state: GameState): GameState {
 
 /**
  * Check if a player can still meaningfully act during the tea ceremony.
- * A player can act if they have no ally AND at least one other player also has no ally
- * (i.e., there is a potential alliance partner available).
+ * A player can act if they have no ally AND have not opted out AND at least one other player
+ * also has no ally and has not opted out (i.e., there is a potential alliance partner available).
  */
 function canPlayerActInTea(state: GameState, playerId: string): boolean {
   const player = state.players.find(p => p.id === playerId);
   if (!player) return false;
   // If the player already has an ally, they cannot propose/accept
   if (player.allies.length > 0) return false;
+  // If the player has opted out of alliances, they cannot act
+  if (state.teaOptedOut.includes(playerId)) return false;
   // If there is a pending proposal TO this player, they can accept/reject
   const hasIncomingProposal = state.allianceProposals.some(ap => ap.to === playerId);
   if (hasIncomingProposal) return true;
-  // Check if there is at least one other unallied player to propose to
+  // Check if there is at least one other unallied, non-opted-out player to propose to
   const hasUnalliedPartner = state.players.some(
-    p => p.id !== playerId && p.allies.length === 0
+    p => p.id !== playerId && p.allies.length === 0 && !state.teaOptedOut.includes(p.id)
   );
   return hasUnalliedPartner;
+}
+
+/**
+ * Determines if the tea phase should end in online (simultaneous) mode.
+ * Returns true if every player either:
+ *   (a) has an ally, OR
+ *   (b) has opted out (is in teaOptedOut), OR
+ *   (c) is the only unallied/non-opted-out player remaining (no possible partner)
+ */
+export function shouldEndTeaPhase(state: GameState): boolean {
+  const unalliedAndActive = state.players.filter(
+    p => p.allies.length === 0 && !state.teaOptedOut.includes(p.id)
+  );
+  // If 0 or 1 unallied/non-opted-out players remain, tea should end
+  return unalliedAndActive.length <= 1;
 }
 
 /**

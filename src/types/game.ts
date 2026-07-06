@@ -255,6 +255,7 @@ export interface GameState {
   kamiPhasePopupPending?: boolean;
   gameOver: boolean;
   winner?: string;
+  teaOptedOut: string[];
   tradeOffers: TradeOffer[];
   coinDistributionPending?: {
     battleProvinceId: string;

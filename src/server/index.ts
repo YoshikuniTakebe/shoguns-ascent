@@ -26,6 +26,7 @@ import {
   buildFortress,
   betraySelectFigure,
   skipBetrayTurn,
+  shouldEndTeaPhase,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 import {
@@ -786,6 +787,90 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           l.gameState = breakAllAlliances(l.gameState);
+          broadcastState(l);
+          break;
+        }
+
+        case 'TEA_PROPOSE_ALLIANCE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'tea') return;
+          const { toPlayerId: teaPropTo, bribeAmount: teaPropBribe, requestAmount: teaPropRequest } = data.payload || {};
+          const fromId = data.playerId;
+          if (!fromId || !teaPropTo) return;
+          // Validate sender is unallied and not opted out
+          const sender = l.gameState.players.find(p => p.id === fromId);
+          const target = l.gameState.players.find(p => p.id === teaPropTo);
+          if (!sender || !target) return;
+          if (sender.allies.length > 0 || target.allies.length > 0) return;
+          if (l.gameState.teaOptedOut.includes(fromId) || l.gameState.teaOptedOut.includes(teaPropTo)) return;
+          l.gameState = proposeAlliance(l.gameState, fromId, teaPropTo, teaPropBribe || 0, teaPropRequest || 0);
+          // If proposeAlliance auto-accepted (reverse proposal existed), check if tea should end
+          const updatedSender = l.gameState.players.find(p => p.id === fromId);
+          if (updatedSender && updatedSender.allies.length > 0 && shouldEndTeaPhase(l.gameState)) {
+            l.gameState = advancePhase(l.gameState);
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'TEA_ACCEPT_ALLIANCE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'tea') return;
+          const { fromPlayerId: teaAccFrom } = data.payload || {};
+          const acceptingId = data.playerId;
+          if (!teaAccFrom || !acceptingId) return;
+          l.gameState = acceptAlliance(l.gameState, teaAccFrom, acceptingId);
+          if (shouldEndTeaPhase(l.gameState)) {
+            l.gameState = advancePhase(l.gameState);
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'TEA_REJECT_ALLIANCE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'tea') return;
+          const { fromPlayerId: teaRejFrom } = data.payload || {};
+          const rejectingId = data.playerId;
+          if (!teaRejFrom || !rejectingId) return;
+          // Remove proposal from the specified sender to the rejecting player
+          l.gameState = {
+            ...l.gameState,
+            allianceProposals: l.gameState.allianceProposals.filter(
+              ap => !(ap.from === teaRejFrom && ap.to === rejectingId)
+            ),
+          };
+          if (shouldEndTeaPhase(l.gameState)) {
+            l.gameState = advancePhase(l.gameState);
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'TEA_OPT_OUT': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'tea') return;
+          const optOutId = data.playerId;
+          if (!optOutId) return;
+          // Only opt out if not already opted out and not already allied
+          const optPlayer = l.gameState.players.find(p => p.id === optOutId);
+          if (!optPlayer || optPlayer.allies.length > 0) return;
+          if (l.gameState.teaOptedOut.includes(optOutId)) return;
+          // Add to teaOptedOut and remove all proposals to/from this player
+          l.gameState = {
+            ...l.gameState,
+            teaOptedOut: [...l.gameState.teaOptedOut, optOutId],
+            allianceProposals: l.gameState.allianceProposals.filter(
+              ap => ap.from !== optOutId && ap.to !== optOutId
+            ),
+          };
+          if (shouldEndTeaPhase(l.gameState)) {
+            l.gameState = advancePhase(l.gameState);
+          }
           broadcastState(l);
           break;
         }

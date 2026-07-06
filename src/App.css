@@ -466,3 +466,10 @@
 .auth-submit{margin-top:0.5rem;font-size:1rem;padding:0.8rem;width:100%}
 .auth-switch{background:none;border:none;color:var(--accent-gold);cursor:pointer;margin-top:1.25rem;font-size:0.9rem;text-align:center;display:block;width:100%;opacity:0.8;transition:opacity 0.2s}
 .auth-switch:hover{opacity:1;text-decoration:underline}
+
+.tea-online-panel{position:relative}
+.tea-opt-out-btn{display:block;width:100%;margin-top:1rem;padding:0.7rem 1rem;background:rgba(220,50,50,0.15);border:2px solid rgba(220,50,50,0.6);border-radius:8px;color:#ff6b6b;font-size:0.9rem;font-weight:bold;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.05em}
+.tea-opt-out-btn:hover{background:rgba(220,50,50,0.3);border-color:#ff6b6b;box-shadow:0 0 12px rgba(220,50,50,0.3)}
+.tea-proposal-card{background:rgba(30,132,73,0.08);border:1px solid rgba(30,132,73,0.3);border-radius:8px;padding:0.6rem;margin-bottom:0.5rem}
+.tea-opted-out-msg{padding:0.8rem;background:rgba(220,50,50,0.08);border:1px solid rgba(220,50,50,0.3);border-radius:8px;color:#ff6b6b;font-weight:bold;text-align:center;font-size:0.9rem}
+.tea-alliance-formed{display:flex;align-items:center;gap:0.5rem;padding:0.8rem;background:rgba(30,132,73,0.1);border:1px solid rgba(30,132,73,0.4);border-radius:8px;color:#27ae60;font-weight:bold;font-size:0.9rem}

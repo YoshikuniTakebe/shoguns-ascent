@@ -297,6 +297,10 @@ interface GameStore {
   doBreakAlliances: () => void;
   doProposeAlliance: (to: string, bribeAmount?: number, requestAmount?: number) => void;
   doAcceptAlliance: (from: string) => void;
+  doTeaProposeAlliance: (toPlayerId: string, bribeAmount?: number, requestAmount?: number) => void;
+  doTeaAcceptAlliance: (fromPlayerId: string) => void;
+  doTeaRejectAlliance: (fromPlayerId: string) => void;
+  doTeaOptOut: () => void;
 
   // Politics
   doDrawMandateTiles: () => void;
@@ -1053,6 +1057,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ns = advancePlayer(ns);
     }
     set({ gameState: ns, ...(gameState.mode === 'hotseat' && ns.currentPhase === 'tea' ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}) });
+  },
+
+  // --- Online Tea Ceremony (simultaneous mode) ---
+  doTeaProposeAlliance: (toPlayerId, bribeAmount, requestAmount) => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState || !ws || !localPlayerId) return;
+    get().sendAction({ type: 'TEA_PROPOSE_ALLIANCE', playerId: localPlayerId, payload: { toPlayerId, bribeAmount: bribeAmount || 0, requestAmount: requestAmount || 0 } });
+  },
+  doTeaAcceptAlliance: (fromPlayerId) => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState || !ws || !localPlayerId) return;
+    get().sendAction({ type: 'TEA_ACCEPT_ALLIANCE', playerId: localPlayerId, payload: { fromPlayerId } });
+  },
+  doTeaRejectAlliance: (fromPlayerId) => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState || !ws || !localPlayerId) return;
+    get().sendAction({ type: 'TEA_REJECT_ALLIANCE', playerId: localPlayerId, payload: { fromPlayerId } });
+  },
+  doTeaOptOut: () => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState || !ws || !localPlayerId) return;
+    get().sendAction({ type: 'TEA_OPT_OUT', playerId: localPlayerId });
   },
 
   // --- Politics ---

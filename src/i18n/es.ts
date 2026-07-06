@@ -385,6 +385,15 @@ export const es: Record<TranslationKey, string> = {
   'actions.requestLabel': 'Peticion',
   'actions.requestingCoins': 'Pidiendo {amount} monedas por la alianza',
 
+  // Online Tea Ceremony
+  'actions.noAllianceButton': 'No quiero alianzas',
+  'actions.teaOnlineDesc': 'Propon alianzas a otros jugadores en tiempo real',
+  'actions.allianceProposalSent': 'Propuesta de alianza enviada',
+  'actions.youOptedOut': 'Has rechazado las alianzas',
+  'actions.allianceFormed': 'Alianza formada con {name}',
+  'actions.rejectAlliance': 'Rechazar',
+  'actions.waitingTeaEnd': 'Esperando a que finalice la Ceremonia del Te...',
+
   // Legend Tooltip
   'legend.bushi': 'Bushi',
   'legend.shinto': 'Shinto',

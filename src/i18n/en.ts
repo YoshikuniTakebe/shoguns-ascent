@@ -383,6 +383,15 @@ export const en = {
   'actions.requestLabel': 'Request',
   'actions.requestingCoins': 'Requesting {amount} coins for alliance',
 
+  // Online Tea Ceremony
+  'actions.noAllianceButton': 'I don\'t want alliances',
+  'actions.teaOnlineDesc': 'Propose alliances to other players in real time',
+  'actions.allianceProposalSent': 'Alliance proposal sent',
+  'actions.youOptedOut': 'You opted out of alliances',
+  'actions.allianceFormed': 'Alliance formed with {name}',
+  'actions.rejectAlliance': 'Reject',
+  'actions.waitingTeaEnd': 'Waiting for Tea Ceremony to end...',
+
   // Legend Tooltip
   'legend.bushi': 'Bushi',
   'legend.shinto': 'Shinto',

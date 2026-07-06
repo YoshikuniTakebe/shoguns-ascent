@@ -12,6 +12,7 @@ export const ActionPanel = () => {
   const {
     gameState, localPlayerId, moveMode, toggleMoveMode,
     doAdvancePhase, doAdvancePlayer, doProposeAlliance, doAcceptAlliance,
+    doTeaProposeAlliance, doTeaAcceptAlliance, doTeaRejectAlliance, doTeaOptOut,
     doSetupSeason, doDrawMandateTiles, doChooseMandateTile,
     doLotoChooseActualMandate,
     doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
@@ -82,7 +83,188 @@ export const ActionPanel = () => {
       })()}
 
       {/* Tea Ceremony Phase */}
-      {gameState.currentPhase === 'tea' && (
+      {gameState.currentPhase === 'tea' && gameState.mode === 'online' && (() => {
+        const localPlayer = gameState.players.find(p => p.id === localPlayerId);
+        const hasAlly = localPlayer && localPlayer.allies.length > 0;
+        const hasOptedOut = localPlayerId ? gameState.teaOptedOut.includes(localPlayerId) : false;
+        const allyPlayer = hasAlly ? gameState.players.find(p => localPlayer!.allies.includes(p.id)) : null;
+        const incomingProposals = gameState.allianceProposals.filter(ap => ap.to === localPlayerId && !ap.accepted);
+        const availableTargets = gameState.players.filter(
+          p => p.id !== localPlayerId && p.allies.length === 0 && !gameState.teaOptedOut.includes(p.id)
+        );
+        const hasPendingOutgoing = gameState.allianceProposals.some(ap => ap.from === localPlayerId);
+
+        return (
+          <div className="tea-phase tea-online-panel">
+            <h4>{t('actions.teaCeremony')}</h4>
+            <p className="phase-description">{t('actions.teaOnlineDesc')}</p>
+
+            {/* Alliance formed state */}
+            {hasAlly && allyPlayer && (
+              <div className="tea-alliance-formed">
+                <ClanShield clanId={allyPlayer.clanId} size={30} />
+                <span>{t('actions.allianceFormed', { name: allyPlayer.name })}</span>
+              </div>
+            )}
+
+            {/* Opted out state */}
+            {!hasAlly && hasOptedOut && (
+              <div className="tea-opted-out-msg">
+                <span>{t('actions.youOptedOut')}</span>
+              </div>
+            )}
+
+            {/* Waiting state (allied or opted out) */}
+            {(hasAlly || hasOptedOut) && (
+              <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                {t('actions.waitingTeaEnd')}
+              </p>
+            )}
+
+            {/* Active state: can propose/accept/reject */}
+            {!hasAlly && !hasOptedOut && (
+              <>
+                {/* Incoming proposals */}
+                {incomingProposals.length > 0 && (
+                  <div className="pending-alliances">
+                    <h5>{t('actions.pendingProposals')}</h5>
+                    {incomingProposals.map(pr => {
+                      const fp = gameState.players.find(p => p.id === pr.from);
+                      return (
+                        <div key={pr.from} className="tea-proposal-card">
+                          <div className="alliance-proposal">
+                            <ClanShield clanId={fp?.clanId || ''} size={30} />
+                            <span>{t('actions.wantsAlliance', { name: '' })} <span style={{ color: CLANS.find(c => c.id === fp?.clanId)?.color, fontWeight: 'bold' }}>{fp?.name || ''}</span></span>
+                            {pr.bribeAmount && pr.bribeAmount > 0 && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#DAA520' }}>
+                                <CoinIcon size={16} color="#DAA520" />
+                                <span>{pr.bribeAmount}</span>
+                              </span>
+                            )}
+                            {pr.requestAmount && pr.requestAmount > 0 && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#e74c3c' }}>
+                                <CoinIcon size={16} color="#e74c3c" />
+                                <span>-{pr.requestAmount}</span>
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem', justifyContent: 'center' }}>
+                            <button className="btn-small btn-accept" onClick={() => doTeaAcceptAlliance(pr.from)}>
+                              {t('actions.accept')}
+                            </button>
+                            <button className="btn-small" onClick={() => doTeaRejectAlliance(pr.from)}>
+                              {t('actions.rejectAlliance')}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Proposal targets */}
+                {!hasPendingOutgoing && availableTargets.length > 0 && (
+                  <div className="alliance-options" style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                    {availableTargets.map(p => {
+                      const clan = CLANS.find(c => c.id === p.clanId)!;
+                      const isSelected = selectedAllianceTarget === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          className={`btn-alliance${isSelected ? ' selected' : ''}`}
+                          style={{ borderColor: clan.color, display: 'flex', alignItems: 'center', gap: '6px' }}
+                          onClick={() => setSelectedAllianceTarget(isSelected ? null : p.id)}
+                        >
+                          <ClanShield clanId={p.clanId} size={22} />
+                          <span style={{ color: clan.color, fontWeight: 'bold' }}>{p.name}</span>
+                          <span style={{ opacity: 0.7 }}>({clan.name})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Notification that proposal was sent */}
+                {hasPendingOutgoing && (
+                  <p style={{ color: 'var(--accent-gold)', fontStyle: 'italic', marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                    {t('actions.allianceProposalSent')}
+                  </p>
+                )}
+
+                {/* Bribe/Request sliders and Propose button */}
+                {!hasPendingOutgoing && (
+                  <div className="tea-turn-actions">
+                    {selectedAllianceTarget && localPlayer && localPlayer.coins > 0 && (
+                      <div className="bribe-slider" style={{ marginBottom: '0.5rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85em' }}>
+                          <span style={{ minWidth: '5.5em' }}>{t('actions.bribeLabel')}:</span>
+                          <input
+                            type="range"
+                            min={0}
+                            max={localPlayer.coins}
+                            value={bribeAmount}
+                            onChange={(e) => { setBribeAmount(Number(e.target.value)); if (Number(e.target.value) > 0) setRequestAmount(0); }}
+                            style={{ flex: 1 }}
+                          />
+                          <span style={{ fontWeight: 'bold', color: '#DAA520', minWidth: '2.5em', textAlign: 'center' }}>
+                            {bribeAmount}
+                          </span>
+                        </label>
+                      </div>
+                    )}
+                    {selectedAllianceTarget && (() => {
+                      const targetPlayer = gameState.players.find(p => p.id === selectedAllianceTarget);
+                      return targetPlayer && targetPlayer.coins > 0 ? (
+                        <div className="request-slider" style={{ marginBottom: '0.5rem' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85em' }}>
+                            <span style={{ minWidth: '5.5em' }}>{t('actions.requestLabel')}:</span>
+                            <input
+                              type="range"
+                              min={0}
+                              max={targetPlayer.coins}
+                              value={requestAmount}
+                              onChange={(e) => { setRequestAmount(Number(e.target.value)); if (Number(e.target.value) > 0) setBribeAmount(0); }}
+                              style={{ flex: 1 }}
+                            />
+                            <span style={{ fontWeight: 'bold', color: '#e74c3c', minWidth: '2.5em', textAlign: 'center' }}>
+                              {requestAmount}
+                            </span>
+                          </label>
+                        </div>
+                      ) : null;
+                    })()}
+                    {selectedAllianceTarget && (
+                      <button
+                        className="btn-primary advance-btn"
+                        onClick={() => {
+                          if (selectedAllianceTarget) {
+                            doTeaProposeAlliance(selectedAllianceTarget, bribeAmount > 0 ? bribeAmount : undefined, requestAmount > 0 ? requestAmount : undefined);
+                            setSelectedAllianceTarget(null);
+                            setBribeAmount(0);
+                            setRequestAmount(0);
+                          }
+                        }}
+                      >
+                        {t('actions.endTeaTurn')}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Opt out button */}
+                <button
+                  className="tea-opt-out-btn"
+                  onClick={() => doTeaOptOut()}
+                >
+                  {t('actions.noAllianceButton')}
+                </button>
+              </>
+            )}
+          </div>
+        );
+      })()}
+
+      {gameState.currentPhase === 'tea' && gameState.mode !== 'online' && (
         <div className="tea-phase">
           <h4>{t('actions.teaCeremony')}</h4>
 
