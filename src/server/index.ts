@@ -711,6 +711,8 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (l.gameState.currentPhase !== 'tea') return;
+          // Only use turn-based advancement for hotseat-style flow (not simultaneous online tea)
+          if (l.gameState.mode === 'online') return;
           l.gameState = advancePlayer(l.gameState);
           broadcastState(l);
           break;
