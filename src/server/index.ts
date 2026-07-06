@@ -62,6 +62,10 @@ import { generateToken, verifyToken } from './auth';
 import bcrypt from 'bcryptjs';
 
 const app = express();
+
+// Explicit preflight handler for Express 5 compatibility
+app.options('*', cors({ origin: true, credentials: true, methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
+
 app.use(cors({ origin: true, credentials: true, methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 app.use(express.json({ limit: '50mb' }));
 const server = createServer(app);
