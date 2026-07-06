@@ -30,6 +30,7 @@ import {
   recruitPlaceFigure,
   skipRecruitTurn,
   skipTrainPurchase,
+  advanceTrainResolution,
   advanceHarvestResolution,
   lotoChooseActualMandate,
 } from '../utils/gameLogic';
@@ -972,8 +973,24 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const { cardId } = data.payload || {};
           if (!cardId) return;
-          l.gameState = buySeasonCard(l.gameState, data.playerId, cardId);
-          broadcastState(l);
+          let s = buySeasonCard(l.gameState, data.playerId, cardId);
+          // Check if the bought card is a monster
+          const boughtCard = s.players.find(p => p.id === data.playerId)?.seasonCards.find(c => c.id === cardId);
+          if (boughtCard && boughtCard.cardType === 'monster') {
+            // Monster cards: broadcast state for client to handle placement UI
+            // The train resolution will advance after monster placement completes
+            l.gameState = s;
+            broadcastState(l);
+          } else {
+            // Non-monster card: advance train resolution
+            s = { ...s, trainResolutionIndex: s.trainResolutionIndex + 1 };
+            s = advanceTrainResolution(s);
+            if (!s.trainMandateActive) {
+              s = advancePlayer(s);
+            }
+            l.gameState = s;
+            broadcastState(l);
+          }
           break;
         }
 

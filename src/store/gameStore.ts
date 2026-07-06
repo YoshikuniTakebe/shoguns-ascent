@@ -1297,6 +1297,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!apid) return;
     if (ws && gameState.mode === 'online') {
       get().sendAction({ type: 'BUILD_FORTRESS', playerId: apid, payload: { provinceId } });
+      set({ buildFortressMode: false });
       return;
     }
     const ns = buildFortress(gameState, apid, provinceId);
@@ -2796,7 +2797,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         case 'GAME_STATE': {
           const state = d.state;
           let newTurnPopup: string | null = null;
-          const { turnPopupDismissedForIndex } = get();
+          const { turnPopupDismissedForIndex, localPlayerId: lpId } = get();
+          const prevPlayerIndex = get().gameState?.currentPlayerIndex;
           if (state.mode === 'online' && state.currentPhase === 'politics') {
             const noResolution = !state.trainMandateActive && !state.marshalMandateActive && !state.recruitMandateActive && !state.betrayMandateActive && !state.harvestMandateActive;
             if (noResolution && state.drawnMandates.length === 0 && !state.mandateChoicePhase) {
@@ -2805,7 +2807,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
               }
             }
-            // During mandate resolution, don't re-show the popup - the player already dismissed it
+            // During mandate resolution (except harvest which has its own popup), show turn popup when currentPlayerIndex changes
+            const mandateActive = state.trainMandateActive || state.marshalMandateActive || state.recruitMandateActive || state.betrayMandateActive;
+            if (mandateActive && prevPlayerIndex !== undefined && prevPlayerIndex !== null && state.currentPlayerIndex !== prevPlayerIndex) {
+              const newCurrentPlayerId = state.players[state.currentPlayerIndex]?.id;
+              if (newCurrentPlayerId && newCurrentPlayerId === lpId) {
+                newTurnPopup = newCurrentPlayerId;
+              }
+            }
           }
           // Reset dismissed tracking when the current player index changes
           const dismissedIdx = (turnPopupDismissedForIndex !== null && turnPopupDismissedForIndex !== state.currentPlayerIndex) ? null : turnPopupDismissedForIndex;
