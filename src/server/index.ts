@@ -1016,6 +1016,11 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'MONSTER_PLACED': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          // Validate that the sender is the current train resolution player
+          if (l.gameState.trainMandateActive) {
+            const expectedPlayer = l.gameState.trainResolutionOrder[l.gameState.trainResolutionIndex];
+            if (data.playerId !== expectedPlayer) return;
+          }
           const { cardId, provinceId, templeId, replaceFigureId, reserve } = data.payload || {};
           if (!cardId) return;
           let s = l.gameState;
@@ -1091,6 +1096,11 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'SKIP_MARSHAL_TURN': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          // Validate that the sender is the current marshal resolution player
+          if (l.gameState.marshalMandateActive) {
+            const expectedPlayer = l.gameState.marshalResolutionOrder[l.gameState.marshalResolutionIndex];
+            if (data.playerId !== expectedPlayer) return;
+          }
           let s = l.gameState;
 
           // Replay buffered moves and fortresses from the client payload

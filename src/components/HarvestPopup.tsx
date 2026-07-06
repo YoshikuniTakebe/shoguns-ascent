@@ -21,15 +21,6 @@ export const HarvestPopup = () => {
     }
   }, [gameState?.harvestMandateActive]);
 
-  // Reset coin popup state when harvestCurrentPlayerId changes (new player's turn)
-  useEffect(() => {
-    if (gameState?.harvestCurrentPlayerId && gameState.harvestCurrentPlayerId !== coinConfirmedForPlayer) {
-      // A new player is now acknowledging - they need to see their coin popup first
-      // Only reset if coinConfirmedForPlayer doesn't match the current player
-      // (This ensures when the player changes, coin popup shows again)
-    }
-  }, [gameState?.harvestCurrentPlayerId]);
-
   if (!gameState || !gameState.harvestPopupVisible || !gameState.harvestMandateActive) return null;
 
   // Don't show harvest popup while turn popup is still displayed - let turn popup show first
