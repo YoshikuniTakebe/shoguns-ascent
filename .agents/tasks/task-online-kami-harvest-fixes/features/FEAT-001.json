@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix: After Kami phase completes, mandate selection fails ('It is not your turn to choose a mandate'). Root cause: server calls advancePlayer(s) after advanceKamiResolution() completes, but advanceKamiResolution already sets currentPlayerIndex = kamiResolutionNextPlayerIndex AND the politicsMandateCount was already incremented when entering the Kami turn (inside the original advancePlayer call that triggered Kami resolution). The extra advancePlayer call double-advances the player index and corrupts state. Also fix figure size adjustments in RegionDetailModal diorama.",
+  "status": "completed",
+  "steps": [
+    "In src/server/index.ts, find ALL handlers that call `advanceKamiResolution` followed by `if (!s.kamiResolutionActive) { s = advancePlayer(s); }`. There are 4 instances: ACKNOWLEDGE_KAMI_REWARD (2 places - no winner auto-advance and after reward), FUJIN_DONE, and RAIJIN_CONFIRM. In ALL 4 cases, REMOVE the `s = advancePlayer(s)` call. The advanceKamiResolution function already handles the player transition when all temples are resolved (sets currentPlayerIndex = kamiResolutionNextPlayerIndex and handles advancePhase if politics is done).",
+    "In src/server/index.ts, find the RYUJIN_SKIP and RYUJIN_BUY handlers. If they also call advanceKamiResolution followed by advancePlayer, remove the advancePlayer call there too.",
+    "In src/components/RegionDetailModal.tsx, update the FIGURE_SIZE_OVERRIDES object: change 'daimyo-zorro' from 0.95 to 0.97, change 'bushi-koi' from 0.97 to 0.95, change 'daimyo-koi' from 0.98 to 1.00"
+  ],
+  "acceptance_criteria": [
+    "After Kami phase resolves on the server, the gameState.currentPlayerIndex points to the correct next mandate selector (kamiResolutionNextPlayerIndex) without double-advancement",
+    "The advancePlayer function is NOT called after advanceKamiResolution completes in any server handler",
+    "Figure sizes in FIGURE_SIZE_OVERRIDES: daimyo-zorro = 0.97, bushi-koi = 0.95, daimyo-koi = 1.00",
+    "npm run build succeeds without errors"
+  ],
+  "verification": [
+    "Run npm run build and confirm it passes with no TypeScript or build errors"
+  ],
+  "blocked_reason": null,
+  "findings": "All 6 instances of advancePlayer after advanceKamiResolution removed from server handlers: ACKNOWLEDGE_KAMI_REWARD (no-winner auto-advance), ACKNOWLEDGE_KAMI_REWARD (after auto-reward), FUJIN_DONE, RAIJIN_CONFIRM, RYUJIN_BUY, RYUJIN_SKIP. Build passes cleanly."
+}
