@@ -1156,6 +1156,10 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'SKIP_BETRAY_TURN': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          // Only the current player (betray issuer) can skip
+          if (!l.gameState.betrayMandateActive) return;
+          const currentPlayer = l.gameState.players[l.gameState.currentPlayerIndex];
+          if (!currentPlayer || currentPlayer.id !== data.playerId) return;
           let s = skipBetrayTurn(l.gameState);
           s = advancePlayer(s);
           l.gameState = s;

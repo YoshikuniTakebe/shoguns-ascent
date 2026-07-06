@@ -2995,6 +2995,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
             if (!state.betrayMandateActive) {
               uiResets.betrayMode = false;
             }
+            if (state.betrayMandateActive && lpId) {
+              // Betray is only for the issuer - check if local player is the current player (issuer)
+              const currentBetrayPlayerId = state.players[state.currentPlayerIndex]?.id;
+              if (currentBetrayPlayerId === lpId) {
+                uiResets.betrayMode = true;
+              }
+            }
           }
 
           // For online marshal: save undoMandateState when it's this player's marshal turn
