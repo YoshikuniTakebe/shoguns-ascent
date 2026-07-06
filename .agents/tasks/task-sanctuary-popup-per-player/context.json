@@ -1,0 +1,23 @@
+{
+  "project_type": "React + TypeScript board game adaptation with Express 5 WebSocket server",
+  "language": "TypeScript",
+  "build_system": "Vite for client, tsx for server",
+  "test_framework": "No automated test framework detected",
+  "build_command": "npx tsc -b --noEmit",
+  "test_command": "npx tsc -b --noEmit",
+  "verification_instructions": "1. Run TypeScript compilation to verify no type errors. 2. Verify the logic manually by reading code.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "Open internet available. No automated tests exist - verify via TypeScript compilation.",
+  "contribution_requirements": "Work directly on main branch. CSS in App.css uses minified single-line blocks.",
+  "key_patterns": "Sequential per-player pattern (from harvest): 1) GameState has a currentPlayerId field, 2) Popup component checks localPlayerId vs currentPlayerId - shows waiting if not your turn, 3) Client sends WS action in online mode, 4) Server validates playerId matches currentPlayerId before processing, 5) After processing, state advances to next player's ID and broadcasts. The kami resolution popup uses kamiResolutionActive + kamiResolutionStep='showing' to determine visibility. KamiResolutionTemple has winnerId field for each sanctuary.",
+  "relevant_files": [
+    "src/types/game.ts",
+    "src/components/KamiResolutionPopup.tsx",
+    "src/components/HarvestPopup.tsx",
+    "src/store/gameStore.ts",
+    "src/utils/gameLogic.ts",
+    "src/server/index.ts"
+  ],
+  "directory_structure": "src/components/ (React components), src/store/ (Zustand store with gameStore.ts), src/utils/ (gameLogic.ts with game logic functions), src/server/ (Express+WS server), src/types/ (TypeScript types), src/i18n/ (translations)"
+}

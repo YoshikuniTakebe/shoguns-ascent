@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Implement sequential per-player sanctuary popup during kami resolution in online mode. The popup should only appear on the screen of the player who won that specific sanctuary. When they acknowledge, advance to the next sanctuary and show the popup to that sanctuary's winner. Continue until all sanctuaries are resolved. This follows the same pattern as the harvest popup (harvestCurrentPlayerId + ACKNOWLEDGE_HARVEST).",
+  "status": "completed",
+  "steps": [
+    "Step 1: Add kamiResolutionCurrentPlayerId field to GameState in src/types/game.ts. Add it as optional string|null (like harvestCurrentPlayerId) after kamiResolutionStep field.",
+    "Step 2: In src/utils/gameLogic.ts, modify the initial kami resolution setup (around line 3234 where kamiResolutionTemples is set). Set kamiResolutionCurrentPlayerId to the first temple's winnerId (kamiResolutionTemples[0].winnerId or null).",
+    "Step 3: In src/utils/gameLogic.ts, modify the advanceKamiResolution function. When moving to the next temple (the 'Move to the next temple' return statement around line 1690), set kamiResolutionCurrentPlayerId to the next temple's winnerId. When all temples are resolved (the cleanup block), set kamiResolutionCurrentPlayerId to null. Also add kamiResolutionCurrentPlayerId: null in the initial state in createInitialGameState.",
+    "Step 4: In src/store/gameStore.ts, modify doAcknowledgeKamiReward to send a WS action in online mode (similar to doAcknowledgeHarvest). At the top of the function, after checking gameState and kamiResolutionActive, add: if (ws && gameState.mode === 'online') { get().sendAction({ type: 'ACKNOWLEDGE_KAMI_REWARD', playerId: get().localPlayerId }); return; }. This requires destructuring ws from get() alongside gameState.",
+    "Step 5: In src/server/index.ts, add an ACKNOWLEDGE_KAMI_REWARD case handler. Import resolveCurrentKamiReward and advanceKamiResolution from gameLogic. The handler should: 1) Get the lobby and validate gameState exists + kamiResolutionActive is true, 2) Validate data.playerId matches l.gameState.kamiResolutionCurrentPlayerId (if set), 3) Get currentTemple from kamiResolutionTemples[kamiResolutionIndex], 4) If no winnerId, call advanceKamiResolution, 5) Otherwise call resolveCurrentKamiReward - if result has kamiResolutionStep='interactive' keep that state, else call advanceKamiResolution, 6) If kamiResolutionActive becomes false, call advancePlayer, 7) Set l.gameState and broadcastState. Also add resolveCurrentKamiReward and advanceKamiResolution to the imports from gameLogic.",
+    "Step 6: In src/components/KamiResolutionPopup.tsx, add online mode gating similar to HarvestPopup.tsx. Import localPlayerId from useGameStore. If gameState.mode === 'online' and kamiResolutionCurrentPlayerId is set and does NOT equal localPlayerId, show a 'waiting for X' message instead of the full popup (using the same pattern as HarvestPopup lines 36-47). The winner (whose screen shows the popup) sees the normal popup with the Continue button.",
+    "Step 7: Also handle the interactive kami cases (Fujin, Raijin, Ryujin) for online. In gameStore.ts, add sendAction calls for doFujinDone, doFujinMove, doRaijinPlace/doRaijinConfirm, and doRyujinBuyCard/doRyujinSkip when in online mode. Add corresponding server cases: FUJIN_MOVE, FUJIN_DONE, RAIJIN_PLACE, RYUJIN_BUY, RYUJIN_SKIP. Each should validate data.playerId matches kamiResolutionCurrentPlayerId. The server logic mirrors the local store logic: apply the kami ability, then advanceKamiResolution when done."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compilation passes with no errors (npx tsc -b --noEmit)",
+    "GameState type includes kamiResolutionCurrentPlayerId field",
+    "kamiResolutionCurrentPlayerId is set to the winnerId when kami resolution starts and updates on each advance",
+    "KamiResolutionPopup.tsx checks localPlayerId and shows waiting message when it's not the local player's turn in online mode",
+    "doAcknowledgeKamiReward sends ACKNOWLEDGE_KAMI_REWARD WebSocket action in online mode",
+    "Server has ACKNOWLEDGE_KAMI_REWARD handler that validates the player, resolves the reward, advances, and broadcasts",
+    "Interactive kami (Fujin, Raijin, Ryujin) also work via WebSocket in online mode with corresponding server handlers",
+    "Hotseat mode continues to work as before (no regression)"
+  ],
+  "verification": [
+    "Run npx tsc -b --noEmit from workspace root to verify TypeScript compilation"
+  ],
+  "blocked_reason": null,
+  "findings": "All 7 steps implemented successfully. TypeScript compilation passes cleanly. The kamiResolutionCurrentPlayerId field tracks whose turn it is during online kami resolution. The KamiResolutionPopup shows a waiting message for non-active players. All interactive kami abilities (Fujin move/done, Raijin place/confirm, Ryujin buy/skip) now route through WebSocket in online mode with server-side validation."
+}

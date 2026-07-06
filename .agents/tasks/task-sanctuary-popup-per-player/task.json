@@ -1,0 +1,7 @@
+{
+  "task_id": "task-sanctuary-popup-per-player",
+  "task_description": "Make the sanctuary reward popup during Kami resolution show ONLY to the player who won that specific sanctuary. That player must accept before proceeding to the next sanctuary, which then shows on the next winner's screen. Sequential per-player flow similar to harvest acknowledgment.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}
