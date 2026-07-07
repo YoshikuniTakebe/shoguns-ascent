@@ -149,6 +149,8 @@ function computeWarUpgradeSummary(state: GameState): { playerName: string; clanI
  * If a war transition is detected, shows warPhasePopupVisible instead of immediately starting battles.
  */
 function detectWarTransitionWithPopup(state: GameState): Record<string, unknown> {
+  // Guard: don't show war popup while kami summary is still visible
+  if (state.kamiSummaryVisible) return {};
   const warTransition = detectWarTransition(state);
   if (Object.keys(warTransition).length > 0) {
     const summary = computeWarUpgradeSummary(state);
@@ -3014,7 +3016,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!gameState || !gameState.coinDistributionPending) return;
 
     if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'COIN_DISTRIBUTION_DISMISS', playerId: get().localPlayerId });
+      get().sendAction({ type: 'COIN_DISTRIBUTION_READY', playerId: get().localPlayerId });
       return;
     }
 
@@ -3160,10 +3162,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws } = get();
     if (!gameState) return;
 
-    // Online mode: send WAR_PHASE_READY to server
+    // Online mode: send WAR_PHASE_READY to server, don't hide locally (wait for server)
     if (ws && gameState.mode === 'online') {
       get().sendAction({ type: 'WAR_PHASE_READY', playerId: get().localPlayerId });
-      set({ warPhasePopupVisible: false, warPhaseUpgradeSummary: [] });
       return;
     }
 
@@ -3176,10 +3177,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws } = get();
     if (!gameState) return;
 
-    // Online mode: send WAR_SUMMARY_READY to server
+    // Online mode: send WAR_SUMMARY_READY to server, don't hide locally (wait for server)
     if (ws && gameState.mode === 'online') {
       get().sendAction({ type: 'WAR_SUMMARY_READY', playerId: get().localPlayerId });
-      set({ warSummaryVisible: false });
       return;
     }
 
@@ -3380,14 +3380,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
           if (state.mode === 'online' && state.currentPhase === 'war') {
             // When war phase just started and no Zorro placement, show war phase popup directly
             const prevPhase = prevGameState?.currentPhase;
-            if (prevPhase !== 'war' && !state.zorroPlacementActive) {
+            if (prevPhase !== 'war' && !state.zorroPlacementActive && !state.kamiSummaryVisible) {
               uiResets.warPhasePopupVisible = true;
               uiResets.warPhaseUpgradeSummary = computeWarUpgradeSummary(state);
             }
 
             // When Zorro placement ends (zorroPlacementActive becomes false), show war phase popup
             const prevZorroActive = prevGameState?.zorroPlacementActive;
-            if (prevZorroActive && !state.zorroPlacementActive) {
+            if (prevZorroActive && !state.zorroPlacementActive && !state.kamiSummaryVisible) {
               uiResets.warPhasePopupVisible = true;
               uiResets.warPhaseUpgradeSummary = computeWarUpgradeSummary(state);
             }
@@ -3427,6 +3427,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // Reconnection support: if server has warSummaryVisible=true but client doesn't, show it
             if (state.warSummaryVisible && !get().warSummaryVisible) {
               uiResets.warSummaryVisible = true;
+              uiResets.battleStepPhase = null;
+            }
+
+            // When server clears warSummaryVisible (all accepted), hide client popup
+            if (!state.warSummaryVisible && get().warSummaryVisible) {
+              uiResets.warSummaryVisible = false;
               uiResets.battleStepPhase = null;
             }
 

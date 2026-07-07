@@ -286,6 +286,7 @@ export function createInitialGameState(
     warSummaryVisible: false,
     warSummaryReadyPlayers: [],
     battleResultReadyPlayers: [],
+    coinDistributionReadyPlayers: [],
     log: ['Juego iniciado! Estación: Primavera'],
     logHistory: {},
     hostId,
@@ -1963,6 +1964,7 @@ export function initiateWarPhase(state: GameState): GameState {
     warSummaryVisible: false,
     warSummaryReadyPlayers: [],
     battleResultReadyPlayers: [],
+    coinDistributionReadyPlayers: [],
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], seasonCards: [...p.seasonCards] })),
     log: [...state.log, '=== Comienza la Fase de Guerra ==='],
   };

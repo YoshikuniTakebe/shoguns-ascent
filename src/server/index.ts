@@ -1741,6 +1741,23 @@ wss.on('connection', (ws: WebSocket, req) => {
           broadcastState(l);
           break;
         }
+
+        case 'COIN_DISTRIBUTION_READY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          if (!l.gameState.coinDistributionPending) return;
+          // Only for remainder=0 summary popup (all players must accept)
+          if (l.gameState.coinDistributionPending.remainder !== 0) return;
+          if (!l.gameState.coinDistributionReadyPlayers.includes(playerId)) {
+            l.gameState = { ...l.gameState, coinDistributionReadyPlayers: [...l.gameState.coinDistributionReadyPlayers, playerId] };
+          }
+          if (l.gameState.coinDistributionReadyPlayers.length >= l.gameState.players.length) {
+            l.gameState = { ...l.gameState, coinDistributionPending: null, coinDistributionReadyPlayers: [] };
+          }
+          broadcastState(l);
+          break;
+        }
       }
     } catch (e) {
       console.error(e);

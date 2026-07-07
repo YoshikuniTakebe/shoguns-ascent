@@ -865,9 +865,15 @@ export const GameBoard = () => {
               </div>
             )}
             <div style={{ textAlign: 'center' }}>
-              <button className="btn-primary harvest-popup-btn" onClick={dismissWarPhasePopup} style={{ borderColor: '#DC143C' }}>
-                {t('war.phaseStart.accept')}
-              </button>
+              {gameState && gameState.mode === 'online' && localPlayerId && (gameState.warPhaseReadyPlayers || []).includes(localPlayerId) ? (
+                <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold' }}>
+                  {t('kami.summary.waiting', { count: String((gameState.warPhaseReadyPlayers || []).length), total: String(gameState.players.length) })}
+                </p>
+              ) : (
+                <button className="btn-primary harvest-popup-btn" onClick={dismissWarPhasePopup} style={{ borderColor: '#DC143C' }}>
+                  {t('war.phaseStart.accept')}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -911,10 +917,22 @@ export const GameBoard = () => {
                 );
               })}
             </div>
+            <div style={{ margin: '16px 0', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+              <p style={{ fontWeight: 'bold', fontSize: '0.95rem', margin: '0 0 8px 0', color: '#DC143C' }}>Fase de limpieza</p>
+              <p style={{ fontSize: '0.85rem', margin: 0, lineHeight: 1.5, opacity: 0.9 }}>
+                Cuando todos los jugadores acepten, se procedera a la fase de limpieza donde los <ShintoIcon size={14} color="#e74c3c" /> en santuarios seran devueltos a la reserva de sus propietarios y se eliminaran todas las <CoinIcon size={14} color="#f1c40f" /> y todos los <RoninIcon size={14} color="#e74c3c" /> de los jugadores. Todas las alianzas se romperan.
+              </p>
+            </div>
             <div style={{ textAlign: 'center' }}>
-              <button className="btn-primary battle-popup-accept" onClick={dismissWarSummaryPopup} style={{ borderColor: '#DC143C' }}>
-                {t('war.summary.accept')}
-              </button>
+              {gameState.mode === 'online' && localPlayerId && (gameState.warSummaryReadyPlayers || []).includes(localPlayerId) ? (
+                <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold' }}>
+                  {t('kami.summary.waiting', { count: String((gameState.warSummaryReadyPlayers || []).length), total: String(gameState.players.length) })}
+                </p>
+              ) : (
+                <button className="btn-primary battle-popup-accept" onClick={dismissWarSummaryPopup} style={{ borderColor: '#DC143C' }}>
+                  {t('war.summary.accept')}
+                </button>
+              )}
             </div>
           </div>
         </div>,

@@ -216,12 +216,18 @@ function BattleResultPopup({
   onAccept,
   t,
   resolutionData,
+  localPlayerId,
+  battleResultReadyPlayers,
+  mode,
 }: {
   battle: Battle;
   gameState: GameState;
   onAccept: () => void;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
   resolutionData?: BattleResolutionData | null;
+  localPlayerId?: string | null;
+  battleResultReadyPlayers?: string[];
+  mode?: string;
 }) {
   const resProvince = gameState.provinces[battle.provinceId];
   const winner = battle.winner ? gameState.players.find(p => p.id === battle.winner) : null;
@@ -421,9 +427,15 @@ function BattleResultPopup({
             ))}
           </div>
         )}
-        <button className="btn-primary battle-popup-accept" onClick={onAccept}>
-          {t('battle.continue')}
-        </button>
+        {mode === 'online' && localPlayerId && (battleResultReadyPlayers || []).includes(localPlayerId) ? (
+          <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
+            {(battleResultReadyPlayers || []).length}/{gameState.players.length} listos
+          </p>
+        ) : (
+          <button className="btn-primary battle-popup-accept" onClick={onAccept}>
+            {t('battle.continue')}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -545,9 +557,15 @@ export const BattlePanel = () => {
                 );
               })}
             </div>
-            <button className="btn-primary battle-popup-accept" onClick={doCoinDistributionDismiss}>
-              {t('battle.continue')}
-            </button>
+            {gameState.mode === 'online' && localPlayerId && (gameState.coinDistributionReadyPlayers || []).includes(localPlayerId) ? (
+              <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
+                {(gameState.coinDistributionReadyPlayers || []).length}/{gameState.players.length} listos
+              </p>
+            ) : (
+              <button className="btn-primary battle-popup-accept" onClick={doCoinDistributionDismiss}>
+                {t('battle.continue')}
+              </button>
+            )}
           </div>
         </div>,
         document.body
@@ -876,6 +894,9 @@ export const BattlePanel = () => {
           onAccept={doAcceptBattlePopup}
           t={t}
           resolutionData={battleResolutionData}
+          localPlayerId={localPlayerId}
+          battleResultReadyPlayers={gameState.battleResultReadyPlayers}
+          mode={gameState.mode}
         />,
         document.body
       );
@@ -1095,6 +1116,9 @@ export const BattlePanel = () => {
           onAccept={doAcceptBattlePopup}
           t={t}
           resolutionData={battleResolutionData}
+          localPlayerId={localPlayerId}
+          battleResultReadyPlayers={gameState.battleResultReadyPlayers}
+          mode={gameState.mode}
         />,
         document.body
       );
@@ -1161,6 +1185,9 @@ export const BattlePanel = () => {
           onAccept={doAcceptBattlePopup}
           t={t}
           resolutionData={battleResolutionData}
+          localPlayerId={localPlayerId}
+          battleResultReadyPlayers={gameState.battleResultReadyPlayers}
+          mode={gameState.mode}
         />,
         document.body
       );

@@ -280,6 +280,7 @@ export interface GameState {
   warSummaryVisible: boolean;
   warSummaryReadyPlayers: string[];
   battleResultReadyPlayers: string[];
+  coinDistributionReadyPlayers: string[];
   log: string[];
   logHistory: { [season: string]: string[] };
   hostId?: string;
