@@ -130,7 +130,7 @@ export const en = {
   'battle.accept': 'Accept',
   'battle.resultTitle': 'Battle Result',
   'battle.resultWinner': '{name} wins the battle!',
-  'battle.resultWarToken': 'Receives war token in {province}',
+  'battle.resultWarToken': 'Receives Province at War token in {province}',
   'battle.continue': 'Continue',
   'battle.force': 'Force',
   'battle.coinDistributionTitle': 'Coin Distribution',
@@ -156,7 +156,7 @@ export const en = {
   'battle.uncontestedNoOpposition': '{name} wins without opposition',
   'battle.uncontestedTokenDiscarded': 'No figures present - war token is discarded',
   'battle.uncontestedAllied': 'Allied province - no battle',
-  'battle.winsProvinceToken': '{name} receives the war token',
+  'battle.winsProvinceToken': '{name} receives the Province at War token',
   'battle.forceTotal': 'Force: {force}',
 
   // GameOverScreen

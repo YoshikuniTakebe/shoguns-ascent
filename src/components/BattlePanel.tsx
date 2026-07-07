@@ -203,7 +203,7 @@ function FigureTypeIcon({ figureType, size = 16 }: { figureType: string; size?: 
     case 'shinto':
       return <ShintoIcon size={size} color="#fff" />;
     default:
-      return <span style={{ fontSize: size * 0.7 }}>👹</span>;
+      return <MonsterIcon size={size} color="#fff" />;
   }
 }
 
@@ -250,7 +250,7 @@ function BattleResultPopup({
     <div className="battle-popup-overlay">
       <div className="battle-popup-card" style={{ maxWidth: '700px', width: '95%', maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden', paddingTop: '15px' }}>
         <h3 className="battle-popup-title">{t('battle.resultTitle')}</h3>
-        <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
+        <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem', color: PROVINCE_COLORS[battle.provinceId] || '#fff' }}>
           {resProvince?.name || battle.provinceId}
         </p>
         {/* Bets (Apuestas) container */}
@@ -269,9 +269,13 @@ function BattleResultPopup({
                     return { pid, player, clan, amount };
                   })
                   .filter(Boolean) as { pid: string; player: any; clan: any; amount: number }[];
+                const tacticWinner = bidsForTactic.length > 0
+                  ? bidsForTactic.reduce((best, curr) => curr.amount > best.amount ? curr : best)
+                  : null;
+                const tacticWinnerColor = tacticWinner?.clan?.color || undefined;
                 return (
                   <div key={tacticId} style={{ background: 'rgba(0,0,0,0.15)', padding: '0.4rem', borderRadius: '4px', minWidth: '120px', flex: 1 }}>
-                    <p style={{ margin: '0 0 0.3rem', fontSize: '0.8em', fontWeight: 'bold', opacity: 0.8 }}>{tacticLabels[tacticId]}</p>
+                    <p style={{ margin: '0 0 0.3rem', fontSize: '0.8em', fontWeight: 'bold', opacity: tacticWinnerColor ? 1 : 0.8, color: tacticWinnerColor || 'inherit' }}>{tacticLabels[tacticId]}</p>
                     {bidsForTactic.length === 0 && (
                       <span style={{ fontSize: '0.75em', opacity: 0.5 }}>-</span>
                     )}
@@ -952,9 +956,15 @@ export const BattlePanel = () => {
             <p className="battle-popup-message" style={{ opacity: 0.8 }}>
               {t('battle.uncontestedTokenDiscarded')}
             </p>
-            <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
-              {t('battle.accept')}
-            </button>
+            {gameState.mode === 'online' && localPlayerId && (gameState.battlePopupReadyPlayers || []).includes(localPlayerId) ? (
+              <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
+                Listo {(gameState.battlePopupReadyPlayers || []).length}/{gameState.players.length}
+              </p>
+            ) : (
+              <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
+                {t('battle.accept')}
+              </button>
+            )}
           </div>
         </div>,
         document.body
@@ -1011,9 +1021,15 @@ export const BattlePanel = () => {
                 {t('battle.winsProvinceToken', { name: winner.name })}
               </span>
             </div>
-            <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
-              {t('battle.accept')}
-            </button>
+            {gameState.mode === 'online' && localPlayerId && (gameState.battlePopupReadyPlayers || []).includes(localPlayerId) ? (
+              <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
+                Listo {(gameState.battlePopupReadyPlayers || []).length}/{gameState.players.length}
+              </p>
+            ) : (
+              <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
+                {t('battle.accept')}
+              </button>
+            )}
           </div>
         </div>,
         document.body
@@ -1038,9 +1054,15 @@ export const BattlePanel = () => {
             <p style={{ color: winnerClan?.color, margin: '0.25rem 0' }}>
               {t('battle.winsProvinceToken', { name: winner.name })}
             </p>
-            <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
-              {t('battle.accept')}
-            </button>
+            {gameState.mode === 'online' && localPlayerId && (gameState.battlePopupReadyPlayers || []).includes(localPlayerId) ? (
+              <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
+                Listo {(gameState.battlePopupReadyPlayers || []).length}/{gameState.players.length}
+              </p>
+            ) : (
+              <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
+                {t('battle.accept')}
+              </button>
+            )}
           </div>
         </div>,
         document.body

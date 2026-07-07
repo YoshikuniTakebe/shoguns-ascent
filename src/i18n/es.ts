@@ -132,7 +132,7 @@ export const es: Record<TranslationKey, string> = {
   'battle.accept': 'Aceptar',
   'battle.resultTitle': 'Resultado de Batalla',
   'battle.resultWinner': '\u00A1{name} gana la batalla!',
-  'battle.resultWarToken': 'Obtiene loseta de guerra en {province}',
+  'battle.resultWarToken': 'Obtiene ficha de Provincia en Guerra en {province}',
   'battle.continue': 'Continuar',
   'battle.force': 'Fuerza',
   'battle.coinDistributionTitle': 'Reparto de Monedas',
@@ -158,7 +158,7 @@ export const es: Record<TranslationKey, string> = {
   'battle.uncontestedNoOpposition': '{name} gana sin oposicion',
   'battle.uncontestedTokenDiscarded': 'No hay figuras presentes - la loseta de guerra se descarta',
   'battle.uncontestedAllied': 'Provincia aliada - sin batalla',
-  'battle.winsProvinceToken': '{name} recibe la loseta de guerra',
+  'battle.winsProvinceToken': '{name} recibe la ficha de Provincia en Guerra',
   'battle.forceTotal': 'Fuerza: {force}',
 
   // GameOverScreen

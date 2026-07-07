@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-004",
+  "type": "fix",
+  "description": "Fix betray undo button missing, fix uncontested battle popup text and listo system, and fix battle result popup texts/icons/colors",
+  "status": "in_progress",
+  "steps": [
+    "BETRAY UNDO: The betray section in ActionPanel.tsx (line 810) already has an undo button that shows when undoMandateState is truthy. The issue might be that undoMandateState is not being set when betray starts in online mode. Check gameStore.ts GAME_STATE handler - around line 3318+ there's betray mode handling. Ensure that when betrayMandateActive becomes true and it's the local player's turn, undoMandateState is saved (similar to how recruit does it around line 3282). Add: in the betrayMandateActive section, if currentBetrayPlayerId === lpId, save undoMandateState if not already set.",
+    "UNCONTESTED (single player) BATTLE POPUP TEXT: In src/i18n/es.ts, change 'battle.winsProvinceToken' from '{name} recibe la loseta de guerra' to '{name} recibe la ficha de Provincia en Guerra'. In src/i18n/en.ts change 'battle.winsProvinceToken' from '{name} receives the war token' to '{name} receives the Province at War token'.",
+    "UNCONTESTED SINGLE PLAYER POPUP LISTO SYSTEM: In BattlePanel.tsx, for the single-player uncontested battle (Case 3, around line 1028), after clicking 'Aceptar', show 'Listo X/Y' instead of the button (same as other popups do). This requires online mode ready tracking. Use the existing battlePopupReadyPlayers mechanism - in online mode when the user clicks accept, send BATTLE_POPUP_READY. If already accepted, show 'Listo count/total' text. Replace the simple button with the pattern: if online mode and localPlayerId is in battlePopupReadyPlayers, show count text; else show accept button. Import battlePopupReadyPlayers from gameState. Actually the doAcceptBattlePopup already sends BATTLE_RESULT_ACCEPTED for uncontested battles. We need a new mechanism OR re-use battlePopupReadyPlayers. Let's re-use: change the uncontested handling to use BATTLE_POPUP_READY instead of BATTLE_RESULT_ACCEPTED, and on the server, when all players send BATTLE_POPUP_READY for an uncontested battle, resolve it. Check the current server logic - BATTLE_POPUP_READY is for contested battles to start bidding. We need a separate approach. The simplest fix: in the BattlePanel uncontested single-player popup, after the user clicks accept in online mode, show listo locally by checking if battlePopupReadyPlayers includes localPlayerId. The doAcceptBattlePopup already sends BATTLE_RESULT_ACCEPTED which the server uses to advance. So just add the UI pattern: if online && battlePopupReadyPlayers includes localPlayerId, show 'Listo X/Y', else show button. The server BATTLE_RESULT_ACCEPTED handler on line 1944 already tracks battlePopupReadyPlayers and advances when all are ready. Wait - that's for 'BATTLE_POPUP_READY'. Let me recheck: the uncontested case sends 'BATTLE_RESULT_ACCEPTED' which uses a DIFFERENT server handler. Need to verify this works with the existing mechanism or add new ready tracking. Actually, on the server around line 1280+, BATTLE_RESULT_ACCEPTED uses battleResultReadyPlayers. So we need to check battleResultReadyPlayers in the UI. But for uncontested battles it might not... Let's look more carefully. Actually the safest approach: the doAcceptBattlePopup for uncontested sends BATTLE_RESULT_ACCEPTED. On the server (line 1280), this adds to battlePopupReadyPlayers (not battleResultReadyPlayers). When all ready, the battle is resolved. So the UI should check: if online && gameState.battlePopupReadyPlayers?.includes(localPlayerId), show Listo text.",
+    "BATTLE RESULT POPUP - WAR TOKEN TEXT: In src/i18n/es.ts, change 'battle.resultWarToken' from 'Obtiene loseta de guerra en {province}' to 'Obtiene ficha de Provincia en Guerra en {province}'. In src/i18n/en.ts change accordingly.",
+    "BATTLE RESULT POPUP - MONSTER ICON IN CASUALTIES: In BattlePanel.tsx FigureTypeIcon function (around line 200), the default case for monster renders a span with emoji. Change it to render <MonsterIcon size={size} color='#fff' /> instead of the emoji span.",
+    "BATTLE RESULT POPUP - BETS SECTION COLORS: In the BattleResultPopup bets section, change the title of each tactic container to be colored by the clan color of whoever won that bet (highest bidder). Determine the winner of each tactic by finding the participant with the highest bid amount. Set the tacticLabel text color to the winner clan's color.",
+    "BATTLE RESULT POPUP - PROVINCE NAME COLOR: In BattleResultPopup, the province name is shown at the top. Apply the province color from PROVINCE_COLORS[battle.provinceId] to that text."
+  ],
+  "acceptance_criteria": [
+    "Betray undo button appears in online mode when it's the player's betray turn",
+    "Uncontested single-player battle popup shows 'ficha de Provincia en Guerra' text and Listo X/Y after accepting",
+    "Battle result popup shows 'ficha de Provincia en Guerra' text",
+    "Monster casualties use MonsterIcon instead of emoji",
+    "Bet section titles are colored by the winning bidder's clan color",
+    "Province name in battle result popup is colored with province color"
+  ],
+  "verification": ["npx tsc -b --noEmit"],
+  "blocked_reason": null,
+  "findings": ""
+}

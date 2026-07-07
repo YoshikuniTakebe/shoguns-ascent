@@ -3333,6 +3333,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
               const currentBetrayPlayerId = state.players[state.currentPlayerIndex]?.id;
               if (currentBetrayPlayerId === lpId) {
                 uiResets.betrayMode = true;
+                // Save undo state when betray turn begins
+                const existingUndo = get().undoMandateState;
+                if (!existingUndo) {
+                  uiResets.undoMandateState = JSON.parse(JSON.stringify(state));
+                }
               }
             }
           }
