@@ -2,7 +2,7 @@
   "id": "FEAT-006",
   "type": "fix",
   "description": "Fix War Summary popup: shinto icon color in cleanup text, popup z-order with hostage return popup, hostage return unit name colors, and tea ceremony popup flow after battles",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "WAR SUMMARY SHINTO ICON COLOR: In GameBoard.tsx war summary popup (around line 1007), the cleanup text has <ShintoIcon size={14} color='#e74c3c' />. Change the color to '#9B59B6' (purple, same as the Kami Phase title color).",
     "WAR SUMMARY POPUP Z-ORDER: The user reports that when everyone accepts the war summary and hostage return starts, the war summary popup stays behind the hostage return popup. The issue is that warSummaryVisible is not being set to false before the hostage return popup appears. In src/store/gameStore.ts dismissWarSummaryPopup: in online mode it sends WAR_SUMMARY_READY. On the server (src/server/index.ts around line 1320), when all players are ready, the server should set warSummaryVisible=false before activating hostageReturnActive. Check the server code and ensure warSummaryVisible is set to false when advancing to hostage return phase.",
@@ -17,5 +17,5 @@
   ],
   "verification": ["npx tsc -b --noEmit"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Server already correctly sets warSummaryVisible=false before calling startInteractiveCleanup. The client store also already had logic to clear warSummaryVisible when server state has it false. Added extra safeguard: store clears warSummaryVisible when hostageReturnActive is true, and GameBoard hostage return popup condition now includes !warSummaryVisible. Flow from war summary -> hostage return -> tea ceremony verified as correct with no loops."
 }
