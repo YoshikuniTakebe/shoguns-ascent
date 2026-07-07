@@ -867,6 +867,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       selectedFigures: [],
       buildFortressMode: false,
       recruitMode: undoMandateState.recruitMandateActive,
+      recruitFigureType: 'bushi',
       betrayMode: undoMandateState.betrayMandateActive,
       betrayMonsterSelectionVisible: false,
       betrayMonsterSelectionProvinceId: null,
@@ -1514,8 +1515,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Detect war phase transition or kami popup
     const warPopup = detectWarTransitionWithPopup(ns);
     const kamiPopup = detectKamiPopupPending(ns);
+    const hotseatTurnPopup = ns.recruitMandateActive && gameState.mode === 'hotseat'
+      ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null }
+      : {};
     if (Object.keys(warPopup).length > 0 || Object.keys(kamiPopup).length > 0) {
-      set({ gameState: ns, recruitMode: ns.recruitMandateActive, undoMandateState: ns.recruitMandateActive ? JSON.parse(JSON.stringify(ns)) : null, ...warPopup, ...kamiPopup });
+      set({ gameState: ns, recruitMode: ns.recruitMandateActive, undoMandateState: ns.recruitMandateActive ? JSON.parse(JSON.stringify(ns)) : null, ...hotseatTurnPopup, ...warPopup, ...kamiPopup });
     } else {
       // Auto-enable recruitMode for next player if mandate is still active
       set({
@@ -3232,7 +3236,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
               const currentRecruitPlayerId = state.players[state.currentPlayerIndex]?.id;
               if (currentRecruitPlayerId === lpId) {
                 uiResets.recruitMode = true;
-                uiResets.recruitFigureType = 'bushi';
+                // Only reset recruitFigureType to 'bushi' when the recruit turn is STARTING
+                // (player index changed or recruitMandateActive just became true), not on every broadcast
+                const recruitTurnJustStarted = prevPlayerIndex !== state.currentPlayerIndex || !prevGameState?.recruitMandateActive;
+                if (recruitTurnJustStarted) {
+                  uiResets.recruitFigureType = 'bushi';
+                }
                 // Save undo state when recruit turn begins (don't overwrite during local placements)
                 const existingUndo = get().undoMandateState;
                 if (!existingUndo) {
