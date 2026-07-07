@@ -2,7 +2,7 @@
   "id": "FEAT-004",
   "type": "fix",
   "description": "Fix betray undo button missing, fix uncontested battle popup text and listo system, and fix battle result popup texts/icons/colors",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "BETRAY UNDO: The betray section in ActionPanel.tsx (line 810) already has an undo button that shows when undoMandateState is truthy. The issue might be that undoMandateState is not being set when betray starts in online mode. Check gameStore.ts GAME_STATE handler - around line 3318+ there's betray mode handling. Ensure that when betrayMandateActive becomes true and it's the local player's turn, undoMandateState is saved (similar to how recruit does it around line 3282). Add: in the betrayMandateActive section, if currentBetrayPlayerId === lpId, save undoMandateState if not already set.",
     "UNCONTESTED (single player) BATTLE POPUP TEXT: In src/i18n/es.ts, change 'battle.winsProvinceToken' from '{name} recibe la loseta de guerra' to '{name} recibe la ficha de Provincia en Guerra'. In src/i18n/en.ts change 'battle.winsProvinceToken' from '{name} receives the war token' to '{name} receives the Province at War token'.",
@@ -22,5 +22,5 @@
   ],
   "verification": ["npx tsc -b --noEmit"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 6 parts implemented successfully. TypeScript compilation passes with no errors. The betray undo state is now saved in the GAME_STATE handler similar to how recruit does it. Uncontested battle popups (all 3 cases) now show 'Listo X/Y' pattern in online mode after the player clicks accept. Translation texts updated for both ES and EN. MonsterIcon replaces emoji in FigureTypeIcon default case. Bet section tactic labels are colored by the winning bidder clan color. Province name in BattleResultPopup is colored using PROVINCE_COLORS."
 }
