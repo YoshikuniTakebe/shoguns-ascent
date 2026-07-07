@@ -3472,6 +3472,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
               uiResets.battleStepPhase = null;
             }
 
+            // Clear war summary when server advances to hostage return
+            if (state.hostageReturnActive && get().warSummaryVisible) {
+              uiResets.warSummaryVisible = false;
+              uiResets.battleStepPhase = null;
+            }
+
             // Detect battle just resolved (server resolved via SUBMIT_WAR_BIDS): show result
             const prevResolvedCount = prevGameState?.activeBattles?.filter((b: { resolved?: boolean; uncontested?: boolean }) => b.resolved && !b.uncontested).length || 0;
             const currentResolvedCount = state.activeBattles?.filter((b: { resolved?: boolean; uncontested?: boolean }) => b.resolved && !b.uncontested).length || 0;

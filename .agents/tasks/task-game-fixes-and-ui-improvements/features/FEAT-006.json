@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-006",
+  "type": "fix",
+  "description": "Fix War Summary popup: shinto icon color in cleanup text, popup z-order with hostage return popup, hostage return unit name colors, and tea ceremony popup flow after battles",
+  "status": "in_progress",
+  "steps": [
+    "WAR SUMMARY SHINTO ICON COLOR: In GameBoard.tsx war summary popup (around line 1007), the cleanup text has <ShintoIcon size={14} color='#e74c3c' />. Change the color to '#9B59B6' (purple, same as the Kami Phase title color).",
+    "WAR SUMMARY POPUP Z-ORDER: The user reports that when everyone accepts the war summary and hostage return starts, the war summary popup stays behind the hostage return popup. The issue is that warSummaryVisible is not being set to false before the hostage return popup appears. In src/store/gameStore.ts dismissWarSummaryPopup: in online mode it sends WAR_SUMMARY_READY. On the server (src/server/index.ts around line 1320), when all players are ready, the server should set warSummaryVisible=false before activating hostageReturnActive. Check the server code and ensure warSummaryVisible is set to false when advancing to hostage return phase.",
+    "HOSTAGE RETURN POPUP - UNIT NAME COLORS: In GameBoard.tsx hostage return popup (around line 920), each hostage is shown with its figureType (like 'bushi', 'shinto', or monster name). Color the figureType/name text with the color of the clan that the hostage BELONGS TO (fromClanId). Currently it shows h.figureType with no specific color styling - add color={fromClan?.color}.",
+    "TEA CEREMONY FLOW: After hostage returns, the cleanupTeaCeremonyReady popup should show (already implemented in GameBoard.tsx around line 950). Verify the flow: after all hostage returns are processed, cleanupTeaCeremonyReady becomes true and the tea ceremony popup shows. The user mentions 'cosas raras y bucles raros' - check the server logic for the transition from hostage return to tea ceremony. In server/index.ts, after the last hostage return is processed, ensure cleanupTeaCeremonyReady is set. Also check that the hostageReturnActive flag is properly cleared. Look at the HOSTAGE_RETURN_ACCEPTED handler on the server and verify the flow doesn't loop."
+  ],
+  "acceptance_criteria": [
+    "Shinto icon in war summary cleanup text is purple (#9B59B6)",
+    "War summary popup closes before hostage return popup opens",
+    "Hostage names in return popup are colored by their owning clan's color",
+    "Flow from battles end -> war summary -> hostage return -> tea ceremony works without loops or stacking popups"
+  ],
+  "verification": ["npx tsc -b --noEmit"],
+  "blocked_reason": null,
+  "findings": ""
+}

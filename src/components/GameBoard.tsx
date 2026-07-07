@@ -922,7 +922,7 @@ export const GameBoard = () => {
       )}
 
       {/* Hostage Return Popup (interactive cleanup) */}
-      {gameState && gameState.hostageReturnActive && createPortal(
+      {gameState && gameState.hostageReturnActive && !warSummaryVisible && createPortal(
         <div className="battle-popup-overlay">
           <div className="battle-popup-card" style={{ maxWidth: '460px', minWidth: '300px' }}>
             <h3 style={{ color: '#D4AF37', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
@@ -952,7 +952,7 @@ export const GameBoard = () => {
                       return (
                         <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', background: `${fromClan?.color || '#666'}20`, border: `1px solid ${fromClan?.color || '#444'}44`, fontSize: '0.8rem' }}>
                           <ClanShield clanId={h.fromClanId} size={14} />
-                          {h.figureType}
+                          <span style={{ color: fromClan?.color || '#fff', fontWeight: 'bold' }}>{h.figureType}</span>
                         </span>
                       );
                     })}
@@ -1043,7 +1043,7 @@ export const GameBoard = () => {
             <div style={{ margin: '16px 0', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
               <p style={{ fontWeight: 'bold', fontSize: '0.95rem', margin: '0 0 8px 0', color: '#DC143C' }}>Fase de limpieza</p>
               <p style={{ fontSize: '0.85rem', margin: 0, lineHeight: 1.5, opacity: 0.9 }}>
-                Cuando todos los jugadores acepten, se procedera a la fase de limpieza donde los <ShintoIcon size={14} color="#e74c3c" /> en santuarios seran devueltos a la reserva de sus propietarios y se eliminaran todas las <CoinIcon size={14} color="#f1c40f" /> y todos los <RoninIcon size={14} color="#e74c3c" /> de los jugadores. Todas las alianzas se romperan.
+                Cuando todos los jugadores acepten, se procedera a la fase de limpieza donde los <ShintoIcon size={14} color="#9B59B6" /> en santuarios seran devueltos a la reserva de sus propietarios y se eliminaran todas las <CoinIcon size={14} color="#f1c40f" /> y todos los <RoninIcon size={14} color="#e74c3c" /> de los jugadores. Todas las alianzas se romperan.
               </p>
             </div>
             <div style={{ textAlign: 'center' }}>
