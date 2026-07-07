@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Fix Fujin undo button disappearing after second movement, fix mandates appearing during Fujin resolution, and fix Fujin/Raijin action buttons showing to all players instead of only the winner",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "FUJIN UNDO FIX (online mode): In src/store/gameStore.ts doFujinMove function, when in online mode (ws && gameState.mode === 'online'), BEFORE sending the action to the server, save the current gameState as fujinPreMoveState so the undo button works client-side. Currently it returns early without setting fujinPreMoveState. Add: set({ fujinPreMoveState: JSON.parse(JSON.stringify(gameState)) }) before the sendAction call and return.",
     "FUJIN UNDO FIX (second move): In the GAME_STATE handler in gameStore.ts (around line 3310), when the Fujin interactive state has fujinMovesRemaining === 0 (second move done, awaiting confirmation), DO NOT reset fujinPreMoveState. Currently the code at line 3300 sets uiResets.moveMode = false when !state.marshalMandateActive, which would happen during Fujin. The Fujin override at line 3310 only applies when fujinMovesRemaining > 0. Add another condition: if kamiResolutionActive and kamiResolutionStep === 'interactive' and the current kami is fujin (check temple type) and fujinMovesRemaining === 0, do NOT set moveMode to false - the confirmation overlay handles this.",
@@ -21,5 +21,5 @@
   ],
   "verification": ["npx tsc -b --noEmit"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 6 parts implemented successfully. Part 1: fujinPreMoveState saved before sending FUJIN_MOVE in online mode. Part 2: moveMode not reset during kamiResolution interactive step; Fujin override extended to handle fujinMovesRemaining=0. Part 3: Turn popup suppressed with !gameState.kamiResolutionActive. Part 4: Fujin overlay shows waiting message to non-winners in online mode. Part 5: Raijin overlay shows waiting message to non-winners in online mode. Part 6: raijinPrePlaceState saved before RAIJIN_PLACE in online mode, doRaijinUndo sends RAIJIN_UNDO to server, and RAIJIN_UNDO handler added to server/index.ts. Also added !state.kamiResolutionActive guard to otherMandateActive turn popup condition."
 }
