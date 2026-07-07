@@ -1,0 +1,20 @@
+{
+  "id": "FEAT-007",
+  "type": "fix",
+  "description": "Fix Susanoo VP preview missing Fukurokuju fortress count in advanceKamiResolution and advancePlayer",
+  "status": "completed",
+  "steps": [
+    "Step 1 - Fix advanceKamiResolution (~line 1863): Update the fortress count filter to include Fukurokuju monsters by adding `|| (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')` to the filter condition.",
+    "Step 2 - Fix advancePlayer (~line 3602): Update the fortress count filter to include Fukurokuju monsters by adding `|| (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')` to the filter condition."
+  ],
+  "acceptance_criteria": [
+    "Both Susanoo VP preview computations include Fukurokuju as a fortress",
+    "The filter condition matches the pattern used in resolveCurrentKamiReward",
+    "npm run build succeeds"
+  ],
+  "verification": [
+    "npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "Both locations fixed to match the correct pattern used elsewhere in the codebase. Build passes."
+}

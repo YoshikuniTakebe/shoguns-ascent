@@ -1862,7 +1862,7 @@ export function advanceKamiResolution(state: GameState): GameState {
       let fortressCount = 0;
       Object.values(state.provinces).forEach((province) => {
         fortressCount += province.figures.filter(
-          (f) => f.owner === nextWinnerId && f.type === 'fortress'
+          (f) => f.owner === nextWinnerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju'))
         ).length;
       });
       updatedNextTemple.susanooVPGained = fortressCount;
@@ -3601,7 +3601,7 @@ export function advancePlayer(state: GameState): GameState {
         let fortressCount = 0;
         Object.values(newState.provinces).forEach((province) => {
           fortressCount += province.figures.filter(
-            (f) => f.owner === firstWinnerId && f.type === 'fortress'
+            (f) => f.owner === firstWinnerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju'))
           ).length;
         });
         kamiResolutionTemples[0] = { ...kamiResolutionTemples[0], susanooVPGained: fortressCount };
