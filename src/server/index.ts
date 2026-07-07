@@ -1122,6 +1122,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           }
           if (l.gameState.kamiReadyPlayers.length >= l.gameState.players.length) {
             l.gameState = { ...l.gameState, kamiResolutionActive: true, kamiPhasePopupPending: false, kamiReadyPlayers: [] };
+            l.gameState = resolveKamiTurn(l.gameState);
           }
           broadcastState(l);
           break;
