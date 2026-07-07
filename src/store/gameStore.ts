@@ -2147,6 +2147,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // In online mode, send the action to the server
     if (ws && gameState.mode === 'online') {
+      set({ fujinPreMoveState: JSON.parse(JSON.stringify(gameState)) });
       get().sendAction({ type: 'FUJIN_MOVE', playerId: get().localPlayerId, payload: { fromProvinceId, toProvinceId, figureIds } });
       return;
     }
@@ -2213,6 +2214,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // In online mode, send the action to the server
     if (ws && gameState.mode === 'online') {
+      set({ raijinPrePlaceState: JSON.parse(JSON.stringify(gameState)) });
       get().sendAction({ type: 'RAIJIN_PLACE', playerId: get().localPlayerId, payload: { provinceId } });
       return;
     }
@@ -2281,8 +2283,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doRaijinUndo: () => {
-    const { raijinPrePlaceState } = get();
+    const { raijinPrePlaceState, gameState, ws } = get();
     if (!raijinPrePlaceState) return;
+    if (ws && gameState?.mode === 'online') {
+      get().sendAction({ type: 'RAIJIN_UNDO', playerId: get().localPlayerId });
+    }
     set({ gameState: JSON.parse(JSON.stringify(raijinPrePlaceState)), raijinPrePlaceState: null });
   },
 
@@ -3256,7 +3261,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             }
             // During other mandate resolution (marshal, recruit, betray), show turn popup when currentPlayerIndex changes
             const otherMandateActive = state.marshalMandateActive || state.recruitMandateActive || state.betrayMandateActive;
-            if (otherMandateActive && prevPlayerIndex !== undefined && prevPlayerIndex !== null && state.currentPlayerIndex !== prevPlayerIndex) {
+            if (otherMandateActive && !state.kamiResolutionActive && prevPlayerIndex !== undefined && prevPlayerIndex !== null && state.currentPlayerIndex !== prevPlayerIndex) {
               const newCurrentPlayerId = state.players[state.currentPlayerIndex]?.id;
               if (newCurrentPlayerId && newCurrentPlayerId === lpId) {
                 newTurnPopup = newCurrentPlayerId;
@@ -3296,9 +3301,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
               }
             }
             if (!state.marshalMandateActive) {
-              uiResets.moveMode = false;
-              uiResets.moveFrom = null;
-              uiResets.selectedFigures = [];
+              // Don't reset moveMode during Fujin resolution
+              if (!(state.kamiResolutionActive && state.kamiResolutionStep === 'interactive')) {
+                uiResets.moveMode = false;
+                uiResets.moveFrom = null;
+                uiResets.selectedFigures = [];
+              }
               uiResets.buildFortressMode = false;
               if (!state.recruitMandateActive && !state.betrayMandateActive) {
                 uiResets.undoMandateState = null;
@@ -3307,10 +3315,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
               uiResets.marshalPendingFortresses = [];
             }
             // Fujin movement: override moveMode when kami resolution is in interactive step with moves remaining
-            if (state.kamiResolutionActive && state.kamiResolutionStep === 'interactive' && state.fujinMovesRemaining > 0 && state.kamiResolutionCurrentPlayerId === lpId) {
-              uiResets.moveMode = true;
-              uiResets.moveFrom = null;
-              uiResets.selectedFigures = [];
+            if (state.kamiResolutionActive && state.kamiResolutionStep === 'interactive' && state.kamiResolutionCurrentPlayerId === lpId) {
+              const currentTemple = state.kamiResolutionTemples?.[state.kamiResolutionIndex];
+              if (currentTemple?.kamiType === 'fujin') {
+                if (state.fujinMovesRemaining > 0) {
+                  uiResets.moveMode = true;
+                }
+                uiResets.moveFrom = null;
+                uiResets.selectedFigures = [];
+              }
             }
             if (!state.betrayMandateActive) {
               uiResets.betrayMode = false;

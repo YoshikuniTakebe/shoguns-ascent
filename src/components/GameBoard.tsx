@@ -339,28 +339,40 @@ export const GameBoard = () => {
             const winnerPlayer = currentTemple.winnerId ? gameState.players.find(p => p.id === currentTemple.winnerId) : null;
             const winnerClan = winnerPlayer ? CLANS.find(c => c.id === winnerPlayer.clanId) : null;
             const clanColor = winnerClan?.color || '#fff';
+            const isOnline = gameState.mode === 'online';
+            const isMyFujinTurn = !isOnline || localPlayerId === currentTemple.winnerId;
             return (
               <div className="kami-action-overlay" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                {movesRemaining > 0 && (
+                {isMyFujinTurn ? (
+                  <>
+                    {movesRemaining > 0 && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
+                        {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
+                        <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
+                        {' tienes ' + movesRemaining + ' movimientos'}
+                      </span>
+                    )}
+                    {fujinPreMoveState && (
+                      <button className="btn-secondary" onClick={doFujinUndo} style={{ width: '36px', height: '36px', borderRadius: '50%', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <UndoIcon size={18} color="currentColor" />
+                      </button>
+                    )}
+                    {movesRemaining > 0 && (
+                      <button className="btn-primary" onClick={() => { setMoveFrom(null); setSelectedFigures([]); }} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
+                        {t('kami.resolution.fujinCancel')}
+                      </button>
+                    )}
+                    <button className="btn-primary" onClick={doFujinDone} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
+                      {movesRemaining > 0 ? t('kami.resolution.fujinDone') : t('kami.resolution.fujinConfirm')}
+                    </button>
+                  </>
+                ) : (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
                     {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
                     <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
-                    {' tienes ' + movesRemaining + ' movimientos'}
+                    {' Movimientos [ESPERANDO]'}
                   </span>
                 )}
-                {fujinPreMoveState && (
-                  <button className="btn-secondary" onClick={doFujinUndo} style={{ width: '36px', height: '36px', borderRadius: '50%', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <UndoIcon size={18} color="currentColor" />
-                  </button>
-                )}
-                {movesRemaining > 0 && (
-                  <button className="btn-primary" onClick={() => { setMoveFrom(null); setSelectedFigures([]); }} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
-                    {t('kami.resolution.fujinCancel')}
-                  </button>
-                )}
-                <button className="btn-primary" onClick={doFujinDone} style={{ fontSize: '0.85rem', padding: '4px 12px' }}>
-                  {movesRemaining > 0 ? t('kami.resolution.fujinDone') : t('kami.resolution.fujinConfirm')}
-                </button>
               </div>
             );
           })()}
@@ -371,30 +383,48 @@ export const GameBoard = () => {
             const winnerPlayer = currentTemple?.winnerId ? gameState.players.find(p => p.id === currentTemple.winnerId) : null;
             const winnerClan = winnerPlayer ? CLANS.find(c => c.id === winnerPlayer.clanId) : null;
             const clanColor = winnerClan?.color || '#fff';
+            const isOnline = gameState.mode === 'online';
+            const isMyRaijinTurn = !isOnline || localPlayerId === currentTemple?.winnerId;
             return (
               <div className="kami-action-overlay">
                 {gameState.raijinPlacementActive && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
-                    {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
-                    <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
-                    {' coloca un '}
-                    <BushiIcon size={22} color={clanColor} />
-                    {' Bushi en cualquier provincia'}
-                  </span>
+                  isMyRaijinTurn ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
+                      {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
+                      <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
+                      {' coloca un '}
+                      <BushiIcon size={22} color={clanColor} />
+                      {' Bushi en cualquier provincia'}
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
+                      {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
+                      <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
+                      {' Bushi [ESPERANDO]'}
+                    </span>
+                  )
                 )}
                 {gameState.raijinPlacementDone && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
-                    {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
-                    <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
-                    <BushiIcon size={18} color={clanColor} />
-                    <span style={{ color: '#c8a951', fontWeight: 'bold' }}>{' Bushi colocado'}</span>
-                    <button className="btn-secondary" onClick={doRaijinUndo} style={{ marginLeft: '8px', width: '36px', height: '36px', borderRadius: '50%', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <UndoIcon size={18} color="currentColor" />
-                    </button>
-                    <button className="btn-primary" onClick={doRaijinConfirm} style={{ marginLeft: '4px', fontSize: '0.85rem', padding: '4px 12px' }}>
-                      Terminar
-                    </button>
-                  </span>
+                  isMyRaijinTurn ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
+                      {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
+                      <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
+                      <BushiIcon size={18} color={clanColor} />
+                      <span style={{ color: '#c8a951', fontWeight: 'bold' }}>{' Bushi colocado'}</span>
+                      <button className="btn-secondary" onClick={doRaijinUndo} style={{ marginLeft: '8px', width: '36px', height: '36px', borderRadius: '50%', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <UndoIcon size={18} color="currentColor" />
+                      </button>
+                      <button className="btn-primary" onClick={doRaijinConfirm} style={{ marginLeft: '4px', fontSize: '0.85rem', padding: '4px 12px' }}>
+                        Terminar
+                      </button>
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
+                      {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
+                      <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
+                      {' Bushi colocado [ESPERANDO]'}
+                    </span>
+                  )
                 )}
               </div>
             );
@@ -700,7 +730,7 @@ export const GameBoard = () => {
       })()}
 
       {/* Turn Popup (hotseat mandate transitions + online politics) */}
-      {turnPopupPlayer && (gameState.mode === 'hotseat' || (gameState.mode === 'online' && turnPopupPlayer === localPlayerId)) && gameState.currentPhase !== 'war' && (() => {
+      {turnPopupPlayer && (gameState.mode === 'hotseat' || (gameState.mode === 'online' && turnPopupPlayer === localPlayerId)) && gameState.currentPhase !== 'war' && !gameState.kamiResolutionActive && (() => {
         const popupPlayer = gameState.players.find(p => p.id === turnPopupPlayer);
         if (!popupPlayer) return null;
         const clanColor = CLANS.find(c => c.id === popupPlayer.clanId)?.color;

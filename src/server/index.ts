@@ -1894,6 +1894,48 @@ wss.on('connection', (ws: WebSocket, req) => {
           break;
         }
 
+        case 'RAIJIN_UNDO': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.raijinPlacementDone) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+
+          const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
+          if (!currentTemple || !currentTemple.winnerId) return;
+
+          // Find and remove the last bushi placed by the winner in any province
+          let undone = false;
+          const updatedProvinces = { ...l.gameState.provinces };
+          for (const [provId, prov] of Object.entries(updatedProvinces)) {
+            const figures = [...prov.figures];
+            const lastBushiIdx = figures.length - 1 - [...figures].reverse().findIndex(f => f.type === 'bushi' && f.owner === currentTemple.winnerId);
+            if (lastBushiIdx >= 0 && lastBushiIdx < figures.length && figures[lastBushiIdx]?.type === 'bushi' && figures[lastBushiIdx]?.owner === currentTemple.winnerId) {
+              updatedProvinces[provId] = { ...prov, figures: figures.filter((_, i) => i !== lastBushiIdx) };
+              undone = true;
+              break;
+            }
+          }
+
+          if (!undone) return;
+
+          const updatedPlayers = l.gameState.players.map(p => {
+            if (p.id === currentTemple.winnerId) {
+              return { ...p, bushi: p.bushi + 1 };
+            }
+            return p;
+          });
+
+          l.gameState = {
+            ...l.gameState,
+            provinces: updatedProvinces,
+            players: updatedPlayers,
+            raijinPlacementActive: true,
+            raijinPlacementDone: false,
+          };
+          broadcastState(l);
+          break;
+        }
+
         case 'RYUJIN_BUY': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;

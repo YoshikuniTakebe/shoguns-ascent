@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Fix Fujin undo button disappearing after second movement, fix mandates appearing during Fujin resolution, and fix Fujin/Raijin action buttons showing to all players instead of only the winner",
+  "status": "in_progress",
+  "steps": [
+    "FUJIN UNDO FIX (online mode): In src/store/gameStore.ts doFujinMove function, when in online mode (ws && gameState.mode === 'online'), BEFORE sending the action to the server, save the current gameState as fujinPreMoveState so the undo button works client-side. Currently it returns early without setting fujinPreMoveState. Add: set({ fujinPreMoveState: JSON.parse(JSON.stringify(gameState)) }) before the sendAction call and return.",
+    "FUJIN UNDO FIX (second move): In the GAME_STATE handler in gameStore.ts (around line 3310), when the Fujin interactive state has fujinMovesRemaining === 0 (second move done, awaiting confirmation), DO NOT reset fujinPreMoveState. Currently the code at line 3300 sets uiResets.moveMode = false when !state.marshalMandateActive, which would happen during Fujin. The Fujin override at line 3310 only applies when fujinMovesRemaining > 0. Add another condition: if kamiResolutionActive and kamiResolutionStep === 'interactive' and the current kami is fujin (check temple type) and fujinMovesRemaining === 0, do NOT set moveMode to false - the confirmation overlay handles this.",
+    "MANDATES BUG DURING FUJIN: In src/components/GameBoard.tsx, the turn popup condition at line 703 already checks gameState.currentPhase !== 'war'. Add an additional condition to suppress the turn popup when gameState.kamiResolutionActive is true. Change the condition to also include: && !gameState.kamiResolutionActive",
+    "Also in the GAME_STATE handler in gameStore.ts, the turnPopup trigger logic at line 3233 checks !state.kamiResolutionActive but let's also ensure the 'otherMandateActive' logic at around line 3260 does NOT trigger turn popup during kami resolution. Add !state.kamiResolutionActive to that condition.",
+    "FUJIN BUTTONS ONLY FOR WINNER (online): In src/components/GameBoard.tsx, the Fujin overlay (lines 332-364) currently shows to ALL players. Add a condition: in online mode, only show the interactive controls (undo, cancel, done buttons) if localPlayerId matches the currentTemple.winnerId. For non-winner players, show a waiting message instead (e.g., 'ClanShield + PlayerName + Movimientos [ESPERANDO]').",
+    "RAIJIN BUTTONS ONLY FOR WINNER (online): In src/components/GameBoard.tsx, the Raijin overlay (lines 367-395) currently shows to ALL players. Add condition: in online mode, only show the interactive Bushi placement text if localPlayerId matches currentTemple.winnerId. For non-winner players, show waiting message.",
+    "RAIJIN UNDO FIX (online): In src/store/gameStore.ts doRaijinPlace function, when in online mode, BEFORE sending the action to server, save current gameState as raijinPrePlaceState so undo works client-side. Currently it returns early. Add: set({ raijinPrePlaceState: JSON.parse(JSON.stringify(gameState)) }) before sendAction and return. Also need to handle the RAIJIN_UNDO message on server side - add a new 'RAIJIN_UNDO' case in src/server/index.ts that reverts raijinPlacementDone to false, raijinPlacementActive to true, restores the bushi to reserve and removes it from the province. OR simpler: just let the undo be client-local (restore from raijinPrePlaceState) and NOT send to server, then the RAIJIN_PLACE action will just overwrite. Actually the simplest fix: doRaijinUndo should also work in online mode - it sets gameState from raijinPrePlaceState. But this requires the client to send a RAIJIN_UNDO action to the server. Add handling for 'RAIJIN_UNDO' in server/index.ts that reverses the placement (set raijinPlacementActive=true, raijinPlacementDone=false, remove the placed bushi, restore reserve count)."
+  ],
+  "acceptance_criteria": [
+    "Fujin undo button appears after both first and second movements in online mode",
+    "Mandates/turn popup does not appear during kami resolution",
+    "Fujin movement buttons only show to the winning player in online mode; others see waiting message",
+    "Raijin placement button only shows to the winning player in online mode; others see waiting message",
+    "Raijin undo button works in online mode"
+  ],
+  "verification": ["npx tsc -b --noEmit"],
+  "blocked_reason": null,
+  "findings": ""
+}
