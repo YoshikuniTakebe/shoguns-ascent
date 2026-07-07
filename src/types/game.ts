@@ -227,6 +227,7 @@ export interface GameState {
   recruitMandateIssuerId: string | null;
   recruitPlacementsRemaining: number;
   recruitUsedFortressProvinces: string[];
+  jinmenjuUsedThisMandate: boolean;
   betrayMandateActive: boolean;
   betraySelectionsRemaining: number;
   betraySelectedOwners: string[];

@@ -246,6 +246,7 @@ export function createInitialGameState(
     recruitMandateIssuerId: null,
     recruitPlacementsRemaining: 0,
     recruitUsedFortressProvinces: [],
+    jinmenjuUsedThisMandate: false,
     betrayMandateActive: false,
     betraySelectionsRemaining: 0,
     betraySelectedOwners: [],
@@ -695,6 +696,7 @@ function executeRecruit(state: GameState, issuerId: string): GameState {
     recruitMandateIssuerId: issuerId,
     recruitPlacementsRemaining: 0,
     recruitUsedFortressProvinces: [],
+    jinmenjuUsedThisMandate: false,
     log: [...state.log, `Mandato de Reclutar emitido por ${issuer?.name ?? 'Jugador'} - todos los jugadores pueden invocar figuras en sus fortalezas. Emisor y aliado obtienen +1 colocación extra.`],
   };
 

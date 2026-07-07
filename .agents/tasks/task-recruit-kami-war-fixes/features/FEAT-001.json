@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix RECRUIT mandate issues: auto-select bushi mode in online, limit Jinmenju to once per mandate, add undo button for recruit, and fix Jinmenju log text",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/store/gameStore.ts, in the GAME_STATE handler (around line 3210), when state.recruitMandateActive is true and the local player is the current player in the recruit resolution order, set uiResets.recruitMode = true AND uiResets.recruitFigureType = 'bushi'. This ensures that in online mode, when recruit mandate starts, bushi is actually selected (not just visually). Also set uiResets.undoMandateState to a deep copy of state when the local player's recruit turn begins (similar to how marshal does it around line 3258).",
+    "2. In src/types/game.ts, add a new field 'jinmenjuUsedThisMandate: boolean' to the GameState interface (initialized to false).",
+    "3. In src/utils/gameLogic.ts, in createInitialGameState function, initialize jinmenjuUsedThisMandate: false. In the chooseMandateTile function (where recruit mandate is activated around line 690), reset jinmenjuUsedThisMandate to false.",
+    "4. In src/store/gameStore.ts, in doJinmenjuPlace (around line 549) and doJinmenjuPlaceTemple (around line 605), after placing the figure, set jinmenjuUsedThisMandate: true on the new state. Also in doJinmenjuActivate, check if gameState.jinmenjuUsedThisMandate is true - if so, return early (don't activate).",
+    "5. In src/components/ActionPanel.tsx, in the Jinmenju button section (around line where hasJinmenju and jinmenjuOnMap are checked), add a check: if gameState.jinmenjuUsedThisMandate is true, disable the button or don't render it. Add 'jinmenjuUsedThisMandate' to the condition that hides/disables the button.",
+    "6. In src/server/index.ts, add handling for jinmenjuUsedThisMandate in the RECRUIT_PLACE_FIGURE handler - when the server receives a Jinmenju placement action, set jinmenjuUsedThisMandate = true on the state. Also add a JINMENJU_PLACE and JINMENJU_PLACE_TEMPLE handler if not already present.",
+    "7. Fix the Jinmenju log messages in src/store/gameStore.ts. Change line 600 from '(pierde honor)' to '(pierde {h})' and line 649 from '(pierde honor)' to '(pierde {h})'. Then in src/components/GameLog.tsx, add a new pattern BEFORE the existing honor pattern (around line 175) that matches '{h}' and renders it as just the HonorIcon (no text). Pattern: /\\{h\\}/g, replacement: <HonorIcon size={14} color='#DAA520' />.",
+    "8. Ensure the undo button works for recruit in online mode. In the GAME_STATE handler, when state.recruitMandateActive is true and the local player is the current recruit player, set uiResets.undoMandateState = JSON.parse(JSON.stringify(state)) ONLY if no undoMandateState currently exists (don't overwrite during local placements). The undo button is already rendered in ActionPanel when undoMandateState is truthy."
+  ],
+  "acceptance_criteria": [
+    "npm run build succeeds without errors",
+    "In online mode, when recruit mandate starts, clicking on the map places bushis immediately (recruitMode is true by default)",
+    "Jinmenju button can only be used once per recruit mandate - after one use, the button is disabled/hidden",
+    "Jinmenju log messages show '(pierde <honor-icon>)' without the word 'honor'",
+    "Undo button appears during recruit mandate and works (restores state to mandate start)"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}

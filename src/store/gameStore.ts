@@ -544,6 +544,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   ruleViolationMessage: null,
   setRuleViolationMessage: (msg) => set({ ruleViolationMessage: msg }),
   doJinmenjuActivate: () => {
+    const { gameState } = get();
+    if (gameState?.jinmenjuUsedThisMandate) return;
     set({ jinmenjuSummonActive: true, recruitMode: true });
   },
   doJinmenjuPlace: (provinceId: string) => {
@@ -597,7 +599,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       provinces: updatedProvinces,
       players: updatedPlayers,
       honorTrack: [...gameState.honorTrack],
-      log: [...gameState.log, `${player.name} invoca un ${recruitFigureType} en ${jinmenjuProvince.name} usando Jinmenju (pierde honor)`],
+      jinmenjuUsedThisMandate: true,
+      log: [...gameState.log, `${player.name} invoca un ${recruitFigureType} en ${jinmenjuProvince.name} usando Jinmenju (pierde {h})`],
     };
 
     // Lose honor
@@ -646,7 +649,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       temples: updatedTemples,
       players: updatedPlayers,
       honorTrack: [...gameState.honorTrack],
-      log: [...gameState.log, `${player.name} coloca un shinto en santuario de ${capitalize(temple.kamiType)} usando Jinmenju (pierde honor)`],
+      jinmenjuUsedThisMandate: true,
+      log: [...gameState.log, `${player.name} coloca un shinto en santuario de ${capitalize(temple.kamiType)} usando Jinmenju (pierde {h})`],
     };
 
     // Lose honor
@@ -3210,13 +3214,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
           if (state.mode === 'online') {
             if (!state.recruitMandateActive) {
               uiResets.recruitMode = false;
+              if (!state.marshalMandateActive && !state.betrayMandateActive) {
+                uiResets.undoMandateState = null;
+              }
+            }
+            if (state.recruitMandateActive && lpId) {
+              // Auto-select recruit mode when it's this player's recruit turn (same as hotseat behavior)
+              const currentRecruitPlayerId = state.players[state.currentPlayerIndex]?.id;
+              if (currentRecruitPlayerId === lpId) {
+                uiResets.recruitMode = true;
+                uiResets.recruitFigureType = 'bushi';
+                // Save undo state when recruit turn begins (don't overwrite during local placements)
+                const existingUndo = get().undoMandateState;
+                if (!existingUndo) {
+                  uiResets.undoMandateState = JSON.parse(JSON.stringify(state));
+                }
+              }
             }
             if (!state.marshalMandateActive) {
               uiResets.moveMode = false;
               uiResets.moveFrom = null;
               uiResets.selectedFigures = [];
               uiResets.buildFortressMode = false;
-              uiResets.undoMandateState = null;
+              if (!state.recruitMandateActive && !state.betrayMandateActive) {
+                uiResets.undoMandateState = null;
+              }
               uiResets.marshalPendingMoves = [];
               uiResets.marshalPendingFortresses = [];
             }
@@ -3366,7 +3388,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // Keep local gameState (with pending moves applied), only update non-gameState fields
             set({ turnPopupPlayer: finalTurnPopup, turnPopupDismissedForIndex: dismissedIdx, ...uiResets });
           } else {
-            set({ gameState: state, turnPopupPlayer: finalTurnPopup, turnPopupDismissedForIndex: dismissedIdx, ...uiResets });
+            // Preserve client-local jinmenjuUsedThisMandate flag during recruit (jinmenju is client-only)
+            const localJinmenjuUsed = get().gameState?.jinmenjuUsedThisMandate;
+            const mergedState = (state.recruitMandateActive && localJinmenjuUsed && !state.jinmenjuUsedThisMandate)
+              ? { ...state, jinmenjuUsedThisMandate: true }
+              : state;
+            set({ gameState: mergedState, turnPopupPlayer: finalTurnPopup, turnPopupDismissedForIndex: dismissedIdx, ...uiResets });
           }
           break;
         }

@@ -599,6 +599,7 @@ export const ActionPanel = () => {
               {cp && !jinmenjuSummonActive && (() => {
                 const hasJinmenju = cp.seasonCards.some(c => c.id === 'sp-jinmenju');
                 if (!hasJinmenju) return null;
+                if (gameState.jinmenjuUsedThisMandate) return null;
                 // Check if Jinmenju is placed on the map
                 const jinmenjuOnMap = Object.values(gameState.provinces).some(prov =>
                   prov.figures.some(f => f.owner === cp.id && f.monsterCardId === 'sp-jinmenju')

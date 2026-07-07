@@ -171,7 +171,13 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
     <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#E63946', fontWeight: 'bold' }}>{m}<RoninIcon size={14} color="#E63946" /></span>
   ));
 
-  // 6.5. Replace honor keyword with bold styling + HonorIcon
+  // 6.5. Replace {h} with just the HonorIcon (no text)
+  const honorTokenPattern = /\{h\}/g;
+  segments = applyPattern(segments, honorTokenPattern, (_m, key) => (
+    <span key={key} style={{ display: 'inline-flex', alignItems: 'center' }}><HonorIcon size={14} color="#DAA520" /></span>
+  ));
+
+  // 6.6. Replace honor keyword with bold styling + HonorIcon
   const honorPattern = /\b(honor)\b/gi;
   segments = applyPattern(segments, honorPattern, (m, key) => (
     <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}>{m}<HonorIcon size={14} /></span>
