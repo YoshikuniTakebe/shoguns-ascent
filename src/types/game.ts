@@ -276,6 +276,7 @@ export interface GameState {
     sharePerLoser: number;
   } | null;
   warPhaseReadyPlayers: string[];
+  battlePopupReadyPlayers: string[];
   warSummaryVisible: boolean;
   warSummaryReadyPlayers: string[];
   battleResultReadyPlayers: string[];

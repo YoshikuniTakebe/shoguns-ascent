@@ -1668,6 +1668,61 @@ wss.on('connection', (ws: WebSocket, req) => {
           broadcastState(l);
           break;
         }
+
+        case 'BATTLE_POPUP_READY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          if (!l.gameState.battlePopupReadyPlayers.includes(playerId)) {
+            l.gameState = { ...l.gameState, battlePopupReadyPlayers: [...l.gameState.battlePopupReadyPlayers, playerId] };
+          }
+          if (l.gameState.battlePopupReadyPlayers.length >= l.gameState.players.length) {
+            l.gameState = { ...l.gameState, battlePopupReadyPlayers: [] };
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'COIN_DISTRIBUTION_CHOICE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.coinDistributionPending) return;
+          const pending = l.gameState.coinDistributionPending;
+          // Only the winner can distribute
+          if (data.playerId !== pending.winnerId) return;
+          const { targetPlayerId } = data.payload || {};
+          if (!targetPlayerId || !pending.losers.includes(targetPlayerId)) return;
+
+          // Give 1 coin to target
+          const newPlayers = l.gameState.players.map(p => {
+            if (p.id === targetPlayerId) return { ...p, coins: p.coins + 1 };
+            return p;
+          });
+          const winner = l.gameState.players.find(p => p.id === pending.winnerId);
+          const target = l.gameState.players.find(p => p.id === targetPlayerId);
+          const newLog = [...l.gameState.log, `${winner?.name || ''} da 1 moneda extra a ${target?.name || ''}`];
+          const newRemainder = pending.remainder - 1;
+
+          l.gameState = {
+            ...l.gameState,
+            players: newPlayers,
+            log: newLog,
+            coinDistributionPending: newRemainder > 0
+              ? { ...pending, remainder: newRemainder, distributed: pending.distributed + 1, losers: pending.losers.filter(id => id !== targetPlayerId) }
+              : null,
+          };
+          broadcastState(l);
+          break;
+        }
+
+        case 'COIN_DISTRIBUTION_DISMISS': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.coinDistributionPending) return;
+          l.gameState = { ...l.gameState, coinDistributionPending: null };
+          broadcastState(l);
+          break;
+        }
       }
     } catch (e) {
       console.error(e);

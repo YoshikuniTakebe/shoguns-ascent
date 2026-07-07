@@ -485,6 +485,32 @@ export const BattlePanel = () => {
     const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
     const province = gameState.provinces[pending.battleProvinceId];
 
+    // Online mode: only show interactive distribution to the winner; others see waiting message
+    if (gameState.mode === 'online' && pending.remainder > 0 && localPlayerId !== pending.winnerId) {
+      return createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card">
+            <h3 className="battle-popup-title">{t('battle.coinDistributionTitle')}</h3>
+            <p style={{ fontSize: '0.95em', marginBottom: '0.5rem' }}>
+              {province?.name || pending.battleProvinceId}
+            </p>
+            {winner && winnerClan && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <ClanShield clanId={winner.clanId} size={28} />
+                <span style={{ color: winnerClan.color, fontWeight: 'bold' }}>
+                  {winner.name}
+                </span>
+              </div>
+            )}
+            <p style={{ margin: '0.5rem 0', fontSize: '0.95em', opacity: 0.8 }}>
+              Esperando reparto de monedas...
+            </p>
+          </div>
+        </div>,
+        document.body
+      );
+    }
+
     // If no remainder, show informational popup only
     if (pending.remainder === 0) {
       return createPortal(
@@ -1169,7 +1195,7 @@ export const BattlePanel = () => {
         })}
       </div>
 
-      {isPart && !hasBid && createPortal(
+      {isPart && !hasBid && !biddingMapPeek && createPortal(
         <BattleBiddingOverlay
           playerName={gameState.players.find(p => p.id === apid)?.name || ''}
           playerClanColor={CLANS.find(c => c.id === gameState.players.find(p => p.id === apid)?.clanId)?.color || '#fff'}

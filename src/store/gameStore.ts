@@ -2930,6 +2930,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     // Contested battle: transition from popup to bidding
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'BATTLE_POPUP_READY', playerId: get().localPlayerId });
+      return;
+    }
     set({ battleStepPhase: 'bidding' });
   },
 
@@ -2974,8 +2978,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- Coin Distribution Dismiss (informational only, no remainder) ---
   doCoinDistributionDismiss: () => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState || !gameState.coinDistributionPending) return;
+
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'COIN_DISTRIBUTION_DISMISS', playerId: get().localPlayerId });
+      return;
+    }
 
     const newState: GameState = {
       ...gameState,
@@ -3268,6 +3277,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
             uiResets.turnPopupDismissedForIndex = null;
           }
 
+          // Harvest mandate transition: show turn popup when harvest ends for all players
+          if (state.mode === 'online' && prevGameState?.harvestMandateActive && !state.harvestMandateActive && !state.kamiResolutionActive && !state.kamiSummaryVisible && !state.kamiPhasePopupPending) {
+            newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
+            uiResets.turnPopupDismissedForIndex = null;
+          }
+
           // For online marshal: save undoMandateState when it's this player's marshal turn
           // Only set when we receive a fresh state from the server (not from local modifications)
           if (state.mode === 'online' && state.marshalMandateActive && lpId) {
@@ -3348,6 +3363,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
               uiResets.warPhaseUpgradeSummary = [];
               uiResets.battleStepPhase = 'popup';
               uiResets.battleCurrentBiddingIndex = 0;
+            }
+
+            // When battlePopupReadyPlayers clears (all accepted battle start popup), transition to bidding
+            const prevBattlePopupReady = prevGameState?.battlePopupReadyPlayers?.length || 0;
+            if (prevBattlePopupReady > 0 && (state.battlePopupReadyPlayers?.length || 0) === 0) {
+              uiResets.battleStepPhase = 'bidding';
             }
 
             // When battleResultReadyPlayers clears (all accepted battle result), advance to next battle popup

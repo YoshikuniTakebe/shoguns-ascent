@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Fix war phase flow: battle start popup needs ready-check in online mode, fix ver mapa button in online bidding, fix coin distribution popup to show only to winner, add COIN_DISTRIBUTION_CHOICE server handler, and fix harvest flow turn popup",
+  "status": "in_progress",
+  "steps": [
+    "1. Fix the 'ver mapa' (peek map) button for online mode bidding. In src/components/BattlePanel.tsx around line 1144, the online bidding section renders the BattleBiddingOverlay via createPortal without checking biddingMapPeek. Add a guard: when biddingMapPeek is true, don't render the bidding overlay portal (similar to the hotseat check at line 1081).",
+    "2. Fix the coin distribution popup to only show for the winner (deciding player) in online mode. In src/components/BattlePanel.tsx around line 479, when gameState.coinDistributionPending exists AND gameState.mode === 'online', check if localPlayerId === pending.winnerId. If NOT the winner, show a waiting message ('Esperando reparto de monedas...') instead of the interactive buttons. The informational popup (remainder === 0) can still show to everyone.",
+    "3. Add COIN_DISTRIBUTION_CHOICE handler to the server. In src/server/index.ts, add a new case 'COIN_DISTRIBUTION_CHOICE' that: validates the sending player is the winner (data.playerId === l.gameState.coinDistributionPending.winnerId), gets targetPlayerId from data.payload, gives 1 coin to the target player, decrements remainder, and if remainder reaches 0, clears coinDistributionPending. Then broadcasts state.",
+    "4. Add COIN_DISTRIBUTION_DISMISS handler to the server. In src/server/index.ts, add case 'COIN_DISTRIBUTION_DISMISS' that clears coinDistributionPending (sets it to null) and broadcasts state. This handles the case where remainder is 0 and all players just need to acknowledge.",
+    "5. Fix the battle start popup to use a ready-check in online mode. This is the 'popup' phase (battleStepPhase === 'popup') which shows 'Comienzo de batalla N'. Currently, doAcceptBattlePopup directly transitions to 'bidding' without server coordination. For online mode: when the user accepts the popup, send a new action 'BATTLE_POPUP_READY' to the server. The server tracks battlePopupReadyPlayers array. When all players are ready, the server clears the array and broadcasts (the client detects this transition and sets battleStepPhase to 'bidding'). Add the field battlePopupReadyPlayers: string[] to GameState. On the client side in doAcceptBattlePopup, when online, send the action and don't transition locally. In the GAME_STATE handler, detect when battlePopupReadyPlayers goes from >0 to 0 and set battleStepPhase='bidding'.",
+    "6. Fix the harvest flow turn popup issue. In the GAME_STATE handler, after harvest mandate ends (prevGameState?.harvestMandateActive && !state.harvestMandateActive), the existing code at line ~3242 should trigger the turnPopup. Verify the condition 'prevMandateWasActive && noMandateNow' covers this case (it includes harvestMandateActive). If the issue is that mandates are not shown after dismissing the turn popup, verify that dismissTurnPopup correctly triggers DRAW_MANDATE_TILES. The logic at line 3064 already does this. If the issue is that the popup doesn't appear at all, add additional detection: when state.harvestMandateActive is false and prevGameState?.harvestMandateActive was true, explicitly set newTurnPopup."
+  ],
+  "acceptance_criteria": [
+    "npm run build succeeds without errors",
+    "In online mode, clicking 'ver mapa' during bidding hides the bidding overlay so the map is visible",
+    "Coin distribution popup with choice buttons only appears for the battle winner in online mode",
+    "COIN_DISTRIBUTION_CHOICE actions from server properly give coins and clear pending state",
+    "Battle start popup waits for all players to accept before transitioning to bidding in online mode",
+    "After harvest mandate finishes in online mode, the turn popup shows for the next player and mandates can be drawn"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}
