@@ -759,16 +759,15 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
     if (lunaFiguresInProvince >= 2) return state;
   }
 
-  // For bushi (and monster) placements, enforce one-per-fortress-province rule.
-  // Shinto placements do NOT consume a fortress slot (they go to temples or provinces freely).
-  // Rule: each fortress province can be used once for a "base" bushi/monster placement.
+  // Enforce one-per-fortress-province rule for all figure types (bushi, shinto, monster).
+  // Rule: each fortress province can be used once for a "base" placement.
   // If the player is issuer/ally, they get +1 bonus that can go to ANY fortress province (even one already used).
-  if (figureType === 'bushi' || figureType === 'monster') {
+  {
     const usedProvinces = state.recruitUsedFortressProvinces;
     const timesProvinceUsed = usedProvinces.filter(p => p === provinceId).length;
 
     if (timesProvinceUsed === 0) {
-      // First bushi/monster in this province - always allowed (base placement)
+      // First figure in this province - always allowed (base placement)
     } else {
       // Province already used for a base placement - only allow if bonus is available.
       // Bonus is available when: player is issuer/ally AND only one bonus placement is allowed.
@@ -793,9 +792,7 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
     provinces: { ...state.provinces },
     players: state.players.map((p) => ({ ...p })),
     recruitPlacementsRemaining: state.recruitPlacementsRemaining - 1,
-    recruitUsedFortressProvinces: (figureType === 'bushi' || figureType === 'monster')
-      ? [...state.recruitUsedFortressProvinces, provinceId]
-      : [...state.recruitUsedFortressProvinces],
+    recruitUsedFortressProvinces: [...state.recruitUsedFortressProvinces, provinceId],
     log: [...state.log, `${player.name} invoca un ${figureType} en ${province.name}`],
   };
 

@@ -36,15 +36,9 @@ const KAMI_PALETTES: Record<KamiType, { primary: string; secondary: string; glow
 export const KamiResolutionPopup = () => {
   const { gameState, doAcknowledgeKamiReward } = useGameStore();
   const localPlayerId = useGameStore(s => s.localPlayerId);
-  const turnPopupPlayer = useGameStore(s => s.turnPopupPlayer);
   const t = useT();
 
   if (!gameState || !gameState.kamiResolutionActive || gameState.kamiResolutionStep !== 'showing') {
-    return null;
-  }
-
-  // In online mode: don't show kami resolution popup if turn popup is active for this player
-  if (gameState.mode === 'online' && turnPopupPlayer && turnPopupPlayer === localPlayerId) {
     return null;
   }
 

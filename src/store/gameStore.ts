@@ -3390,21 +3390,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
             uiResets.kamiPendingTemples = null;
           }
 
-          // Kami Resolution: show "Turno de" popup for the sanctuary winner
-          if (state.mode === 'online' && state.kamiResolutionActive && state.kamiResolutionStep === 'showing' && lpId) {
-            const currentKamiWinner = state.kamiResolutionCurrentPlayerId;
-            const prevKamiIndex = prevGameState?.kamiResolutionIndex;
-            const prevKamiActive = prevGameState?.kamiResolutionActive;
-            const { kamiTurnPopupShownForIndex } = get();
-            // Show turn popup when: kami resolution just started OR index changed
-            if (currentKamiWinner && currentKamiWinner === lpId) {
-              if (!prevKamiActive || prevKamiIndex !== state.kamiResolutionIndex || kamiTurnPopupShownForIndex !== state.kamiResolutionIndex) {
-                newTurnPopup = lpId;
-                uiResets.kamiTurnPopupShownForIndex = state.kamiResolutionIndex;
-              }
-            }
-          }
-
           // When kamiSummaryVisible becomes false after being true: show turn popup for mandate selector
           if (state.mode === 'online' && prevGameState?.kamiSummaryVisible && !state.kamiSummaryVisible) {
             newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
