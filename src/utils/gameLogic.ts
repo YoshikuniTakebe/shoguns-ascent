@@ -1458,7 +1458,7 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
     const hasUndeployedMonster = issuer.seasonCards.some(
       (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
     );
-    if (!hasUndeployedMonster) return state;
+    if (!hasUndeployedMonster || issuer.monsters <= 0) return state;
   }
 
   // Perform the replacement

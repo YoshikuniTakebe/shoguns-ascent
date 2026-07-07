@@ -655,6 +655,7 @@ export const ActionPanel = () => {
             const canDeployShinto = cp ? cp.shinto > 0 : false;
             const canDeployMonster = (() => {
               if (!cp) return false;
+              if (cp.monsters <= 0) return false;
               const deployedMonsterCardIds = new Set<string>();
               Object.values(gameState.provinces).forEach((prov) => {
                 prov.figures.forEach((f) => {

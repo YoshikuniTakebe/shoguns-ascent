@@ -1228,6 +1228,10 @@ wss.on('connection', (ws: WebSocket, req) => {
             const expectedPlayer = l.gameState.trainResolutionOrder[l.gameState.trainResolutionIndex];
             if (data.playerId !== expectedPlayer) return;
           }
+          // Validate that the sender is the kami resolution player (for Ryujin monster purchases)
+          if (l.gameState.kamiResolutionActive && l.gameState.kamiResolutionCurrentPlayerId) {
+            if (data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          }
           const { cardId, provinceId, templeId, replaceFigureId, reserve } = data.payload || {};
           if (!cardId) return;
           let s = l.gameState;
@@ -1289,11 +1293,17 @@ wss.on('connection', (ws: WebSocket, req) => {
             };
           }
 
-          // Advance train resolution
-          s = { ...s, trainResolutionIndex: s.trainResolutionIndex + 1 };
-          s = advanceTrainResolution(s);
-          if (!s.trainMandateActive) {
-            s = advancePlayer(s);
+          // Advance resolution depending on context
+          if (s.kamiResolutionActive && !s.trainMandateActive) {
+            // Monster placed during kami resolution (e.g., Ryujin purchase)
+            s = advanceKamiResolution(s);
+          } else {
+            // Monster placed during train mandate resolution
+            s = { ...s, trainResolutionIndex: s.trainResolutionIndex + 1 };
+            s = advanceTrainResolution(s);
+            if (!s.trainMandateActive) {
+              s = advancePlayer(s);
+            }
           }
           l.gameState = s;
           broadcastState(l);
@@ -1626,9 +1636,19 @@ wss.on('connection', (ws: WebSocket, req) => {
 
           let s = ryujinBuyCardFn(l.gameState, currentTemple.winnerId, cardId);
           s = { ...s, ryujinBuyActive: false };
-          s = advanceKamiResolution(s);
-          l.gameState = s;
-          broadcastState(l);
+
+          // Check if the bought card is a monster - if so, wait for MONSTER_PLACED
+          const boughtCard = s.players.find(p => p.id === currentTemple.winnerId)?.seasonCards.find(c => c.id === cardId);
+          if (boughtCard && boughtCard.cardType === 'monster') {
+            // Monster: don't advance kami resolution, wait for MONSTER_PLACED message
+            l.gameState = s;
+            broadcastState(l);
+          } else {
+            // Non-monster: advance kami resolution immediately
+            s = advanceKamiResolution(s);
+            l.gameState = s;
+            broadcastState(l);
+          }
           break;
         }
 

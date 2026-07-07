@@ -2298,6 +2298,64 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // In online mode, send the action to the server
     if (ws && gameState.mode === 'online') {
       get().sendAction({ type: 'RYUJIN_BUY', playerId: get().localPlayerId, payload: { cardId } });
+
+      // Apply ryujinBuyCard locally to check if the card is a monster
+      const currentTempleOnline = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
+      if (!currentTempleOnline || !currentTempleOnline.winnerId) return;
+      const nsOnline = ryujinBuyCard(gameState, currentTempleOnline.winnerId, cardId);
+      const boughtCardOnline = nsOnline.players.find(p => p.id === currentTempleOnline.winnerId)?.seasonCards.find(c => c.id === cardId);
+      if (boughtCardOnline && boughtCardOnline.cardType === 'monster') {
+        // Monster card: run the placement UI locally (server will wait for MONSTER_PLACED)
+        if (boughtCardOnline.id === 'sp-komainu' || boughtCardOnline.id === 'su-hotei') {
+          set({
+            gameState: { ...nsOnline, ryujinBuyActive: false },
+            monsterPlacementCard: boughtCardOnline,
+            monsterPlacementPlayerId: currentTempleOnline.winnerId,
+            komainuChoiceVisible: true,
+            monsterPlacementPopupVisible: false,
+            monsterPlacementMode: false,
+          });
+        } else {
+          // Check for Luna no-valid-province case
+          const placingPlayerOnline = nsOnline.players.find(p => p.id === currentTempleOnline.winnerId);
+          if (placingPlayerOnline && placingPlayerOnline.clanId === 'luna') {
+            if (!lunaHasValidProvince(nsOnline, currentTempleOnline.winnerId)) {
+              // No valid province: monster goes to reserve directly
+              const updatedPlayersOnline = nsOnline.players.map(p => {
+                if (p.id !== currentTempleOnline.winnerId) return p;
+                return { ...p, monsters: p.monsters + 1 };
+              });
+              const nsUpdatedOnline: GameState = {
+                ...nsOnline,
+                players: updatedPlayersOnline,
+                ryujinBuyActive: false,
+                log: [...nsOnline.log, `Luna: no hay provincia valida para colocar monstruo - ${boughtCardOnline.name} se queda en reserva`],
+              };
+              set({
+                gameState: nsUpdatedOnline,
+                monsterPlacementCard: boughtCardOnline,
+                monsterPlacementPlayerId: currentTempleOnline.winnerId,
+                monsterPlacementPopupVisible: false,
+                monsterNoPlacementPopupVisible: true,
+                monsterPlacementMode: false,
+                komainuChoiceVisible: false,
+              });
+              return;
+            }
+          }
+          // Show popup asking where to place the monster
+          set({
+            gameState: { ...nsOnline, ryujinBuyActive: false },
+            monsterPlacementCard: boughtCardOnline,
+            monsterPlacementPlayerId: currentTempleOnline.winnerId,
+            monsterPlacementPopupVisible: true,
+            monsterPlacementMode: false,
+            komainuChoiceVisible: false,
+          });
+        }
+        return;
+      }
+      // Non-monster: server will advance, just return
       return;
     }
 
@@ -3161,6 +3219,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
               uiResets.undoMandateState = null;
               uiResets.marshalPendingMoves = [];
               uiResets.marshalPendingFortresses = [];
+            }
+            // Fujin movement: override moveMode when kami resolution is in interactive step with moves remaining
+            if (state.kamiResolutionActive && state.kamiResolutionStep === 'interactive' && state.fujinMovesRemaining > 0 && state.kamiResolutionCurrentPlayerId === lpId) {
+              uiResets.moveMode = true;
+              uiResets.moveFrom = null;
+              uiResets.selectedFigures = [];
             }
             if (!state.betrayMandateActive) {
               uiResets.betrayMode = false;
