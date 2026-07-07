@@ -2,7 +2,7 @@
   "id": "FEAT-005",
   "type": "fix",
   "description": "Fix cleanup phase: auto-execute after all accept war summary, return hostages sequentially by seat order with popup, tea ceremony ready-check. Fix hostage bug (winner not getting selection popup, coins not reflected)",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Step 1 - Implement sequential hostage return during cleanup: Currently cleanupSeason in gameLogic.ts (line ~2781) just removes all hostages silently and adds 1 coin per hostage. In online mode, after all players accept the war summary, the cleanup should be interactive: hostages are returned one player at a time by seat order (turnOrder). Add new state fields to GameState in types/game.ts: `hostageReturnActive: boolean`, `hostageReturnOrder: string[]` (player IDs with hostages in seat order), `hostageReturnIndex: number`, `hostageReturnReadyPlayers: string[]`. When cleanup starts, populate hostageReturnOrder with players who have hostages (in turnOrder). Set hostageReturnActive to true if any player has hostages.",
     "Step 2 - Create hostage return popup UI: In GameBoard.tsx or a new component, when hostageReturnActive is true, show a popup for the current player (hostageReturnOrder[hostageReturnIndex]) displaying their hostages being returned. Show which hostages they have, that they get 1 coin per hostage, and an accept button. In online mode, this popup shows to the current player with an accept button, and others see a waiting message.",
@@ -24,5 +24,5 @@
     "npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implemented interactive cleanup for online mode with hostage return popups and tea ceremony ready-check. Fixed hostage capture bug by having server store resolutionData on battles when interactive steps are needed instead of auto-resolving. Moved determineTacticWinners to shared gameLogic.ts. Added hostage return during cleanup for hotseat mode too (coins per hostage). The seppuku decline detection uses seppukuWinnerId being cleared to null. All advancePlayer calls in server that could trigger cleanup now check for and start interactive cleanup."
 }
