@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix tea ceremony popup showing sequentially instead of simultaneously, and hide 'Turno de' indicator during simultaneous phases",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/utils/gameLogic.ts, modify finalizeCleanupAndAdvance(): Instead of calling setupSeason(newState, nextSeason) directly, just advance the season metadata (currentSeason = nextSeason, round += 1) and set currentPhase to 'seasonSetup' with teaReadyPlayers = []. Do NOT call setupSeason here. This ensures the tea ready popup shows for all players simultaneously at the start of each new season, not just the first. Keep the winter logic (resolveWinter) unchanged.",
     "In src/server/index.ts TEA_READY handler (around line 1098): The handler already calls setupSeason when all teaReadyPlayers are present. This works for both the first season and subsequent seasons. No change needed if finalizeCleanupAndAdvance correctly sets the state to 'seasonSetup'.",
@@ -19,5 +19,5 @@
     "Run npm run build and confirm no TypeScript or build errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes cleanly. The TEA_READY handler in server/index.ts already uses l.gameState.currentSeason so it works correctly with the new flow where finalizeCleanupAndAdvance sets the season before entering seasonSetup phase."
 }
