@@ -254,12 +254,32 @@ export const GameBoard = () => {
           })()}
         </div>
         <div className="turn-indicator">
-          <ClanShield clanId={cp?.clanId || ''} size={28} />
-          <span className="current-player-name" style={{ color: CLANS.find(c => c.id === cp?.clanId)?.color }}>
-            {t('game.turn', { name: cp?.name || '' })}
-          </span>
-          {gameState.mode === 'hotseat' && <span className="hotseat-label">{t('game.hotseat')}</span>}
-          {!isMyTurn && gameState.mode === 'online' && <span className="waiting-label">{t('game.waiting')}</span>}
+          {(() => {
+            if (gameState.zorroPlacementActive && gameState.zorroPlacementPlayerId) {
+              const zorroPlayer = gameState.players.find(p => p.id === gameState.zorroPlacementPlayerId);
+              const zorroClan = zorroPlayer ? CLANS.find(c => c.id === zorroPlayer.clanId) : null;
+              const isZorroPlayer = gameState.mode === 'hotseat' || localPlayerId === gameState.zorroPlacementPlayerId;
+              return (
+                <>
+                  <ClanShield clanId={zorroClan?.id || ''} size={28} />
+                  <span className="current-player-name" style={{ color: zorroClan?.color }}>
+                    {t('game.turn', { name: zorroPlayer?.name || '' })}
+                  </span>
+                  {!isZorroPlayer && gameState.mode === 'online' && <span className="waiting-label">[ESPERANDO]</span>}
+                </>
+              );
+            }
+            return (
+              <>
+                <ClanShield clanId={cp?.clanId || ''} size={28} />
+                <span className="current-player-name" style={{ color: CLANS.find(c => c.id === cp?.clanId)?.color }}>
+                  {t('game.turn', { name: cp?.name || '' })}
+                </span>
+                {gameState.mode === 'hotseat' && <span className="hotseat-label">{t('game.hotseat')}</span>}
+                {!isMyTurn && gameState.mode === 'online' && <span className="waiting-label">{t('game.waiting')}</span>}
+              </>
+            );
+          })()}
         </div>
         <div className="legend-button-wrapper" style={{ left: '20rem' }}>
           <span className="game-name-header">{gameState.gameName}</span>
@@ -369,12 +389,24 @@ export const GameBoard = () => {
           })()}
 
           {/* Zorro Placement Overlay */}
-          {gameState.zorroPlacementActive && (
-            <div className="kami-action-overlay">
-              <span>Zorro: Coloca Bushi en provincias de batalla ({gameState.zorroPlacementsRemaining} restantes)</span>
-              <button className="btn-primary" onClick={doZorroSkipPlacement} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>Terminar</button>
-            </div>
-          )}
+          {gameState.zorroPlacementActive && (() => {
+            const isZorroPlayer = gameState.mode === 'hotseat' || localPlayerId === gameState.zorroPlacementPlayerId;
+            if (isZorroPlayer) {
+              return (
+                <div className="kami-action-overlay">
+                  <span>Zorro: Coloca Bushi en provincias de batalla ({gameState.zorroPlacementsRemaining} restantes)</span>
+                  <button className="btn-primary" onClick={doZorroSkipPlacement} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>Terminar</button>
+                </div>
+              );
+            } else {
+              const zorroPlayer = gameState.players.find(p => p.id === gameState.zorroPlacementPlayerId);
+              return (
+                <div className="kami-action-overlay">
+                  <span>Turno del Zorro{zorroPlayer ? ` (${zorroPlayer.name})` : ''} [ESPERANDO]</span>
+                </div>
+              );
+            }
+          })()}
 
           <div
             className={`map-container${isDragging ? ' dragging' : ''}`}

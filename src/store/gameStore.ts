@@ -3285,9 +3285,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
           // Detect kami phase popup pending for online
           // Guard: only trigger if not already visible/dismissed locally (avoid re-trigger on subsequent broadcasts)
-          if (state.kamiPhasePopupPending && !state.kamiResolutionActive && !get().kamiPhasePopupVisible && !get().gameState?.kamiResolutionActive) {
+          if (state.kamiPhasePopupPending && !state.kamiResolutionActive && !get().kamiPhasePopupVisible && !get().gameState?.kamiResolutionActive && !state.kamiSummaryVisible) {
             uiResets.kamiPhasePopupVisible = true;
             uiResets.kamiPendingTemples = state.kamiResolutionTemples;
+          }
+
+          // When kamiSummaryVisible is true, ensure kami phase start popup is hidden
+          if (state.kamiSummaryVisible) {
+            uiResets.kamiPhasePopupVisible = false;
+            uiResets.kamiPendingTemples = null;
           }
 
           // When kamiResolutionActive becomes true and we are in online mode: hide kami phase popup

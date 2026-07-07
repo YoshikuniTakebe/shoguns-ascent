@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix Kami phase flow issues: prevent start popup from showing at summary time, fix advancePlayer to move to next player after kami, and fix zorro placement visibility for non-zorro players",
+  "status": "in_progress",
+  "steps": [
+    "1. Fix the 'Comienza la Fase Kami' popup showing at summary time in online mode. In src/store/gameStore.ts GAME_STATE handler (around line 3278), the condition that sets kamiPhasePopupVisible=true checks 'state.kamiPhasePopupPending && !state.kamiResolutionActive && !get().kamiPhasePopupVisible && !get().gameState?.kamiResolutionActive'. Add an additional guard: '&& !state.kamiSummaryVisible'. This prevents the popup from re-showing when summary is visible. Also ensure that when kamiSummaryVisible becomes true on server broadcast, kamiPhasePopupVisible is explicitly set to false.",
+    "2. Fix the flow after kami summary: In the GAME_STATE handler, when kamiSummaryVisible transitions from true to false (line ~3300), verify the turn popup is shown for the CORRECT next player. The server's advanceKamiResolution already sets currentPlayerIndex = kamiResolutionNextPlayerIndex. The existing code at line ~3300 already shows turnPopup for state.players[state.currentPlayerIndex], which should be correct if the server computed kamiResolutionNextPlayerIndex properly.",
+    "3. Fix the Zorro placement overlay for non-zorro players. In src/components/GameBoard.tsx (around line 371), the Zorro placement overlay shows unconditionally when gameState.zorroPlacementActive is true. Change it to only show the placement buttons if localPlayerId === gameState.zorroPlacementPlayerId. For other players, show a waiting message like 'Turno del Zorro [ESPERANDO]' with the zorro player's name.",
+    "4. In src/components/BattlePanel.tsx where zorroPlacementActive is checked (around line 460-470), the text 'El clan Zorro esta colocando Bushi en provincias de batalla...' should also mention which player is the Zorro player. In the turn indicator area of GameBoard.tsx, when zorroPlacementActive is true, non-zorro players should see 'Turno del Zorro [ESPERANDO]' instead of the last mandate player's turn."
+  ],
+  "acceptance_criteria": [
+    "npm run build succeeds without errors",
+    "The 'Comienza la Fase Kami' popup does not appear when the kami summary popup is being shown",
+    "After kami summary is dismissed, the next player in seating order gets to choose a mandate",
+    "During zorro placement, non-zorro players see a waiting message instead of the placement UI with buttons"
+  ],
+  "verification": ["npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}
