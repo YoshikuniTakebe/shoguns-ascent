@@ -23,6 +23,16 @@ const KAMI_IMAGES: Record<KamiType, string> = {
   tsukuyomi: tsukuyomiImg,
 };
 
+const KAMI_COLORS: Record<KamiType, string> = {
+  amaterasu: '#FFD700',
+  fujin: '#4ECDC4',
+  hachiman: '#DC143C',
+  raijin: '#9B59B6',
+  ryujin: '#1E90FF',
+  susanoo: '#2ECC71',
+  tsukuyomi: '#C0C0C0',
+};
+
 export const KamiSummaryPopup = () => {
   const { gameState, doKamiSummaryReady } = useGameStore();
   const localPlayerId = useGameStore(s => s.localPlayerId);
@@ -87,7 +97,7 @@ export const KamiSummaryPopup = () => {
                   }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#ddd' }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: KAMI_COLORS[temple.kamiType] }}>
                     {kamiName}
                   </div>
                   <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>
