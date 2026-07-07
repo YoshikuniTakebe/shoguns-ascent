@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix tea ceremony popup showing sequentially instead of simultaneously, and hide 'Turno de' indicator during simultaneous phases",
+  "status": "in_progress",
+  "steps": [
+    "In src/utils/gameLogic.ts, modify finalizeCleanupAndAdvance(): Instead of calling setupSeason(newState, nextSeason) directly, just advance the season metadata (currentSeason = nextSeason, round += 1) and set currentPhase to 'seasonSetup' with teaReadyPlayers = []. Do NOT call setupSeason here. This ensures the tea ready popup shows for all players simultaneously at the start of each new season, not just the first. Keep the winter logic (resolveWinter) unchanged.",
+    "In src/server/index.ts TEA_READY handler (around line 1098): The handler already calls setupSeason when all teaReadyPlayers are present. This works for both the first season and subsequent seasons. No change needed if finalizeCleanupAndAdvance correctly sets the state to 'seasonSetup'.",
+    "In src/components/GameBoard.tsx, modify the turn-indicator div (around line 256): Add a condition to hide or change the 'Turno de X' display during online simultaneous phases. When gameState.mode === 'online' AND (gameState.currentPhase === 'seasonSetup' OR gameState.currentPhase === 'tea' OR (gameState.currentPhase === 'cleanup' && gameState.cleanupTeaCeremonyReady)), instead of showing 'Turno de X', show something like 'Ceremonia del Te' or the current phase name without a specific player. The turn indicator should still show normally during politics, war, and other phases.",
+    "Verify that the ActionPanel.tsx seasonSetup section (around line 66-86) still works correctly - it shows 'Esperando X/Y' for online mode during seasonSetup phase."
+  ],
+  "acceptance_criteria": [
+    "npm run build succeeds without errors",
+    "finalizeCleanupAndAdvance does NOT call setupSeason - it sets currentPhase to 'seasonSetup' instead",
+    "The turn indicator in GameBoard does not show 'Turno de X' during seasonSetup, tea, or cleanup tea ceremony phases in online mode",
+    "The tea ready popup (GameBoard line 656) renders during 'seasonSetup' phase for all players simultaneously"
+  ],
+  "verification": [
+    "Run npm run build and confirm no TypeScript or build errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

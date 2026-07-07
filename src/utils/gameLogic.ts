@@ -2929,8 +2929,10 @@ export function finalizeCleanupAndAdvance(state: GameState): GameState {
     newState = resolveWinter(newState);
   } else {
     const nextSeason = seasons[idx + 1];
+    newState.currentSeason = nextSeason;
     newState.round += 1;
-    newState = setupSeason(newState, nextSeason);
+    newState.currentPhase = 'seasonSetup';
+    newState.teaReadyPlayers = [];
   }
 
   return newState;

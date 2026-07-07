@@ -269,6 +269,18 @@ export const GameBoard = () => {
                 </>
               );
             }
+            // During simultaneous phases in online mode, don't show individual player turn
+            if (gameState.mode === 'online' && (
+              gameState.currentPhase === 'seasonSetup' ||
+              gameState.currentPhase === 'tea' ||
+              (gameState.currentPhase === 'cleanup' && gameState.cleanupTeaCeremonyReady)
+            )) {
+              return (
+                <span className="current-player-name">
+                  {t(gameState.currentPhase === 'cleanup' ? 'phase.tea' as TranslationKey : `phase.${gameState.currentPhase}` as TranslationKey)}
+                </span>
+              );
+            }
             return (
               <>
                 <ClanShield clanId={cp?.clanId || ''} size={28} />
