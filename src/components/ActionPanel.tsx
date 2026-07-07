@@ -593,20 +593,20 @@ export const ActionPanel = () => {
               )}
               <div className="recruit-buttons">
                 <button
-                  className={`recruit-type-btn ${recruitFigureType === 'bushi' ? 'active' : ''}`}
+                  className={`recruit-type-btn ${recruitFigureType === 'bushi' && recruitMode ? 'active' : ''}`}
                   onClick={() => { if (recruitFigureType === 'bushi' && recruitMode) { toggleRecruitMode(); } else { setRecruitFigureType('bushi'); if (!recruitMode) toggleRecruitMode(); } }}
                   style={{ '--recruit-clan-color': (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() } as React.CSSProperties}
                 >
-                  <BushiIcon size={18} color={recruitFigureType === 'bushi' ? (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() : 'var(--text-secondary)'} />
+                  <BushiIcon size={18} color={recruitFigureType === 'bushi' && recruitMode ? (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() : 'var(--text-secondary)'} />
                   <span className="recruit-type-label">{t('actions.recruitBushi')}</span>
                   <span className="recruit-type-count">{cp?.bushi ?? 0}</span>
                 </button>
                 <button
-                  className={`recruit-type-btn ${recruitFigureType === 'shinto' ? 'active' : ''}`}
+                  className={`recruit-type-btn ${recruitFigureType === 'shinto' && recruitMode ? 'active' : ''}`}
                   onClick={() => { if (recruitFigureType === 'shinto' && recruitMode) { toggleRecruitMode(); } else { setRecruitFigureType('shinto'); if (!recruitMode) toggleRecruitMode(); } }}
                   style={{ '--recruit-clan-color': (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() } as React.CSSProperties}
                 >
-                  <ShintoIcon size={18} color={recruitFigureType === 'shinto' ? (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() : 'var(--text-secondary)'} />
+                  <ShintoIcon size={18} color={recruitFigureType === 'shinto' && recruitMode ? (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() : 'var(--text-secondary)'} />
                   <span className="recruit-type-label">{t('actions.recruitShinto')}</span>
                   <span className="recruit-type-count">{cp?.shinto ?? 0}</span>
                 </button>

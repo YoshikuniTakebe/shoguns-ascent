@@ -807,8 +807,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
   marshalPendingMoves: [],
   marshalPendingFortresses: [],
   doUndoMandate: () => {
-    const { undoMandateState } = get();
+    const { undoMandateState, gameState, ws } = get();
     if (!undoMandateState) return;
+
+    // For online recruit: send undo to server
+    if (ws && gameState?.mode === 'online' && gameState.recruitMandateActive) {
+      get().sendAction({ type: 'UNDO_RECRUIT', playerId: get().localPlayerId });
+      // Also restore local state immediately for responsiveness
+      set({
+        gameState: JSON.parse(JSON.stringify(undoMandateState)),
+        recruitMode: true,
+        recruitFigureType: 'bushi',
+        // Keep undoMandateState so it can be used again
+      });
+      return;
+    }
+
+    // Original logic for hotseat/marshal
     set({
       gameState: JSON.parse(JSON.stringify(undoMandateState)),
       moveMode: false,
@@ -3274,6 +3289,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 if (!existingUndo) {
                   uiResets.undoMandateState = JSON.parse(JSON.stringify(state));
                 }
+              } else {
+                // Not this player's recruit turn - deactivate recruit mode
+                uiResets.recruitMode = false;
+                uiResets.undoMandateState = null;
               }
             }
             if (!state.marshalMandateActive) {

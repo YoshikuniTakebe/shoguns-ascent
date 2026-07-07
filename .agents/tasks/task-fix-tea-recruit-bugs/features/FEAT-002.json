@@ -1,0 +1,26 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix recruit button visual state, recruit mode not deactivating after Terminar, and recruit undo + shinto placement bug",
+  "status": "in_progress",
+  "steps": [
+    "BUG A - Recruit button visual: In src/components/ActionPanel.tsx around line 596 and 605, fix the CSS class for recruit type buttons. Current: className={`recruit-type-btn ${recruitFigureType === 'bushi' ? 'active' : ''}`}. Fix: className={`recruit-type-btn ${recruitFigureType === 'bushi' && recruitMode ? 'active' : ''}`}. Same for the shinto button.",
+    "BUG B - Recruit mode not deactivating: In src/store/gameStore.ts GAME_STATE handler (around line 3260-3280). Current code: when state.recruitMandateActive is true, it only sets recruitMode=true if currentRecruitPlayerId === lpId. But it does NOT set recruitMode=false when it's another player's turn. Fix: Add an else clause after the if(currentRecruitPlayerId === lpId) block that sets uiResets.recruitMode = false; uiResets.undoMandateState = null; This ensures when the local player skips their recruit turn and it becomes another player's turn, recruitMode is cleared.",
+    "BUG B (server validation): In src/server/index.ts RECRUIT_PLACE_FIGURE handler (around line 1609), add validation that data.playerId matches the current recruit resolution player: const currentRecruitPlayerId = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex]; if (data.playerId !== currentRecruitPlayerId) return; Same for RECRUIT_PLACE_TEMPLE_SHINTO handler (around line 1619).",
+    "BUG C - Recruit undo + shinto: The undo is client-only but recruit placements are sent to server individually. Fix: Add a server-side UNDO_RECRUIT handler. In src/server/index.ts, add a new case 'UNDO_RECRUIT' that receives the undoMandateState from the client and restores the server's gameState to it (only if the player is the current recruit player). In src/store/gameStore.ts doUndoMandate function, when gameState.mode === 'online' and recruitMandateActive is true, send the undoMandateState to the server: get().sendAction({ type: 'UNDO_RECRUIT', playerId: get().localPlayerId, payload: { undoState: get().undoMandateState } }). The server handler should validate: the sender is the current recruit player, recruitMandateActive is true, and the undoState has the same recruitResolutionIndex. Then set l.gameState to the received undoState (only recruit-related fields: recruitPlacementsRemaining, recruitUsedFortressProvinces, temples, provinces, players bushi/shinto counts) and broadcast.",
+    "BUG C (alternative simpler approach): Instead of sending full state, have the server save a snapshot when each recruit turn begins. In src/server/index.ts, when the recruit mandate starts (in advanceRecruitResolution when a new player's turn begins), save the current state as recruitUndoSnapshot on the lobby. In the UNDO_RECRUIT handler, restore from this snapshot. In SKIP_RECRUIT_TURN, clear the snapshot."
+  ],
+  "acceptance_criteria": [
+    "npm run build succeeds without errors",
+    "Recruit buttons show 'active' class only when both the figure type matches AND recruitMode is true",
+    "In the GAME_STATE handler, recruitMode is set to false when it's another player's recruit turn",
+    "Server validates that RECRUIT_PLACE_FIGURE and RECRUIT_PLACE_TEMPLE_SHINTO are from the current recruit player",
+    "Server has UNDO_RECRUIT handler that restores the recruit turn start state",
+    "Client doUndoMandate sends UNDO_RECRUIT to server in online recruit mode"
+  ],
+  "verification": [
+    "Run npm run build and confirm no TypeScript or build errors"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

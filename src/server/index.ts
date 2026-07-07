@@ -109,6 +109,7 @@ interface Lobby {
   started: boolean;
   persistentGameId: string | null;
   config: LobbyConfig | null;
+  recruitUndoSnapshot: GameState | null;
 }
 
 const lobbies = new Map<string, Lobby>();
@@ -240,6 +241,7 @@ app.post('/api/lobbies', (req, res) => {
     started: false,
     persistentGameId: null,
     config: null,
+    recruitUndoSnapshot: null,
   };
   lobbies.set(lobby.id, lobby);
   res.json({ id: lobby.id });
@@ -641,6 +643,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             started: false,
             persistentGameId: null,
             config,
+            recruitUndoSnapshot: null,
           };
           lobbies.set(lobbyId, l);
           currentLobbyId = lobbyId;
@@ -1609,8 +1612,15 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'RECRUIT_PLACE_FIGURE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          // Validate that the placing player is the current recruit player
+          const currentRecruitPlayerIdRPF = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
+          if (data.playerId !== currentRecruitPlayerIdRPF) return;
           const { provinceId, figureType } = data.payload || {};
           if (!provinceId || !figureType) return;
+          // Save undo snapshot on first placement of this recruit turn
+          if (!l.recruitUndoSnapshot) {
+            l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+          }
           l.gameState = recruitPlaceFigure(l.gameState, data.playerId, provinceId, figureType);
           broadcastState(l);
           break;
@@ -1619,8 +1629,15 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'RECRUIT_PLACE_TEMPLE_SHINTO': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          // Validate that the placing player is the current recruit player
+          const currentRecruitPlayerIdRPTS = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
+          if (data.playerId !== currentRecruitPlayerIdRPTS) return;
           const { templeId } = data.payload || {};
           if (!templeId) return;
+          // Save undo snapshot on first placement of this recruit turn
+          if (!l.recruitUndoSnapshot) {
+            l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+          }
           // Place shinto in temple during recruit mandate
           if (!l.gameState.recruitMandateActive) return;
           if (l.gameState.recruitPlacementsRemaining <= 0) return;
@@ -1667,6 +1684,23 @@ wss.on('connection', (ws: WebSocket, req) => {
             }
           }
           l.gameState = s;
+          l.recruitUndoSnapshot = null;
+          broadcastState(l);
+          break;
+        }
+
+        case 'UNDO_RECRUIT': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.recruitMandateActive) return;
+          // Validate sender is current recruit player
+          const currentRecruitIdUndo = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
+          if (data.playerId !== currentRecruitIdUndo) return;
+          // Restore from snapshot
+          if (l.recruitUndoSnapshot) {
+            l.gameState = JSON.parse(JSON.stringify(l.recruitUndoSnapshot));
+            l.recruitUndoSnapshot = null;
+          }
           broadcastState(l);
           break;
         }
