@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix RECRUIT mandate issues: auto-select bushi mode in online, limit Jinmenju to once per mandate, add undo button for recruit, and fix Jinmenju log text",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/store/gameStore.ts, in the GAME_STATE handler (around line 3210), when state.recruitMandateActive is true and the local player is the current player in the recruit resolution order, set uiResets.recruitMode = true AND uiResets.recruitFigureType = 'bushi'. This ensures that in online mode, when recruit mandate starts, bushi is actually selected (not just visually). Also set uiResets.undoMandateState to a deep copy of state when the local player's recruit turn begins (similar to how marshal does it around line 3258).",
     "2. In src/types/game.ts, add a new field 'jinmenjuUsedThisMandate: boolean' to the GameState interface (initialized to false).",
@@ -22,5 +22,5 @@
   ],
   "verification": ["npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "jinmenjuUsedThisMandate is tracked in GameState but jinmenju operations are client-local (no server handler). Added merge logic in GAME_STATE handler to preserve the flag when server broadcasts overwrite local state. undoMandateState cleanup needed careful coordination - only clear when NO mandate that uses it is active (marshal, recruit, betray all share the field)."
 }
