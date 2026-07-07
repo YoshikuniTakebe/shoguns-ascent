@@ -2,7 +2,7 @@ import type {
   GameState, Player, Province, Season, MandateType,
   Battle, Figure, Temple, WarProvinceSlot, SeasonCard,
   AllianceProposal, Hostage, DeckConfig, DeckName, KamiType,
-  KamiResolutionTemple, KamiData,
+  KamiResolutionTemple, KamiData, BattleResolutionData,
 } from '../types/game';
 import {
   CLANS, PROVINCES_DATA, HOME_PROVINCES, WAR_TACTICS,
@@ -287,6 +287,12 @@ export function createInitialGameState(
     warSummaryReadyPlayers: [],
     battleResultReadyPlayers: [],
     coinDistributionReadyPlayers: [],
+    hostageReturnActive: false,
+    hostageReturnOrder: [],
+    hostageReturnIndex: 0,
+    hostageReturnReadyPlayers: [],
+    cleanupTeaCeremonyReady: false,
+    cleanupTeaCeremonyReadyPlayers: [],
     log: ['Juego iniciado! Estación: Primavera'],
     logHistory: {},
     hostId,
@@ -1965,6 +1971,12 @@ export function initiateWarPhase(state: GameState): GameState {
     warSummaryReadyPlayers: [],
     battleResultReadyPlayers: [],
     coinDistributionReadyPlayers: [],
+    hostageReturnActive: false,
+    hostageReturnOrder: [],
+    hostageReturnIndex: 0,
+    hostageReturnReadyPlayers: [],
+    cleanupTeaCeremonyReady: false,
+    cleanupTeaCeremonyReadyPlayers: [],
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], seasonCards: [...p.seasonCards] })),
     log: [...state.log, '=== Comienza la Fase de Guerra ==='],
   };
@@ -2726,7 +2738,7 @@ export function cleanupSeason(state: GameState): GameState {
       ...p,
       ronin: 0,
       coins: 0,
-      allies: [...p.allies],
+      allies: [],
       seasonCards: [...p.seasonCards],
       warProvinceTokens: [...p.warProvinceTokens],
       hostages: [...p.hostages],
@@ -2755,7 +2767,13 @@ export function cleanupSeason(state: GameState): GameState {
     warSummaryVisible: false,
     warSummaryReadyPlayers: [],
     battleResultReadyPlayers: [],
-    log: [...state.log, 'Limpieza: Ronin y monedas descartados, Shinto devueltos de los santuarios'],
+    hostageReturnActive: false,
+    hostageReturnOrder: [],
+    hostageReturnIndex: 0,
+    hostageReturnReadyPlayers: [],
+    cleanupTeaCeremonyReady: false,
+    cleanupTeaCeremonyReadyPlayers: [],
+    log: [...state.log, 'Limpieza: Ronin y monedas descartados, Shinto devueltos de los santuarios, alianzas rotas'],
   };
 
   // Return all Shinto from temples to reserves
@@ -2767,6 +2785,153 @@ export function cleanupSeason(state: GameState): GameState {
       }
     });
   });
+
+  // Return hostages (+1 coin per hostage) during cleanup (for hotseat / non-interactive path)
+  newState.players.forEach((player) => {
+    if (player.hostages.length > 0) {
+      player.coins += player.hostages.length;
+      newState.log = [...newState.log, `${player.name} devuelve ${player.hostages.length} rehen(es) y gana ${player.hostages.length} moneda(s)`];
+      player.hostages = [];
+    }
+  });
+
+  return newState;
+}
+
+/**
+ * Start the interactive cleanup phase for online mode.
+ * Executes the "auto" parts of cleanup (coins=0, ronin=0, return shinto, break alliances)
+ * then checks if any player has hostages to return interactively.
+ */
+export function startInteractiveCleanup(state: GameState): GameState {
+  let newState: GameState = {
+    ...state,
+    players: state.players.map((p) => ({
+      ...p,
+      ronin: 0,
+      coins: 0,
+      allies: [],
+      seasonCards: [...p.seasonCards],
+      warProvinceTokens: [...p.warProvinceTokens],
+      hostages: [...p.hostages],
+      // Increment allianceSeasons if player had an ally this season
+      allianceSeasons: p.allies.length > 0 ? p.allianceSeasons + 1 : p.allianceSeasons,
+    })),
+    temples: state.temples.map((t) => ({ ...t, figures: [] })),
+    allianceProposals: [],
+    hostageReturnActive: false,
+    hostageReturnOrder: [],
+    hostageReturnIndex: 0,
+    hostageReturnReadyPlayers: [],
+    cleanupTeaCeremonyReady: false,
+    cleanupTeaCeremonyReadyPlayers: [],
+    log: [...state.log, 'Limpieza: Ronin y monedas descartados, Shinto devueltos de los santuarios, alianzas rotas'],
+  };
+
+  // Return all Shinto from temples to reserves
+  state.temples.forEach((temple) => {
+    temple.figures.forEach((fig) => {
+      const player = newState.players.find((p) => p.id === fig.playerId);
+      if (player) {
+        player.shinto += 1;
+      }
+    });
+  });
+
+  // Determine which players have hostages (in turnOrder)
+  const playersWithHostages = newState.turnOrder.filter(pid => {
+    const player = newState.players.find(p => p.id === pid);
+    return player && player.hostages.length > 0;
+  });
+
+  if (playersWithHostages.length > 0) {
+    newState.hostageReturnActive = true;
+    newState.hostageReturnOrder = playersWithHostages;
+    newState.hostageReturnIndex = 0;
+  } else {
+    newState.cleanupTeaCeremonyReady = true;
+  }
+
+  return newState;
+}
+
+/**
+ * Process a hostage return acceptance during interactive cleanup.
+ * Returns coins to the player and clears their hostages.
+ */
+export function processHostageReturn(state: GameState): GameState {
+  const newState: GameState = {
+    ...state,
+    players: state.players.map(p => ({ ...p, hostages: [...p.hostages] })),
+    log: [...state.log],
+  };
+
+  const currentPlayerId = newState.hostageReturnOrder[newState.hostageReturnIndex];
+  const player = newState.players.find(p => p.id === currentPlayerId);
+  if (!player) return newState;
+
+  const coinsGained = player.hostages.length;
+  player.coins += coinsGained;
+  newState.log = [...newState.log, `${player.name} devuelve ${coinsGained} rehen(es) y gana ${coinsGained} moneda(s)`];
+  player.hostages = [];
+
+  newState.hostageReturnIndex += 1;
+
+  if (newState.hostageReturnIndex >= newState.hostageReturnOrder.length) {
+    newState.hostageReturnActive = false;
+    newState.cleanupTeaCeremonyReady = true;
+  }
+
+  return newState;
+}
+
+/**
+ * Finalize the cleanup phase after tea ceremony acceptance (online mode).
+ * Advances to next season or winter without re-running full cleanupSeason.
+ */
+export function finalizeCleanupAndAdvance(state: GameState): GameState {
+  let newState: GameState = {
+    ...state,
+    mandatesDeck: shuffleMandates(),
+    drawnMandates: [],
+    mandateChoicePhase: false,
+    lotoChoicePhase: false,
+    lotoDiscardedMandate: null,
+    mandatesThisTurn: [],
+    activeBattles: [],
+    coinDistributionPending: null,
+    politicsMandateCount: 0,
+    trainMandateActive: false,
+    trainResolutionOrder: [],
+    trainResolutionIndex: 0,
+    trainMandateIssuerId: null,
+    teaTurnIndex: 0,
+    warPhaseReadyPlayers: [],
+    battlePopupReadyPlayers: [],
+    warSummaryVisible: false,
+    warSummaryReadyPlayers: [],
+    battleResultReadyPlayers: [],
+    coinDistributionReadyPlayers: [],
+    hostageReturnActive: false,
+    hostageReturnOrder: [],
+    hostageReturnIndex: 0,
+    hostageReturnReadyPlayers: [],
+    cleanupTeaCeremonyReady: false,
+    cleanupTeaCeremonyReadyPlayers: [],
+    log: [...state.log],
+  };
+
+  // Advance to next season or winter
+  const seasons: Season[] = ['spring', 'summer', 'autumn'];
+  const idx = seasons.indexOf(newState.currentSeason);
+  if (idx >= 2) {
+    // After autumn, go to winter
+    newState = resolveWinter(newState);
+  } else {
+    const nextSeason = seasons[idx + 1];
+    newState.round += 1;
+    newState = setupSeason(newState, nextSeason);
+  }
 
   return newState;
 }
@@ -3832,4 +3997,69 @@ export function buildFukurokuju(state: GameState, playerId: string, provinceId: 
 
 export function getCurrentPlayer(state: GameState): Player | undefined {
   return state.players[state.currentPlayerIndex];
+}
+
+/**
+ * Determines tactic winners from bids without resolving - used to drive step-by-step popups.
+ * Shared between client (gameStore) and server for online battle resolution.
+ */
+export function determineTacticWinners(state: GameState, battle: { provinceId: string; participants: string[]; warTacticBids: { [playerId: string]: { [tacticId: string]: number } } }): BattleResolutionData {
+  const result: BattleResolutionData = {
+    seppukuWinnerId: null,
+    hostageWinnerId: null,
+    roninWinnerId: null,
+    imperialPoetsWinnerId: null,
+    seppukuKillCount: 0,
+    seppukuAccepted: false,
+    phoenixDiedInSeppuku: false,
+    phoenixDiedInBattle: false,
+    capturedHostage: null,
+    roninForce: 0,
+    battleDeathCount: 0,
+    imperialPoetsVP: 0,
+    participantForces: battle.participants.map(pid => ({
+      playerId: pid,
+      force: calculateForce(state.provinces[battle.provinceId], pid, state),
+    })),
+  };
+
+  for (const tactic of WAR_TACTICS) {
+    let highestBid = 0;
+    let highestBidder: string | null = null;
+
+    battle.participants.forEach((pid) => {
+      const playerBids = battle.warTacticBids[pid];
+      const bid = playerBids?.[tactic.id] || 0;
+      if (bid > highestBid) {
+        highestBid = bid;
+        highestBidder = pid;
+      } else if (bid === highestBid && bid > 0 && highestBidder) {
+        // Tie-breaking by honor
+        const currentHonor = state.honorTrack.indexOf(highestBidder);
+        const challengerHonor = state.honorTrack.indexOf(pid);
+        if (challengerHonor < currentHonor) {
+          highestBidder = pid;
+        }
+      }
+    });
+
+    if (!highestBidder || highestBid === 0) continue;
+
+    switch (tactic.id) {
+      case 'seppuku':
+        result.seppukuWinnerId = highestBidder;
+        break;
+      case 'take-hostage':
+        result.hostageWinnerId = highestBidder;
+        break;
+      case 'hire-ronin':
+        result.roninWinnerId = highestBidder;
+        break;
+      case 'imperial-poets':
+        result.imperialPoetsWinnerId = highestBidder;
+        break;
+    }
+  }
+
+  return result;
 }

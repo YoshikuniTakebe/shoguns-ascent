@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-005",
+  "type": "fix",
+  "description": "Fix cleanup phase: auto-execute after all accept war summary, return hostages sequentially by seat order with popup, tea ceremony ready-check. Fix hostage bug (winner not getting selection popup, coins not reflected)",
+  "status": "in_progress",
+  "steps": [
+    "Step 1 - Implement sequential hostage return during cleanup: Currently cleanupSeason in gameLogic.ts (line ~2781) just removes all hostages silently and adds 1 coin per hostage. In online mode, after all players accept the war summary, the cleanup should be interactive: hostages are returned one player at a time by seat order (turnOrder). Add new state fields to GameState in types/game.ts: `hostageReturnActive: boolean`, `hostageReturnOrder: string[]` (player IDs with hostages in seat order), `hostageReturnIndex: number`, `hostageReturnReadyPlayers: string[]`. When cleanup starts, populate hostageReturnOrder with players who have hostages (in turnOrder). Set hostageReturnActive to true if any player has hostages.",
+    "Step 2 - Create hostage return popup UI: In GameBoard.tsx or a new component, when hostageReturnActive is true, show a popup for the current player (hostageReturnOrder[hostageReturnIndex]) displaying their hostages being returned. Show which hostages they have, that they get 1 coin per hostage, and an accept button. In online mode, this popup shows to the current player with an accept button, and others see a waiting message.",
+    "Step 3 - Server-side hostage return handling: In server/index.ts, add a HOSTAGE_RETURN_ACCEPTED handler. When a player accepts, increment hostageReturnIndex. If all players in hostageReturnOrder have been processed, clear hostageReturnActive and proceed to tea ceremony ready-check. Apply the coin gains when each player accepts (add coins = hostages.length, clear their hostages array).",
+    "Step 4 - Tea ceremony ready-check after cleanup: After all hostages are returned (or if none existed), show a tea ceremony ready-check popup to all players. Only when all accept does the next season start. Add state fields: `teaCeremonyReadyCheck: boolean`, `teaCeremonyReadyPlayers: string[]`. Show the popup in GameBoard.tsx. Handle TEA_CEREMONY_READY server action.",
+    "Step 5 - Fix hostage capture bug: In gameStore.ts around the hostage-selection battle step (~line 2750+), the hostage winner should get the selection popup. The issue might be in online mode where the battleStepPhase transition to 'hostage-selection' only happens on the client that performed the seppuku decision. In the server, after seppuku resolution, the server should set a flag indicating hostage-selection phase so all clients show it correctly. Check the RESOLVE_BATTLE server handler and ensure that after battle resolution with hostage winner, the state includes appropriate flags for all clients to show the hostage selection to the winner.",
+    "Step 6 - Fix hostage coin reflection: When hostages are returned during cleanup (or at the new interactive return), ensure the coin addition is properly reflected in the player's total. In the current cleanupSeason, coins are set to 0 BEFORE hostages are returned (line ~2729: `coins: 0`). This means the hostage coin bonus is lost! Fix: In cleanupSeason, either remove hostages BEFORE zeroing coins, or add hostage coins after zeroing. Better: process hostage return BEFORE the cleanup wipes coins, OR change the order so hostage return happens in the new interactive phase which runs before coins are zeroed."
+  ],
+  "acceptance_criteria": [
+    "After all players accept war summary, cleanup executes automatically",
+    "Hostages are returned sequentially by seat order with a popup for each player",
+    "Each player gains 1 coin per hostage returned (visible in their total)",
+    "After hostage return, tea ceremony ready-check popup appears for all players",
+    "Tea ceremony only starts when all players accept the ready-check",
+    "Hostage winner in battle gets the selection popup correctly",
+    "npm run build succeeds"
+  ],
+  "verification": [
+    "npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

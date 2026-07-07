@@ -107,7 +107,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted, doCleanupTeaCeremonyReady } = useGameStore();
   const t = useT();
 
   const [isDragging, setIsDragging] = useState(false);
@@ -877,6 +877,87 @@ export const GameBoard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Hostage Return Popup (interactive cleanup) */}
+      {gameState && gameState.hostageReturnActive && createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card" style={{ maxWidth: '460px', minWidth: '300px' }}>
+            <h3 style={{ color: '#D4AF37', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <span>Devolucion de Rehenes</span>
+            </h3>
+            {(() => {
+              const currentReturnPlayerId = gameState.hostageReturnOrder[gameState.hostageReturnIndex];
+              const currentReturnPlayer = gameState.players.find(p => p.id === currentReturnPlayerId);
+              if (!currentReturnPlayer) return null;
+              const returnClan = CLANS.find(c => c.id === currentReturnPlayer.clanId);
+              const hostageCount = currentReturnPlayer.hostages.length;
+              const isMyReturn = gameState.mode === 'online' && localPlayerId === currentReturnPlayerId;
+              const alreadyReturned = gameState.hostageReturnIndex >= gameState.hostageReturnOrder.length;
+
+              return (
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '12px' }}>
+                    <ClanShield clanId={currentReturnPlayer.clanId} size={40} />
+                    <span style={{ color: returnClan?.color, fontWeight: 'bold', fontSize: '1.1rem' }}>{currentReturnPlayer.name}</span>
+                  </div>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.9, margin: '8px 0' }}>
+                    Devuelve {hostageCount} rehen{hostageCount > 1 ? 'es' : ''} y gana <CoinIcon size={14} color="#f1c40f" /> {hostageCount} moneda{hostageCount > 1 ? 's' : ''}
+                  </p>
+                  <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', margin: '8px 0' }}>
+                    {currentReturnPlayer.hostages.map((h, idx) => {
+                      const fromClan = CLANS.find(c => c.id === h.fromClanId);
+                      return (
+                        <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', background: `${fromClan?.color || '#666'}20`, border: `1px solid ${fromClan?.color || '#444'}44`, fontSize: '0.8rem' }}>
+                          <ClanShield clanId={h.fromClanId} size={14} />
+                          {h.figureType}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <div style={{ marginTop: '16px' }}>
+                    {!alreadyReturned && (gameState.mode === 'hotseat' || isMyReturn) ? (
+                      <button className="btn-primary battle-popup-accept" onClick={doHostageReturnAccepted} style={{ borderColor: '#D4AF37' }}>
+                        Aceptar
+                      </button>
+                    ) : (
+                      <p style={{ color: '#D4AF37', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                        Esperando a {currentReturnPlayer.name}...
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Tea Ceremony Ready-Check Popup (after hostage returns during cleanup) */}
+      {gameState && gameState.cleanupTeaCeremonyReady && !gameState.hostageReturnActive && gameState.currentPhase === 'cleanup' && createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card" style={{ maxWidth: '440px', minWidth: '300px' }}>
+            <h3 style={{ color: '#2ECC71', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <span>Ceremonia del Te</span>
+            </h3>
+            <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.9, marginBottom: '16px' }}>
+              La limpieza ha finalizado. Comienza la nueva estacion.
+            </p>
+            <div style={{ textAlign: 'center' }}>
+              {gameState.mode === 'online' && localPlayerId && (gameState.cleanupTeaCeremonyReadyPlayers || []).includes(localPlayerId) ? (
+                <p style={{ color: '#2ECC71', fontSize: '1rem', fontWeight: 'bold' }}>
+                  Listo {(gameState.cleanupTeaCeremonyReadyPlayers || []).length}/{gameState.players.length}
+                </p>
+              ) : (
+                <button className="btn-primary battle-popup-accept" onClick={doCleanupTeaCeremonyReady} style={{ borderColor: '#2ECC71' }}>
+                  {gameState.mode === 'online' ? `Listo ${(gameState.cleanupTeaCeremonyReadyPlayers || []).length}/${gameState.players.length}` : 'Aceptar'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* War Summary Popup (after all battles resolved) */}

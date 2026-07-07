@@ -38,6 +38,10 @@ import {
   ryujinBuyCard as ryujinBuyCardFn,
   resolveUncontestedBattles,
   calculateForce,
+  startInteractiveCleanup,
+  processHostageReturn,
+  finalizeCleanupAndAdvance,
+  determineTacticWinners,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 import {
@@ -775,7 +779,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           }
           let s = chooseMandateTile(l.gameState, mandate, playerId);
           if (!s.lotoChoicePhase && !s.betrayMandateActive && !s.trainMandateActive && !s.marshalMandateActive && !s.recruitMandateActive && !s.harvestMandateActive) {
+            const prevPhase = s.currentPhase;
             s = advancePlayer(s);
+            if (s.currentPhase === 'cleanup' && prevPhase !== 'cleanup') {
+              s = startInteractiveCleanup(s);
+            }
           }
           l.gameState = s;
           broadcastState(l);
@@ -800,8 +808,157 @@ wss.on('connection', (ws: WebSocket, req) => {
           l.gameState = submitWarTacticBids(l.gameState, provinceId, data.playerId, tacticBids);
           // Only resolve once all participants have submitted their bids
           if (allBidsSubmitted(l.gameState, provinceId)) {
+            const battle = l.gameState.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
+            if (battle) {
+              const resData = determineTacticWinners(l.gameState, battle);
+              // If there are interactive steps (seppuku or hostage), attach resolutionData but don't resolve yet
+              if (resData.seppukuWinnerId || resData.hostageWinnerId) {
+                const updatedBattles = l.gameState.activeBattles.map(b => {
+                  if (b.provinceId === provinceId && !b.resolved) {
+                    return { ...b, resolutionData: resData };
+                  }
+                  return b;
+                });
+                l.gameState = { ...l.gameState, activeBattles: updatedBattles };
+              } else {
+                // No interactive steps needed - resolve directly
+                l.gameState = resolveNextBattle(l.gameState);
+              }
+            }
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'SEPPUKU_DECISION': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          const { accept: seppukuAccept } = data.payload || {};
+          const unresolvedBattle = l.gameState.activeBattles.find(b => !b.resolved && !b.uncontested && b.resolutionData);
+          if (!unresolvedBattle) return;
+          const resData = unresolvedBattle.resolutionData!;
+          if (resData.seppukuWinnerId !== playerId) return;
+
+          if (seppukuAccept) {
+            // Execute seppuku: kill all own troops in province
+            const province = l.gameState.provinces[unresolvedBattle.provinceId];
+            const seppukuPlayer = l.gameState.players.find(p => p.id === playerId)!;
+            const ownFigures = province.figures.filter(f => f.owner === playerId && (f.type === 'bushi' || f.type === 'shinto' || f.type === 'daimyo' || f.type === 'monster'));
+            const killCount = ownFigures.length;
+            let phoenixDied = false;
+            for (const fig of ownFigures) {
+              seppukuPlayer.victoryPoints += 1;
+              if (fig.type === 'bushi') seppukuPlayer.bushi += 1;
+              else if (fig.type === 'shinto') seppukuPlayer.shinto += 1;
+              else if (fig.type === 'daimyo') seppukuPlayer.hasDaimyo = true;
+              else if (fig.type === 'monster') {
+                seppukuPlayer.monsters += 1;
+                if (fig.monsterCardId === 'sp-phoenix') phoenixDied = true;
+              }
+            }
+            const killedIds = ownFigures.map(f => f.id);
+            let newFigures = province.figures.filter(f => !killedIds.includes(f.id));
+            // Phoenix revival
+            if (phoenixDied) {
+              const figureId = Math.random().toString(36).substring(2, 10);
+              newFigures = [...newFigures, { type: 'monster' as const, owner: playerId, id: figureId, monsterCardId: 'sp-phoenix' }];
+              seppukuPlayer.monsters -= 1;
+            }
+            l.gameState.provinces[unresolvedBattle.provinceId] = { ...province, figures: newFigures };
+            // Gain honor for each kill
+            for (let i = 0; i < killCount; i++) {
+              const idx = l.gameState.honorTrack.indexOf(playerId);
+              if (idx > 0) {
+                [l.gameState.honorTrack[idx], l.gameState.honorTrack[idx - 1]] = [l.gameState.honorTrack[idx - 1], l.gameState.honorTrack[idx]];
+              }
+            }
+            // Update honor values
+            l.gameState.honorTrack.forEach((pid, i) => {
+              const p = l.gameState!.players.find(pl => pl.id === pid);
+              if (p) p.honor = i + 1;
+            });
+            // Update resolutionData
+            const updatedResData = { ...resData, seppukuAccepted: true, seppukuKillCount: killCount, phoenixDiedInSeppuku: phoenixDied };
+            const updatedBattles = l.gameState.activeBattles.map(b => {
+              if (b.provinceId === unresolvedBattle.provinceId && !b.resolved) {
+                return { ...b, resolutionData: updatedResData };
+              }
+              return b;
+            });
+            l.gameState = { ...l.gameState, activeBattles: updatedBattles, log: [...l.gameState.log, `${seppukuPlayer.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV`] };
+          } else {
+            // Declined seppuku - clear seppukuWinnerId to signal decision made
+            const updatedResData = { ...resData, seppukuAccepted: false, seppukuWinnerId: null };
+            const updatedBattles = l.gameState.activeBattles.map(b => {
+              if (b.provinceId === unresolvedBattle.provinceId && !b.resolved) {
+                return { ...b, resolutionData: updatedResData };
+              }
+              return b;
+            });
+            l.gameState = { ...l.gameState, activeBattles: updatedBattles };
+          }
+          // If no hostage winner remains, resolve the battle now
+          const updatedBattle = l.gameState.activeBattles.find(b => b.provinceId === unresolvedBattle.provinceId && !b.resolved);
+          if (updatedBattle?.resolutionData && !updatedBattle.resolutionData.hostageWinnerId) {
             l.gameState = resolveNextBattle(l.gameState);
           }
+          broadcastState(l);
+          break;
+        }
+
+        case 'HOSTAGE_CONFIRM': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          const { figureId: selectedFigureId } = data.payload || {};
+          const unresolvedBattle2 = l.gameState.activeBattles.find(b => !b.resolved && !b.uncontested && b.resolutionData);
+          if (!unresolvedBattle2) return;
+          const resData2 = unresolvedBattle2.resolutionData!;
+          if (resData2.hostageWinnerId !== playerId) return;
+
+          const province2 = l.gameState.provinces[unresolvedBattle2.provinceId];
+          const hostageWinner = l.gameState.players.find(p => p.id === playerId)!;
+
+          // Find the target figure
+          const targetFigure = selectedFigureId ? province2.figures.find(f => f.id === selectedFigureId) : null;
+
+          if (targetFigure && targetFigure.owner !== playerId &&
+            (targetFigure.type === 'bushi' || targetFigure.type === 'shinto' ||
+              (targetFigure.type === 'monster' && targetFigure.monsterCardId && !['su-yurei', 'sp-fukurokuju'].includes(targetFigure.monsterCardId)))) {
+            // Capture the hostage
+            const hostage = { fromClanId: targetFigure.owner, figureType: targetFigure.type };
+            hostageWinner.hostages.push(hostage);
+            hostageWinner.victoryPoints += 1;
+            l.gameState.provinces[unresolvedBattle2.provinceId] = {
+              ...province2,
+              figures: province2.figures.filter(f => f.id !== targetFigure.id),
+            };
+            const victim = l.gameState.players.find(p => p.id === targetFigure.owner);
+            if (victim) {
+              if (targetFigure.type === 'bushi') victim.bushi += 1;
+              else if (targetFigure.type === 'shinto') victim.shinto += 1;
+              else if (targetFigure.type === 'monster') victim.monsters += 1;
+            }
+            const capturedHostageData = {
+              captorId: playerId,
+              fromClanId: targetFigure.owner,
+              figureType: targetFigure.type,
+              figureName: targetFigure.type,
+              monsterCardId: targetFigure.monsterCardId,
+            };
+            const updatedResData2 = { ...resData2, capturedHostage: capturedHostageData };
+            const updatedBattles2 = l.gameState.activeBattles.map(b => {
+              if (b.provinceId === unresolvedBattle2.provinceId && !b.resolved) {
+                return { ...b, resolutionData: updatedResData2 };
+              }
+              return b;
+            });
+            l.gameState = { ...l.gameState, activeBattles: updatedBattles2, log: [...l.gameState.log, `${hostageWinner.name} toma un rehen de ${victim?.name}`] };
+          }
+
+          // After hostage is taken (or skipped), resolve the battle
+          l.gameState = resolveNextBattle(l.gameState);
           broadcastState(l);
           break;
         }
@@ -918,7 +1075,12 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'ADVANCE_PHASE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          const prevPhase = l.gameState.currentPhase;
           l.gameState = advancePhase(l.gameState);
+          // If we transitioned to cleanup phase (e.g., no battles case), start interactive cleanup
+          if (l.gameState.currentPhase === 'cleanup' && prevPhase !== 'cleanup') {
+            l.gameState = startInteractiveCleanup(l.gameState);
+          }
           broadcastState(l);
           break;
         }
@@ -1161,6 +1323,35 @@ wss.on('connection', (ws: WebSocket, req) => {
             // All players accepted war summary - advance to cleanup phase
             l.gameState = advancePhase(l.gameState);
             l.gameState = { ...l.gameState, warSummaryVisible: false, warSummaryReadyPlayers: [] };
+            // Start interactive cleanup for online mode
+            l.gameState = startInteractiveCleanup(l.gameState);
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'HOSTAGE_RETURN_ACCEPTED': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          // Verify the sender is the current hostage return player
+          const currentReturnPlayer = l.gameState.hostageReturnOrder[l.gameState.hostageReturnIndex];
+          if (playerId !== currentReturnPlayer) return;
+          l.gameState = processHostageReturn(l.gameState);
+          broadcastState(l);
+          break;
+        }
+
+        case 'CLEANUP_TEA_CEREMONY_READY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          if (!l.gameState.cleanupTeaCeremonyReadyPlayers.includes(playerId)) {
+            l.gameState = { ...l.gameState, cleanupTeaCeremonyReadyPlayers: [...l.gameState.cleanupTeaCeremonyReadyPlayers, playerId] };
+          }
+          if (l.gameState.cleanupTeaCeremonyReadyPlayers.length >= l.gameState.players.length) {
+            // All players accepted tea ceremony - advance to next season
+            l.gameState = finalizeCleanupAndAdvance(l.gameState);
           }
           broadcastState(l);
           break;
@@ -1213,7 +1404,11 @@ wss.on('connection', (ws: WebSocket, req) => {
             s = { ...s, trainResolutionIndex: s.trainResolutionIndex + 1 };
             s = advanceTrainResolution(s);
             if (!s.trainMandateActive) {
+              const prevPhaseBC = s.currentPhase;
               s = advancePlayer(s);
+              if (s.currentPhase === 'cleanup' && prevPhaseBC !== 'cleanup') {
+                s = startInteractiveCleanup(s);
+              }
             }
             l.gameState = s;
             broadcastState(l);
@@ -1303,7 +1498,11 @@ wss.on('connection', (ws: WebSocket, req) => {
             s = { ...s, trainResolutionIndex: s.trainResolutionIndex + 1 };
             s = advanceTrainResolution(s);
             if (!s.trainMandateActive) {
+              const prevPhaseMP = s.currentPhase;
               s = advancePlayer(s);
+              if (s.currentPhase === 'cleanup' && prevPhaseMP !== 'cleanup') {
+                s = startInteractiveCleanup(s);
+              }
             }
           }
           l.gameState = s;
@@ -1344,7 +1543,11 @@ wss.on('connection', (ws: WebSocket, req) => {
 
           s = skipMarshalTurn(s);
           if (!s.marshalMandateActive) {
+            const prevPhaseSM = s.currentPhase;
             s = advancePlayer(s);
+            if (s.currentPhase === 'cleanup' && prevPhaseSM !== 'cleanup') {
+              s = startInteractiveCleanup(s);
+            }
           }
           l.gameState = s;
           broadcastState(l);
@@ -1393,7 +1596,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           const currentPlayer = l.gameState.players[l.gameState.currentPlayerIndex];
           if (!currentPlayer || currentPlayer.id !== data.playerId) return;
           let s = skipBetrayTurn(l.gameState);
+          const prevPhaseSB = s.currentPhase;
           s = advancePlayer(s);
+          if (s.currentPhase === 'cleanup' && prevPhaseSB !== 'cleanup') {
+            s = startInteractiveCleanup(s);
+          }
           l.gameState = s;
           broadcastState(l);
           break;
@@ -1453,7 +1660,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           let s = skipRecruitTurn(l.gameState);
           if (!s.recruitMandateActive) {
+            const prevPhaseSR = s.currentPhase;
             s = advancePlayer(s);
+            if (s.currentPhase === 'cleanup' && prevPhaseSR !== 'cleanup') {
+              s = startInteractiveCleanup(s);
+            }
           }
           l.gameState = s;
           broadcastState(l);
@@ -1470,7 +1681,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           }
           let s = skipTrainPurchase(l.gameState);
           if (!s.trainMandateActive) {
+            const prevPhaseST = s.currentPhase;
             s = advancePlayer(s);
+            if (s.currentPhase === 'cleanup' && prevPhaseST !== 'cleanup') {
+              s = startInteractiveCleanup(s);
+            }
           }
           l.gameState = s;
           broadcastState(l);
@@ -1485,7 +1700,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (l.gameState.harvestCurrentPlayerId && data.playerId !== l.gameState.harvestCurrentPlayerId) return;
           let s = advanceHarvestResolution(l.gameState);
           if (!s.harvestMandateActive) {
+            const prevPhaseAH = s.currentPhase;
             s = advancePlayer(s);
+            if (s.currentPhase === 'cleanup' && prevPhaseAH !== 'cleanup') {
+              s = startInteractiveCleanup(s);
+            }
           }
           l.gameState = s;
           broadcastState(l);
@@ -1499,7 +1718,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!lotoMandate) return;
           let s = lotoChooseActualMandate(l.gameState, lotoMandate, data.playerId);
           if (!s.betrayMandateActive && !s.trainMandateActive && !s.marshalMandateActive && !s.recruitMandateActive && !s.harvestMandateActive) {
+            const prevPhaseLM = s.currentPhase;
             s = advancePlayer(s);
+            if (s.currentPhase === 'cleanup' && prevPhaseLM !== 'cleanup') {
+              s = startInteractiveCleanup(s);
+            }
           }
           l.gameState = s;
           broadcastState(l);

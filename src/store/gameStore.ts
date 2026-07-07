@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { GameState, MandateType, DeckConfig, SeasonCard, BattleResolutionData, Hostage } from '../types/game';
-import { WAR_TACTICS, SEASON_CARDS_DATA } from '../types/game';
+import { SEASON_CARDS_DATA } from '../types/game';
 import { API_BASE } from '../config';
 import {
   createInitialGameState,
@@ -38,7 +38,9 @@ import {
   loseHonor,
   gainHonor,
   resolveUncontestedBattles,
-  calculateForce,
+  processHostageReturn,
+  finalizeCleanupAndAdvance,
+  determineTacticWinners,
 } from '../utils/gameLogic';
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -180,70 +182,6 @@ function attachResolutionData(state: GameState, resData: BattleResolutionData): 
     return b;
   });
   return { ...state, activeBattles: updatedBattles };
-}
-
-/**
- * Determines tactic winners from bids without resolving - used to drive step-by-step popups.
- */
-function determineTacticWinners(state: GameState, battle: { provinceId: string; participants: string[]; warTacticBids: { [playerId: string]: { [tacticId: string]: number } } }): BattleResolutionData {
-  const result: BattleResolutionData = {
-    seppukuWinnerId: null,
-    hostageWinnerId: null,
-    roninWinnerId: null,
-    imperialPoetsWinnerId: null,
-    seppukuKillCount: 0,
-    seppukuAccepted: false,
-    phoenixDiedInSeppuku: false,
-    phoenixDiedInBattle: false,
-    capturedHostage: null,
-    roninForce: 0,
-    battleDeathCount: 0,
-    imperialPoetsVP: 0,
-    participantForces: battle.participants.map(pid => ({
-      playerId: pid,
-      force: calculateForce(state.provinces[battle.provinceId], pid, state),
-    })),
-  };
-
-  for (const tactic of WAR_TACTICS) {
-    let highestBid = 0;
-    let highestBidder: string | null = null;
-
-    battle.participants.forEach((pid) => {
-      const playerBids = battle.warTacticBids[pid];
-      const bid = playerBids?.[tactic.id] || 0;
-      if (bid > highestBid) {
-        highestBid = bid;
-        highestBidder = pid;
-      } else if (bid === highestBid && bid > 0 && highestBidder) {
-        // Tie-breaking by honor
-        const currentHonor = state.honorTrack.indexOf(highestBidder);
-        const challengerHonor = state.honorTrack.indexOf(pid);
-        if (challengerHonor < currentHonor) {
-          highestBidder = pid;
-        }
-      }
-    });
-
-    if (!highestBidder || highestBid === 0) continue;
-
-    switch (tactic.id) {
-      case 'seppuku':
-        result.seppukuWinnerId = highestBidder;
-        break;
-      case 'take-hostage':
-        result.hostageWinnerId = highestBidder;
-        break;
-      case 'hire-ronin':
-        result.roninWinnerId = highestBidder;
-        break;
-      case 'imperial-poets':
-        result.imperialPoetsWinnerId = highestBidder;
-        break;
-    }
-  }
-
-  return result;
 }
 
 interface GameStore {
@@ -434,6 +372,10 @@ interface GameStore {
   // War Summary Popup (end of war phase)
   warSummaryVisible: boolean;
   dismissWarSummaryPopup: () => void;
+
+  // Interactive cleanup (hostage return + tea ceremony)
+  doHostageReturnAccepted: () => void;
+  doCleanupTeaCeremonyReady: () => void;
 
   // Battle result acceptance for online mode
   doAcceptBattleResultOnline: () => void;
@@ -2671,8 +2613,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     get().saveSnapshot();
   },
   doSeppukuDecision: (accept: boolean) => {
-    const { gameState, battleResolutionData } = get();
+    const { gameState, battleResolutionData, ws } = get();
     if (!gameState || !battleResolutionData || !battleResolutionData.seppukuWinnerId) return;
+
+    // Online mode: send to server and let server handle
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'SEPPUKU_DECISION', playerId: get().localPlayerId, payload: { accept } });
+      return;
+    }
 
     const unresolvedIdx = gameState.activeBattles.findIndex(b => !b.resolved && !b.uncontested);
     if (unresolvedIdx === -1) return;
@@ -2775,7 +2723,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameState: newState, battleStepPhase: 'seppuku-result', battleResolutionData: updatedResData });
   },
   doSeppukuResultAccept: () => {
-    const { gameState, battleResolutionData } = get();
+    const { gameState, battleResolutionData, ws } = get();
     if (!gameState || !battleResolutionData) return;
 
     // Move to next phase
@@ -2784,7 +2732,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else if (battleResolutionData.roninWinnerId) {
       set({ battleStepPhase: 'ronin-result' });
     } else {
-      // No more interactive phases, resolve battle with updated state
+      // No more interactive phases, resolve battle
+      if (ws && gameState.mode === 'online') {
+        // Server needs to resolve - send RESOLVE_BATTLE
+        get().sendAction({ type: 'RESOLVE_BATTLE', playerId: get().localPlayerId });
+        return;
+      }
       const withResData = attachResolutionData(gameState, battleResolutionData);
       const ns = resolveNextBattle(withResData);
       set({ gameState: ns, battleStepPhase: 'result', battleResolutionData: battleResolutionData, selectedHostageTarget: null });
@@ -2812,8 +2765,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ selectedHostageTarget: { owner: figure.owner, figureId: figure.id, figureType: figure.type, figureName } });
   },
   doHostageConfirm: () => {
-    const { gameState, battleResolutionData, selectedHostageTarget } = get();
+    const { gameState, battleResolutionData, selectedHostageTarget, ws } = get();
     if (!gameState || !battleResolutionData || !battleResolutionData.hostageWinnerId || !selectedHostageTarget) return;
+
+    // Online mode: send to server and let server handle
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'HOSTAGE_CONFIRM', playerId: get().localPlayerId, payload: { figureId: selectedHostageTarget.figureId } });
+      return;
+    }
 
     const unresolvedIdx = gameState.activeBattles.findIndex(b => !b.resolved && !b.uncontested);
     if (unresolvedIdx === -1) return;
@@ -2872,8 +2831,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
   doHostageSkip: () => {
-    const { gameState, battleResolutionData } = get();
+    const { gameState, battleResolutionData, ws } = get();
     if (!gameState || !battleResolutionData) return;
+
+    // Online mode: send skip to server (empty figureId means skip)
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'HOSTAGE_CONFIRM', playerId: get().localPlayerId, payload: { figureId: null } });
+      return;
+    }
 
     // No capturable figures - advance to next phase
     if (battleResolutionData.roninWinnerId) {
@@ -2885,8 +2850,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
   doRoninResultAccept: () => {
-    const { gameState, battleResolutionData } = get();
+    const { gameState, battleResolutionData, ws } = get();
     if (!gameState || !battleResolutionData) return;
+
+    // Online mode: tell server to resolve the battle
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_BATTLE', playerId: get().localPlayerId });
+      return;
+    }
 
     // Resolve the battle with final force calculation
     const withResData = attachResolutionData(gameState, battleResolutionData);
@@ -3197,6 +3168,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
+  // --- Interactive Cleanup: Hostage Return Accepted ---
+  doHostageReturnAccepted: () => {
+    const { gameState, ws } = get();
+    if (!gameState) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'HOSTAGE_RETURN_ACCEPTED', playerId: get().localPlayerId });
+      return;
+    }
+    // Hotseat: process locally
+    const ns = processHostageReturn(gameState);
+    set({ gameState: ns });
+    get().saveSnapshot();
+  },
+
+  // --- Interactive Cleanup: Tea Ceremony Ready ---
+  doCleanupTeaCeremonyReady: () => {
+    const { gameState, ws } = get();
+    if (!gameState) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'CLEANUP_TEA_CEREMONY_READY', playerId: get().localPlayerId });
+      return;
+    }
+    // Hotseat: advance directly
+    const ns = finalizeCleanupAndAdvance(gameState);
+    set({ gameState: ns });
+    get().saveSnapshot();
+  },
+
   // --- Online ---
   connectWebSocket: (url, onOpen) => {
     const { authToken } = get();
@@ -3441,6 +3440,41 @@ export const useGameStore = create<GameStore>((set, get) => ({
             const currentResolvedCount = state.activeBattles?.filter((b: { resolved?: boolean; uncontested?: boolean }) => b.resolved && !b.uncontested).length || 0;
             if (currentResolvedCount > prevResolvedCount && prevBattleReady === 0) {
               uiResets.battleStepPhase = 'result';
+            }
+
+            // Detect when server attaches resolutionData to a battle (interactive steps needed)
+            const unresolvedWithResData = state.activeBattles?.find((b: { resolved?: boolean; uncontested?: boolean; resolutionData?: BattleResolutionData }) => !b.resolved && !b.uncontested && b.resolutionData);
+            const prevUnresolvedWithResData = prevGameState?.activeBattles?.find((b: { resolved?: boolean; uncontested?: boolean; resolutionData?: BattleResolutionData }) => !b.resolved && !b.uncontested && b.resolutionData);
+            if (unresolvedWithResData?.resolutionData && !prevUnresolvedWithResData?.resolutionData) {
+              // New resolutionData appeared - enter interactive step
+              const rd = unresolvedWithResData.resolutionData as BattleResolutionData;
+              uiResets.battleResolutionData = rd;
+              uiResets.selectedHostageTarget = null;
+              if (rd.seppukuWinnerId) {
+                uiResets.battleStepPhase = 'seppuku-decision';
+              } else if (rd.hostageWinnerId && !rd.capturedHostage) {
+                uiResets.battleStepPhase = 'hostage-selection';
+              } else {
+                uiResets.battleStepPhase = 'ronin-result';
+              }
+            } else if (unresolvedWithResData?.resolutionData && prevUnresolvedWithResData?.resolutionData) {
+              // ResolutionData was updated (e.g., seppuku accepted/declined) - check if we should transition
+              const rd = unresolvedWithResData.resolutionData as BattleResolutionData;
+              const prevRd = prevUnresolvedWithResData.resolutionData as BattleResolutionData;
+              if (rd.seppukuAccepted && !prevRd.seppukuAccepted) {
+                // Seppuku was accepted - show result
+                uiResets.battleResolutionData = rd;
+                uiResets.battleStepPhase = 'seppuku-result';
+              } else if (prevRd.seppukuWinnerId && !rd.seppukuWinnerId) {
+                // Seppuku was declined (seppukuWinnerId cleared)
+                uiResets.battleResolutionData = rd;
+                if (rd.hostageWinnerId && !rd.capturedHostage) {
+                  uiResets.battleStepPhase = 'hostage-selection';
+                  uiResets.selectedHostageTarget = null;
+                } else if (rd.roninWinnerId) {
+                  uiResets.battleStepPhase = 'ronin-result';
+                }
+              }
             }
           }
 

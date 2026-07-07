@@ -920,10 +920,17 @@ export const ActionPanel = () => {
         <div className="cleanup-phase">
           <h4>{t('actions.cleanup')}</h4>
           <p className="phase-description">{t('actions.cleanupDesc')}</p>
-          {isMyTurn && (
+          {gameState.mode === 'hotseat' && isMyTurn && (
             <button className="btn-primary advance-btn" onClick={doAdvancePhase}>
               {t('actions.proceedNextSeason')}
             </button>
+          )}
+          {gameState.mode === 'online' && (
+            <p className="phase-description" style={{ fontStyle: 'italic', opacity: 0.7 }}>
+              {gameState.hostageReturnActive ? 'Devolucion de rehenes en curso...' :
+               gameState.cleanupTeaCeremonyReady ? 'Esperando ceremonia del te...' :
+               'Procesando limpieza...'}
+            </p>
           )}
         </div>
       )}

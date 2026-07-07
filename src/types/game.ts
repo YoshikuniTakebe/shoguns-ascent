@@ -281,6 +281,12 @@ export interface GameState {
   warSummaryReadyPlayers: string[];
   battleResultReadyPlayers: string[];
   coinDistributionReadyPlayers: string[];
+  hostageReturnActive: boolean;
+  hostageReturnOrder: string[];
+  hostageReturnIndex: number;
+  hostageReturnReadyPlayers: string[];
+  cleanupTeaCeremonyReady: boolean;
+  cleanupTeaCeremonyReadyPlayers: string[];
   log: string[];
   logHistory: { [season: string]: string[] };
   hostId?: string;
