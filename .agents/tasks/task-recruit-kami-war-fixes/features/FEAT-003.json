@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Fix war phase flow: battle start popup needs ready-check in online mode, fix ver mapa button in online bidding, fix coin distribution popup to show only to winner, add COIN_DISTRIBUTION_CHOICE server handler, and fix harvest flow turn popup",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Fix the 'ver mapa' (peek map) button for online mode bidding. In src/components/BattlePanel.tsx around line 1144, the online bidding section renders the BattleBiddingOverlay via createPortal without checking biddingMapPeek. Add a guard: when biddingMapPeek is true, don't render the bidding overlay portal (similar to the hotseat check at line 1081).",
     "2. Fix the coin distribution popup to only show for the winner (deciding player) in online mode. In src/components/BattlePanel.tsx around line 479, when gameState.coinDistributionPending exists AND gameState.mode === 'online', check if localPlayerId === pending.winnerId. If NOT the winner, show a waiting message ('Esperando reparto de monedas...') instead of the interactive buttons. The informational popup (remainder === 0) can still show to everyone.",
@@ -21,5 +21,5 @@
   ],
   "verification": ["npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 6 sub-issues implemented successfully: (1) Added !biddingMapPeek guard to online bidding portal, (2) Added waiting message for non-winners during coin distribution, (3) Added COIN_DISTRIBUTION_CHOICE server handler, (4) Added COIN_DISTRIBUTION_DISMISS server handler with online send from client, (5) Added battlePopupReadyPlayers field to GameState and full ready-check flow (type, init, server handler, client send, GAME_STATE detection), (6) Added explicit harvest mandate transition detection for turn popup. Build passes cleanly."
 }
