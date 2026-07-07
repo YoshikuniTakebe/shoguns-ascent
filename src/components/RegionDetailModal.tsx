@@ -14,7 +14,7 @@ import { renderCardEffect } from '../utils/renderCardEffect';
 const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'sp-jorogumo': 0.85,
   'daimyo-tortuga': 1.20,
-  'bushi-tortuga': 1.04,
+  'bushi-tortuga': 1.05,
   'bushi-loto': 0.75,
   'daimyo-loto': 0.80,
   'sp-oni-of-skulls': 1.30,
@@ -24,7 +24,7 @@ const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'bushi-luna': 0.85,
   'daimyo-libelula': 1.10,
   'daimyo-sol': 1.01,
-  'sp-daikokuten': 0.80,
+  'sp-daikokuten': 0.824,
   'sp-oni-of-souls': 1.25,
   'sp-phoenix': 1.27,
   'sp-komainu': 0.83,
@@ -34,12 +34,14 @@ const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'daimyo-zorro': 0.94,
   'bushi-koi': 0.95,
   'bushi-libelula': 0.87,
-  'bushi-sol': 0.92,
+  'bushi-sol': 0.91,
   'bushi-bonsai': 0.85,
   'su-hotei': 1.15,
   'su-yurei': 1.20,
   'su-oni-of-souls': 1.25,
   'su-oni-of-blood': 1.20,
+  'sp-fukurokuju': 1.04,
+  'shinto-tortuga': 0.88,
 };
 
 /** Get the size scale override for a figure. Returns 1.0 if no override is defined. */
@@ -496,6 +498,21 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
         <div className="figure-zoom-content" onClick={(e) => e.stopPropagation()}>
           <div className="figure-zoom-image">
             {renderLargeFigure()}
+          </div>
+          <div className="figure-zoom-name" style={{
+            color: ownerColor,
+            fontWeight: 'bold',
+            fontSize: '1.2rem',
+            textAlign: 'center',
+            textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+          }}>
+            {figure.type === 'monster' && figure.monsterCardId
+              ? getMonsterInfo(figure.monsterCardId)?.name ?? 'Monster'
+              : figure.type === 'bushi' ? 'Bushi'
+              : figure.type === 'shinto' ? 'Shinto'
+              : figure.type === 'daimyo' ? 'Daimyo'
+              : figure.type === 'fortress' ? 'Fortaleza'
+              : ''}
           </div>
           {monsterPowerText && (
             <div className="figure-zoom-power">{renderCardEffect(monsterPowerText)}</div>
