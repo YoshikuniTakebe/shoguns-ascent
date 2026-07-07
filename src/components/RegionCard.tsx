@@ -488,9 +488,27 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
       })()
     : undefined;
 
+  // Marshal dimming: dim provinces that are not valid sources or targets
+  let isMarshalDimmed = false;
+  if ((isMarshalMove || isFujinMove) && moveMode) {
+    if (!moveFrom) {
+      // Phase 1: selecting source - dim provinces without movable troops
+      if (!hasTroopsForGlow) {
+        isMarshalDimmed = true;
+      }
+    } else if (selectedFigures.length > 0) {
+      // Phase 2: after selecting source - dim provinces that are not valid targets and not the source
+      if (moveFrom === regionId) {
+        isMarshalDimmed = false;
+      } else if (!isMoveTarget) {
+        isMarshalDimmed = true;
+      }
+    }
+  }
+
   return (
     <div
-      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${isMonsterDimmed ? 'recruit-dimmed' : ''} ${isZorroTarget ? 'recruit-target' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''}`}
+      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${isMonsterDimmed ? 'recruit-dimmed' : ''} ${isZorroTarget ? 'recruit-target' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''} ${isMarshalDimmed ? 'recruit-dimmed' : ''}`}
       style={{ ...style, ...(hasTroopsForGlow ? { '--marshal-glow-color': marshalGlowColor } as React.CSSProperties : {}) }}
       onClick={handleClick}
     >
