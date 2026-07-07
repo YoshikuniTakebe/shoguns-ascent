@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix Kami phase flow issues: prevent start popup from showing at summary time, fix advancePlayer to move to next player after kami, and fix zorro placement visibility for non-zorro players",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Fix the 'Comienza la Fase Kami' popup showing at summary time in online mode. In src/store/gameStore.ts GAME_STATE handler (around line 3278), the condition that sets kamiPhasePopupVisible=true checks 'state.kamiPhasePopupPending && !state.kamiResolutionActive && !get().kamiPhasePopupVisible && !get().gameState?.kamiResolutionActive'. Add an additional guard: '&& !state.kamiSummaryVisible'. This prevents the popup from re-showing when summary is visible. Also ensure that when kamiSummaryVisible becomes true on server broadcast, kamiPhasePopupVisible is explicitly set to false.",
     "2. Fix the flow after kami summary: In the GAME_STATE handler, when kamiSummaryVisible transitions from true to false (line ~3300), verify the turn popup is shown for the CORRECT next player. The server's advanceKamiResolution already sets currentPlayerIndex = kamiResolutionNextPlayerIndex. The existing code at line ~3300 already shows turnPopup for state.players[state.currentPlayerIndex], which should be correct if the server computed kamiResolutionNextPlayerIndex properly.",
@@ -17,5 +17,5 @@
   ],
   "verification": ["npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes built successfully with npm run build. The kami phase popup guard was a single condition addition. The zorro overlay was refactored to use an IIFE pattern to conditionally render based on player identity. Turn indicator also uses IIFE pattern for zorro-active override."
 }
