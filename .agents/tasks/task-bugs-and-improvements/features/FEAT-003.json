@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Fix Susanoo not counting Fukurokuju as fortress for VP reward, and implement Fukurokuju marshal placement rules",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Step 1 - Fix Susanoo VP counting: In src/utils/gameLogic.ts, there are TWO places where Susanoo counts fortresses. At line ~1589, the filter is `f.owner === playerId && f.type === 'fortress'` - this does NOT include Fukurokuju. Change both occurrences to also count monsters with monsterCardId === 'sp-fukurokuju': `f.owner === playerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju'))`. The second occurrence is around line 1730 where `fortressCount` is computed for the susanoo popup.",
     "Step 2 - Implement Fukurokuju placement via Marshal mandate: Currently buildFortress() in gameLogic.ts only builds type 'fortress' figures. According to the FAQ, Fukurokuju can be placed via Marshal as a fortress (3 coins, anywhere). Add a new function or modify buildFortress to allow placing Fukurokuju during marshal if the player has Fukurokuju in their monster reserve (purchased via Train but not yet deployed). The cost is 3 coins (or 1 for Bonsai clan). When placed this way, it goes to any province (same as fortress placement rules). Create a new action or a flag that indicates the player wants to build Fukurokuju instead of a regular fortress.",
@@ -20,5 +20,5 @@
     "npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All implementations verified via npm run build. The recruit rule (Step 4) is already correct - calculateRecruitPlacements is called per-player at their turn start via advanceRecruitResolution, not at mandate initiation. Since Fukurokuju is only placed via Marshal (not recruit), it cannot affect the same recruit mandate's placement count."
 }
