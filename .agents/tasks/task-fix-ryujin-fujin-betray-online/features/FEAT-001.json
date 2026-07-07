@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Fix three online bugs: (1) Ryujin monster card skips placement, (2) Fujin movement not working, (3) Betray shows monster option without monsters in reserve",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "BUG 1 - Ryujin Monster Placement in Online Mode:\n\n(A) In src/server/index.ts RYUJIN_BUY handler (line ~1615): After calling ryujinBuyCardFn, check if the bought card is a monster (cardType === 'monster'). If it IS a monster, set ryujinBuyActive: false but do NOT call advanceKamiResolution. Instead just broadcastState and wait for MONSTER_PLACED. If it is NOT a monster, proceed as before (advanceKamiResolution).\n\n(B) In src/server/index.ts MONSTER_PLACED handler (line ~1223): After the existing monster placement logic (templeId/provinceId/reserve branches), add a check: if the game is in kamiResolutionActive state (and trainMandateActive is false), instead of advancing trainResolution, call advanceKamiResolution and do NOT advance trainResolutionIndex. The existing trainResolution advancement should only run when trainMandateActive is true.\n\n(C) In src/store/gameStore.ts doRyujinBuyCard (line ~2294): After sending RYUJIN_BUY to the server, do NOT just return. Instead, apply ryujinBuyCard locally (same as hotseat) to check if the card is a monster. If it IS a monster, enter the monster placement UI flow (same pattern as doBuySeasonCard online mode at line ~1197): handle Komainu/Hotei special case (komainuChoiceVisible), Luna no-valid-province case, and normal monster placement popup. If NOT a monster, just return (server will advance).",
 
@@ -23,5 +23,5 @@
     "Run `npm run build` and confirm successful compilation with no errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All three bugs fixed in a single commit. Build passes clean. No test suite to run. The MONSTER_PLACED handler now has dual-path logic: if kamiResolutionActive and not trainMandateActive, it calls advanceKamiResolution; otherwise it advances train resolution as before. Added kami resolution player validation to MONSTER_PLACED handler for security."
 }
