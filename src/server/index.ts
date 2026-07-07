@@ -1708,7 +1708,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             players: newPlayers,
             log: newLog,
             coinDistributionPending: newRemainder > 0
-              ? { ...pending, remainder: newRemainder, distributed: pending.distributed + 1, losers: pending.losers.filter(id => id !== targetPlayerId) }
+              ? { ...pending, remainder: newRemainder, distributed: pending.distributed + 1 }
               : null,
           };
           broadcastState(l);
@@ -1719,6 +1719,9 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.coinDistributionPending) return;
+          const pendingDismiss = l.gameState.coinDistributionPending;
+          // Only allow dismiss if remainder is 0 (informational) or the sender is the winner
+          if (pendingDismiss.remainder !== 0 && data.playerId !== pendingDismiss.winnerId) return;
           l.gameState = { ...l.gameState, coinDistributionPending: null };
           broadcastState(l);
           break;
