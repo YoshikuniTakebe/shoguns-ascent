@@ -3385,6 +3385,15 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
           figForce = isLuna ? Math.max(monsterCard.force, 2) : monsterCard.force;
         }
       }
+      // Fukurokuju counts as daimyo - apply daimyo bonus cards
+      if (fig.monsterCardId === 'sp-fukurokuju') {
+        if (hasCard(cardIds, 'sp-path-of-the-lion')) {
+          figForce += 1;
+        }
+        if (hasCard(cardIds, 'au-path-of-the-dragon')) {
+          figForce += 3;
+        }
+      }
     }
 
     totalForce += figForce;
