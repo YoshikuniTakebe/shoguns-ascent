@@ -339,6 +339,29 @@ function BattleResultPopup({
                   <span style={{ opacity: 0.7 }}>sacrifico</span>
                   <span style={{ fontWeight: 'bold' }}>{resData.seppukuKillCount}</span>
                   <span style={{ opacity: 0.7 }}>unidades</span>
+                  {resData.seppukuFigures && resData.seppukuFigures.length > 0 && (
+                    <span style={{ opacity: 0.8 }}>
+                      ({resData.seppukuFigures.map((entry: any, i: number) => (
+                        <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                          {i > 0 && ' | '}
+                          <span>{entry.count}</span>
+                          {entry.type === 'bushi' && <BushiIcon size={14} color={seppClan?.color || '#fff'} />}
+                          {entry.type === 'shinto' && <ShintoIcon size={14} color={seppClan?.color || '#fff'} />}
+                          {entry.type === 'monster' && <MonsterIcon size={14} color={seppClan?.color || '#fff'} />}
+                          {entry.type === 'monster' && entry.names && entry.names.length > 0 && (
+                            <span style={{ fontSize: '0.85em' }}>[{entry.names.join(', ')}]</span>
+                          )}
+                        </span>
+                      ))})
+                    </span>
+                  )}
+                  <span style={{ opacity: 0.7 }}>y gano</span>
+                  <VPIcon size={14} color="#f5c842" />
+                  <span style={{ color: '#f5c842', fontWeight: 'bold' }}>{resData.seppukuKillCount}</span>
+                  <span style={{ opacity: 0.7 }}>y subio</span>
+                  <span style={{ fontWeight: 'bold' }}>{resData.seppukuKillCount}</span>
+                  <span style={{ opacity: 0.7 }}>posiciones de</span>
+                  <HonorIcon size={14} color="#e57373" />
                 </div>
               );
             })()}
@@ -382,7 +405,7 @@ function BattleResultPopup({
                   <ClanShield clanId={captor?.clanId || ''} size={16} />
                   <span style={{ color: captorClan?.color, fontWeight: 'bold' }}>{captor?.name}</span>
                   <span style={{ opacity: 0.7 }}>captura</span>
-                  <span style={{ fontWeight: 'bold' }}>{resData.capturedHostage!.figureName}</span>
+                  <span style={{ fontWeight: 'bold', color: victimClan?.color || '#fff' }}>{resData.capturedHostage!.figureName}</span>
                   <span style={{ opacity: 0.7 }}>de</span>
                   <ClanShield clanId={victim?.clanId || ''} size={16} />
                   <span style={{ color: victimClan?.color, fontWeight: 'bold' }}>{victim?.name}</span>
@@ -648,6 +671,26 @@ export const BattlePanel = () => {
     const seppukuPlayer = gameState.players.find(p => p.id === battleResolutionData.seppukuWinnerId);
     const seppukuClan = seppukuPlayer ? CLANS.find(c => c.id === seppukuPlayer.clanId) : null;
 
+    // In online mode, only show interactive popup to the seppuku winner
+    if (gameState.mode === 'online' && localPlayerId !== battleResolutionData.seppukuWinnerId) {
+      return createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card" style={{ borderColor: seppukuClan?.color }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <ClanShield clanId={seppukuPlayer?.clanId || ''} size={36} />
+              <span style={{ color: seppukuClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+                {seppukuPlayer?.name}
+              </span>
+            </div>
+            <p style={{ fontSize: '1em', margin: '0.5rem 0', textAlign: 'center', opacity: 0.8 }}>
+              Decidiendo Seppuku... [ESPERANDO]
+            </p>
+          </div>
+        </div>,
+        document.body
+      );
+    }
+
     return createPortal(
       <div className="battle-popup-overlay">
         <div className="battle-popup-card" style={{ borderColor: seppukuClan?.color }}>
@@ -687,6 +730,26 @@ export const BattlePanel = () => {
     const seppukuPlayer = gameState.players.find(p => p.id === battleResolutionData.seppukuWinnerId);
     const seppukuClan = seppukuPlayer ? CLANS.find(c => c.id === seppukuPlayer.clanId) : null;
     const killCount = battleResolutionData.seppukuKillCount;
+
+    // In online mode, only show to the seppuku winner
+    if (gameState.mode === 'online' && localPlayerId !== battleResolutionData.seppukuWinnerId) {
+      return createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card" style={{ borderColor: seppukuClan?.color }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <ClanShield clanId={seppukuPlayer?.clanId || ''} size={36} />
+              <span style={{ color: seppukuClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+                {seppukuPlayer?.name}
+              </span>
+            </div>
+            <p style={{ fontSize: '1em', margin: '0.5rem 0', textAlign: 'center', opacity: 0.8 }}>
+              Turno de {seppukuPlayer?.name} [ESPERANDO]
+            </p>
+          </div>
+        </div>,
+        document.body
+      );
+    }
 
     return createPortal(
       <div className="battle-popup-overlay">
@@ -758,6 +821,26 @@ export const BattlePanel = () => {
   if (battleStepPhase === 'hostage-selection' && battleResolutionData?.hostageWinnerId) {
     const hostagePlayer = gameState.players.find(p => p.id === battleResolutionData.hostageWinnerId);
     const hostageClan = hostagePlayer ? CLANS.find(c => c.id === hostagePlayer.clanId) : null;
+
+    // In online mode, only show to the hostage winner
+    if (gameState.mode === 'online' && localPlayerId !== battleResolutionData.hostageWinnerId) {
+      return createPortal(
+        <div className="battle-popup-overlay">
+          <div className="battle-popup-card" style={{ borderColor: hostageClan?.color }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <ClanShield clanId={hostagePlayer?.clanId || ''} size={36} />
+              <span style={{ color: hostageClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+                {hostagePlayer?.name}
+              </span>
+            </div>
+            <p style={{ fontSize: '1em', margin: '0.5rem 0', textAlign: 'center', opacity: 0.8 }}>
+              Eligiendo rehen... [ESPERANDO]
+            </p>
+          </div>
+        </div>,
+        document.body
+      );
+    }
 
     const unresolvedBattle = allBattles.find(b => !b.resolved && !b.uncontested);
     const province = unresolvedBattle ? gameState.provinces[unresolvedBattle.provinceId] : null;
