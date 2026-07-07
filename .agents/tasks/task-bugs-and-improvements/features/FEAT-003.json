@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Fix Susanoo not counting Fukurokuju as fortress for VP reward, and implement Fukurokuju marshal placement rules",
+  "status": "in_progress",
+  "steps": [
+    "Step 1 - Fix Susanoo VP counting: In src/utils/gameLogic.ts, there are TWO places where Susanoo counts fortresses. At line ~1589, the filter is `f.owner === playerId && f.type === 'fortress'` - this does NOT include Fukurokuju. Change both occurrences to also count monsters with monsterCardId === 'sp-fukurokuju': `f.owner === playerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju'))`. The second occurrence is around line 1730 where `fortressCount` is computed for the susanoo popup.",
+    "Step 2 - Implement Fukurokuju placement via Marshal mandate: Currently buildFortress() in gameLogic.ts only builds type 'fortress' figures. According to the FAQ, Fukurokuju can be placed via Marshal as a fortress (3 coins, anywhere). Add a new function or modify buildFortress to allow placing Fukurokuju during marshal if the player has Fukurokuju in their monster reserve (purchased via Train but not yet deployed). The cost is 3 coins (or 1 for Bonsai clan). When placed this way, it goes to any province (same as fortress placement rules). Create a new action or a flag that indicates the player wants to build Fukurokuju instead of a regular fortress.",
+    "Step 3 - Add Fukurokuju build option in ActionPanel: In src/components/ActionPanel.tsx, during marshal mandate, if the active player has Fukurokuju in their monster reserve (purchased card not deployed), show an additional button to build Fukurokuju as fortress. This should use the buildFortressMode logic but dispatch a different action.",
+    "Step 4 - Fix Jinmenju/Fukurokuju recruit bonus rule: In src/utils/gameLogic.ts, when computing recruit placements available, both Jinmenju and Fukurokuju should only grant their bonus figure if they were on the map BEFORE the recruit mandate started (i.e., at the start of the mandate, not placed during it). Currently the code at line ~713 counts fortresses (including Fukurokuju) for determining placements. This is correct because the count happens when the mandate starts. Verify this is already correct - the totalFortresses calculation at line 713 happens when the recruit mandate is initiated, so Fukurokuju placed during the same mandate would not be counted. This step may already be correct but verify.",
+    "Step 5 - Server-side support: In src/server/index.ts, handle the new action for building Fukurokuju via Marshal. Process it similarly to BUILD_FORTRESS but place a monster figure with monsterCardId 'sp-fukurokuju' instead of a fortress figure."
+  ],
+  "acceptance_criteria": [
+    "Susanoo VP reward counts Fukurokuju as a fortress (both in resolution and in the popup preview)",
+    "Players with Fukurokuju purchased but not deployed can place it during Marshal mandate as a fortress (3 coins, anywhere, or 1 coin for Bonsai)",
+    "Fukurokuju placed via recruit does not grant an extra figure in the same recruit turn",
+    "npm run build succeeds"
+  ],
+  "verification": [
+    "npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

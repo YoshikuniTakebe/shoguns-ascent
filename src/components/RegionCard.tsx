@@ -231,6 +231,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   const localPlayerId = useGameStore(s => s.localPlayerId);
   const selectedFigures = useGameStore(s => s.selectedFigures);
   const buildFortressMode = useGameStore(s => s.buildFortressMode);
+  const buildFukurokujuMode = useGameStore(s => s.buildFukurokujuMode);
   const recruitMode = useGameStore(s => s.recruitMode);
   const betrayMode = useGameStore(s => s.betrayMode);
   const monsterPlacementMode = useGameStore(s => s.monsterPlacementMode);
@@ -346,7 +347,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   }
 
   const handleClick = () => {
-    const { selectRegion, doMoveForces, setMoveFrom, setSelectedFigures, doBuildFortress, doRecruitPlaceFigure, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, doJinmenjuPlace } = useGameStore.getState();
+    const { selectRegion, doMoveForces, setMoveFrom, setSelectedFigures, doBuildFortress, doBuildFukurokuju, doRecruitPlaceFigure, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, doJinmenjuPlace } = useGameStore.getState();
     // Zorro placement: click province to place bushi
     if (zorroPlacementActive && isZorroTarget) {
       doZorroPlaceBushi(regionId);
@@ -378,6 +379,10 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
     }
     if (buildFortressMode) {
       doBuildFortress(regionId);
+      return;
+    }
+    if (buildFukurokujuMode) {
+      doBuildFukurokuju(regionId);
       return;
     }
     if (moveMode && moveFrom && isMoveTarget) {

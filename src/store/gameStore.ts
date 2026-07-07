@@ -29,6 +29,7 @@ import {
   advanceTrainResolution,
   skipMarshalTurn,
   buildFortress,
+  buildFukurokuju,
   recruitPlaceFigure,
   skipRecruitTurn,
   betraySelectFigure,
@@ -320,6 +321,9 @@ interface GameStore {
   doSkipMarshalTurn: () => void;
   doBuildFortress: (provinceId: string) => void;
   toggleBuildFortressMode: () => void;
+  buildFukurokujuMode: boolean;
+  toggleBuildFukurokujuMode: () => void;
+  doBuildFukurokuju: (provinceId: string) => void;
 
   // Recruit mandate actions
   recruitMode: boolean;
@@ -438,7 +442,7 @@ interface GameStore {
 
   // Marshal pending moves/fortresses for online buffering
   marshalPendingMoves: { fromProvinceId: string; toProvinceId: string; figureIds: string[] }[];
-  marshalPendingFortresses: { provinceId: string }[];
+  marshalPendingFortresses: { provinceId: string; fukurokuju?: boolean }[];
 
   // Map peek during bidding
   biddingMapPeek: boolean;
@@ -519,6 +523,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   selectedHostageTarget: null,
   showTrainModal: false,
   buildFortressMode: false,
+  buildFukurokujuMode: false,
   recruitMode: false,
   recruitFigureType: 'bushi',
   betrayMode: false,
@@ -866,6 +871,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       moveFrom: null,
       selectedFigures: [],
       buildFortressMode: false,
+      buildFukurokujuMode: false,
       recruitMode: undoMandateState.recruitMandateActive,
       recruitFigureType: 'bushi',
       betrayMode: undoMandateState.betrayMandateActive,
@@ -1354,7 +1360,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         playerId: get().localPlayerId,
         payload: { moves: marshalPendingMoves, fortresses: marshalPendingFortresses },
       });
-      set({ marshalPendingMoves: [], marshalPendingFortresses: [], undoMandateState: null, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false });
+      set({ marshalPendingMoves: [], marshalPendingFortresses: [], undoMandateState: null, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false, buildFukurokujuMode: false });
       return;
     }
     let ns = skipMarshalTurn(gameState);
@@ -1365,6 +1371,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       gameState: ns,
       buildFortressMode: false,
+      buildFukurokujuMode: false,
       moveMode: false,
       moveFrom: null,
       selectedFigures: [],
@@ -1394,10 +1401,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const ns = buildFortress(gameState, apid, provinceId);
     set({ gameState: ns, buildFortressMode: false });
   },
-  toggleBuildFortressMode: () => set((s) => ({ buildFortressMode: !s.buildFortressMode, moveMode: false, moveFrom: null, selectedFigures: [] })),
+  toggleBuildFortressMode: () => set((s) => ({ buildFortressMode: !s.buildFortressMode, buildFukurokujuMode: false, moveMode: false, moveFrom: null, selectedFigures: [] })),
+  toggleBuildFukurokujuMode: () => set((s) => ({ buildFukurokujuMode: !s.buildFukurokujuMode, buildFortressMode: false, moveMode: false, moveFrom: null, selectedFigures: [] })),
+  doBuildFukurokuju: (provinceId: string) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState || !localPlayerId) return;
+    const cp = getCurrentPlayer(gameState);
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (!apid) return;
+    if (ws && gameState.mode === 'online') {
+      // During marshal mandate, apply Fukurokuju locally instead of sending to server
+      if (gameState.marshalMandateActive) {
+        const ns = buildFukurokuju(gameState, apid, provinceId);
+        set({ gameState: ns, buildFukurokujuMode: false, marshalPendingFortresses: [...get().marshalPendingFortresses, { provinceId, fukurokuju: true }] });
+        return;
+      }
+      get().sendAction({ type: 'BUILD_FUKUROKUJU', playerId: apid, payload: { provinceId } });
+      set({ buildFukurokujuMode: false });
+      return;
+    }
+    const ns = buildFukurokuju(gameState, apid, provinceId);
+    set({ gameState: ns, buildFukurokujuMode: false });
+  },
 
   // --- Recruit Mandate Actions ---
-  toggleRecruitMode: () => set((s) => ({ recruitMode: !s.recruitMode, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false, betrayMode: false })),
+  toggleRecruitMode: () => set((s) => ({ recruitMode: !s.recruitMode, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false, buildFukurokujuMode: false, betrayMode: false })),
   setRecruitFigureType: (figureType) => set({ recruitFigureType: figureType }),
   doRecruitPlaceFigure: (provinceId: string) => {
     const { gameState, localPlayerId, recruitFigureType, ws } = get();

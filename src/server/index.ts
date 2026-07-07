@@ -23,6 +23,7 @@ import {
   buySeasonCard,
   skipMarshalTurn,
   buildFortress,
+  buildFukurokuju,
   betraySelectFigure,
   skipBetrayTurn,
   shouldEndTeaPhase,
@@ -1332,7 +1333,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (fortresses && Array.isArray(fortresses)) {
             for (const fort of fortresses) {
               if (fort.provinceId) {
-                s = buildFortress(s, data.playerId, fort.provinceId);
+                if (fort.fukurokuju) {
+                  s = buildFukurokuju(s, data.playerId, fort.provinceId);
+                } else {
+                  s = buildFortress(s, data.playerId, fort.provinceId);
+                }
               }
             }
           }
@@ -1352,6 +1357,16 @@ wss.on('connection', (ws: WebSocket, req) => {
           const { provinceId } = data.payload || {};
           if (!provinceId) return;
           l.gameState = buildFortress(l.gameState, data.playerId, provinceId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'BUILD_FUKUROKUJU': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const { provinceId } = data.payload || {};
+          if (!provinceId) return;
+          l.gameState = buildFukurokuju(l.gameState, data.playerId, provinceId);
           broadcastState(l);
           break;
         }

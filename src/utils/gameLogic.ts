@@ -1585,11 +1585,11 @@ export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerI
       break;
     }
     case 'susanoo': {
-      // Grant VP equal to number of fortresses on the map
+      // Grant VP equal to number of fortresses on the map (Fukurokuju counts as fortress)
       let fortressCount = 0;
       Object.values(newState.provinces).forEach((province) => {
         fortressCount += province.figures.filter(
-          (f) => f.owner === playerId && f.type === 'fortress'
+          (f) => f.owner === playerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju'))
         ).length;
       });
       player.victoryPoints += fortressCount;
@@ -1730,7 +1730,7 @@ export function resolveCurrentKamiReward(state: GameState): GameState {
       let fortressCount = 0;
       Object.values(newState.provinces).forEach((province) => {
         fortressCount += province.figures.filter(
-          (f) => f.owner === winnerId && f.type === 'fortress'
+          (f) => f.owner === winnerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju'))
         ).length;
       });
       updatedTemple.susanooVPGained = fortressCount;
@@ -3769,6 +3769,61 @@ export function buildFortress(state: GameState, playerId: string, provinceId: st
     },
     marshalFortressBuiltBy: [...state.marshalFortressBuiltBy, playerId],
     log: [...state.log, `${player.name} construye una fortaleza en ${province.name} (${fortressCost} monedas)`],
+  };
+  return newState;
+}
+
+/**
+ * Place Fukurokuju as a fortress during Marshal mandate.
+ * Costs 3 coins (1 for Bonsai), can be placed in ANY province.
+ * Consumes the marshal fortress build slot. Does NOT use fortress reserve.
+ */
+export function buildFukurokuju(state: GameState, playerId: string, provinceId: string): GameState {
+  if (!state.marshalMandateActive) return state;
+  if (!state.marshalMandateIssuerId) return state;
+  if (!isIssuerOrAlly(state, playerId, state.marshalMandateIssuerId)) return state;
+  if (state.marshalFortressBuiltBy.includes(playerId)) return state;
+
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return state;
+
+  // Check player has Fukurokuju in seasonCards
+  const hasFukurokujuCard = player.seasonCards.some(c => c.id === 'sp-fukurokuju');
+  if (!hasFukurokujuCard) return state;
+
+  // Check Fukurokuju is not already deployed on the map
+  const alreadyDeployed = Object.values(state.provinces).some(prov =>
+    prov.figures.some(f => f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju' && f.owner === playerId)
+  );
+  if (alreadyDeployed) return state;
+
+  // Bonsai clan power: fortress costs max 1 coin instead of 3
+  const fortressCost = player.clanId === 'bonsai' ? 1 : 3;
+  if (player.coins < fortressCost) return state;
+
+  const province = state.provinces[provinceId];
+  if (!province) return state;
+
+  const figureId = Math.random().toString(36).substring(2, 10);
+  const fukurokujuFigure = { type: 'monster' as const, owner: playerId, id: figureId, monsterCardId: 'sp-fukurokuju' };
+
+  const newState: GameState = {
+    ...state,
+    players: state.players.map((p) => {
+      if (p.id === playerId) {
+        return { ...p, coins: p.coins - fortressCost };
+      }
+      return { ...p };
+    }),
+    provinces: {
+      ...state.provinces,
+      [provinceId]: {
+        ...province,
+        figures: [...province.figures, fukurokujuFigure],
+      },
+    },
+    marshalFortressBuiltBy: [...state.marshalFortressBuiltBy, playerId],
+    log: [...state.log, `${player.name} despliega a Fukurokuju en ${province.name} (${fortressCost} monedas)`],
   };
   return newState;
 }

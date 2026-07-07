@@ -16,6 +16,7 @@ export const ActionPanel = () => {
     doSetupSeason, doDrawMandateTiles, doChooseMandateTile,
     doLotoChooseActualMandate,
     doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
+    toggleBuildFukurokujuMode, buildFukurokujuMode,
     doSkipRecruitTurn, toggleRecruitMode, recruitMode, recruitFigureType, setRecruitFigureType,
     doSkipBetrayTurn,
     doResolveWinter,
@@ -530,6 +531,22 @@ export const ActionPanel = () => {
                       </span>
                     </button>
                     {buildFortressMode && <p className="move-instruction">{t('actions.marshalSelectProvince')}</p>}
+                  </div>
+                )}
+                {hasBonus &&
+                  !gameState.marshalFortressBuiltBy.includes(cp!.id) &&
+                  cp!.coins >= (cp!.clanId === 'bonsai' ? 1 : 3) &&
+                  cp!.seasonCards.some(c => c.id === 'sp-fukurokuju') &&
+                  !Object.values(gameState.provinces).some(prov => prov.figures.some(f => f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju' && f.owner === cp!.id)) && (
+                  <div style={{ marginTop: '6px' }}>
+                    <button className={`btn-secondary ${buildFukurokujuMode ? 'active' : ''}`} style={{ fontSize: '0.85rem', width: '100%' }} onClick={toggleBuildFukurokujuMode}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        Fukurokuju
+                        <CoinIcon size={16} color="#DAA520" />
+                        <span style={{ fontWeight: 'bold', color: '#DAA520', fontSize: '1.1em' }}>{cp!.clanId === 'bonsai' ? 1 : 3}</span>
+                      </span>
+                    </button>
+                    {buildFukurokujuMode && <p className="move-instruction">{t('actions.marshalSelectProvince')}</p>}
                   </div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
