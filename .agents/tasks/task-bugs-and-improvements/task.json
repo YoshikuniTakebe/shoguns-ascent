@@ -1,0 +1,7 @@
+{
+  "task_id": "task-bugs-and-improvements",
+  "task_description": "Fix recruit bugs (shinto reset, undo phantoms, toggle buttons, turn popup), add marshal province dimming, fix Susanoo/Fukurokuju rules, fix kami/war/battle flow popups and ready-checks, implement cleanup phase with hostage return, and adjust figure sizes + diorama name display",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004", "FEAT-005", "FEAT-006", "FEAT-007"],
+  "blocked_reason": null
+}
