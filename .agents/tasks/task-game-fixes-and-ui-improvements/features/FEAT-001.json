@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Figure size overrides and Kami Summary god name coloring",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/components/RegionDetailModal.tsx, update FIGURE_SIZE_OVERRIDES: change 'bushi-zorro' from 0.86 to 0.84, change 'bushi-loto' from 0.75 to 0.76, change 'bushi-luna' from 0.85 to 0.86, and add 'shinto-zorro' with value reduced by 10% from default 1.0, so 0.90",
     "In src/components/KamiSummaryPopup.tsx, import the KAMI_PALETTES from KamiResolutionPopup.tsx (or define them inline). Then in the map over kamiSummaryData, render the kamiName with color set to the kami's primary palette color. The KAMI_PALETTES are: amaterasu=#FFD700, fujin=#4ECDC4, hachiman=#DC143C, raijin=#9B59B6, ryujin=#1E90FF, susanoo=#2ECC71, tsukuyomi=#C0C0C0"
