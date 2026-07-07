@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "fix",
   "description": "Fix recruit button visual state, recruit mode not deactivating after Terminar, and recruit undo + shinto placement bug",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "BUG A - Recruit button visual: In src/components/ActionPanel.tsx around line 596 and 605, fix the CSS class for recruit type buttons. Current: className={`recruit-type-btn ${recruitFigureType === 'bushi' ? 'active' : ''}`}. Fix: className={`recruit-type-btn ${recruitFigureType === 'bushi' && recruitMode ? 'active' : ''}`}. Same for the shinto button.",
     "BUG B - Recruit mode not deactivating: In src/store/gameStore.ts GAME_STATE handler (around line 3260-3280). Current code: when state.recruitMandateActive is true, it only sets recruitMode=true if currentRecruitPlayerId === lpId. But it does NOT set recruitMode=false when it's another player's turn. Fix: Add an else clause after the if(currentRecruitPlayerId === lpId) block that sets uiResets.recruitMode = false; uiResets.undoMandateState = null; This ensures when the local player skips their recruit turn and it becomes another player's turn, recruitMode is cleared.",
@@ -22,5 +22,5 @@
     "Run npm run build and confirm no TypeScript or build errors"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All three bugs fixed successfully. Build passes without errors. The recruitUndoSnapshot approach was used for server-side undo rather than sending full state from client (simpler and more secure)."
 }
