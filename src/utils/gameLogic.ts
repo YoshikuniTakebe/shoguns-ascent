@@ -316,8 +316,8 @@ function shuffleMandates(): MandateType[] {
 // ============================================================
 
 export function setupSeason(state: GameState, season: Season): GameState {
-  // Archive current season's log before transitioning
-  const archivedHistory = { ...state.logHistory, [state.currentSeason]: [...state.log] };
+  // Archive current season's log before transitioning (only if there's content to avoid overwriting)
+  const archivedHistory = state.log.length > 0 ? { ...state.logHistory, [state.currentSeason]: [...state.log] } : { ...state.logHistory };
 
   // Determine first player from turn order (static order set at game creation)
   const firstPlayerId = state.turnOrder[0];
@@ -2965,6 +2965,8 @@ export function finalizeCleanupAndAdvance(state: GameState): GameState {
     newState = resolveWinter(newState);
   } else {
     const nextSeason = seasons[idx + 1];
+    newState.logHistory = { ...newState.logHistory, [newState.currentSeason]: [...newState.log] };
+    newState.log = [];
     newState.currentSeason = nextSeason;
     newState.round += 1;
     newState.currentPhase = 'seasonSetup';
@@ -3395,7 +3397,8 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
       if (fig.monsterCardId === 'sp-oni-of-skulls') {
         const ownerIds = [...new Set(province.figures.map(f => f.owner))];
         const ownerHonorIndex = state.honorTrack.indexOf(playerId);
-        const hasLowestHonor = ownerIds.every(id => {
+        const otherOwnerIds = ownerIds.filter(id => id !== playerId);
+        const hasLowestHonor = otherOwnerIds.length > 0 && otherOwnerIds.every(id => {
           const idx = state.honorTrack.indexOf(id);
           return idx <= ownerHonorIndex;
         });
@@ -3404,7 +3407,8 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
       } else if (fig.monsterCardId === 'su-oni-of-blood') {
         const ownerIds = [...new Set(province.figures.map(f => f.owner))];
         const ownerHonorIndex = state.honorTrack.indexOf(playerId);
-        const hasLowestHonor = ownerIds.every(id => {
+        const otherOwnerIds = ownerIds.filter(id => id !== playerId);
+        const hasLowestHonor = otherOwnerIds.length > 0 && otherOwnerIds.every(id => {
           const idx = state.honorTrack.indexOf(id);
           return idx <= ownerHonorIndex;
         });
@@ -3590,6 +3594,7 @@ export function advancePlayer(state: GameState): GameState {
     // Instead of resolving all temples at once, compute temple results and enter step-by-step resolution
     const sortedTemples = [...newState.temples].sort((a, b) => a.position - b.position);
     const kamiResolutionTemples: KamiResolutionTemple[] = [];
+    newState.log = [...newState.log, '--- Turno Kami ---'];
 
     for (const temple of sortedTemples) {
       const { forces } = computeTempleWinner(temple.figures, newState.honorTrack, newState.players);
@@ -3656,7 +3661,6 @@ export function advancePlayer(state: GameState): GameState {
     }
     newState.kamiResolutionCurrentPlayerId = firstWinnerId;
     newState.kamiResolutionNextPlayerIndex = advanceToNextInSeating(referenceIdx);
-    newState.log = [...newState.log, '--- Turno Kami ---'];
     return newState;
   }
 

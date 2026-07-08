@@ -183,7 +183,8 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
             if (province) {
               const ownerIds = [...new Set(province.figures.map(f => f.owner))];
               const ownerHonorIndex = gameState.honorTrack.indexOf(figure.owner);
-              const hasLowestHonor = ownerIds.every(id => {
+              const otherOwnerIds = ownerIds.filter(id => id !== figure.owner);
+              const hasLowestHonor = otherOwnerIds.length > 0 && otherOwnerIds.every(id => {
                 const idx = gameState.honorTrack.indexOf(id);
                 return idx <= ownerHonorIndex;
               });
