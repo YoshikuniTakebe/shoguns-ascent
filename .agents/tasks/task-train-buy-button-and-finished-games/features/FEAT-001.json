@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix TRAIN mandate buy button not appearing in SeasonCardsModal. The bug is related to the purchasePending/playerConfirmed state management combined with the trainResolutionIndex-based reset effect. When a new train mandate fires, trainResolutionIndex is 0 (same as the default/reset value), so the useEffect that resets playerConfirmed and purchasePending doesn't fire. Additionally, for online mode, the component might retain stale state since it never unmounts (it always renders its hooks even when open=false).",
+  "status": "completed",
+  "steps": [
+    "In src/components/SeasonCardsModal.tsx, fix the useEffect that resets playerConfirmed and purchasePending. The current logic only fires when trainResolutionIndex changes, but between trains the index stays at 0, so a new train with index 0 doesn't trigger the reset. Add a secondary dependency on gameState.trainMandateActive: when trainMandateActive transitions from false to true (a new train mandate starts), unconditionally reset playerConfirmed=false, purchasePending=false, and confirmCard=null. Use a ref to track the previous trainMandateActive state.",
+    "Ensure the fix works for both hotseat and online modes. In hotseat, after the last player completes, trainResolutionIndex goes to 0 and trainMandateActive goes to false. When a new train starts, trainMandateActive becomes true again with index 0. In online mode, the same pattern occurs via WebSocket state updates.",
+    "Keep the existing trainResolutionIndex change detection for mid-train player transitions (index 0->1->2->3), which correctly resets state when advancing between players within a single train mandate.",
+    "Verify the fix doesn't cause the accept-button flicker that commit d7b96ae was trying to prevent. The overlay should NOT flash between players - purchasePending=true should still block it until the next player's turn is detected via index change."
+  ],
+  "acceptance_criteria": [
+    "When TRAIN mandate is emitted, the SeasonCardsModal shows the player indicator overlay with the Accept button",
+    "After clicking Accept, buy buttons appear on affordable season cards",
+    "This works correctly for subsequent TRAIN mandates in the same game session (not just the first one)",
+    "No flicker of the accept overlay between player transitions within a single train mandate",
+    "npm run build compiles without TypeScript errors"
+  ],
+  "verification": [
+    "Run npm run build and confirm it succeeds without errors"
+  ],
+  "blocked_reason": null,
+  "findings": "npm install was required before build. Build succeeds cleanly. The fix adds a useEffect tracking trainMandateActive transitions (false->true) to reset playerConfirmed/purchasePending/confirmCard and also resets lastTrainIndexRef to -1 so the index-based effect can also fire correctly on the first player."
+}
