@@ -74,6 +74,22 @@ export const BattleBiddingOverlay = ({
     return positions;
   });
 
+  // Safety wrapper: validates that total coin count always equals maxCoins.
+  // If any discrepancy is detected, resets all coins to the pool.
+  const safeSetCoinPositions = useCallback((updater: (prev: Record<string, string>) => Record<string, string>) => {
+    setCoinPositions(prev => {
+      const next = updater(prev);
+      // Validate: must have exactly maxCoins keys and all values must be valid targets
+      if (Object.keys(next).length !== maxCoins) {
+        // Reset to all-pool
+        const reset: Record<string, string> = {};
+        for (let i = 0; i < maxCoins; i++) reset[`coin-${i}`] = 'pool';
+        return reset;
+      }
+      return next;
+    });
+  }, [maxCoins]);
+
   // Reinitialize coinPositions if maxCoins changes while mounted
   useEffect(() => {
     setCoinPositions(() => {
@@ -84,6 +100,15 @@ export const BattleBiddingOverlay = ({
       return positions;
     });
   }, [maxCoins]);
+
+  // Safety net: if coinPositions ever has a count mismatch, reset to pool
+  useEffect(() => {
+    if (Object.keys(coinPositions).length !== maxCoins) {
+      const reset: Record<string, string> = {};
+      for (let i = 0; i < maxCoins; i++) reset[`coin-${i}`] = 'pool';
+      setCoinPositions(reset);
+    }
+  }, [coinPositions, maxCoins]);
 
   // Track which drop target is currently being dragged over
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
@@ -123,9 +148,13 @@ export const BattleBiddingOverlay = ({
     setDragOverTarget(null);
     const coinId = e.dataTransfer.getData('text/plain');
     if (coinId) {
-      setCoinPositions(prev => ({ ...prev, [coinId]: targetId }));
+      safeSetCoinPositions(prev => {
+        // Only process if coinId exists in current positions (not a phantom coin)
+        if (prev[coinId] === undefined) return prev;
+        return { ...prev, [coinId]: targetId };
+      });
     }
-  }, []);
+  }, [safeSetCoinPositions]);
 
   // ---- Touch event handlers for mobile ----
 
@@ -205,7 +234,11 @@ export const BattleBiddingOverlay = ({
       while (el) {
         const targetId = el.getAttribute('data-drop-target');
         if (targetId && ALL_DROP_TARGETS.includes(targetId)) {
-          setCoinPositions(prev => ({ ...prev, [coinId]: targetId }));
+          safeSetCoinPositions(prev => {
+            // Only process if coinId exists in current positions (not a phantom coin)
+            if (prev[coinId] === undefined) return prev;
+            return { ...prev, [coinId]: targetId };
+          });
           setDragOverTarget(null);
           return;
         }
@@ -214,7 +247,7 @@ export const BattleBiddingOverlay = ({
     }
 
     setDragOverTarget(null);
-  }, []);
+  }, [safeSetCoinPositions]);
 
   // ---- Confirm ----
 

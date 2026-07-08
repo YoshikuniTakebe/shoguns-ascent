@@ -1,0 +1,18 @@
+{
+  "id": "FEAT-006",
+  "type": "fix",
+  "description": "Add province color to the Coin Distribution popup (Reparto de Monedas). Currently the province name is rendered without color styling. Use PROVINCE_COLORS from types/game.ts.",
+  "status": "completed",
+  "steps": [
+    "In src/components/BattlePanel.tsx, find ALL instances where the coin distribution popup renders the province name. These are around lines 532-536 and any similar places within the coinDistributionPending block (there appear to be multiple: one for the online waiting state, one for remainder=0 info state, and one for the interactive distribution state).",
+    "For each province name display in the coin distribution popup, change from plain text to colored text using PROVINCE_COLORS[pending.battleProvinceId]. Example: `<p style={{ fontSize: '0.95em', marginBottom: '0.5rem', color: PROVINCE_COLORS[pending.battleProvinceId] || '#fff', fontWeight: 'bold' }}>{province?.name || pending.battleProvinceId}</p>`",
+    "PROVINCE_COLORS is already imported in BattlePanel.tsx (line 4: `import { CLANS, PROVINCE_COLORS, SEASON_CARDS_DATA } from '../types/game';`), so no new imports needed."
+  ],
+  "acceptance_criteria": [
+    "The province name in ALL variants of the coin distribution popup is displayed in the province's designated color from PROVINCE_COLORS",
+    "TypeScript build passes"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
+  "blocked_reason": null,
+  "findings": "Added color and fontWeight styling to all 3 province name displays in coin distribution popup. PROVINCE_COLORS was already imported."
+}

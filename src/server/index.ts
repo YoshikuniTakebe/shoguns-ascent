@@ -957,6 +957,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const targetFigure = selectedFigureId ? province2.figures.find(f => f.id === selectedFigureId) : null;
 
           if (targetFigure && targetFigure.owner !== playerId &&
+            unresolvedBattle2.participants.includes(targetFigure.owner) &&
             (targetFigure.type === 'bushi' || targetFigure.type === 'shinto' ||
               (targetFigure.type === 'monster' && targetFigure.monsterCardId && !['su-yurei', 'sp-fukurokuju'].includes(targetFigure.monsterCardId)))) {
             // Capture the hostage

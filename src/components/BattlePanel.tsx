@@ -849,6 +849,8 @@ export const BattlePanel = () => {
     const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
     const capturableFigures = province ? province.figures.filter(f => {
       if (f.owner === battleResolutionData.hostageWinnerId) return false;
+      // Only allow capturing figures from battle participants
+      if (unresolvedBattle && !unresolvedBattle.participants.includes(f.owner)) return false;
       if (f.type === 'daimyo') return false;
       if (f.type === 'fortress') return false;
       if (f.type === 'monster' && f.monsterCardId && DAIMYO_MONSTER_IDS.includes(f.monsterCardId)) return false;

@@ -1,0 +1,16 @@
+{
+  "id": "FEAT-010",
+  "type": "fix",
+  "description": "Increase Oni of Skulls figure size by 8% in the diorama view. Current scale: 1.30, target: 1.404 (1.30 * 1.08).",
+  "status": "in_progress",
+  "steps": [
+    "In src/components/RegionDetailModal.tsx, find the FIGURE_SIZE_OVERRIDES constant (around line 20). Change `'sp-oni-of-skulls': 1.30` to `'sp-oni-of-skulls': 1.404`."
+  ],
+  "acceptance_criteria": [
+    "Oni of Skulls figure in the region detail diorama renders at scale 1.404",
+    "TypeScript build passes"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -17,7 +17,7 @@ const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'bushi-tortuga': 1.05,
   'bushi-loto': 0.75,
   'daimyo-loto': 0.80,
-  'sp-oni-of-skulls': 1.30,
+  'sp-oni-of-skulls': 1.404,
   'daimyo-koi': 1.00,
   'sp-earth-dragon': 1.30,
   'daimyo-luna': 1.25,

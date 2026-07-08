@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-004",
+  "type": "fix",
+  "description": "Fix Yurei placement: when Yurei is bought and placed on the map, it should NOT also appear in the daimyo reserve. The user confirms the max daimyo count increased correctly, but Yurei also shows as being in reserve.",
+  "status": "completed",
+  "steps": [
+    "Investigate the doPlaceMonster flow in src/store/gameStore.ts (line 1717). When a monster figure is placed on the map, check if there's any code that also increments player.monsters or player.hasDaimyo incorrectly.",
+    "Check if the issue is that after placement, the figure's monsterCardId is correctly set so that computeReserveTotals in PlayerPanel.tsx can identify it as 'deployed'. The monster figure MUST have monsterCardId: 'su-yurei' for the deployed check to work.",
+    "Look at PlayerPanel.tsx computeReserveTotals (line ~19): `deployedMonsterCardIds` is built from `allMapFigures`. Verify that after placement, the monster figure shows up in allMapFigures with the correct monsterCardId.",
+    "The likely issue: in doPlaceMonster, the figure is placed but the GameState might not be properly persisted/propagated. Check if there's a state update that overwrites the placement. Also check if in online mode, the local state update is being overridden by a server broadcast that doesn't include the placement.",
+    "If the issue cannot be found in the placement logic, add a safety check in computeReserveTotals: after computing daimyoMonstersInReserve, verify that if a daimyo-type monster card is owned AND deployed on map, it should NOT count as being in reserve. The current logic should handle this via deployedMonsterCardIds check, but add a debug log if the deployed set doesn't contain 'su-yurei' when Yurei is owned."
+  ],
+  "acceptance_criteria": [
+    "When Yurei is purchased and placed on the map, the daimyo reserve shows correctly (Yurei NOT in reserve)",
+    "The total daimyo count (max) correctly includes Yurei",
+    "TypeScript build passes"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
+  "blocked_reason": null,
+  "findings": "The bug was in online mode: doPlaceMonster sent MONSTER_PLACED to server but did not optimistically update local gameState with the placed figure. This caused computeReserveTotals to not see the figure in deployedMonsterCardIds, incorrectly counting Yurei as in reserve. Fixed by adding gameState: ns to the online mode set() call."
+}

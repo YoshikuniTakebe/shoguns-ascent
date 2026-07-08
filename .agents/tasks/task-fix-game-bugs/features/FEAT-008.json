@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-008",
+  "type": "fix",
+  "description": "Fix critical coin duplication bug in BattleBiddingOverlay. When dragging coins out of the reserve pool and back in without releasing, extra coins can appear. Implement a validation/safety mechanism that stores the initial coin count and resets if the total ever mismatches.",
+  "status": "in_progress",
+  "steps": [
+    "In src/components/BattleBiddingOverlay.tsx, add an invariant check. Store maxCoins as the authoritative total at component mount.",
+    "Add a useEffect that watches coinPositions. On every change, count total coins in the positions object (Object.keys(coinPositions).length). If this count ever differs from maxCoins, reset all coins back to the pool: `setCoinPositions(() => { const positions = {}; for (let i = 0; i < maxCoins; i++) positions['coin-' + i] = 'pool'; return positions; })`.",
+    "In the handleDrop and handleTouchEnd callbacks, before setting the new position, validate that the coinId exists in the current coinPositions. If it doesn't (phantom coin), ignore the drop.",
+    "Add a guard in handleDrop: only process if `coinId && prev[coinId] !== undefined`. Same for handleTouchEnd.",
+    "Add a safety wrapper around setCoinPositions that validates the resulting total coin count after each update. If total coins in new state !== maxCoins, return the reset state instead.",
+    "The key principle per user request: 'total coins in pool + total coins in tactics must ALWAYS equal maxCoins. Any discrepancy resets everything to pool.'"
+  ],
+  "acceptance_criteria": [
+    "Dragging a coin out of the pool and back in without releasing does NOT create duplicate coins",
+    "Total coin count (pool + all tactics) is always exactly maxCoins",
+    "If any discrepancy is detected, all coins reset to the pool (tactic slots empty)",
+    "Normal drag-and-drop between pool and tactics works correctly",
+    "TypeScript build passes"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}

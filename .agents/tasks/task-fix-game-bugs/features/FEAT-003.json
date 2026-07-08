@@ -1,0 +1,20 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Fix Oni of Blood force display: the monster shows force 2 when the owner has worst honor in the province, but should show force 4. The issue is likely in how honor comparison works - the honorTrack stores player IDs where index 0 = best honor. The current code checks `idx <= ownerHonorIndex` which should be correct, BUT there might be an edge case where a figure in the province belongs to a player NOT in the honorTrack (somehow), or when there's only one owner in the province (the owner's own idx <= ownerHonorIndex is trivially true even if no comparison is possible). Also review whether the condition should require at least 2 different owners for the lowest-honor condition to trigger (you can't be 'lowest honor' if you're the only one there).",
+  "status": "completed",
+  "steps": [
+    "In src/utils/gameLogic.ts calculateForce function (around line 3395), examine the Oni of Blood condition. The current code uses `ownerIds = [...new Set(province.figures.map(f => f.owner))]` which includes ALL figure owners including the player themselves. The condition `ownerIds.every(id => idx <= ownerHonorIndex)` is always true if the player is the ONLY owner, giving them force 4 even alone. Per game rules, 'worst honor in the province' should require at least one OTHER player present. Fix: change the condition to only check OTHER owners: `const otherOwnerIds = ownerIds.filter(id => id !== playerId); const hasLowestHonor = otherOwnerIds.length > 0 && otherOwnerIds.every(id => { const idx = state.honorTrack.indexOf(id); return idx <= ownerHonorIndex; });`",
+    "Apply the same fix for sp-oni-of-skulls in the same function (same logic pattern, around line 3389).",
+    "Apply the same fix in src/components/RegionDetailModal.tsx getFigureForce function (around line 179-189) which has the same duplicate logic for display purposes."
+  ],
+  "acceptance_criteria": [
+    "Oni of Blood (su-oni-of-blood) shows force 4 when owner has worst honor among multiple clans in same province",
+    "Oni of Blood shows force 2 when owner is alone in the province or does NOT have worst honor",
+    "Oni of Skulls (sp-oni-of-skulls) follows same pattern: force 3 with worst honor (multiple clans), force 1 otherwise",
+    "TypeScript build passes"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
+  "blocked_reason": null,
+  "findings": "Fixed in both gameLogic.ts calculateForce and RegionDetailModal.tsx getFigureForce. The issue was Array.every() returning true on empty iteration when player was the only owner."
+}

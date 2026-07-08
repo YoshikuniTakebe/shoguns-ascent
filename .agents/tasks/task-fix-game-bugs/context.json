@@ -1,0 +1,24 @@
+{
+  "project_type": "React + TypeScript + Vite + Zustand board game (Shogun's Ascent)",
+  "language": "TypeScript/TSX",
+  "build_system": "npm + vite (tsc -b && vite build)",
+  "test_framework": "none (no test files found)",
+  "build_command": "cd /projects/sandbox/shoguns-ascent && npm run build",
+  "test_command": "cd /projects/sandbox/shoguns-ascent && npm run build",
+  "verification_instructions": "Run 'npm run build' - must produce zero TypeScript errors and a successful build output in dist/",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install (already done)",
+  "environment_constraints": "No test framework; verification is via TypeScript build passing. Network mode: INTEGRATIONS_ONLY - no external package installs needed.",
+  "contribution_requirements": "No CONTRIBUTING.md. Push directly to main branch.",
+  "key_patterns": "All game logic in src/utils/gameLogic.ts; UI state in src/store/gameStore.ts (Zustand); Components in src/components/; Types in src/types/game.ts. PROVINCE_COLORS from types/game.ts maps provinceId->color. Figure size overrides in FIGURE_SIZE_OVERRIDES in RegionDetailModal.tsx.",
+  "relevant_files": [
+    "src/utils/gameLogic.ts",
+    "src/store/gameStore.ts",
+    "src/components/BattlePanel.tsx",
+    "src/components/BattleBiddingOverlay.tsx",
+    "src/components/RegionDetailModal.tsx",
+    "src/components/GameLog.tsx",
+    "src/types/game.ts"
+  ],
+  "directory_structure": "src/components/ - UI components, src/store/gameStore.ts - Zustand store with all game actions, src/utils/gameLogic.ts - pure game logic functions (~3661 lines), src/types/game.ts - TypeScript types + game constants (PROVINCE_COLORS, card data)"
+}

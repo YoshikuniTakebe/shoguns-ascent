@@ -1,0 +1,20 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix season log history: when viewing the Spring log tab during Summer, it shows empty. The issue is in the cleanup/season-transition flow. In src/utils/gameLogic.ts around line 2968, cleanupSeason's return block sets currentSeason to nextSeason BEFORE the log is archived. Then when doSetupSeason calls setupSeason(gameState, gameState.currentSeason), it archives under the NEW season key instead of the old season.",
+  "status": "completed",
+  "steps": [
+    "In src/utils/gameLogic.ts, find the code block around line 2958-2972 (end of cleanupSeason or the function that sets currentSeason to nextSeason and currentPhase to 'seasonSetup'). Currently it does: `newState.currentSeason = nextSeason; newState.round += 1; newState.currentPhase = 'seasonSetup';`. The problem is that currentSeason changes BEFORE setupSeason archives the log.",
+    "Fix: Archive the log in this same location before changing currentSeason. Add: `newState.logHistory = { ...newState.logHistory, [newState.currentSeason]: [...newState.log] };` BEFORE `newState.currentSeason = nextSeason;`. Then clear the log: `newState.log = [];`",
+    "Also update setupSeason to handle the case where logHistory already has the current season archived (don't overwrite with empty log). In setupSeason (line 318), change the archive logic to only archive if the current log has content: `const archivedHistory = state.log.length > 0 ? { ...state.logHistory, [state.currentSeason]: [...state.log] } : { ...state.logHistory };`",
+    "Test that the flow works: Spring log is preserved when viewing it during Summer via the season tabs in GameLog component."
+  ],
+  "acceptance_criteria": [
+    "When transitioning from Spring to Summer, the Spring season's log entries are preserved in logHistory['spring']",
+    "The GameLog tab for Spring shows the full spring log when viewing during Summer",
+    "TypeScript build passes"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
+  "blocked_reason": null,
+  "findings": "The cleanupSeason function is named finalizeCleanupAndAdvance. Archive happens there before season change. setupSeason guards against overwriting with empty log."
+}

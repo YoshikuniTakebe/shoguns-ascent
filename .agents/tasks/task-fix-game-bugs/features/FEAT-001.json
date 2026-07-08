@@ -1,0 +1,19 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix Kami turn log markers: '--- Turno Kami ---' must appear BEFORE any sanctuary resolution logs, and '--- Fin Turno Kami ---' after all resolutions. Currently, empty temple 'saltado' logs appear before the marker.",
+  "status": "completed",
+  "steps": [
+    "In src/utils/gameLogic.ts around line 3590-3660 (the kami resolution setup in advancePlayer), the empty temples' 'saltado' log messages are added at lines 3601-3604 BEFORE the '--- Turno Kami ---' marker at line 3659. Fix: Move the '--- Turno Kami ---' marker to be added BEFORE the loop that logs empty temples (before the `for (const temple of sortedTemples)` loop that starts around line 3592).",
+    "Verify that the resolveKamiTurn function (line ~1668) also adds the marker before any temple logs - it currently does this correctly at line 1673.",
+    "Ensure order is: '--- Turno Kami ---', then empty temple logs ('Santuario N (...) - sin figuras, saltado'), then temple resolution logs, then '--- Fin Turno Kami ---'."
+  ],
+  "acceptance_criteria": [
+    "The log line '--- Turno Kami ---' appears before ALL sanctuary resolution entries including 'saltado' entries",
+    "The log line '--- Fin Turno Kami ---' appears after ALL sanctuary resolutions are complete",
+    "TypeScript build passes with no errors"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
+  "blocked_reason": null,
+  "findings": "npm install was needed before build could run. Build passes cleanly after fix."
+}

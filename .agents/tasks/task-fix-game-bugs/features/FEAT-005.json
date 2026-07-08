@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-005",
+  "type": "fix",
+  "description": "Fix betray undo not working properly. The undo mechanism saves a snapshot when betray mandate activates (line 1122 in gameStore.ts), and restores it in doUndoMandate (line 809). Need to investigate what's going wrong.",
+  "status": "completed",
+  "steps": [
+    "In src/store/gameStore.ts, check the doUndoMandate function at line 809. When betrayMode is active and undo is pressed, the undoMandateState is restored. Check that ALL relevant betray state fields are being properly reset.",
+    "The restoration sets `betrayMode: undoMandateState.betrayMandateActive` but does NOT explicitly reset `betraySelectionsRemaining` or `betraySelectedOwners` - those come from the gameState restoration. Verify the JSON deep copy correctly preserves all nested fields.",
+    "Check if there's a timing issue where the undo state gets cleared before the undo action can complete. Look at whether doBetraySelectFigure sets `undoMandateState: null` prematurely when betray is still active.",
+    "A possible issue: after the first betray replacement, if betrayMandateActive is still true (more replacements to do), the code at line 1614 does `set({ gameState: ns })` without updating undoMandateState. This is correct (undo should restore to pre-any-betray state). But check if there's an issue where the gameState ns reference somehow corrupts undoMandateState.",
+    "Another possible issue: the JSON.parse(JSON.stringify(undoMandateState)) deep copy might not correctly handle some fields. Check if `betrayReplacements` (a GameState field) is properly copied.",
+    "Fix: Ensure that when restoring from undo, the `betrayReplacements` field on the gameState is also reset (it should be empty in the snapshot since it was captured before any betrayals). Add explicit resets for any betray-related UI state that might not be in GameState."
+  ],
+  "acceptance_criteria": [
+    "When pressing undo during a betray mandate, all betray replacements are reverted",
+    "After undo, the betray UI shows correctly allowing the player to make new selections",
+    "TypeScript build passes"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
+  "blocked_reason": null,
+  "findings": "The bug was in online mode: doUndoMandate had no handler for online betray (only online recruit was handled). Added UNDO_BETRAY action following the same pattern as UNDO_RECRUIT - client sends action to server, server restores from betrayUndoSnapshot. Also added betrayUndoSnapshot field to Lobby interface and save/restore logic. Hotseat mode undo logic was already correct."
+}
