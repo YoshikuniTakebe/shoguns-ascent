@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "fix",
   "description": "Figure size adjustments, recruit error message fix, and coin total log messages",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/components/RegionDetailModal.tsx, update the FIGURE_SIZE_OVERRIDES object: change 'daimyo-tortuga' from 1.20 to 1.22, change 'bushi-luna' from 0.86 to 0.87, change 'sp-jinmenju' from 1.20 to 1.23",
     "In src/store/gameStore.ts doRecruitPlaceFigure function (around line 1389-1460), fix the error message for when a player tries to recruit a shinto but has 0 in reserve. BEFORE the pre-validation call to recruitPlaceFigure, check if the player's reserve for the selected figure type is 0 (player.bushi <= 0 for bushi, player.shinto <= 0 for shinto). If so, show the message 'No te quedan mas shintos' (for shinto) or 'No te quedan mas bushis' (for bushi) instead of the generic fortress-based error. This check must happen BEFORE the call to recruitPlaceFigure(). The same pattern exists in both the online (ws) branch and the hotseat branch of doRecruitPlaceFigure.",
@@ -18,5 +18,5 @@
   ],
   "verification": ["npx tsc --noEmit"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All changes compile cleanly. Used \\u{1FA99} (coin emoji U+1FA99) for coin totals in log messages. The recruit reserve check was added as the very first check in the online branch (before recruitPlaceFigure call) and integrated as the first condition in the hotseat error-detection block."
 }
