@@ -1393,6 +1393,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
     if (ws && gameState.mode === 'online') {
+      // Pre-validate reserve before anything else
+      const player = gameState.players.find(p => p.id === apid);
+      if (player) {
+        if (recruitFigureType === 'shinto' && player.shinto <= 0) {
+          set({ ruleViolationMessage: 'No te quedan mas shintos' });
+          return;
+        }
+        if (recruitFigureType === 'bushi' && player.bushi <= 0) {
+          set({ ruleViolationMessage: 'No te quedan mas bushis' });
+          return;
+        }
+      }
       // Pre-validate on client side to show rule violation messages
       const preCheck = recruitPlaceFigure(gameState, apid, provinceId, recruitFigureType);
       if (preCheck === gameState) {
@@ -1432,20 +1444,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const province = gameState.provinces[provinceId];
       let msg = 'No puedes realizar esta accion';
       if (player && province) {
-        const isDragonfly = player.clanId === 'libelula';
-        if (!isDragonfly) {
-          const hasFortress = province.figures.some(f => f.owner === apid && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
-          if (!hasFortress) {
-            msg = 'No tienes fortaleza en esta provincia';
-          } else if (player.clanId === 'luna') {
-            const lunaFiguresInProvince = province.figures.filter(f => f.owner === apid && f.type !== 'fortress').length;
-            if (lunaFiguresInProvince >= 2) {
-              msg = 'Luna: maximo 2 figuras por provincia';
+        if (recruitFigureType === 'shinto' && player.shinto <= 0) {
+          msg = 'No te quedan mas shintos';
+        } else if (recruitFigureType === 'bushi' && player.bushi <= 0) {
+          msg = 'No te quedan mas bushis';
+        } else {
+          const isDragonfly = player.clanId === 'libelula';
+          if (!isDragonfly) {
+            const hasFortress = province.figures.some(f => f.owner === apid && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
+            if (!hasFortress) {
+              msg = 'No tienes fortaleza en esta provincia';
+            } else if (player.clanId === 'luna') {
+              const lunaFiguresInProvince = province.figures.filter(f => f.owner === apid && f.type !== 'fortress').length;
+              if (lunaFiguresInProvince >= 2) {
+                msg = 'Luna: maximo 2 figuras por provincia';
+              } else {
+                msg = 'Ya has reclutado en esta fortaleza este turno';
+              }
             } else {
               msg = 'Ya has reclutado en esta fortaleza este turno';
             }
-          } else {
-            msg = 'Ya has reclutado en esta fortaleza este turno';
           }
         }
       }

@@ -406,7 +406,7 @@ function returnHostages(state: GameState): GameState {
       Object.entries(hostagesByOwner).forEach(([ownerId, count]) => {
         const targetPlayer = newState.players.find((p) => p.id === ownerId);
         const targetName = targetPlayer ? targetPlayer.name : ownerId;
-        newState.log = [...newState.log, `${player.name} devuelve ${count} rehén(es) a ${targetName}, gana ${count} moneda(s)`];
+        newState.log = [...newState.log, `${player.name} devuelve ${count} rehén(es) a ${targetName}, gana ${count} moneda(s). Total \u{1FA99} ${player.coins}`];
       });
       player.hostages = [];
     }
@@ -470,7 +470,7 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string, 
           resultState = {
             ...resultState,
             players: updatedPlayers,
-            log: [...resultState.log, `${counterTarget.name} recibe ${actualBribe} monedas de soborno de ${counterProposer.name}`],
+            log: [...resultState.log, `${counterTarget.name} recibe ${actualBribe} monedas de soborno de ${counterProposer.name}. Total \u{1FA99} ${counterTarget.coins + actualBribe}`],
           };
         }
       }
@@ -490,7 +490,7 @@ export function proposeAlliance(state: GameState, fromId: string, toId: string, 
           resultState = {
             ...resultState,
             players: updatedPlayers,
-            log: [...resultState.log, `${requester.name} recibe ${actualRequest} monedas de peticion de ${payer.name}`],
+            log: [...resultState.log, `${requester.name} recibe ${actualRequest} monedas de peticion de ${payer.name}. Total \u{1FA99} ${requester.coins + actualRequest}`],
           };
         }
       }
@@ -537,7 +537,7 @@ export function acceptAlliance(state: GameState, fromId: string, toId: string): 
     if (actualBribe > 0) {
       from.coins -= actualBribe;
       to.coins += actualBribe;
-      newState.log = [...newState.log, `${to.name} recibe ${actualBribe} monedas de soborno de ${from.name}`];
+      newState.log = [...newState.log, `${to.name} recibe ${actualBribe} monedas de soborno de ${from.name}. Total \u{1FA99} ${to.coins}`];
     }
   }
 
@@ -547,7 +547,7 @@ export function acceptAlliance(state: GameState, fromId: string, toId: string): 
     if (actualRequest > 0) {
       to.coins -= actualRequest;
       from.coins += actualRequest;
-      newState.log = [...newState.log, `${from.name} recibe ${actualRequest} monedas de peticion de ${to.name}`];
+      newState.log = [...newState.log, `${from.name} recibe ${actualRequest} monedas de peticion de ${to.name}. Total \u{1FA99} ${from.coins}`];
     }
   }
 
@@ -1262,7 +1262,7 @@ export function advanceHarvestResolution(state: GameState): GameState {
           if (rewards.coins) rewardParts.push(`${rewards.coins} monedas`);
           if (rewards.ronin) rewardParts.push(`${rewards.ronin} ronin`);
           if (rewards.honor) rewardParts.push(`${rewards.honor} honor`);
-          newState.log = [...newState.log, `${player.name} obtiene recompensa de ${provinceName}: ${rewardParts.join(', ')}`];
+          newState.log = [...newState.log, `${player.name} obtiene recompensa de ${provinceName}: ${rewardParts.join(', ')}${rewards.coins ? `. Total \u{1FA99} ${player.coins}` : ''}`];
         }
       }
 
@@ -1305,7 +1305,7 @@ export function advanceHarvestResolution(state: GameState): GameState {
       if (rewards.coins) rewardParts.push(`${rewards.coins} monedas`);
       if (rewards.ronin) rewardParts.push(`${rewards.ronin} ronin`);
       if (rewards.honor) rewardParts.push(`${rewards.honor} honor`);
-      newState.log = [...newState.log, `${player.name} obtiene recompensa de ${provinceName}: ${rewardParts.join(', ')}`];
+      newState.log = [...newState.log, `${player.name} obtiene recompensa de ${provinceName}: ${rewardParts.join(', ')}${rewards.coins ? `. Total \u{1FA99} ${player.coins}` : ''}`];
     }
   }
 
@@ -1896,7 +1896,7 @@ function applyWarUpgrades(state: GameState): void {
         case 'sp-way-of-the-shogun': {
           // +3 coins
           player.coins += 3;
-          state.log = [...state.log, `${player.name} obtiene 3 Monedas (Way of the Shogun)`];
+          state.log = [...state.log, `${player.name} obtiene 3 Monedas (Way of the Shogun). Total \u{1FA99} ${player.coins}`];
           break;
         }
         case 'sp-way-of-the-righteous': {
@@ -1910,7 +1910,7 @@ function applyWarUpgrades(state: GameState): void {
               player.coins += 1;
             }
           }
-          state.log = [...state.log, `${player.name} toma monedas de jugadores con menor honor (Way of the Righteous)`];
+          state.log = [...state.log, `${player.name} toma monedas de jugadores con menor honor (Way of the Righteous). Total \u{1FA99} ${player.coins}`];
           break;
         }
         case 'su-way-of-bushido': {
@@ -1918,7 +1918,7 @@ function applyWarUpgrades(state: GameState): void {
           const virtueCount = player.seasonCards.filter((c) => c.cardType === 'virtue').length;
           player.coins += 2;
           player.victoryPoints += 2 * virtueCount;
-          state.log = [...state.log, `${player.name} obtiene 2 Monedas y ${2 * virtueCount} PV (Way of Bushido, ${virtueCount} virtudes)`];
+          state.log = [...state.log, `${player.name} obtiene 2 Monedas y ${2 * virtueCount} PV (Way of Bushido, ${virtueCount} virtudes). Total \u{1FA99} ${player.coins}`];
           break;
         }
         case 'su-way-of-the-ronin': {
@@ -1930,7 +1930,7 @@ function applyWarUpgrades(state: GameState): void {
         case 'au-way-of-the-moneylender': {
           // +5 coins
           player.coins += 5;
-          state.log = [...state.log, `${player.name} obtiene 5 Monedas (Way of the Moneylender)`];
+          state.log = [...state.log, `${player.name} obtiene 5 Monedas (Way of the Moneylender). Total \u{1FA99} ${player.coins}`];
           break;
         }
         case 'su-way-of-naginata':
@@ -2688,7 +2688,7 @@ export function resolveNextBattle(state: GameState): GameState {
           losers.forEach((pid) => {
             const loser = newState.players.find((p) => p.id === pid)!;
             loser.coins += share;
-            newState.log = [...newState.log, `${loser.name} recibe ${share} monedas del ganador`];
+            newState.log = [...newState.log, `${loser.name} recibe ${share} monedas del ganador. Total \u{1FA99} ${loser.coins}`];
           });
         }
         // Always show coin distribution popup to inform the winner of the distribution
@@ -2871,7 +2871,7 @@ export function processHostageReturn(state: GameState): GameState {
 
   const coinsGained = player.hostages.length;
   player.coins += coinsGained;
-  newState.log = [...newState.log, `${player.name} devuelve ${coinsGained} rehen(es) y gana ${coinsGained} moneda(s)`];
+  newState.log = [...newState.log, `${player.name} devuelve ${coinsGained} rehen(es) y gana ${coinsGained} moneda(s). Total \u{1FA99} ${player.coins}`];
   player.hostages = [];
 
   newState.hostageReturnIndex += 1;
