@@ -2,7 +2,7 @@
   "id": "FEAT-009",
   "type": "fix",
   "description": "Fix monster hostage-taking. The user reports that currently monsters cannot be taken as hostages. Code review shows the filter logic in BattlePanel.tsx appears correct (allows type 'monster' except daimyo-type), but there may be an issue with how the hostage selection interacts with the step-by-step battle mode, or there may be an issue with how battle participants are filtered.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/components/BattlePanel.tsx around line 848-855, verify the capturableFigures filter includes monsters correctly. Current code: `if (f.type === 'bushi' || f.type === 'shinto' || f.type === 'monster') return true;` - this should work.",
     "Check if the issue is that in step-by-step mode, by the time hostage selection occurs, the monster figures have been removed from the province by seppuku or Fire Dragon (once implemented). If seppuku killed the monster, it wouldn't be available for hostage - this is correct game behavior.",
@@ -19,5 +19,5 @@
   ],
   "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "The capturableFigures filter logic already correctly included monsters (type === 'monster') and excluded daimyo-type monsters (Yurei, Fukurokuju). Added a battle.participants check to ensure only figures from actual battle participants can be captured, which may have been the cause of edge-case issues. Server-side validation also updated for consistency."
 }

@@ -2,7 +2,7 @@
   "id": "FEAT-008",
   "type": "fix",
   "description": "Fix critical coin duplication bug in BattleBiddingOverlay. When dragging coins out of the reserve pool and back in without releasing, extra coins can appear. Implement a validation/safety mechanism that stores the initial coin count and resets if the total ever mismatches.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/components/BattleBiddingOverlay.tsx, add an invariant check. Store maxCoins as the authoritative total at component mount.",
     "Add a useEffect that watches coinPositions. On every change, count total coins in the positions object (Object.keys(coinPositions).length). If this count ever differs from maxCoins, reset all coins back to the pool: `setCoinPositions(() => { const positions = {}; for (let i = 0; i < maxCoins; i++) positions['coin-' + i] = 'pool'; return positions; })`.",
@@ -20,5 +20,5 @@
   ],
   "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "The coin duplication bug was caused by drag events creating new keys in the positions object when coins were dragged out and back into the pool. The safeSetCoinPositions wrapper validates that the resulting state always has exactly maxCoins entries and resets to pool if not. Additionally, a useEffect safety net monitors coinPositions and resets on any mismatch."
 }
