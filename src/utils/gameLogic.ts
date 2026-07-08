@@ -2806,7 +2806,7 @@ export function cleanupSeason(state: GameState): GameState {
   newState.players.forEach((player) => {
     if (player.hostages.length > 0) {
       player.coins += player.hostages.length;
-      newState.log = [...newState.log, `${player.name} devuelve ${player.hostages.length} rehen(es) y gana ${player.hostages.length} moneda(s)`];
+      newState.log = [...newState.log, `${player.name} devuelve ${player.hostages.length} rehen(es) y gana ${player.hostages.length} moneda(s). Total \u{1FA99} ${player.coins}`];
       player.hostages = [];
     }
   });
