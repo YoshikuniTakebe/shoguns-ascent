@@ -1,0 +1,7 @@
+{
+  "task_id": "task-recruit-monster-daimyo-ui-fixes",
+  "task_description": "Add monster and daimyo recruitment buttons to recruit panel with selection popups, fix UI issues (autumn log tab text, monster tooltip overflow/coloring, game-over title animation with image, scoring breakdown modal), and adjust figure sizes",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}
