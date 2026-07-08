@@ -418,6 +418,10 @@ interface GameStore {
   doAcceptTrade: (offerId: string) => void;
   doRejectTrade: (offerId: string) => void;
 
+  // Finished game viewing
+  viewingFinishedGame: boolean;
+  loadFinishedGameScore: (gameId: string) => Promise<void>;
+
   // Persistence
   persistentGameId: string | null;
   saveSnapshot: () => Promise<void> | void;
@@ -495,6 +499,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   turnPopupDismissedForIndex: null,
   jinmenjuSummonActive: false,
   tradeModalOpen: false,
+  viewingFinishedGame: false,
   persistentGameId: null,
   replayGameId: null,
   replaySnapshots: [],
@@ -698,6 +703,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ state: gameState }),
     }).then(() => {}).catch((err) => { console.error('[saveSnapshot] persistence error:', err); });
+  },
+
+  // --- Finished Game Score ---
+  loadFinishedGameScore: async (gameId) => {
+    try {
+      const snapshotsRes = await fetch(`${API_BASE}/api/games/${gameId}/snapshots`);
+      const snapshots = await snapshotsRes.json();
+      if (snapshots.length === 0) return;
+      const lastSnapshot = snapshots[snapshots.length - 1];
+      const gameState = lastSnapshot.state as GameState;
+      set({
+        gameState,
+        localPlayerId: gameState.players[0]?.id || null,
+        viewingFinishedGame: true,
+        screen: 'game',
+      });
+    } catch (err) {
+      console.error('[loadFinishedGameScore] failed to load game:', err);
+    }
   },
 
   // --- Replay ---

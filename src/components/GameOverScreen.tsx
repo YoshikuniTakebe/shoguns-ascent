@@ -68,7 +68,7 @@ function computeScoringBreakdown(player: Player, gameState: GameState) {
 }
 
 export const GameOverScreen = () => {
-  const { gameState } = useGameStore();
+  const { gameState, viewingFinishedGame } = useGameStore();
   const t = useT();
   const [viewingWarTokensPlayer, setViewingWarTokensPlayer] = useState<Player | null>(null);
   const [viewingCardsPlayer, setViewingCardsPlayer] = useState<Player | null>(null);
@@ -228,8 +228,14 @@ export const GameOverScreen = () => {
         </div>
 
         <div className="game-over-actions">
-          <button className="btn-primary" onClick={() => useGameStore.setState({ gameState: null, screen: 'menu' })}>
-            {t('gameOver.returnToMenu')}
+          <button className="btn-primary" onClick={() => {
+            if (viewingFinishedGame) {
+              useGameStore.setState({ gameState: null, viewingFinishedGame: false, screen: 'games-lobby' });
+            } else {
+              useGameStore.setState({ gameState: null, screen: 'menu' });
+            }
+          }}>
+            {viewingFinishedGame ? t('lobby.back') : t('gameOver.returnToMenu')}
           </button>
         </div>
       </div>

@@ -25,7 +25,7 @@ interface GameRecord {
 }
 
 export const GamesLobby = () => {
-  const { setScreen, resumeGame, loadReplayGame, authToken, authUser, logout } = useGameStore();
+  const { setScreen, resumeGame, loadFinishedGameScore, authToken, authUser, logout } = useGameStore();
   const t = useT();
   const [yourTurnGames, setYourTurnGames] = useState<GameRecord[]>([]);
   const [waitingGames, setWaitingGames] = useState<GameRecord[]>([]);
@@ -257,7 +257,7 @@ export const GamesLobby = () => {
     const handleAction = (e: React.MouseEvent) => {
       e.stopPropagation();
       if (type === 'finished') {
-        loadReplayGame(game.id);
+        loadFinishedGameScore(game.id);
       } else {
         handleResumeGame(game.id, game.mode);
       }
@@ -288,7 +288,7 @@ export const GamesLobby = () => {
       <div
         key={game.id}
         className={cardClass}
-        onClick={() => type === 'finished' ? loadReplayGame(game.id) : handleResumeGame(game.id, game.mode)}
+        onClick={() => type === 'finished' ? loadFinishedGameScore(game.id) : handleResumeGame(game.id, game.mode)}
       >
         <div className="games-lobby-card-header">
           <span className="games-lobby-card-gamename">
