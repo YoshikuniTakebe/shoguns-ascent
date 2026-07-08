@@ -111,6 +111,7 @@ interface Lobby {
   persistentGameId: string | null;
   config: LobbyConfig | null;
   recruitUndoSnapshot: GameState | null;
+  betrayUndoSnapshot: GameState | null;
 }
 
 const lobbies = new Map<string, Lobby>();
@@ -243,6 +244,7 @@ app.post('/api/lobbies', (req, res) => {
     persistentGameId: null,
     config: null,
     recruitUndoSnapshot: null,
+    betrayUndoSnapshot: null,
   };
   lobbies.set(lobby.id, lobby);
   res.json({ id: lobby.id });
@@ -645,6 +647,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             persistentGameId: null,
             config,
             recruitUndoSnapshot: null,
+            betrayUndoSnapshot: null,
           };
           lobbies.set(lobbyId, l);
           currentLobbyId = lobbyId;
@@ -1624,9 +1627,14 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const { figureId, provinceId } = data.payload || {};
           if (!figureId || !provinceId) return;
+          // Save undo snapshot on first betray selection
+          if (!l.betrayUndoSnapshot) {
+            l.betrayUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+          }
           let s = betraySelectFigure(l.gameState, data.playerId, figureId, provinceId);
           if (!s.betrayMandateActive) {
             s = advancePlayer(s);
+            l.betrayUndoSnapshot = null;
           }
           l.gameState = s;
           broadcastState(l);
@@ -1647,6 +1655,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             s = startInteractiveCleanup(s);
           }
           l.gameState = s;
+          l.betrayUndoSnapshot = null;
           broadcastState(l);
           break;
         }
@@ -1742,6 +1751,22 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (l.recruitUndoSnapshot) {
             l.gameState = JSON.parse(JSON.stringify(l.recruitUndoSnapshot));
             l.recruitUndoSnapshot = null;
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'UNDO_BETRAY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!l.gameState.betrayMandateActive) return;
+          // Validate sender is the betray issuer (current player)
+          const currentBetrayIdUndo = l.gameState.players[l.gameState.currentPlayerIndex]?.id;
+          if (data.playerId !== currentBetrayIdUndo) return;
+          // Restore from snapshot
+          if (l.betrayUndoSnapshot) {
+            l.gameState = JSON.parse(JSON.stringify(l.betrayUndoSnapshot));
+            l.betrayUndoSnapshot = null;
           }
           broadcastState(l);
           break;

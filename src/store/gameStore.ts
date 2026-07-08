@@ -823,6 +823,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
+    // For online betray: send undo to server
+    if (ws && gameState?.mode === 'online' && gameState.betrayMandateActive) {
+      get().sendAction({ type: 'UNDO_BETRAY', playerId: get().localPlayerId });
+      // Also restore local state immediately for responsiveness
+      set({
+        gameState: JSON.parse(JSON.stringify(undoMandateState)),
+        betrayMode: true,
+        betrayMonsterSelectionVisible: false,
+        betrayMonsterSelectionProvinceId: null,
+        betrayMonsterSelectionFigureId: null,
+        // Keep undoMandateState so it can be used again
+      });
+      return;
+    }
+
     // Original logic for hotseat/marshal
     set({
       gameState: JSON.parse(JSON.stringify(undoMandateState)),
@@ -1774,6 +1789,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (ws && gameState.mode === 'online') {
       get().sendAction({ type: 'MONSTER_PLACED', playerId: monsterPlacementPlayerId, payload: { cardId: monsterPlacementCard.id, provinceId } });
       set({
+        gameState: ns,
         monsterPlacementMode: false,
         monsterPlacementCard: null,
         monsterPlacementPlayerId: null,

@@ -530,7 +530,7 @@ export const BattlePanel = () => {
         <div className="battle-popup-overlay">
           <div className="battle-popup-card">
             <h3 className="battle-popup-title">{t('battle.coinDistributionTitle')}</h3>
-            <p style={{ fontSize: '0.95em', marginBottom: '0.5rem' }}>
+            <p style={{ fontSize: '0.95em', marginBottom: '0.5rem', color: PROVINCE_COLORS[pending.battleProvinceId] || '#fff', fontWeight: 'bold' }}>
               {province?.name || pending.battleProvinceId}
             </p>
             {winner && winnerClan && (
@@ -556,7 +556,7 @@ export const BattlePanel = () => {
         <div className="battle-popup-overlay">
           <div className="battle-popup-card">
             <h3 className="battle-popup-title">{t('battle.coinDistributionTitle')}</h3>
-            <p style={{ fontSize: '0.95em', marginBottom: '0.5rem' }}>
+            <p style={{ fontSize: '0.95em', marginBottom: '0.5rem', color: PROVINCE_COLORS[pending.battleProvinceId] || '#fff', fontWeight: 'bold' }}>
               {province?.name || pending.battleProvinceId}
             </p>
             {winner && winnerClan && (
@@ -615,7 +615,7 @@ export const BattlePanel = () => {
               <span>Ver Mapa</span>
             </button>
           </div>
-          <p style={{ fontSize: '0.95em', marginBottom: '0.5rem' }}>
+          <p style={{ fontSize: '0.95em', marginBottom: '0.5rem', color: PROVINCE_COLORS[pending.battleProvinceId] || '#fff', fontWeight: 'bold' }}>
             {province?.name || pending.battleProvinceId}
           </p>
           {winner && winnerClan && (
