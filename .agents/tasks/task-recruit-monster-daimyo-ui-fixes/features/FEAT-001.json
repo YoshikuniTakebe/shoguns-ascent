@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Add monster and daimyo recruit buttons to the recruit panel in ActionPanel.tsx, add monster/daimyo selection popup logic, hide buttons for troop types with 0 units available, and implement the full monster/daimyo placement flow in the game store",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. In src/store/gameStore.ts, change the type of recruitFigureType from 'bushi' | 'shinto' to 'bushi' | 'shinto' | 'monster' | 'daimyo' throughout (interface declaration around line 271, default at ~473, and doJinmenjuPlace at ~502).",
     "2. Add new state properties to the store for monster/daimyo selection popup: recruitMonsterSelectionVisible (boolean), recruitDaimyoSelectionVisible (boolean), recruitPendingProvinceId (string|null). Add actions: doRecruitShowMonsterSelection(provinceId), doRecruitShowDaimyoSelection(provinceId), doRecruitConfirmMonster(monsterCardId), doRecruitConfirmDaimyo(daimyoType: 'normal' | monsterCardId), doRecruitDismissSelection().",
@@ -25,5 +25,5 @@
   ],
   "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation complete. recruitPlaceFigure in gameLogic.ts now accepts all 4 figure types (bushi/shinto/monster/daimyo). The store handles monster/daimyo recruit flow client-side with popup selection, then sends appropriate action to server for online mode. The FigureType import was added to gameStore.ts to fix a type assertion in doJinmenjuPlace."
 }
