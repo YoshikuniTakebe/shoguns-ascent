@@ -41,6 +41,7 @@ import {
   processHostageReturn,
   finalizeCleanupAndAdvance,
   determineTacticWinners,
+  applyFireDragonEffect,
 } from '../utils/gameLogic';
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -2645,6 +2646,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         // Instead of resolving immediately, enter step-by-step resolution
         const battle = ns.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
         if (!battle) return;
+        // Apply Fire Dragon pre-battle effect before determining tactic winners
+        ns = applyFireDragonEffect(ns, provinceId);
         const resData = determineTacticWinners(ns, battle);
         // Enter first phase: seppuku decision if winner exists
         if (resData.seppukuWinnerId) {
@@ -2668,6 +2671,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (allBidsSubmitted(ns, provinceId)) {
         const battle = ns.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
         if (!battle) return;
+        // Apply Fire Dragon pre-battle effect before determining tactic winners
+        ns = applyFireDragonEffect(ns, provinceId);
         const resData = determineTacticWinners(ns, battle);
         if (resData.seppukuWinnerId) {
           set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'seppuku-decision', battleCurrentBiddingIndex: 0, battleResolutionData: resData, selectedHostageTarget: null });

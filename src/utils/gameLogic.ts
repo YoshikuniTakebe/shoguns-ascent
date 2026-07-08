@@ -2245,6 +2245,99 @@ export function allBidsSubmitted(state: GameState, provinceId: string): boolean 
   return battle.participants.every((pid) => pid in battle.warTacticBids);
 }
 
+/**
+ * Fire Dragon's Incineration pre-battle effect.
+ * When a battle begins in a province containing the Fire Dragon, each player with figures there
+ * must kill one of their own figures (weakest first: bushi > shinto > non-immune monsters).
+ * Immune figures: Daimyo type, daimyo-type monsters (Yurei, Fukurokuju), and the Fire Dragon itself.
+ * If a player has only immune figures, they lose nothing.
+ * Returns the updated state with killed figures returned to reserves and log entries added.
+ */
+export function applyFireDragonEffect(state: GameState, provinceId: string): GameState {
+  const province = state.provinces[provinceId];
+  if (!province) return state;
+
+  // Check if Fire Dragon is present in this province
+  const fireDragonFigure = province.figures.find(f => f.type === 'monster' && f.monsterCardId === 'su-fire-dragon');
+  if (!fireDragonFigure) return state;
+
+  // Deep copy relevant parts of state
+  const newState: GameState = {
+    ...state,
+    players: state.players.map(p => ({ ...p })),
+    provinces: { ...state.provinces },
+    log: [...state.log],
+  };
+
+  // Get all unique players with figures in this province
+  const playersInProvince = [...new Set(province.figures.map(f => f.owner))];
+
+  // Daimyo-immune monster card IDs
+  const DAIMYO_IMMUNE_MONSTERS = ['su-yurei', 'sp-fukurokuju'];
+
+  for (const playerId of playersInProvince) {
+    const currentProv = newState.provinces[provinceId];
+    const playerFigures = currentProv.figures.filter(f => f.owner === playerId);
+
+    // Find a killable figure (not daimyo, not daimyo-type monsters, not Fire Dragon itself)
+    // Priority: bushi first, then shinto, then non-immune monsters
+    const isImmune = (f: Figure): boolean => {
+      if (f.type === 'daimyo') return true;
+      if (f.type === 'monster' && f.monsterCardId === 'su-fire-dragon') return true;
+      if (f.type === 'monster' && f.monsterCardId && DAIMYO_IMMUNE_MONSTERS.includes(f.monsterCardId)) return true;
+      return false;
+    };
+
+    // Find weakest killable figure
+    let targetFigure: Figure | undefined;
+    // Priority 1: bushi
+    targetFigure = playerFigures.find(f => f.type === 'bushi');
+    // Priority 2: shinto
+    if (!targetFigure) targetFigure = playerFigures.find(f => f.type === 'shinto');
+    // Priority 3: non-immune monsters
+    if (!targetFigure) targetFigure = playerFigures.find(f => f.type === 'monster' && !isImmune(f));
+
+    if (!targetFigure) continue; // Player has only immune figures
+
+    // Kill the figure: remove from province, return to reserve
+    newState.provinces[provinceId] = {
+      ...currentProv,
+      figures: currentProv.figures.filter(f => f.id !== targetFigure!.id),
+    };
+
+    const player = newState.players.find(p => p.id === playerId)!;
+    let figureTypeName: string;
+    if (targetFigure.type === 'bushi') {
+      player.bushi += 1;
+      figureTypeName = 'bushi';
+    } else if (targetFigure.type === 'shinto') {
+      player.shinto += 1;
+      figureTypeName = 'shinto';
+    } else {
+      // Monster
+      player.monsters += 1;
+      figureTypeName = SEASON_CARDS_DATA.find(c => c.id === targetFigure!.monsterCardId)?.name || 'monster';
+    }
+
+    newState.log = [...newState.log, `🐉 Dragón de Fuego incinera: ${player.name} pierde 1 ${figureTypeName}`];
+
+    // Handle Phoenix resurrection: if Phoenix was killed, gain 1 VP and place it back
+    if (targetFigure.type === 'monster' && targetFigure.monsterCardId === 'sp-phoenix') {
+      player.victoryPoints += 1;
+      const figureId = Math.random().toString(36).substring(2, 10);
+      const phoenixFigure: Figure = { type: 'monster', owner: playerId, id: figureId, monsterCardId: 'sp-phoenix' };
+      newState.provinces[provinceId] = {
+        ...newState.provinces[provinceId],
+        figures: [...newState.provinces[provinceId].figures, phoenixFigure],
+      };
+      player.monsters -= 1;
+      newState.log = [...newState.log, `🔥 Phoenix renace en ${province.name} - ${player.name} gana 1 PV`];
+    }
+  }
+
+  return newState;
+}
+
 export function resolveNextBattle(state: GameState): GameState {
   const unresolvedIdx = state.activeBattles.findIndex((b) => !b.resolved && !b.uncontested);
   if (unresolvedIdx === -1) return state;
@@ -2276,6 +2369,19 @@ export function resolveNextBattle(state: GameState): GameState {
   const resData = battle.resolutionData;
   const stepByStepMode = !!resData;
 
+  // Apply Fire Dragon's Incineration effect (pre-battle) when NOT in step-by-step mode.
+  // In step-by-step mode, this is already applied by the store before determineTacticWinners.
+  if (!stepByStepMode) {
+    const fireDragonResult = applyFireDragonEffect(newState, battle.provinceId);
+    // Merge Fire Dragon changes back into newState
+    newState.players = fireDragonResult.players;
+    newState.provinces = fireDragonResult.provinces;
+    newState.log = fireDragonResult.log;
+  }
+
+  // Re-read province reference after potential Fire Dragon kills
+  const provinceAfterDragon = newState.provinces[battle.provinceId];
+
   // Determine hire-ronin winner BEFORE computing preResolutionForces so we can include ronin in force display
   let preHireRoninWinner: string | null = null;
   {
@@ -2298,7 +2404,7 @@ export function resolveNextBattle(state: GameState): GameState {
 
   // Compute participant forces BEFORE any seppuku/hostage removals, but INCLUDING ronin for hire-ronin winner
   const preResolutionForces = battle.participants.map(pid => {
-    let force = calculateForce(province, pid, newState);
+    let force = calculateForce(provinceAfterDragon, pid, newState);
     if (pid === preHireRoninWinner) {
       const player = newState.players.find(p => p.id === pid)!;
       force += player.ronin;

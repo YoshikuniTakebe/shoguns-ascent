@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-007",
+  "type": "feat",
+  "description": "Implement Fire Dragon's pre-battle effect (Incineration). When a battle begins in its province, the Fire Dragon's owner must kill one of their own figures, and every opponent with figures there must also kill one of their own figures. Daimyo-type figures are immune. The Fire Dragon itself cannot be killed by its own effect.",
+  "status": "in_progress",
+  "steps": [
+    "In src/utils/gameLogic.ts, find the resolveNextBattle function (line 2248). The Fire Dragon effect must trigger BEFORE the battle resolution begins (before seppuku/take-hostage/hire-ronin).",
+    "After the battle log entry ('--- Inicio Batalla N (ProvinceName) ---') and BEFORE the 'Resolve War Tactics' section, add Fire Dragon pre-battle logic:",
+    "Step 1: Check if any figure in the province has monsterCardId === 'su-fire-dragon'. If so, execute the effect.",
+    "Step 2: For each player (including the Fire Dragon's owner) who has figures in the battle province, kill one figure. Rules: (a) Cannot kill Daimyo-type figures (type === 'daimyo' OR monsterCardId in ['su-yurei', 'sp-fukurokuju']). (b) Cannot kill the Fire Dragon itself. (c) Choose the weakest figure to auto-kill (bushi first, then shinto, then non-daimyo monsters). If a player has only daimyo/Fire-Dragon/daimyo-monsters, they lose no figure.",
+    "Step 3: For each killed figure, return it to the owner's reserve (increment bushi/shinto/monsters count). Add appropriate log entries: '🐉 Dragón de Fuego incinera: [player] pierde 1 [figureType]'.",
+    "Step 4: Handle Phoenix resurrection if Phoenix is killed by Fire Dragon.",
+    "Step 5: Update the preResolutionForces calculation to account for figures already killed by Fire Dragon (it should use the province figures AFTER Fire Dragon kills).",
+    "Also implement in the step-by-step mode (when resolutionData is present). The Fire Dragon effect should execute BEFORE the seppuku/hostage interactive phases. This means in the gameStore.ts battle flow, when transitioning from bidding to seppuku-decision or hostage-selection, apply Fire Dragon kills to the gameState first.",
+    "In src/store/gameStore.ts where battle results are determined (around line 2630-2640), before calling determineTacticWinners, apply Fire Dragon's effect to ns (the game state).",
+    "Add log entries visible to all players showing which figures were killed by Fire Dragon's incineration."
+  ],
+  "acceptance_criteria": [
+    "When a battle occurs in a province containing Fire Dragon, before battle resolution starts, one figure from each clan present is killed (following immunity rules)",
+    "Daimyo figures and daimyo-type monsters (Yurei, Fukurokuju) are immune to the kill",
+    "The Fire Dragon itself is immune to its own effect",
+    "Players with ONLY immune figures in the province lose no figure",
+    "Killed figures return to their owner's reserve",
+    "Log entries show which figures were killed by incineration",
+    "TypeScript build passes"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
+  "blocked_reason": null,
+  "findings": ""
+}
