@@ -2,7 +2,7 @@
   "id": "FEAT-007",
   "type": "feat",
   "description": "Implement Fire Dragon's pre-battle effect (Incineration). When a battle begins in its province, the Fire Dragon's owner must kill one of their own figures, and every opponent with figures there must also kill one of their own figures. Daimyo-type figures are immune. The Fire Dragon itself cannot be killed by its own effect.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/utils/gameLogic.ts, find the resolveNextBattle function (line 2248). The Fire Dragon effect must trigger BEFORE the battle resolution begins (before seppuku/take-hostage/hire-ronin).",
     "After the battle log entry ('--- Inicio Batalla N (ProvinceName) ---') and BEFORE the 'Resolve War Tactics' section, add Fire Dragon pre-battle logic:",
@@ -26,5 +26,5 @@
   ],
   "verification": ["cd /projects/sandbox/shoguns-ascent && npm run build"],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation successful. Created applyFireDragonEffect() as an exported helper function that can be called from both resolveNextBattle (non-step-by-step path) and gameStore (step-by-step path). The function handles all immunity rules (daimyo, Yurei, Fukurokuju, Fire Dragon itself), auto-selects weakest killable figure (bushi > shinto > non-immune monsters), returns killed figures to reserves, handles Phoenix resurrection, and adds log entries. Build passes cleanly."
 }
