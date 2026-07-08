@@ -133,7 +133,7 @@ export interface Battle {
   winner?: string;
   uncontested?: boolean;
   logStartIndex?: number;
-  killedFigures?: { owner: string; figureType: string; count: number }[];
+  killedFigures?: { owner: string; figureType: string; count: number; monsterNames?: string[] }[];
   resolutionData?: BattleResolutionData;
 }
 

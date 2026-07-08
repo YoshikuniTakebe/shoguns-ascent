@@ -1360,9 +1360,10 @@ wss.on('connection', (ws: WebSocket, req) => {
             l.gameState = { ...l.gameState, warSummaryReadyPlayers: [...l.gameState.warSummaryReadyPlayers, playerId] };
           }
           if (l.gameState.warSummaryReadyPlayers.length >= l.gameState.players.length) {
-            // All players accepted war summary - advance to cleanup phase
-            l.gameState = advancePhase(l.gameState);
+            // Clear war summary state FIRST
             l.gameState = { ...l.gameState, warSummaryVisible: false, warSummaryReadyPlayers: [] };
+            // Then advance to cleanup phase
+            l.gameState = advancePhase(l.gameState);
             // Start interactive cleanup for online mode
             l.gameState = startInteractiveCleanup(l.gameState);
           }

@@ -289,6 +289,18 @@ export const GameBoard = () => {
                 </span>
               );
             }
+            // During war phase, non-participating players see battle in progress
+            if (gameState.mode === 'online' && gameState.currentPhase === 'war') {
+              const currentBattle = gameState.activeBattles?.find(b => !b.resolved);
+              if (currentBattle && currentBattle.participants && localPlayerId && !currentBattle.participants.includes(localPlayerId)) {
+                const battleIndex = gameState.activeBattles.findIndex(b => !b.resolved);
+                return (
+                  <span className="current-player-name">
+                    Batalla {battleIndex + 1} en curso <span className="waiting-label">[ESPERANDO]</span>
+                  </span>
+                );
+              }
+            }
             return (
               <>
                 <ClanShield clanId={cp?.clanId || ''} size={28} />
@@ -1034,7 +1046,7 @@ export const GameBoard = () => {
                 const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
                 return (
                   <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', borderRadius: '6px', background: winner ? `${winnerClan?.color || '#666'}15` : 'rgba(255,255,255,0.05)', border: `1px solid ${winnerClan?.color || '#444'}33` }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '0.8rem', opacity: 0.6, minWidth: '20px' }}>#{idx + 1}</span>
+                    <span style={{ fontWeight: 'bold', fontSize: '0.8rem', opacity: 0.6, minWidth: '30px', textAlign: 'right', marginRight: '4px' }}>#{idx + 1}</span>
                     <span style={{ flex: 1, fontSize: '0.9rem' }}>{province?.name || battle.provinceId}</span>
                     {winner ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

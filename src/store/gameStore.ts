@@ -3575,6 +3575,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
             }
           }
 
+          // Fix war summary loop: clear warSummaryVisible when phase is no longer 'war'
+          if (state.mode === 'online' && state.currentPhase !== 'war' && get().warSummaryVisible) {
+            uiResets.warSummaryVisible = false;
+            uiResets.battleStepPhase = null;
+          }
+
           // If monster placement is in progress, suppress turn popup to avoid interference
           const { monsterPlacementCard: currentMonsterCard, monsterPlacementMode: currentMonsterMode, komainuPrayMode: currentKomainuPray, monsterPlacementPopupVisible: currentMonsterPopup, komainuChoiceVisible: currentKomainuChoice, monsterNoPlacementPopupVisible: currentNoPlacementPopup } = get();
           const monsterPlacementInProgress = !!(currentMonsterCard || currentMonsterMode || currentKomainuPray || currentMonsterPopup || currentKomainuChoice || currentNoPlacementPopup);

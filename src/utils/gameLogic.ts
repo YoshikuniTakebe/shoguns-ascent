@@ -2556,6 +2556,7 @@ export function resolveNextBattle(state: GameState): GameState {
     // Losing players' figures are killed (return to reserve).
     // Allied figures of the winner are also protected.
     const killedMap: Record<string, Record<string, number>> = {};
+    const killedMonsterNames: Record<string, string[]> = {};
     battle.participants.forEach((pid) => {
       if (pid === winnerId) return;
       // Skip killing figures of players allied with the winner
@@ -2569,6 +2570,13 @@ export function resolveNextBattle(state: GameState): GameState {
         else if (fig.type === 'daimyo') loser.hasDaimyo = true;
         else if (fig.type === 'monster') {
           loser.monsters += 1;
+          // Track monster names for display
+          if (fig.monsterCardId) {
+            const key = `${pid}|monster`;
+            if (!killedMonsterNames[key]) killedMonsterNames[key] = [];
+            const monsterName = SEASON_CARDS_DATA.find(c => c.id === fig.monsterCardId)?.name;
+            if (monsterName) killedMonsterNames[key].push(monsterName);
+          }
         }
         // Track killed figures for display
         if (!killedMap[pid]) killedMap[pid] = {};
@@ -2577,10 +2585,17 @@ export function resolveNextBattle(state: GameState): GameState {
     });
 
     // Build killedFigures array from the map
-    const killedFigures: { owner: string; figureType: string; count: number }[] = [];
+    const killedFigures: { owner: string; figureType: string; count: number; monsterNames?: string[] }[] = [];
     for (const ownerId of Object.keys(killedMap)) {
       for (const figType of Object.keys(killedMap[ownerId])) {
-        killedFigures.push({ owner: ownerId, figureType: figType, count: killedMap[ownerId][figType] });
+        const entry: { owner: string; figureType: string; count: number; monsterNames?: string[] } = { owner: ownerId, figureType: figType, count: killedMap[ownerId][figType] };
+        if (figType === 'monster') {
+          const key = `${ownerId}|monster`;
+          if (killedMonsterNames[key] && killedMonsterNames[key].length > 0) {
+            entry.monsterNames = killedMonsterNames[key];
+          }
+        }
+        killedFigures.push(entry);
       }
     }
     battle.killedFigures = killedFigures;
@@ -2615,6 +2630,7 @@ export function resolveNextBattle(state: GameState): GameState {
       if (stepByStepMode) {
         battle.resolutionData = {
           ...resData,
+          imperialPoetsWinnerId: imperialPoetsBidder,
           phoenixDiedInBattle,
           battleDeathCount: battleCasualtyCount,
           imperialPoetsVP: totalDeaths,
@@ -2641,6 +2657,7 @@ export function resolveNextBattle(state: GameState): GameState {
     } else if (stepByStepMode) {
       battle.resolutionData = {
         ...resData,
+        imperialPoetsWinnerId: null,
         phoenixDiedInBattle,
         battleDeathCount: battleCasualtyCount,
         imperialPoetsVP: 0,

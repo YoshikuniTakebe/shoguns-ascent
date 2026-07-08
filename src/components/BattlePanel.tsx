@@ -382,7 +382,7 @@ function BattleResultPopup({
                     <ClanShield clanId={owner?.clanId || ''} size={16} />
                     <span style={{ color: ownerClan?.color, fontWeight: 'bold' }}>{owner?.name}</span>
                     <FigureTypeIcon figureType={kf.figureType} size={14} />
-                    <span style={{ fontWeight: 'bold' }}>{kf.count}</span>
+                    <span style={{ fontWeight: 'bold' }}>{kf.count}{kf.figureType === 'monster' && kf.monsterNames && kf.monsterNames.length > 0 ? ` (${kf.monsterNames.join(', ')})` : ''}</span>
                   </div>
                 );
               })}
