@@ -910,6 +910,32 @@ wss.on('connection', (ws: WebSocket, req) => {
           break;
         }
 
+        case 'SEPPUKU_RESULT_ACCEPT': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          const unresolvedBattleSRA = l.gameState.activeBattles.find(b => !b.resolved && !b.uncontested && b.resolutionData);
+          if (!unresolvedBattleSRA) return;
+          const resDataSRA = unresolvedBattleSRA.resolutionData!;
+          // Only the seppuku winner can accept the result
+          if (resDataSRA.seppukuWinnerId !== playerId) return;
+          // Mark seppuku phase as complete
+          const updatedResDataSRA = { ...resDataSRA, seppukuPhaseComplete: true };
+          const updatedBattlesSRA = l.gameState.activeBattles.map(b => {
+            if (b.provinceId === unresolvedBattleSRA.provinceId && !b.resolved) {
+              return { ...b, resolutionData: updatedResDataSRA };
+            }
+            return b;
+          });
+          l.gameState = { ...l.gameState, activeBattles: updatedBattlesSRA };
+          // If no hostage winner and no ronin winner, resolve the battle
+          if (!resDataSRA.hostageWinnerId && !resDataSRA.roninWinnerId) {
+            l.gameState = resolveNextBattle(l.gameState);
+          }
+          broadcastState(l);
+          break;
+        }
+
         case 'HOSTAGE_CONFIRM': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
@@ -1143,6 +1169,10 @@ wss.on('connection', (ws: WebSocket, req) => {
               ? nextIdx
               : l.gameState.currentPlayerIndex;
             l.gameState = { ...l.gameState, kamiSummaryVisible: false, kamiSummaryData: [], kamiSummaryReadyPlayers: [], currentPlayerIndex: correctedIndex };
+            // If all mandates exhausted, transition to war phase now that summary is accepted
+            if (l.gameState.politicsMandateCount >= l.gameState.maxMandates) {
+              l.gameState = initiateWarPhase(l.gameState);
+            }
           }
           broadcastState(l);
           break;

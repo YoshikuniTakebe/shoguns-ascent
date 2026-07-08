@@ -255,6 +255,14 @@ export const GameBoard = () => {
         </div>
         <div className="turn-indicator">
           {(() => {
+            if (gameState.kamiResolutionActive || gameState.kamiSummaryVisible || gameState.kamiPhasePopupPending) {
+              const kamiPhaseNumber = Math.ceil((gameState.politicsMandateCount - 2) / 2);
+              return (
+                <span className="current-player-name" style={{ color: '#9B59B6' }}>
+                  FASE DE KAMI {kamiPhaseNumber}
+                </span>
+              );
+            }
             if (gameState.zorroPlacementActive && gameState.zorroPlacementPlayerId) {
               const zorroPlayer = gameState.players.find(p => p.id === gameState.zorroPlacementPlayerId);
               const zorroClan = zorroPlayer ? CLANS.find(c => c.id === zorroPlayer.clanId) : null;

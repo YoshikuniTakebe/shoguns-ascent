@@ -1393,6 +1393,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
     if (ws && gameState.mode === 'online') {
+      // Pre-validate on client side to show rule violation messages
+      const preCheck = recruitPlaceFigure(gameState, apid, provinceId, recruitFigureType);
+      if (preCheck === gameState) {
+        // Validation failed - determine reason and show locally
+        const player = gameState.players.find(p => p.id === apid);
+        const province = gameState.provinces[provinceId];
+        let msg = 'No puedes realizar esta accion';
+        if (player && province) {
+          const isDragonfly = player.clanId === 'libelula';
+          if (!isDragonfly) {
+            const hasFortress = province.figures.some(f => f.owner === apid && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
+            if (!hasFortress) {
+              msg = 'No tienes fortaleza en esta provincia';
+            } else if (player.clanId === 'luna') {
+              const lunaFiguresInProvince = province.figures.filter(f => f.owner === apid && f.type !== 'fortress').length;
+              if (lunaFiguresInProvince >= 2) {
+                msg = 'Luna: maximo 2 figuras por provincia';
+              } else {
+                msg = 'Ya has reclutado en esta fortaleza este turno';
+              }
+            } else {
+              msg = 'Ya has reclutado en esta fortaleza este turno';
+            }
+          }
+        }
+        set({ ruleViolationMessage: msg });
+        return;
+      }
       get().sendAction({ type: 'RECRUIT_PLACE_FIGURE', playerId: apid, payload: { provinceId, figureType: recruitFigureType } });
       return;
     }
@@ -2746,6 +2774,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, battleResolutionData, ws } = get();
     if (!gameState || !battleResolutionData) return;
 
+    // In online mode, notify server so all clients transition
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'SEPPUKU_RESULT_ACCEPT', playerId: get().localPlayerId });
+      return;
+    }
+
     // Move to next phase
     if (battleResolutionData.hostageWinnerId) {
       set({ battleStepPhase: 'hostage-selection' });
@@ -3501,6 +3535,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 // Seppuku was accepted - show result
                 uiResets.battleResolutionData = rd;
                 uiResets.battleStepPhase = 'seppuku-result';
+              } else if (rd.seppukuPhaseComplete && !prevRd.seppukuPhaseComplete) {
+                // Seppuku result was accepted by winner - transition to next phase
+                uiResets.battleResolutionData = rd;
+                if (rd.hostageWinnerId && !rd.capturedHostage) {
+                  uiResets.battleStepPhase = 'hostage-selection';
+                  uiResets.selectedHostageTarget = null;
+                } else if (rd.roninWinnerId) {
+                  uiResets.battleStepPhase = 'ronin-result';
+                }
               } else if (prevRd.seppukuWinnerId && !rd.seppukuWinnerId) {
                 // Seppuku was declined (seppukuWinnerId cleared)
                 uiResets.battleResolutionData = rd;

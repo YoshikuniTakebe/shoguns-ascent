@@ -122,6 +122,7 @@ export interface BattleResolutionData {
   imperialPoetsVP: number;
   seppukuFigures?: { type: string; count: number }[];
   participantForces?: { playerId: string; force: number }[];
+  seppukuPhaseComplete?: boolean;
 }
 
 export interface Battle {

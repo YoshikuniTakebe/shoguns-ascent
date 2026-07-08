@@ -1835,7 +1835,7 @@ export function advanceKamiResolution(state: GameState): GameState {
 
     // Check if politics phase is done
     if (newState.politicsMandateCount >= newState.maxMandates) {
-      return advancePhase(newState);
+      return newState;
     }
 
     // Continue with next player's mandate turn
