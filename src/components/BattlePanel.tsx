@@ -1039,9 +1039,9 @@ export const BattlePanel = () => {
             <p className="battle-popup-message" style={{ opacity: 0.8 }}>
               {t('battle.uncontestedTokenDiscarded')}
             </p>
-            {gameState.mode === 'online' && localPlayerId && (gameState.battlePopupReadyPlayers || []).includes(localPlayerId) ? (
+            {gameState.mode === 'online' && localPlayerId && (gameState.battleResultReadyPlayers || []).includes(localPlayerId) ? (
               <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
-                Listo {(gameState.battlePopupReadyPlayers || []).length}/{gameState.players.length}
+                Listo {(gameState.battleResultReadyPlayers || []).length}/{gameState.players.length}
               </p>
             ) : (
               <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
@@ -1104,9 +1104,9 @@ export const BattlePanel = () => {
                 {t('battle.winsProvinceToken', { name: winner.name })}
               </span>
             </div>
-            {gameState.mode === 'online' && localPlayerId && (gameState.battlePopupReadyPlayers || []).includes(localPlayerId) ? (
+            {gameState.mode === 'online' && localPlayerId && (gameState.battleResultReadyPlayers || []).includes(localPlayerId) ? (
               <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
-                Listo {(gameState.battlePopupReadyPlayers || []).length}/{gameState.players.length}
+                Listo {(gameState.battleResultReadyPlayers || []).length}/{gameState.players.length}
               </p>
             ) : (
               <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
@@ -1137,9 +1137,9 @@ export const BattlePanel = () => {
             <p style={{ color: winnerClan?.color, margin: '0.25rem 0' }}>
               {t('battle.winsProvinceToken', { name: winner.name })}
             </p>
-            {gameState.mode === 'online' && localPlayerId && (gameState.battlePopupReadyPlayers || []).includes(localPlayerId) ? (
+            {gameState.mode === 'online' && localPlayerId && (gameState.battleResultReadyPlayers || []).includes(localPlayerId) ? (
               <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
-                Listo {(gameState.battlePopupReadyPlayers || []).length}/{gameState.players.length}
+                Listo {(gameState.battleResultReadyPlayers || []).length}/{gameState.players.length}
               </p>
             ) : (
               <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>

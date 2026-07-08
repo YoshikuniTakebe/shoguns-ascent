@@ -44,6 +44,7 @@ import {
   determineTacticWinners,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
+import { SEASON_CARDS_DATA } from '../types/game';
 import {
   initDatabase,
   saveGame,
@@ -956,7 +957,10 @@ wss.on('connection', (ws: WebSocket, req) => {
             (targetFigure.type === 'bushi' || targetFigure.type === 'shinto' ||
               (targetFigure.type === 'monster' && targetFigure.monsterCardId && !['su-yurei', 'sp-fukurokuju'].includes(targetFigure.monsterCardId)))) {
             // Capture the hostage
-            const hostage = { fromClanId: targetFigure.owner, figureType: targetFigure.type };
+            const hostageMonsterName = targetFigure.type === 'monster' && targetFigure.monsterCardId
+              ? (SEASON_CARDS_DATA.find((c: { id: string; name: string }) => c.id === targetFigure.monsterCardId)?.name || targetFigure.type)
+              : targetFigure.type;
+            const hostage = { fromClanId: targetFigure.owner, figureType: targetFigure.type, figureName: hostageMonsterName };
             hostageWinner.hostages.push(hostage);
             hostageWinner.victoryPoints += 1;
             l.gameState.provinces[unresolvedBattle2.provinceId] = {

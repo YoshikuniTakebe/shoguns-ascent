@@ -2868,7 +2868,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const capturedFig = province.figures.find(f => f.id === selectedHostageTarget.figureId);
     if (!capturedFig) return;
 
-    const hostage: Hostage = { fromClanId: capturedFig.owner, figureType: selectedHostageTarget.figureType };
+    const hostage: Hostage = { fromClanId: capturedFig.owner, figureType: selectedHostageTarget.figureType, figureName: selectedHostageTarget.figureName };
     captor.hostages.push(hostage);
     captor.victoryPoints += 1;
 

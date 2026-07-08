@@ -183,7 +183,23 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
     <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}>{m}<HonorIcon size={14} /></span>
   ));
 
-  // 7. Replace moneda/monedas/coin/coins keyword (and preceding number if present) with bold gold + icon
+  // 7. Replace {coin} token followed by a number with CoinIcon + number (bold gold)
+  const coinTokenPattern = /\{coin\}\s*(\d+)/g;
+  segments = applyPattern(segments, coinTokenPattern, (m, key) => {
+    const numberMatch = m.match(/\d+/);
+    const number = numberMatch ? numberMatch[0] : '';
+    return (
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}><CoinIcon size={14} />{number}</span>
+    );
+  });
+
+  // 7.1. Replace standalone {coin} token (without number) with just CoinIcon
+  const coinTokenStandalonePattern = /\{coin\}/g;
+  segments = applyPattern(segments, coinTokenStandalonePattern, (_m, key) => (
+    <span key={key} style={{ display: 'inline-flex', alignItems: 'center' }}><CoinIcon size={14} color="#DAA520" /></span>
+  ));
+
+  // 7.2. Replace moneda/monedas/coin/coins keyword (and preceding number if present) with bold gold + icon
   const coinPattern = /(\d+\s*)?\b(moneda|monedas|coin|coins)\b/gi;
   segments = applyPattern(segments, coinPattern, (m, key) => {
     const numberMatch = m.match(/\d+/);

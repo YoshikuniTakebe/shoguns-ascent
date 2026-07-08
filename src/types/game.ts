@@ -66,6 +66,7 @@ export interface WarTactic {
 export interface Hostage {
   fromClanId: string;
   figureType: string;
+  figureName?: string;
 }
 
 export interface Player {
