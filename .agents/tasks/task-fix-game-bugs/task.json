@@ -2,7 +2,7 @@
   "task_id": "task-fix-game-bugs",
   "task_description": "Fix multiple game bugs: Kami turn log markers, season log persistence, Oni of Blood force, Yurei reserve display, betray undo, coin distribution province color, Fire Dragon pre-battle effect, battle bidding coin duplication, monster hostage-taking, and Oni of Skulls size.",
   "status": "completed",
-  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004", "FEAT-005", "FEAT-006", "FEAT-007", "FEAT-008", "FEAT-009", "FEAT-010"],
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004", "FEAT-005", "FEAT-006", "FEAT-007", "FEAT-008", "FEAT-009", "FEAT-010", "FEAT-011"],
   "verification": {
     "build": "pass",
     "tests": "pass",
