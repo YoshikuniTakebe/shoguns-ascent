@@ -1,0 +1,18 @@
+{
+  "id": "FEAT-004",
+  "type": "fix",
+  "description": "Fix review issues #1 (server daimyo broadcast without validation gate) and #4 (no deployed-check in monster recruit confirmation)",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/server/index.ts RECRUIT_PLACE_DAIMYO handler, add a same-reference check: store old state, call recruitPlaceDaimyo, compare references, return early if unchanged, only then assign and broadcast.",
+    "2. In src/store/gameStore.ts doRecruitConfirmMonster action, add a deployedMonsterCardIds check before placing the monster to prevent double-placement of the same card."
+  ],
+  "acceptance_criteria": [
+    "Server RECRUIT_PLACE_DAIMYO handler does not broadcast when recruitPlaceDaimyo returns unchanged state",
+    "doRecruitConfirmMonster verifies the monsterCardId is not already deployed on the map before placing",
+    "TypeScript compiles without errors"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit"],
+  "blocked_reason": null,
+  "findings": ""
+}

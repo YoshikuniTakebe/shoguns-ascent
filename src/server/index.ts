@@ -1753,7 +1753,9 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l.recruitUndoSnapshot) {
             l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
           }
-          l.gameState = recruitPlaceDaimyo(l.gameState, data.playerId, daimyoProvinceId, daimyoType);
+          const ns = recruitPlaceDaimyo(l.gameState, data.playerId, daimyoProvinceId, daimyoType);
+          if (ns === l.gameState) return;
+          l.gameState = ns;
           broadcastState(l);
           break;
         }

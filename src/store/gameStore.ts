@@ -1730,6 +1730,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const monsterCard = player.seasonCards.find(c => c.id === monsterCardId);
     if (!monsterCard) return;
 
+    // Verify the monster card is not already deployed on the map (prevents double-placement race)
+    const deployedMonsterCardIds = new Set<string>();
+    Object.values(gameState.provinces).forEach((prov) => {
+      prov.figures.forEach((f) => {
+        if (f.type === 'monster' && f.owner === apid && f.monsterCardId) {
+          deployedMonsterCardIds.add(f.monsterCardId);
+        }
+      });
+    });
+    if (deployedMonsterCardIds.has(monsterCardId)) return;
+
     const figureId = Math.random().toString(36).substring(2, 10);
     const newFigure = { type: 'monster' as const, owner: apid, id: figureId, monsterCardId };
 
