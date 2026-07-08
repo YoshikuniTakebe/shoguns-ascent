@@ -729,7 +729,7 @@ function calculateRecruitPlacements(state: GameState, playerId: string, issuerId
  * Place a figure during the recruit mandate.
  * Player chooses bushi or shinto, and a province (must have their fortress, or ANY if Dragonfly).
  */
-export function recruitPlaceFigure(state: GameState, playerId: string, provinceId: string, figureType: 'bushi' | 'shinto' | 'monster'): GameState {
+export function recruitPlaceFigure(state: GameState, playerId: string, provinceId: string, figureType: 'bushi' | 'shinto' | 'monster' | 'daimyo'): GameState {
   if (!state.recruitMandateActive) return state;
   if (state.recruitPlacementsRemaining <= 0) return state;
 
@@ -739,7 +739,8 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
   // Check reserve
   if (figureType === 'bushi' && player.bushi <= 0) return state;
   if (figureType === 'shinto' && player.shinto <= 0) return state;
-  // Monsters don't come from reserve - they come from purchased cards
+  if (figureType === 'monster' && player.monsters <= 0) return state;
+  if (figureType === 'daimyo' && !player.hasDaimyo) return state;
 
   const province = state.provinces[provinceId];
   if (!province) return state;
@@ -752,7 +753,7 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
   }
 
   // Luna clan power: max 2 figures per province (excluding fortresses)
-  if (player.clanId === 'luna' && (figureType === 'bushi' || figureType === 'shinto' || figureType === 'monster')) {
+  if (player.clanId === 'luna' && (figureType === 'bushi' || figureType === 'shinto' || figureType === 'monster' || figureType === 'daimyo')) {
     const lunaFiguresInProvince = province.figures.filter(
       (f) => f.owner === playerId && f.type !== 'fortress'
     ).length;
@@ -806,10 +807,115 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
     updatedPlayer.bushi -= 1;
   } else if (figureType === 'shinto') {
     updatedPlayer.shinto -= 1;
+  } else if (figureType === 'monster') {
+    updatedPlayer.monsters -= 1;
+  } else if (figureType === 'daimyo') {
+    updatedPlayer.hasDaimyo = false;
   }
-  // Monsters don't decrement a reserve
 
   return newState;
+}
+
+/**
+ * Place a daimyo figure during the recruit mandate.
+ * daimyoType is 'normal' for the clan daimyo, or a monsterCardId for daimyo-type monsters.
+ */
+export function recruitPlaceDaimyo(state: GameState, playerId: string, provinceId: string, daimyoType: string): GameState {
+  if (!state.recruitMandateActive) return state;
+  if (state.recruitPlacementsRemaining <= 0) return state;
+
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return state;
+
+  const province = state.provinces[provinceId];
+  if (!province) return state;
+
+  // Validate province: must have player's fortress, UNLESS player is Dragonfly (libelula)
+  const isDragonfly = player.clanId === 'libelula';
+  if (!isDragonfly) {
+    const hasFortress = province.figures.some(f => f.owner === playerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
+    if (!hasFortress) return state;
+  }
+
+  // Luna clan power: max 2 figures per province (excluding fortresses)
+  if (player.clanId === 'luna') {
+    const lunaFiguresInProvince = province.figures.filter(
+      (f) => f.owner === playerId && f.type !== 'fortress'
+    ).length;
+    if (lunaFiguresInProvince >= 2) return state;
+  }
+
+  // Enforce one-per-fortress-province rule
+  {
+    const usedProvinces = state.recruitUsedFortressProvinces;
+    const timesProvinceUsed = usedProvinces.filter(p => p === provinceId).length;
+    if (timesProvinceUsed > 0) {
+      const isBonus = state.recruitMandateIssuerId ? isIssuerOrAlly(state, playerId, state.recruitMandateIssuerId) : false;
+      if (!isBonus) return state;
+      const bonusUsesConsumed = usedProvinces.length - new Set(usedProvinces).size;
+      if (bonusUsesConsumed >= 1) return state;
+    }
+  }
+
+  const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
+
+  if (daimyoType === 'normal') {
+    if (!player.hasDaimyo) return state;
+    const figureId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const newFigure = { type: 'daimyo' as const, owner: playerId, id: figureId };
+
+    const newState: GameState = {
+      ...state,
+      provinces: { ...state.provinces },
+      players: state.players.map((p) => {
+        if (p.id === playerId) return { ...p, hasDaimyo: false };
+        return { ...p };
+      }),
+      recruitPlacementsRemaining: state.recruitPlacementsRemaining - 1,
+      recruitUsedFortressProvinces: [...state.recruitUsedFortressProvinces, provinceId],
+      log: [...state.log, `${player.name} despliega su Daimyo en ${province.name}`],
+    };
+
+    const prov = newState.provinces[provinceId];
+    newState.provinces[provinceId] = { ...prov, figures: [...prov.figures, newFigure] };
+    return newState;
+  } else if (DAIMYO_MONSTER_IDS.includes(daimyoType)) {
+    // Daimyo-type monster
+    if (player.monsters <= 0) return state;
+    const monsterCard = player.seasonCards.find(c => c.id === daimyoType && c.cardType === 'monster');
+    if (!monsterCard) return state;
+    // Verify it's not already deployed
+    const deployedMonsterCardIds = new Set<string>();
+    Object.values(state.provinces).forEach((prov) => {
+      prov.figures.forEach((f) => {
+        if (f.type === 'monster' && f.owner === playerId && f.monsterCardId) {
+          deployedMonsterCardIds.add(f.monsterCardId);
+        }
+      });
+    });
+    if (deployedMonsterCardIds.has(daimyoType)) return state;
+
+    const figureId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const newFigure = { type: 'monster' as const, owner: playerId, id: figureId, monsterCardId: daimyoType };
+
+    const newState: GameState = {
+      ...state,
+      provinces: { ...state.provinces },
+      players: state.players.map((p) => {
+        if (p.id === playerId) return { ...p, monsters: p.monsters - 1 };
+        return { ...p };
+      }),
+      recruitPlacementsRemaining: state.recruitPlacementsRemaining - 1,
+      recruitUsedFortressProvinces: [...state.recruitUsedFortressProvinces, provinceId],
+      log: [...state.log, `${player.name} despliega a ${monsterCard.name} en ${province.name}`],
+    };
+
+    const prov = newState.provinces[provinceId];
+    newState.provinces[provinceId] = { ...prov, figures: [...prov.figures, newFigure] };
+    return newState;
+  }
+
+  return state;
 }
 
 /**

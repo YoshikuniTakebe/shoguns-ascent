@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add monster and daimyo recruit buttons to the recruit panel in ActionPanel.tsx, add monster/daimyo selection popup logic, hide buttons for troop types with 0 units available, and implement the full monster/daimyo placement flow in the game store",
+  "status": "in_progress",
+  "steps": [
+    "1. In src/store/gameStore.ts, change the type of recruitFigureType from 'bushi' | 'shinto' to 'bushi' | 'shinto' | 'monster' | 'daimyo' throughout (interface declaration around line 271, default at ~473, and doJinmenjuPlace at ~502).",
+    "2. Add new state properties to the store for monster/daimyo selection popup: recruitMonsterSelectionVisible (boolean), recruitDaimyoSelectionVisible (boolean), recruitPendingProvinceId (string|null). Add actions: doRecruitShowMonsterSelection(provinceId), doRecruitShowDaimyoSelection(provinceId), doRecruitConfirmMonster(monsterCardId), doRecruitConfirmDaimyo(daimyoType: 'normal' | monsterCardId), doRecruitDismissSelection().",
+    "3. Modify the doRecruitPlaceFigure function: when recruitFigureType is 'monster', instead of directly placing, validate the province (has fortress or libelula), then show the monster selection popup by setting recruitMonsterSelectionVisible=true and recruitPendingProvinceId=provinceId. When recruitFigureType is 'daimyo', check how many daimyos are in reserve: if only 1 (either normal daimyo or exactly one daimyo-type monster), place it directly; if more than 1, show the daimyo selection popup similarly.",
+    "4. Implement doRecruitConfirmMonster: get the pendingProvinceId and selected monsterCardId, create figure with type='monster' and monsterCardId, place it in the province, decrement player.monsters, decrement recruitPlacementsRemaining, add to recruitUsedFortressProvinces, add log entry, and dismiss the popup.",
+    "5. Implement doRecruitConfirmDaimyo: for 'normal' daimyo, create a figure with type='daimyo', set player.hasDaimyo=false, decrement recruitPlacementsRemaining. For monster-type daimyos (Yurei su-yurei, Fukurokuju sp-fukurokuju), create figure with type='monster' and the monsterCardId, decrement player.monsters. Add log, dismiss popup.",
+    "6. In src/components/ActionPanel.tsx, within the recruitMandateActive section, add monster and daimyo buttons alongside bushi and shinto. Import DaimyoIcon from Icons. Use the same recruit-type-btn styling pattern. Show available count: for monster show cp.monsters (reserve monsters count), for daimyo show the effective daimyo reserve count (same logic as PlayerPanel: player.hasDaimyo ? 1 : 0 plus daimyo-type monsters in reserve). HIDE any button whose available count is 0.",
+    "7. Add the monster selection popup UI in ActionPanel.tsx (shown when recruitMonsterSelectionVisible is true): title 'Elige monstruo', list of buttons for each monster card in reserve (not deployed on map). Each button shows monster name in clan color, and below it the card effect/power description. Clicking a button calls doRecruitConfirmMonster with the card's id.",
+    "8. Add the daimyo selection popup UI similarly (when recruitDaimyoSelectionVisible is true): title 'Elige daimyo', list includes 'Daimyo Clan X' if player.hasDaimyo is true, plus any daimyo-type monster cards in reserve (Yurei, Fukurokuju). Clicking calls doRecruitConfirmDaimyo.",
+    "9. Also handle the online mode for monster/daimyo recruit: send appropriate action types via websocket (RECRUIT_PLACE_MONSTER, RECRUIT_PLACE_DAIMYO) and handle them in server/index.ts.",
+    "10. In src/utils/gameLogic.ts recruitPlaceFigure function: it already accepts 'monster' as figureType. Add 'daimyo' as valid type. For monster type, add validation that player.monsters > 0. For daimyo type, add validation that player.hasDaimyo is true. After placing daimyo, set player.hasDaimyo = false."
+  ],
+  "acceptance_criteria": [
+    "Recruit panel shows up to 4 buttons (bushi, shinto, monster, daimyo) but only those with available units > 0",
+    "Clicking monster button then clicking a valid province shows monster selection popup with reserve monsters listed",
+    "Clicking a monster in the popup places it and decrements placements",
+    "Clicking daimyo button then clicking province: if only 1 daimyo available places directly, if multiple shows selection popup",
+    "Libelula can recruit monsters/daimyos in any province (not just fortresses)",
+    "TypeScript compiles without errors"
+  ],
+  "verification": ["cd /projects/sandbox/shoguns-ascent && npx tsc --noEmit"],
+  "blocked_reason": null,
+  "findings": ""
+}

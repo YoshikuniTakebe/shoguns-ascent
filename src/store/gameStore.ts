@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, MandateType, DeckConfig, SeasonCard, BattleResolutionData, Hostage } from '../types/game';
+import type { GameState, MandateType, DeckConfig, SeasonCard, BattleResolutionData, Hostage, FigureType } from '../types/game';
 import { SEASON_CARDS_DATA } from '../types/game';
 import { API_BASE } from '../config';
 import {
@@ -31,6 +31,7 @@ import {
   buildFortress,
   buildFukurokuju,
   recruitPlaceFigure,
+  recruitPlaceDaimyo,
   skipRecruitTurn,
   betraySelectFigure,
   skipBetrayTurn,
@@ -268,12 +269,18 @@ interface GameStore {
 
   // Recruit mandate actions
   recruitMode: boolean;
-  recruitFigureType: 'bushi' | 'shinto';
+  recruitFigureType: 'bushi' | 'shinto' | 'monster' | 'daimyo';
   toggleRecruitMode: () => void;
-  setRecruitFigureType: (figureType: 'bushi' | 'shinto') => void;
+  setRecruitFigureType: (figureType: 'bushi' | 'shinto' | 'monster' | 'daimyo') => void;
   doRecruitPlaceFigure: (provinceId: string) => void;
   doRecruitPlaceTempleShinto: (templeId: string) => void;
   doSkipRecruitTurn: () => void;
+  recruitMonsterSelectionVisible: boolean;
+  recruitDaimyoSelectionVisible: boolean;
+  recruitPendingProvinceId: string | null;
+  doRecruitConfirmMonster: (monsterCardId: string) => void;
+  doRecruitConfirmDaimyo: (daimyoType: string) => void;
+  doRecruitDismissSelection: () => void;
 
   // Betray mandate actions
   betrayMode: boolean;
@@ -471,6 +478,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   buildFukurokujuMode: false,
   recruitMode: false,
   recruitFigureType: 'bushi',
+  recruitMonsterSelectionVisible: false,
+  recruitDaimyoSelectionVisible: false,
+  recruitPendingProvinceId: null,
   betrayMode: false,
   monsterPlacementMode: false,
   monsterPlacementCard: null,
@@ -526,7 +536,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     const figureId = Math.random().toString(36).substring(2, 10);
-    const newFigure = { type: recruitFigureType as 'bushi' | 'shinto', owner: cp.id, id: figureId };
+    const newFigure = { type: recruitFigureType as FigureType, owner: cp.id, id: figureId };
 
     // Place figure
     const updatedProvinces = { ...gameState.provinces };
@@ -1400,14 +1410,126 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // --- Recruit Mandate Actions ---
-  toggleRecruitMode: () => set((s) => ({ recruitMode: !s.recruitMode, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false, buildFukurokujuMode: false, betrayMode: false })),
-  setRecruitFigureType: (figureType) => set({ recruitFigureType: figureType }),
+  toggleRecruitMode: () => set((s) => ({ recruitMode: !s.recruitMode, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false, buildFukurokujuMode: false, betrayMode: false, recruitMonsterSelectionVisible: false, recruitDaimyoSelectionVisible: false, recruitPendingProvinceId: null })),
+  setRecruitFigureType: (figureType) => set({ recruitFigureType: figureType, recruitMonsterSelectionVisible: false, recruitDaimyoSelectionVisible: false, recruitPendingProvinceId: null }),
   doRecruitPlaceFigure: (provinceId: string) => {
     const { gameState, localPlayerId, recruitFigureType, ws } = get();
     if (!gameState || !localPlayerId) return;
     const cp = getCurrentPlayer(gameState);
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
+
+    // For monster/daimyo types, we need to show a selection popup instead of placing directly
+    if (recruitFigureType === 'monster' || recruitFigureType === 'daimyo') {
+      const player = gameState.players.find(p => p.id === apid);
+      if (!player) return;
+      const province = gameState.provinces[provinceId];
+      if (!province) return;
+
+      // Validate province: must have fortress (or libelula can place anywhere)
+      const isDragonfly = player.clanId === 'libelula';
+      if (!isDragonfly) {
+        const hasFortress = province.figures.some(f => f.owner === apid && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
+        if (!hasFortress) {
+          set({ ruleViolationMessage: 'No tienes fortaleza en esta provincia' });
+          return;
+        }
+      }
+
+      // Luna clan power: max 2 figures per province
+      if (player.clanId === 'luna') {
+        const lunaFiguresInProvince = province.figures.filter(f => f.owner === apid && f.type !== 'fortress').length;
+        if (lunaFiguresInProvince >= 2) {
+          set({ ruleViolationMessage: 'Luna: maximo 2 figuras por provincia' });
+          return;
+        }
+      }
+
+      // Validate one-per-fortress-province rule
+      const usedProvinces = gameState.recruitUsedFortressProvinces;
+      const timesProvinceUsed = usedProvinces.filter(p => p === provinceId).length;
+      if (timesProvinceUsed > 0) {
+        const isBonus = gameState.recruitMandateIssuerId ? (() => {
+          const issuer = gameState.players.find(p => p.id === gameState.recruitMandateIssuerId);
+          if (!issuer) return false;
+          return apid === gameState.recruitMandateIssuerId || issuer.allies.includes(apid) || player.allies.includes(gameState.recruitMandateIssuerId);
+        })() : false;
+        if (!isBonus) {
+          set({ ruleViolationMessage: 'Ya has reclutado en esta fortaleza este turno' });
+          return;
+        }
+        const bonusUsesConsumed = usedProvinces.length - new Set(usedProvinces).size;
+        if (bonusUsesConsumed >= 1) {
+          set({ ruleViolationMessage: 'Ya has reclutado en esta fortaleza este turno' });
+          return;
+        }
+      }
+
+      if (recruitFigureType === 'monster') {
+        // Show monster selection popup
+        set({ recruitMonsterSelectionVisible: true, recruitPendingProvinceId: provinceId });
+        return;
+      }
+
+      if (recruitFigureType === 'daimyo') {
+        // Determine available daimyos in reserve
+        const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
+        const deployedMonsterCardIds = new Set<string>();
+        Object.values(gameState.provinces).forEach((prov) => {
+          prov.figures.forEach((f) => {
+            if (f.type === 'monster' && f.owner === apid && f.monsterCardId) {
+              deployedMonsterCardIds.add(f.monsterCardId);
+            }
+          });
+        });
+        const daimyoMonstersInReserve = player.seasonCards.filter(
+          (card) => card.cardType === 'monster' && DAIMYO_MONSTER_IDS.includes(card.id) && !deployedMonsterCardIds.has(card.id)
+        );
+        const totalDaimyos = (player.hasDaimyo ? 1 : 0) + daimyoMonstersInReserve.length;
+
+        if (totalDaimyos === 0) {
+          set({ ruleViolationMessage: 'No te quedan daimyos en reserva' });
+          return;
+        }
+
+        if (totalDaimyos === 1) {
+          // Only one available - place directly
+          if (player.hasDaimyo) {
+            // Place normal daimyo directly
+            if (ws && gameState.mode === 'online') {
+              get().sendAction({ type: 'RECRUIT_PLACE_DAIMYO', playerId: apid, payload: { provinceId, daimyoType: 'normal' } });
+              return;
+            }
+            const ns = recruitPlaceDaimyo(gameState, apid, provinceId, 'normal');
+            if (ns === gameState) {
+              set({ ruleViolationMessage: 'No puedes realizar esta accion' });
+              return;
+            }
+            set({ gameState: ns });
+          } else {
+            // Place the single daimyo monster directly
+            const monsterCard = daimyoMonstersInReserve[0];
+            if (ws && gameState.mode === 'online') {
+              get().sendAction({ type: 'RECRUIT_PLACE_DAIMYO', playerId: apid, payload: { provinceId, daimyoType: monsterCard.id } });
+              return;
+            }
+            const ns = recruitPlaceDaimyo(gameState, apid, provinceId, monsterCard.id);
+            if (ns === gameState) {
+              set({ ruleViolationMessage: 'No puedes realizar esta accion' });
+              return;
+            }
+            set({ gameState: ns });
+          }
+          return;
+        }
+
+        // Multiple daimyos available - show selection popup
+        set({ recruitDaimyoSelectionVisible: true, recruitPendingProvinceId: provinceId });
+        return;
+      }
+      return;
+    }
+
     if (ws && gameState.mode === 'online') {
       // Pre-validate reserve before anything else
       const player = gameState.players.find(p => p.id === apid);
@@ -1578,6 +1700,85 @@ export const useGameStore = create<GameStore>((set, get) => ({
         ...(gameState.mode === 'hotseat' && ns.currentPhase === 'politics' && !ns.kamiResolutionActive && !ns.kamiPhasePopupPending ? { turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null } : {}),
       });
     }
+  },
+
+  // --- Recruit Monster/Daimyo Selection Actions ---
+  doRecruitConfirmMonster: (monsterCardId: string) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState || !localPlayerId) return;
+    const cp = getCurrentPlayer(gameState);
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (!apid) return;
+    const { recruitPendingProvinceId } = get();
+    if (!recruitPendingProvinceId) return;
+
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RECRUIT_PLACE_MONSTER', playerId: apid, payload: { provinceId: recruitPendingProvinceId, monsterCardId } });
+      set({ recruitMonsterSelectionVisible: false, recruitPendingProvinceId: null });
+      return;
+    }
+
+    const player = gameState.players.find(p => p.id === apid);
+    if (!player) return;
+    if (player.monsters <= 0) return;
+    if (!gameState.recruitMandateActive || gameState.recruitPlacementsRemaining <= 0) return;
+
+    const province = gameState.provinces[recruitPendingProvinceId];
+    if (!province) return;
+
+    // Find the monster card to get its name
+    const monsterCard = player.seasonCards.find(c => c.id === monsterCardId);
+    if (!monsterCard) return;
+
+    const figureId = Math.random().toString(36).substring(2, 10);
+    const newFigure = { type: 'monster' as const, owner: apid, id: figureId, monsterCardId };
+
+    const updatedProvinces = { ...gameState.provinces };
+    updatedProvinces[recruitPendingProvinceId] = {
+      ...province,
+      figures: [...province.figures, newFigure],
+    };
+
+    const updatedPlayers = gameState.players.map(p => {
+      if (p.id === apid) return { ...p, monsters: p.monsters - 1 };
+      return p;
+    });
+
+    const ns: GameState = {
+      ...gameState,
+      provinces: updatedProvinces,
+      players: updatedPlayers,
+      recruitPlacementsRemaining: gameState.recruitPlacementsRemaining - 1,
+      recruitUsedFortressProvinces: [...gameState.recruitUsedFortressProvinces, recruitPendingProvinceId],
+      log: [...gameState.log, `${player.name} invoca a ${monsterCard.name} en ${province.name}`],
+    };
+
+    set({ gameState: ns, recruitMonsterSelectionVisible: false, recruitPendingProvinceId: null });
+  },
+  doRecruitConfirmDaimyo: (daimyoType: string) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState || !localPlayerId) return;
+    const cp = getCurrentPlayer(gameState);
+    const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
+    if (!apid) return;
+    const { recruitPendingProvinceId } = get();
+    if (!recruitPendingProvinceId) return;
+
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RECRUIT_PLACE_DAIMYO', playerId: apid, payload: { provinceId: recruitPendingProvinceId, daimyoType } });
+      set({ recruitDaimyoSelectionVisible: false, recruitPendingProvinceId: null });
+      return;
+    }
+
+    const ns = recruitPlaceDaimyo(gameState, apid, recruitPendingProvinceId, daimyoType);
+    if (ns === gameState) {
+      set({ ruleViolationMessage: 'No puedes realizar esta accion', recruitDaimyoSelectionVisible: false, recruitPendingProvinceId: null });
+      return;
+    }
+    set({ gameState: ns, recruitDaimyoSelectionVisible: false, recruitPendingProvinceId: null });
+  },
+  doRecruitDismissSelection: () => {
+    set({ recruitMonsterSelectionVisible: false, recruitDaimyoSelectionVisible: false, recruitPendingProvinceId: null });
   },
 
   // --- Betray Mandate Actions ---

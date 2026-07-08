@@ -28,6 +28,7 @@ import {
   skipBetrayTurn,
   shouldEndTeaPhase,
   recruitPlaceFigure,
+  recruitPlaceDaimyo,
   skipRecruitTurn,
   skipTrainPurchase,
   advanceTrainResolution,
@@ -1677,6 +1678,82 @@ wss.on('connection', (ws: WebSocket, req) => {
             l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
           }
           l.gameState = recruitPlaceFigure(l.gameState, data.playerId, provinceId, figureType);
+          broadcastState(l);
+          break;
+        }
+
+        case 'RECRUIT_PLACE_MONSTER': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const currentRecruitPlayerIdRPM = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
+          if (data.playerId !== currentRecruitPlayerIdRPM) return;
+          const { provinceId: monsterProvinceId, monsterCardId } = data.payload || {};
+          if (!monsterProvinceId || !monsterCardId) return;
+          if (!l.recruitUndoSnapshot) {
+            l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+          }
+          const player = l.gameState.players.find(p => p.id === data.playerId);
+          if (!player || player.monsters <= 0) return;
+          if (!l.gameState.recruitMandateActive || l.gameState.recruitPlacementsRemaining <= 0) return;
+          const province = l.gameState.provinces[monsterProvinceId];
+          if (!province) return;
+          const monsterCard = player.seasonCards.find(c => c.id === monsterCardId && c.cardType === 'monster');
+          if (!monsterCard) return;
+          // Validate province
+          const isDragonflyRPM = player.clanId === 'libelula';
+          if (!isDragonflyRPM) {
+            const hasFortress = province.figures.some(f => f.owner === data.playerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
+            if (!hasFortress) return;
+          }
+          // Luna max 2
+          if (player.clanId === 'luna') {
+            const lunaFigures = province.figures.filter(f => f.owner === data.playerId && f.type !== 'fortress').length;
+            if (lunaFigures >= 2) return;
+          }
+          // Fortress usage validation
+          const usedProvinces = l.gameState.recruitUsedFortressProvinces;
+          const timesUsed = usedProvinces.filter(p => p === monsterProvinceId).length;
+          if (timesUsed > 0) {
+            const isBonus = l.gameState.recruitMandateIssuerId ?
+              (data.playerId === l.gameState.recruitMandateIssuerId || player.allies.includes(l.gameState.recruitMandateIssuerId)) : false;
+            if (!isBonus) return;
+            const bonusUsed = usedProvinces.length - new Set(usedProvinces).size;
+            if (bonusUsed >= 1) return;
+          }
+          const figureId = Math.random().toString(36).substring(2, 10);
+          const newFigure = { type: 'monster' as const, owner: data.playerId, id: figureId, monsterCardId };
+          l.gameState = {
+            ...l.gameState,
+            provinces: {
+              ...l.gameState.provinces,
+              [monsterProvinceId]: {
+                ...province,
+                figures: [...province.figures, newFigure],
+              },
+            },
+            players: l.gameState.players.map(p => {
+              if (p.id === data.playerId) return { ...p, monsters: p.monsters - 1 };
+              return p;
+            }),
+            recruitPlacementsRemaining: l.gameState.recruitPlacementsRemaining - 1,
+            recruitUsedFortressProvinces: [...l.gameState.recruitUsedFortressProvinces, monsterProvinceId],
+            log: [...l.gameState.log, `${player.name} invoca a ${monsterCard.name} en ${province.name}`],
+          };
+          broadcastState(l);
+          break;
+        }
+
+        case 'RECRUIT_PLACE_DAIMYO': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const currentRecruitPlayerIdRPD = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
+          if (data.playerId !== currentRecruitPlayerIdRPD) return;
+          const { provinceId: daimyoProvinceId, daimyoType } = data.payload || {};
+          if (!daimyoProvinceId || !daimyoType) return;
+          if (!l.recruitUndoSnapshot) {
+            l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+          }
+          l.gameState = recruitPlaceDaimyo(l.gameState, data.playerId, daimyoProvinceId, daimyoType);
           broadcastState(l);
           break;
         }

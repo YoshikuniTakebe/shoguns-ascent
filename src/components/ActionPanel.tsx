@@ -4,7 +4,7 @@ import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
-import { BushiIcon, ShintoIcon, MonsterIcon, CoinIcon, UndoIcon, SpringIcon, SummerIcon, AutumnIcon, HandshakeIcon } from './Icons';
+import { BushiIcon, ShintoIcon, MonsterIcon, DaimyoIcon, CoinIcon, UndoIcon, SpringIcon, SummerIcon, AutumnIcon, HandshakeIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { getCardEffectKey } from '../utils/cardTranslations';
 
@@ -25,6 +25,8 @@ export const ActionPanel = () => {
     setTradeModalOpen,
     betrayMonsterSelectionVisible, betrayMonsterSelectionProvinceId: _betrayMonsterSelectionProvinceId, betrayMonsterSelectionFigureId: _betrayMonsterSelectionFigureId,
     doBetrayConfirmMonster, doBetrayDismissMonsterSelection,
+    recruitMonsterSelectionVisible, recruitDaimyoSelectionVisible,
+    doRecruitConfirmMonster, doRecruitConfirmDaimyo, doRecruitDismissSelection,
   } = useGameStore();
   const t = useT();
 
@@ -592,6 +594,7 @@ export const ActionPanel = () => {
                 <p className="move-instruction">{t('actions.recruitDragonflyHint')}</p>
               )}
               <div className="recruit-buttons">
+                {(cp?.bushi ?? 0) > 0 && (
                 <button
                   className={`recruit-type-btn ${recruitFigureType === 'bushi' && recruitMode ? 'active' : ''}`}
                   onClick={() => { if (recruitFigureType === 'bushi' && recruitMode) { toggleRecruitMode(); } else { setRecruitFigureType('bushi'); if (!recruitMode) toggleRecruitMode(); } }}
@@ -601,6 +604,8 @@ export const ActionPanel = () => {
                   <span className="recruit-type-label">{t('actions.recruitBushi')}</span>
                   <span className="recruit-type-count">{cp?.bushi ?? 0}</span>
                 </button>
+                )}
+                {(cp?.shinto ?? 0) > 0 && (
                 <button
                   className={`recruit-type-btn ${recruitFigureType === 'shinto' && recruitMode ? 'active' : ''}`}
                   onClick={() => { if (recruitFigureType === 'shinto' && recruitMode) { toggleRecruitMode(); } else { setRecruitFigureType('shinto'); if (!recruitMode) toggleRecruitMode(); } }}
@@ -610,8 +615,159 @@ export const ActionPanel = () => {
                   <span className="recruit-type-label">{t('actions.recruitShinto')}</span>
                   <span className="recruit-type-count">{cp?.shinto ?? 0}</span>
                 </button>
+                )}
+                {cp && (() => {
+                  const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
+                  const deployedMonsterCardIds = new Set<string>();
+                  Object.values(gameState.provinces).forEach((prov) => {
+                    prov.figures.forEach((f) => {
+                      if (f.type === 'monster' && f.owner === cp.id && f.monsterCardId) {
+                        deployedMonsterCardIds.add(f.monsterCardId);
+                      }
+                    });
+                  });
+                  // Monster count: reserve monsters minus daimyo-type monsters (those show in daimyo button)
+                  const monsterCardsInReserve = cp.seasonCards.filter(
+                    (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
+                  );
+                  // Komainu at temple check
+                  const notOnMapCount = monsterCardsInReserve.length;
+                  const komainuAtTemple = notOnMapCount > cp.monsters && monsterCardsInReserve.some(c => c.id === 'sp-komainu');
+                  const actualReserveMonsters = komainuAtTemple ? monsterCardsInReserve.filter(c => c.id !== 'sp-komainu') : monsterCardsInReserve;
+                  const nonDaimyoMonsters = actualReserveMonsters.filter(c => !DAIMYO_MONSTER_IDS.includes(c.id));
+                  const monsterCount = nonDaimyoMonsters.length;
+                  // Daimyo count: normal daimyo + daimyo-type monsters in reserve
+                  const daimyoMonstersInReserve = actualReserveMonsters.filter(c => DAIMYO_MONSTER_IDS.includes(c.id));
+                  const daimyoCount = (cp.hasDaimyo ? 1 : 0) + daimyoMonstersInReserve.length;
+                  const clanColor = (() => { const clan = CLANS.find(c => c.id === cp.clanId); return clan?.color || '#87CEEB'; })();
+                  return (
+                    <>
+                      {monsterCount > 0 && (
+                        <button
+                          className={`recruit-type-btn ${recruitFigureType === 'monster' && recruitMode ? 'active' : ''}`}
+                          onClick={() => { if (recruitFigureType === 'monster' && recruitMode) { toggleRecruitMode(); } else { setRecruitFigureType('monster'); if (!recruitMode) toggleRecruitMode(); } }}
+                          style={{ '--recruit-clan-color': clanColor } as React.CSSProperties}
+                        >
+                          <MonsterIcon size={18} color={recruitFigureType === 'monster' && recruitMode ? clanColor : 'var(--text-secondary)'} />
+                          <span className="recruit-type-label">Monstruo</span>
+                          <span className="recruit-type-count">{monsterCount}</span>
+                        </button>
+                      )}
+                      {daimyoCount > 0 && (
+                        <button
+                          className={`recruit-type-btn ${recruitFigureType === 'daimyo' && recruitMode ? 'active' : ''}`}
+                          onClick={() => { if (recruitFigureType === 'daimyo' && recruitMode) { toggleRecruitMode(); } else { setRecruitFigureType('daimyo'); if (!recruitMode) toggleRecruitMode(); } }}
+                          style={{ '--recruit-clan-color': clanColor } as React.CSSProperties}
+                        >
+                          <DaimyoIcon size={18} color={recruitFigureType === 'daimyo' && recruitMode ? clanColor : 'var(--text-secondary)'} />
+                          <span className="recruit-type-label">Daimyo</span>
+                          <span className="recruit-type-count">{daimyoCount}</span>
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
               {recruitMode && <p className="move-instruction">{recruitFigureType === 'shinto' ? t('actions.recruitSelectProvinceOrTemple') : t('actions.recruitSelectProvince')}</p>}
+              {/* Monster selection popup for recruit */}
+              {recruitMonsterSelectionVisible && cp && (() => {
+                const cpClan = CLANS.find(c => c.id === cp.clanId);
+                const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
+                const deployedMonsterCardIds = new Set<string>();
+                Object.values(gameState.provinces).forEach((prov) => {
+                  prov.figures.forEach((f) => {
+                    if (f.type === 'monster' && f.owner === cp.id && f.monsterCardId) {
+                      deployedMonsterCardIds.add(f.monsterCardId);
+                    }
+                  });
+                });
+                const monsterCardsInReserve = cp.seasonCards.filter(
+                  (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
+                );
+                // Komainu at temple check
+                const komainuAtTemple = monsterCardsInReserve.length > cp.monsters && monsterCardsInReserve.some(c => c.id === 'sp-komainu');
+                const actualReserveMonsters = komainuAtTemple ? monsterCardsInReserve.filter(c => c.id !== 'sp-komainu') : monsterCardsInReserve;
+                const nonDaimyoMonsters = actualReserveMonsters.filter(c => !DAIMYO_MONSTER_IDS.includes(c.id));
+                return (
+                  <div style={{ background: 'rgba(15,52,96,0.97)', border: `2px solid ${cpClan?.color || '#87CEEB'}`, borderRadius: '10px', padding: '12px', margin: '8px 0' }}>
+                    <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Elige monstruo</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }}>
+                      {nonDaimyoMonsters.map((card) => (
+                        <button
+                          key={card.id}
+                          className="btn-alliance"
+                          style={{ borderColor: cpClan?.color || '#87CEEB', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 12px' }}
+                          onClick={() => doRecruitConfirmMonster(card.id)}
+                        >
+                          <span style={{ color: cpClan?.color || '#87CEEB', fontWeight: 'bold' }}>{card.name}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t(getCardEffectKey(card.id))}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      className="btn-secondary"
+                      style={{ width: '100%', marginTop: '4px' }}
+                      onClick={() => doRecruitDismissSelection()}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                );
+              })()}
+              {/* Daimyo selection popup for recruit */}
+              {recruitDaimyoSelectionVisible && cp && (() => {
+                const cpClan = CLANS.find(c => c.id === cp.clanId);
+                const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
+                const deployedMonsterCardIds = new Set<string>();
+                Object.values(gameState.provinces).forEach((prov) => {
+                  prov.figures.forEach((f) => {
+                    if (f.type === 'monster' && f.owner === cp.id && f.monsterCardId) {
+                      deployedMonsterCardIds.add(f.monsterCardId);
+                    }
+                  });
+                });
+                const monsterCardsInReserve = cp.seasonCards.filter(
+                  (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
+                );
+                const komainuAtTemple = monsterCardsInReserve.length > cp.monsters && monsterCardsInReserve.some(c => c.id === 'sp-komainu');
+                const actualReserveMonsters = komainuAtTemple ? monsterCardsInReserve.filter(c => c.id !== 'sp-komainu') : monsterCardsInReserve;
+                const daimyoMonstersInReserve = actualReserveMonsters.filter(c => DAIMYO_MONSTER_IDS.includes(c.id));
+                const clanName = cpClan?.name || '';
+                return (
+                  <div style={{ background: 'rgba(15,52,96,0.97)', border: `2px solid ${cpClan?.color || '#87CEEB'}`, borderRadius: '10px', padding: '12px', margin: '8px 0' }}>
+                    <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Elige daimyo</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }}>
+                      {cp.hasDaimyo && (
+                        <button
+                          className="btn-alliance"
+                          style={{ borderColor: cpClan?.color || '#87CEEB', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 12px' }}
+                          onClick={() => doRecruitConfirmDaimyo('normal')}
+                        >
+                          <span style={{ color: cpClan?.color || '#87CEEB', fontWeight: 'bold' }}>Daimyo Clan {clanName}</span>
+                        </button>
+                      )}
+                      {daimyoMonstersInReserve.map((card) => (
+                        <button
+                          key={card.id}
+                          className="btn-alliance"
+                          style={{ borderColor: cpClan?.color || '#87CEEB', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 12px' }}
+                          onClick={() => doRecruitConfirmDaimyo(card.id)}
+                        >
+                          <span style={{ color: cpClan?.color || '#87CEEB', fontWeight: 'bold' }}>{card.name}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t(getCardEffectKey(card.id))}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      className="btn-secondary"
+                      style={{ width: '100%', marginTop: '4px' }}
+                      onClick={() => doRecruitDismissSelection()}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                );
+              })()}
               {/* Jinmenju ability button */}
               {cp && !jinmenjuSummonActive && (() => {
                 const hasJinmenju = cp.seasonCards.some(c => c.id === 'sp-jinmenju');
