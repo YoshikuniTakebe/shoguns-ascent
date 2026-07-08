@@ -53,6 +53,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   const [lightMode, setLightMode] = useState(false);
   const lastTrainIndexRef = useRef<number>(-1);
   const [purchasePending, setPurchasePending] = useState(false);
+  const prevTrainMandateActiveRef = useRef<boolean>(false);
 
   // Reset playerConfirmed and purchasePending when the train resolution index changes (new player's turn)
   const trainResIdx = gameState?.trainResolutionIndex ?? -1;
@@ -64,6 +65,20 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
       setConfirmCard(null);
     }
   }, [trainResIdx]);
+
+  // Reset state when a new train mandate starts (trainMandateActive transitions false -> true)
+  // This handles the case where trainResolutionIndex stays at 0 between trains
+  const trainMandateActive = gameState?.trainMandateActive ?? false;
+  useEffect(() => {
+    if (trainMandateActive && !prevTrainMandateActiveRef.current) {
+      // New train mandate just started - reset all interaction state
+      setPlayerConfirmed(false);
+      setPurchasePending(false);
+      setConfirmCard(null);
+      lastTrainIndexRef.current = -1;
+    }
+    prevTrainMandateActiveRef.current = trainMandateActive;
+  }, [trainMandateActive]);
 
   if (!open || !gameState) return null;
 
