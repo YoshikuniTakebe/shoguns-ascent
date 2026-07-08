@@ -1135,7 +1135,14 @@ wss.on('connection', (ws: WebSocket, req) => {
             l.gameState = { ...l.gameState, kamiSummaryReadyPlayers: [...l.gameState.kamiSummaryReadyPlayers, playerId] };
           }
           if (l.gameState.kamiSummaryReadyPlayers.length >= l.gameState.players.length) {
-            l.gameState = { ...l.gameState, kamiSummaryVisible: false, kamiSummaryData: [], kamiSummaryReadyPlayers: [] };
+            // All players accepted - clear summary and ensure currentPlayerIndex is correct
+            const nextIdx = l.gameState.kamiResolutionNextPlayerIndex;
+            const playerCount = l.gameState.players.length;
+            // Defensively apply kamiResolutionNextPlayerIndex if valid and politics is still active
+            const correctedIndex = (nextIdx >= 0 && nextIdx < playerCount && l.gameState.politicsMandateCount < l.gameState.maxMandates)
+              ? nextIdx
+              : l.gameState.currentPlayerIndex;
+            l.gameState = { ...l.gameState, kamiSummaryVisible: false, kamiSummaryData: [], kamiSummaryReadyPlayers: [], currentPlayerIndex: correctedIndex };
           }
           broadcastState(l);
           break;

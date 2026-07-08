@@ -3134,6 +3134,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, ws, localPlayerId } = get();
     if (!gameState || !localPlayerId) return;
     if (ws && gameState.mode === 'online') {
+      // Optimistically add local player to kamiSummaryReadyPlayers so the UI immediately shows "Listo x/x"
+      if (!gameState.kamiSummaryReadyPlayers.includes(localPlayerId)) {
+        const updatedState: GameState = {
+          ...gameState,
+          kamiSummaryReadyPlayers: [...gameState.kamiSummaryReadyPlayers, localPlayerId],
+        };
+        set({ gameState: updatedState });
+      }
       get().sendAction({ type: 'KAMI_SUMMARY_READY', playerId: localPlayerId });
     } else {
       // Hotseat: directly clear summary and show turn popup for next player

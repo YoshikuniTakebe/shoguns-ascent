@@ -1830,13 +1830,15 @@ export function advanceKamiResolution(state: GameState): GameState {
     };
     newState.log = [...newState.log, '--- Fin Turno Kami ---'];
 
+    // Advance currentPlayerIndex to the next player (computed at kami start)
+    newState.currentPlayerIndex = state.kamiResolutionNextPlayerIndex;
+
     // Check if politics phase is done
     if (newState.politicsMandateCount >= newState.maxMandates) {
       return advancePhase(newState);
     }
 
     // Continue with next player's mandate turn
-    newState.currentPlayerIndex = state.kamiResolutionNextPlayerIndex;
     return newState;
   }
 
