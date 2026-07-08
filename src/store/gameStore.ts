@@ -713,6 +713,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (snapshots.length === 0) return;
       const lastSnapshot = snapshots[snapshots.length - 1];
       const gameState = lastSnapshot.state as GameState;
+      if (!gameState.gameOver) return;
       set({
         gameState,
         localPlayerId: gameState.players[0]?.id || null,
