@@ -101,15 +101,6 @@ export const BattleBiddingOverlay = ({
     });
   }, [maxCoins]);
 
-  // Safety net: if coinPositions ever has a count mismatch, reset to pool
-  useEffect(() => {
-    if (Object.keys(coinPositions).length !== maxCoins) {
-      const reset: Record<string, string> = {};
-      for (let i = 0; i < maxCoins; i++) reset[`coin-${i}`] = 'pool';
-      setCoinPositions(reset);
-    }
-  }, [coinPositions, maxCoins]);
-
   // Track which drop target is currently being dragged over
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
 

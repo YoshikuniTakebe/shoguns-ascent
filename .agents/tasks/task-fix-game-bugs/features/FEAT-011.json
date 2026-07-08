@@ -1,0 +1,12 @@
+{
+  "id": "FEAT-011",
+  "title": "Fix review issues: Fire Dragon server-side + remove redundant useEffect",
+  "status": "in_progress",
+  "description": "Address issues 1 and 2 from the 2026-07-08 review: (1) Import and call applyFireDragonEffect in the server SUBMIT_WAR_BIDS handler before determineTacticWinners; (2) Remove the redundant safety-net useEffect in BattleBiddingOverlay that watches coinPositions.",
+  "steps": [
+    "Add applyFireDragonEffect to the import list in src/server/index.ts",
+    "Call applyFireDragonEffect(l.gameState, provinceId) before determineTacticWinners in SUBMIT_WAR_BIDS handler",
+    "Remove the redundant useEffect that watches coinPositions in BattleBiddingOverlay.tsx",
+    "Run npm run build to verify"
+  ]
+}

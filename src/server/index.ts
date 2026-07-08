@@ -42,6 +42,7 @@ import {
   processHostageReturn,
   finalizeCleanupAndAdvance,
   determineTacticWinners,
+  applyFireDragonEffect,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 import { SEASON_CARDS_DATA } from '../types/game';
@@ -815,6 +816,8 @@ wss.on('connection', (ws: WebSocket, req) => {
           l.gameState = submitWarTacticBids(l.gameState, provinceId, data.playerId, tacticBids);
           // Only resolve once all participants have submitted their bids
           if (allBidsSubmitted(l.gameState, provinceId)) {
+            // Apply Fire Dragon pre-battle effect before determining tactic winners
+            l.gameState = applyFireDragonEffect(l.gameState, provinceId);
             const battle = l.gameState.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
             if (battle) {
               const resData = determineTacticWinners(l.gameState, battle);
