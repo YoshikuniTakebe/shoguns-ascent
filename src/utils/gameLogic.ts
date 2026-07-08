@@ -3295,7 +3295,7 @@ export function resolveWinter(state: GameState): GameState {
   return newState;
 }
 
-function scoreWinterUpgrade(gameState: GameState, player: Player, card: SeasonCard): number {
+export function scoreWinterUpgrade(gameState: GameState, player: Player, card: SeasonCard): number {
   // Normalize card ID by stripping '-2' suffix for duplicate cards
   const baseCardId = card.id.endsWith('-2') ? card.id.slice(0, -2) : card.id;
   switch (baseCardId) {

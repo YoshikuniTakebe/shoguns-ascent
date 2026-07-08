@@ -481,3 +481,33 @@
 .tea-proposal-card{background:rgba(30,132,73,0.08);border:1px solid rgba(30,132,73,0.3);border-radius:8px;padding:0.6rem;margin-bottom:0.5rem}
 .tea-opted-out-msg{padding:0.8rem;background:rgba(220,50,50,0.08);border:1px solid rgba(220,50,50,0.3);border-radius:8px;color:#ff6b6b;font-weight:bold;text-align:center;font-size:0.9rem}
 .tea-alliance-formed{display:flex;align-items:center;gap:0.5rem;padding:0.8rem;background:rgba(30,132,73,0.1);border:1px solid rgba(30,132,73,0.4);border-radius:8px;color:#27ae60;font-weight:bold;font-size:0.9rem}
+
+/* Game Over Title Animated */
+.game-over-title-img{display:block;margin:0 auto 1rem;max-width:320px;width:80%}
+.game-over-title-animated{font-size:3rem;letter-spacing:0.15em;background:linear-gradient(135deg,#c8a951 0%,#f5e6ca 25%,#e94560 50%,#c8a951 75%,#f5e6ca 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;-webkit-text-stroke:2px rgba(255,255,255,0.85);animation:shimmer 4s ease infinite,gameOverGlow 2.5s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(200,169,81,0.5));margin-bottom:1.5rem}
+@keyframes gameOverGlow{0%,100%{text-shadow:0 0 10px rgba(200,169,81,0.4),0 0 20px rgba(200,169,81,0.2)}50%{text-shadow:0 0 20px rgba(200,169,81,0.8),0 0 40px rgba(200,169,81,0.4),0 0 60px rgba(200,169,81,0.2)}}
+
+/* Scoring Breakdown Link */
+.scoring-breakdown-link{text-decoration:underline;text-underline-offset:2px}
+.scoring-breakdown-link:hover{filter:brightness(1.3)}
+
+/* Scoring Breakdown Modal */
+.scoring-modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:2000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease-out;backdrop-filter:blur(4px)}
+.scoring-modal{position:relative;background:linear-gradient(145deg,var(--bg-medium),var(--bg-dark));border:1px solid var(--border-gold);border-radius:14px;padding:2rem;max-width:550px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,0.7)}
+.scoring-modal-close{position:absolute;top:0.6rem;right:0.9rem;background:none;border:none;color:var(--text-secondary);font-size:1.8rem;cursor:pointer;line-height:1;padding:0.25rem;border-radius:4px;transition:color 0.2s;z-index:1}
+.scoring-modal-close:hover{color:var(--text-primary)}
+.scoring-modal-title{display:flex;align-items:center;gap:0.5rem;justify-content:center;font-size:1.2rem;font-weight:bold;letter-spacing:0.05em;margin-bottom:1.5rem}
+.scoring-modal-section{margin-bottom:1.25rem;padding:0.8rem;background:rgba(0,0,0,0.2);border-radius:8px;border:1px solid rgba(200,169,81,0.15)}
+.scoring-modal-section h4{color:var(--accent-gold);font-size:0.9rem;margin-bottom:0.6rem;letter-spacing:0.03em}
+.scoring-modal-tokens{display:flex;flex-direction:column;gap:0.3rem}
+.scoring-token-row{display:flex;align-items:center;justify-content:space-between;padding:0.3rem 0.5rem;border-radius:4px}
+.scoring-token-row:nth-child(odd){background:rgba(255,255,255,0.02)}
+.scoring-token-season{display:inline-flex;align-items:center;gap:0.4rem;font-size:0.85rem;color:var(--text-primary)}
+.scoring-token-count{font-size:0.8rem;color:var(--text-secondary)}
+.scoring-token-vp{font-size:0.9rem;font-weight:bold;color:var(--accent-gold)}
+.scoring-token-subtotal{border-top:1px solid rgba(200,169,81,0.3);margin-top:0.3rem;padding-top:0.5rem}
+.scoring-set-info{font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem}
+.scoring-modal-grand-total{font-size:2.5rem;font-weight:bold;text-align:center;margin-top:1rem;padding:0.75rem;border-top:2px solid var(--border-gold)}
+
+/* Monster Reserve Tooltip Portal */
+.monster-reserve-tooltip-portal{background:linear-gradient(145deg,rgba(15,52,96,0.98),rgba(10,35,65,0.98));padding:6px 10px;border-radius:8px;white-space:nowrap;display:flex;flex-direction:column;gap:2px;border-width:2px;border-style:solid;pointer-events:none;min-width:80px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}

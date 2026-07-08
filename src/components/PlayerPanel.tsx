@@ -92,11 +92,28 @@ function computeReserveTotals(player: Player, gameState: GameState) {
 const PlayerReserves = ({ player, gameState }: { player: Player; gameState: GameState }) => {
   const clan = CLANS.find(c => c.id === player.clanId)!;
   const totals = computeReserveTotals(player, gameState);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
-  // Get list of monster card names for tooltip
-  const monsterCardNames = player.seasonCards
+  // Determine which monster cards are deployed on the map
+  const allMapFigures = Object.values(gameState.provinces).flatMap(p => p.figures.filter(f => f.owner === player.id));
+  const deployedMonsterCardIds = new Set<string>();
+  allMapFigures.forEach(f => { if (f.type === 'monster' && f.monsterCardId) deployedMonsterCardIds.add(f.monsterCardId); });
+
+  // Get list of monster cards with deployment status
+  const monsterCards = player.seasonCards
     .filter(c => c.cardType === 'monster')
-    .map(c => c.name);
+    .map(c => ({ name: c.name, id: c.id, deployed: deployedMonsterCardIds.has(c.id) }));
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLSpanElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltipPos({ top: rect.top - 8, left: rect.left + rect.width / 2 });
+    setTooltipVisible(true);
+  };
+
+  const handleMouseLeave = () => {
+    setTooltipVisible(false);
+  };
 
   return (
     <>
@@ -116,15 +133,30 @@ const PlayerReserves = ({ player, gameState }: { player: Player; gameState: Game
         <DaimyoIcon size={18} color={clan.color} className="reserve-icon" />
         <span className="reserve-count">{totals.daimyo.reserve}/{totals.daimyo.total}</span>
       </span>
-      <span className="reserve-item reserve-item-monster-wrapper">
+      <span
+        className="reserve-item reserve-item-monster-wrapper"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         <MonsterIcon size={18} color={clan.color} className="reserve-icon" />
         <span className="reserve-count">{totals.monsters.reserve}/{totals.monsters.total}</span>
-        {monsterCardNames.length > 0 && (
-          <span className="figure-tooltip monster-reserve-tooltip" style={{ borderColor: clan.color }}>
-            {monsterCardNames.map((name, idx) => (
-              <span key={idx} className="figure-tooltip-name" style={{ color: clan.color }}>{name}</span>
+        {monsterCards.length > 0 && tooltipVisible && createPortal(
+          <span
+            className="monster-reserve-tooltip-portal"
+            style={{
+              position: 'fixed',
+              top: tooltipPos.top,
+              left: tooltipPos.left,
+              transform: 'translateX(-50%) translateY(-100%)',
+              borderColor: clan.color,
+              zIndex: 10000,
+            }}
+          >
+            {monsterCards.map((mc, idx) => (
+              <span key={idx} className="figure-tooltip-name" style={{ color: mc.deployed ? '#888' : clan.color }}>{mc.name}{mc.deployed ? ' (mapa)' : ''}</span>
             ))}
-          </span>
+          </span>,
+          document.body
         )}
       </span>
     </>

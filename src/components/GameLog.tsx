@@ -286,6 +286,7 @@ export const GameLog = () => {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
+                  ...(isActive ? { color: '#ffffff' } : {}),
                 }}
                 onClick={() => setSelectedSeason(season === currentSeason ? null : season)}
               >
