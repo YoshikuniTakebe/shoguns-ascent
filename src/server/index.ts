@@ -1169,6 +1169,8 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!playerId) return;
+          // Guard: reject ready signals if the summary is not actually visible yet
+          if (!l.gameState.kamiSummaryVisible) return;
           if (!l.gameState.kamiSummaryReadyPlayers.includes(playerId)) {
             l.gameState = { ...l.gameState, kamiSummaryReadyPlayers: [...l.gameState.kamiSummaryReadyPlayers, playerId] };
           }

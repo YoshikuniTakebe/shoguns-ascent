@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-003",
+  "type": "fix",
+  "description": "Fix the Kami phase race condition in online play where a player can accept the KamiSummaryPopup before other clients have received the state update showing the summary, causing the phase to break.",
+  "status": "in_progress",
+  "steps": [
+    "STEP 1: In src/server/index.ts, in the 'KAMI_SUMMARY_READY' case handler (around line 1168), add a guard at the top that rejects the ready signal if kamiSummaryVisible is NOT true on the server state. This prevents players from sending early ready signals before the summary is actually active. Add: if (!l.gameState.kamiSummaryVisible) return;",
+    "STEP 2: In the same KAMI_SUMMARY_READY handler, also ensure that after the Ryujin monster purchase flow completes (advanceKamiResolution is called), the kamiSummaryVisible is properly set. The current flow for Ryujin buying a monster during kami resolution is: RYUJIN_BUY -> if monster, wait for MONSTER_PLACED -> in MONSTER_PLACED handler, call advanceKamiResolution. If that was the last temple, advanceKamiResolution sets kamiSummaryVisible: true. Verify this path is correct by reading the MONSTER_PLACED handler where kamiResolutionActive is true (line ~1546). The issue is: the summary becomes visible in the broadcast, but the resolving player's client may get the updated state and immediately click 'accept' before other clients have rendered the popup. The guard in step 1 fixes this at the server level because the server state has kamiSummaryVisible: true only after broadcastState. The real race is: Player A receives broadcast, renders popup, clicks accept immediately while Player B's state update is still in flight. But since the server state already has kamiSummaryVisible: true, the guard works. The fix from step 1 is sufficient.",
+    "STEP 3: Add a small client-side debounce in the KamiSummaryPopup or doKamiSummaryReady function. In src/store/gameStore.ts, in doKamiSummaryReady (around line 3466), add a guard that the popup has been visible for at least 500ms before allowing acceptance. Track when kamiSummaryVisible transitions to true. Add a kamiSummaryVisibleSince timestamp to the store. When the state is received from the server via WebSocket with kamiSummaryVisible: true and it was previously false, set kamiSummaryVisibleSince to Date.now(). In doKamiSummaryReady, check if Date.now() - kamiSummaryVisibleSince < 500 and if so, return early (preventing the player from accepting too quickly). This gives other clients time to receive and render the summary.",
+    "STEP 4: Set the kamiSummaryVisibleSince timestamp. Find where server state updates come in via WebSocket. In the store, there should be a state setter from server messages. When the incoming gameState has kamiSummaryVisible: true and the current local state had kamiSummaryVisible: false (or was undefined), set kamiSummaryVisibleSince = Date.now(). This is likely in the WebSocket message handler that does set({ gameState: ... })."
+  ],
+  "acceptance_criteria": [
+    "Server rejects KAMI_SUMMARY_READY messages when kamiSummaryVisible is false",
+    "Client prevents accepting the Kami summary popup within the first 500ms of it appearing",
+    "The Kami phase properly completes with '--- Fin Turno Kami ---' in the log when all temples are resolved",
+    "TypeScript compilation passes"
+  ],
+  "verification": [
+    "Run 'npx tsc --noEmit' to confirm no type errors",
+    "Run 'npm run build' to confirm Vite build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

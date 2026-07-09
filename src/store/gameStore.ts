@@ -371,6 +371,7 @@ interface GameStore {
   doKamiPhaseReady: () => void;
   doKamiSummaryReady: () => void;
   kamiTurnPopupShownForIndex: number | null;
+  kamiSummaryVisibleSince: number | null;
 
   // War Phase Popup
   warPhasePopupVisible: boolean;
@@ -3464,8 +3465,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doKamiSummaryReady: () => {
-    const { gameState, ws, localPlayerId } = get();
+    const { gameState, ws, localPlayerId, kamiSummaryVisibleSince } = get();
     if (!gameState || !localPlayerId) return;
+    // Debounce: prevent accepting the popup within the first 500ms of it appearing
+    if (kamiSummaryVisibleSince && Date.now() - kamiSummaryVisibleSince < 500) return;
     if (ws && gameState.mode === 'online') {
       // Optimistically add local player to kamiSummaryReadyPlayers so the UI immediately shows "Listo x/x"
       if (!gameState.kamiSummaryReadyPlayers.includes(localPlayerId)) {
@@ -3488,6 +3491,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   kamiTurnPopupShownForIndex: null,
+  kamiSummaryVisibleSince: null,
 
   // --- War Phase Popup ---
   dismissWarPhasePopup: () => {
@@ -3723,6 +3727,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
           if (state.kamiSummaryVisible) {
             uiResets.kamiPhasePopupVisible = false;
             uiResets.kamiPendingTemples = null;
+            // Track when kamiSummaryVisible transitions from false to true for debounce
+            if (!prevGameState?.kamiSummaryVisible) {
+              uiResets.kamiSummaryVisibleSince = Date.now();
+            }
+          } else {
+            // Reset the timestamp when summary is no longer visible
+            if (prevGameState?.kamiSummaryVisible) {
+              uiResets.kamiSummaryVisibleSince = null;
+            }
           }
 
           // When kamiResolutionActive becomes true and we are in online mode: hide kami phase popup
