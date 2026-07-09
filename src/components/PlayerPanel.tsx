@@ -9,86 +9,7 @@ import { PlayerCardsModal } from './PlayerCardsModal';
 import { WarTokensModal } from './WarTokensModal';
 import { HostagesModal } from './HostagesModal';
 import { useT } from '../i18n';
-
-// Dual-type monster card IDs
-const SHINTO_MONSTER_IDS = ['sp-komainu', 'su-hotei'];
-// Note: Fukurokuju card text says "Counts as Daimyo and Fortress" but only daimyo tracking
-// is implemented per user spec. The fortress aspect is deliberately omitted.
-const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
-
-function computeReserveTotals(player: Player, gameState: GameState) {
-  // Gather all figures on the map owned by this player
-  const allMapFigures = Object.values(gameState.provinces).flatMap(p => p.figures.filter(f => f.owner === player.id));
-  // Gather all temple figures that belong to this player AND have a monsterCardId (praying monsters)
-  const prayingMonsterCardIds = new Set<string>();
-  gameState.temples.forEach(t => {
-    t.figures.forEach(f => {
-      if (f.playerId === player.id && f.monsterCardId) {
-        prayingMonsterCardIds.add(f.monsterCardId);
-      }
-    });
-  });
-  // All temple figures for this player (for shinto count)
-  const allTempleFigures = gameState.temples.flatMap(t => t.figures.filter(f => f.playerId === player.id));
-
-  // Determine which monster cards are deployed on the map (have a figure with monsterCardId)
-  const deployedMonsterCardIds = new Set<string>();
-  allMapFigures.forEach(f => { if (f.type === 'monster' && f.monsterCardId) deployedMonsterCardIds.add(f.monsterCardId); });
-
-  // Monster cards owned by the player
-  const monsterCards = player.seasonCards.filter(c => c.cardType === 'monster');
-  const totalMonsters = monsterCards.length;
-
-  // Monsters in reserve = total owned - deployed on map - praying at temples
-  const monsterCardsInReserve = monsterCards.filter(c => !deployedMonsterCardIds.has(c.id) && !prayingMonsterCardIds.has(c.id));
-  const monstersInReserve = monsterCardsInReserve.length;
-
-  // Dual-type bonus counts for secondary types (only when monster is in reserve)
-  const shintoMonstersInReserve = monsterCardsInReserve.filter(c => SHINTO_MONSTER_IDS.includes(c.id)).length;
-  const daimyoMonstersInReserve = monsterCardsInReserve.filter(c => DAIMYO_MONSTER_IDS.includes(c.id)).length;
-  // Dual-type bonus counts for ALL owned monsters (for total computation)
-  const shintoMonstersOwned = monsterCards.filter(c => SHINTO_MONSTER_IDS.includes(c.id)).length;
-  const daimyoMonstersOwned = monsterCards.filter(c => DAIMYO_MONSTER_IDS.includes(c.id)).length;
-
-  // Bushi
-  const bushiOnMap = allMapFigures.filter(f => f.type === 'bushi').length;
-  const bushiReserve = player.bushi;
-  const bushiTotal = bushiOnMap + bushiReserve;
-
-  // Shinto
-  const shintoOnMap = allMapFigures.filter(f => f.type === 'shinto').length;
-  const shintoInTemples = allTempleFigures.length;
-  const shintoReserve = player.shinto;
-  const shintoTotal = shintoOnMap + shintoInTemples + shintoReserve;
-  // Effective shinto reserve includes shinto-type monsters in reserve
-  const effectiveShintoReserve = shintoReserve + shintoMonstersInReserve;
-  const effectiveShintoTotal = shintoTotal + shintoMonstersOwned;
-
-  // Fortresses
-  const FORTRESS_MONSTER_IDS = ['sp-fukurokuju'];
-  const fortressMonstersOwned = monsterCards.filter(c => FORTRESS_MONSTER_IDS.includes(c.id)).length;
-  const fortressMonstersInReserve = monsterCardsInReserve.filter(c => FORTRESS_MONSTER_IDS.includes(c.id)).length;
-
-  const fortressesOnMap = allMapFigures.filter(f => f.type === 'fortress').length;
-  const fortressesReserve = player.fortresses;
-  const effectiveFortressReserve = fortressesReserve + fortressMonstersInReserve;
-  const effectiveFortressTotal = fortressesOnMap + fortressesReserve + fortressMonstersOwned;
-
-  // Daimyo
-  const daimyoReserve = player.hasDaimyo ? 1 : 0;
-  const daimyoTotal = 1; // Always has 1 daimyo
-  // Effective daimyo reserve includes daimyo-type monsters in reserve
-  const effectiveDaimyoReserve = daimyoReserve + daimyoMonstersInReserve;
-  const effectiveDaimyoTotal = daimyoTotal + daimyoMonstersOwned;
-
-  return {
-    bushi: { reserve: bushiReserve, total: bushiTotal },
-    shinto: { reserve: effectiveShintoReserve, total: effectiveShintoTotal },
-    fortresses: { reserve: effectiveFortressReserve, total: effectiveFortressTotal },
-    daimyo: { reserve: effectiveDaimyoReserve, total: effectiveDaimyoTotal },
-    monsters: { reserve: monstersInReserve, total: totalMonsters },
-  };
-}
+import { computeReserveTotals, getDeployedMonsterCardIds, getPrayingMonsterCardIds } from '../utils/reserveUtils';
 
 const PlayerReserves = ({ player, gameState }: { player: Player; gameState: GameState }) => {
   const clan = CLANS.find(c => c.id === player.clanId)!;
@@ -96,20 +17,9 @@ const PlayerReserves = ({ player, gameState }: { player: Player; gameState: Game
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
-  // Determine which monster cards are deployed on the map
-  const allMapFigures = Object.values(gameState.provinces).flatMap(p => p.figures.filter(f => f.owner === player.id));
-  const deployedMonsterCardIds = new Set<string>();
-  allMapFigures.forEach(f => { if (f.type === 'monster' && f.monsterCardId) deployedMonsterCardIds.add(f.monsterCardId); });
-
-  // Determine which monster cards are praying at temples
-  const prayingMonsterCardIds = new Set<string>();
-  gameState.temples.forEach(t => {
-    t.figures.forEach(f => {
-      if (f.playerId === player.id && f.monsterCardId) {
-        prayingMonsterCardIds.add(f.monsterCardId);
-      }
-    });
-  });
+  // Use shared utility for deployed/praying detection (handles legacy saves)
+  const deployedMonsterCardIds = getDeployedMonsterCardIds(player.id, gameState);
+  const prayingMonsterCardIds = getPrayingMonsterCardIds(player.id, gameState, deployedMonsterCardIds);
 
   // Get list of monster cards with deployment status
   const monsterCards = player.seasonCards

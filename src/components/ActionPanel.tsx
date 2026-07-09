@@ -8,6 +8,9 @@ import type { TranslationKey } from '../i18n';
 import { BushiIcon, ShintoIcon, MonsterIcon, DaimyoIcon, CoinIcon, UndoIcon, SpringIcon, SummerIcon, AutumnIcon, HandshakeIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { getCardEffectKey } from '../utils/cardTranslations';
+import { computeReserveTotals, DAIMYO_MONSTER_IDS } from '../utils/reserveUtils';
+
+const DAIMYO_MONSTER_IDS_LOCAL = DAIMYO_MONSTER_IDS;
 
 export const ActionPanel = () => {
   const {
@@ -606,70 +609,26 @@ export const ActionPanel = () => {
                   <span className="recruit-type-count">{cp?.bushi ?? 0}</span>
                 </button>
                 )}
-                {(() => {
-                  // Effective shinto: player.shinto + shinto-type monsters in reserve (not deployed, not praying)
-                  const SHINTO_MONSTER_IDS_LOCAL = ['sp-komainu', 'su-hotei'];
-                  const deployedIds = new Set<string>();
-                  Object.values(gameState.provinces).forEach((prov) => {
-                    prov.figures.forEach((f) => {
-                      if (f.type === 'monster' && f.owner === cp?.id && f.monsterCardId) {
-                        deployedIds.add(f.monsterCardId);
-                      }
-                    });
-                  });
-                  const prayingIds = new Set<string>();
-                  gameState.temples.forEach(temple => {
-                    temple.figures.forEach(f => {
-                      if (f.playerId === cp?.id && f.monsterCardId) {
-                        prayingIds.add(f.monsterCardId);
-                      }
-                    });
-                  });
-                  const shintoMonstersInReserve = cp?.seasonCards.filter(c => c.cardType === 'monster' && SHINTO_MONSTER_IDS_LOCAL.includes(c.id) && !deployedIds.has(c.id) && !prayingIds.has(c.id)).length || 0;
-                  const effectiveShintoReserve = (cp?.shinto ?? 0) + shintoMonstersInReserve;
-                  return effectiveShintoReserve > 0 ? (
+                {cp && (() => {
+                  const reserveTotals = computeReserveTotals(cp, gameState);
+                  const clanColor = (() => { const clan = CLANS.find(c => c.id === cp.clanId); return clan?.color || '#87CEEB'; })();
+                  const effectiveShintoReserve = reserveTotals.shinto.reserve;
+                  const nonDaimyoMonsters = reserveTotals.monsterCardsInReserve.filter(c => !DAIMYO_MONSTER_IDS_LOCAL.includes(c.id));
+                  const monsterCount = nonDaimyoMonsters.length;
+                  const daimyoCount = reserveTotals.daimyo.reserve;
+                  return (
+                    <>
+                      {effectiveShintoReserve > 0 && (
                 <button
                   className={`recruit-type-btn ${recruitFigureType === 'shinto' && recruitMode ? 'active' : ''}`}
                   onClick={() => { if (recruitFigureType === 'shinto' && recruitMode) { toggleRecruitMode(); } else { setRecruitFigureType('shinto'); if (!recruitMode) toggleRecruitMode(); } }}
-                  style={{ '--recruit-clan-color': (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() } as React.CSSProperties}
+                  style={{ '--recruit-clan-color': clanColor } as React.CSSProperties}
                 >
-                  <ShintoIcon size={18} color={recruitFigureType === 'shinto' && recruitMode ? (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() : 'var(--text-secondary)'} />
+                  <ShintoIcon size={18} color={recruitFigureType === 'shinto' && recruitMode ? clanColor : 'var(--text-secondary)'} />
                   <span className="recruit-type-label">{t('actions.recruitShinto')}</span>
                   <span className="recruit-type-count">{effectiveShintoReserve}</span>
                 </button>
-                  ) : null;
-                })()}
-                {cp && (() => {
-                  const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
-                  const deployedMonsterCardIds = new Set<string>();
-                  Object.values(gameState.provinces).forEach((prov) => {
-                    prov.figures.forEach((f) => {
-                      if (f.type === 'monster' && f.owner === cp.id && f.monsterCardId) {
-                        deployedMonsterCardIds.add(f.monsterCardId);
-                      }
-                    });
-                  });
-                  // Detect praying monsters at temples
-                  const prayingMonsterCardIds = new Set<string>();
-                  gameState.temples.forEach(temple => {
-                    temple.figures.forEach(f => {
-                      if (f.playerId === cp.id && f.monsterCardId) {
-                        prayingMonsterCardIds.add(f.monsterCardId);
-                      }
-                    });
-                  });
-                  // Monster cards in reserve: not deployed on map AND not praying at temple
-                  const actualReserveMonsters = cp.seasonCards.filter(
-                    (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id) && !prayingMonsterCardIds.has(card.id)
-                  );
-                  const nonDaimyoMonsters = actualReserveMonsters.filter(c => !DAIMYO_MONSTER_IDS.includes(c.id));
-                  const monsterCount = nonDaimyoMonsters.length;
-                  // Daimyo count: normal daimyo + daimyo-type monsters in reserve
-                  const daimyoMonstersInReserve = actualReserveMonsters.filter(c => DAIMYO_MONSTER_IDS.includes(c.id));
-                  const daimyoCount = (cp.hasDaimyo ? 1 : 0) + daimyoMonstersInReserve.length;
-                  const clanColor = (() => { const clan = CLANS.find(c => c.id === cp.clanId); return clan?.color || '#87CEEB'; })();
-                  return (
-                    <>
+                      )}
                       {monsterCount > 0 && (
                         <button
                           className={`recruit-type-btn ${recruitFigureType === 'monster' && recruitMode ? 'active' : ''}`}
@@ -700,27 +659,8 @@ export const ActionPanel = () => {
               {/* Monster selection popup for recruit */}
               {recruitMonsterSelectionVisible && cp && (() => {
                 const cpClan = CLANS.find(c => c.id === cp.clanId);
-                const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
-                const deployedMonsterCardIds = new Set<string>();
-                Object.values(gameState.provinces).forEach((prov) => {
-                  prov.figures.forEach((f) => {
-                    if (f.type === 'monster' && f.owner === cp.id && f.monsterCardId) {
-                      deployedMonsterCardIds.add(f.monsterCardId);
-                    }
-                  });
-                });
-                const prayingMonsterCardIds = new Set<string>();
-                gameState.temples.forEach(temple => {
-                  temple.figures.forEach(f => {
-                    if (f.playerId === cp.id && f.monsterCardId) {
-                      prayingMonsterCardIds.add(f.monsterCardId);
-                    }
-                  });
-                });
-                const actualReserveMonsters = cp.seasonCards.filter(
-                  (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id) && !prayingMonsterCardIds.has(card.id)
-                );
-                const nonDaimyoMonsters = actualReserveMonsters.filter(c => !DAIMYO_MONSTER_IDS.includes(c.id));
+                const reserveTotals = computeReserveTotals(cp, gameState);
+                const nonDaimyoMonsters = reserveTotals.monsterCardsInReserve.filter(c => !DAIMYO_MONSTER_IDS_LOCAL.includes(c.id));
                 return createPortal(
                   <div className="monster-placement-popup">
                     <div className="monster-placement-popup-content" style={{ border: `2px solid ${cpClan?.color || '#87CEEB'}`, maxWidth: '400px' }}>
@@ -753,27 +693,8 @@ export const ActionPanel = () => {
               {/* Daimyo selection popup for recruit */}
               {recruitDaimyoSelectionVisible && cp && (() => {
                 const cpClan = CLANS.find(c => c.id === cp.clanId);
-                const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
-                const deployedMonsterCardIds = new Set<string>();
-                Object.values(gameState.provinces).forEach((prov) => {
-                  prov.figures.forEach((f) => {
-                    if (f.type === 'monster' && f.owner === cp.id && f.monsterCardId) {
-                      deployedMonsterCardIds.add(f.monsterCardId);
-                    }
-                  });
-                });
-                const prayingMonsterCardIds = new Set<string>();
-                gameState.temples.forEach(temple => {
-                  temple.figures.forEach(f => {
-                    if (f.playerId === cp.id && f.monsterCardId) {
-                      prayingMonsterCardIds.add(f.monsterCardId);
-                    }
-                  });
-                });
-                const actualReserveMonsters = cp.seasonCards.filter(
-                  (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id) && !prayingMonsterCardIds.has(card.id)
-                );
-                const daimyoMonstersInReserve = actualReserveMonsters.filter(c => DAIMYO_MONSTER_IDS.includes(c.id));
+                const reserveTotals = computeReserveTotals(cp, gameState);
+                const daimyoMonstersInReserve = reserveTotals.monsterCardsInReserve.filter(c => DAIMYO_MONSTER_IDS_LOCAL.includes(c.id));
                 const clanName = cpClan?.name || '';
                 return createPortal(
                   <div className="monster-placement-popup">

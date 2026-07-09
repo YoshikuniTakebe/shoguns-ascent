@@ -6,6 +6,7 @@ import type { TranslationKey } from '../i18n';
 import { useT } from '../i18n';
 import { MonsterIcon } from './Icons';
 import { getCardEffectKey } from '../utils/cardTranslations';
+import { getPrayingMonsterCardIds, getDeployedMonsterCardIds } from '../utils/reserveUtils';
 
 interface HoteiReplacementTarget {
   templeId: string;
@@ -217,6 +218,53 @@ export const TemplePanel = () => {
                           <MonsterIcon size={24} color={figColor} />
                         </span>
                       );
+                    }
+                    // Fallback for legacy saves: check if this untagged figure is likely a praying monster
+                    if (player) {
+                      const deployed = getDeployedMonsterCardIds(player.id, gameState);
+                      const prayingSet = getPrayingMonsterCardIds(player.id, gameState, deployed);
+                      // Check if there are shinto-type monsters in prayingSet that are NOT from tagged figures
+                      // If this player has untagged temple figures and unaccounted shinto monsters, infer
+                      const taggedMonstersForPlayer = new Set<string>();
+                      gameState.temples.forEach(t2 => {
+                        t2.figures.forEach(f2 => {
+                          if (f2.playerId === player.id && f2.monsterCardId) {
+                            taggedMonstersForPlayer.add(f2.monsterCardId);
+                          }
+                        });
+                      });
+                      // Untagged praying monsters = prayingSet minus tagged ones
+                      const untaggedPraying = [...prayingSet].filter(id => !taggedMonstersForPlayer.has(id));
+                      // Count how many untagged temple figures appear before this one for this player
+                      let untaggedIndexForPlayer = 0;
+                      for (const t2 of gameState.temples) {
+                        for (const f2 of t2.figures) {
+                          if (f2.playerId === player.id && !f2.monsterCardId) {
+                            if (t2.id === temple.id && f2.figureId === fig.figureId) {
+                              // This is the current figure
+                              if (untaggedIndexForPlayer < untaggedPraying.length) {
+                                const inferredCardId = untaggedPraying[untaggedIndexForPlayer];
+                                const cardData = SEASON_CARDS_DATA.find(c => c.id === inferredCardId);
+                                const monsterName = cardData?.name || 'Monstruo';
+                                const monsterEffect = cardData ? t(getCardEffectKey(cardData.id)) : '';
+                                const monsterForce = cardData?.force ?? '';
+                                const tooltipText = `${monsterName}${monsterForce ? ` (F:${monsterForce})` : ''}${monsterEffect ? ` - ${monsterEffect}` : ''}`;
+                                return (
+                                  <span
+                                    key={i}
+                                    className="kami-figure-dot"
+                                    title={tooltipText}
+                                  >
+                                    <MonsterIcon size={24} color={figColor} />
+                                  </span>
+                                );
+                              }
+                              break;
+                            }
+                            untaggedIndexForPlayer++;
+                          }
+                        }
+                      }
                     }
                     return (
                       <span
