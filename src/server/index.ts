@@ -76,7 +76,12 @@ import {
   addFriend,
   getFriends,
   areFriends,
+  savePendingLobby,
+  getPendingLobby,
+  getAllPendingLobbies,
+  deletePendingLobby,
 } from './database';
+import type { DbPendingLobby } from './database';
 import { generateToken, verifyToken } from './auth';
 import bcrypt from 'bcryptjs';
 
@@ -113,7 +118,9 @@ interface Lobby {
   id: string;
   name: string;
   host: string;
-  players: { id: string; name: string; clanId: string; ws: WebSocket }[];
+  // ws is null for players that are currently disconnected (their slot is reserved) or for
+  // lobbies rehydrated from the database before anyone reconnects.
+  players: { id: string; name: string; clanId: string; ws: WebSocket | null }[];
   maxPlayers: number;
   gameState: GameState | null;
   started: boolean;
@@ -142,10 +149,80 @@ function isOpenLobby(l: Lobby): boolean {
   return openSlotCount(l) > 0;
 }
 
+/** Safely send a JSON message to a (possibly null/closed) player socket. */
+function safeSend(sock: WebSocket | null, payload: unknown): void {
+  if (sock && sock.readyState === WebSocket.OPEN) {
+    sock.send(JSON.stringify(payload));
+  }
+}
+
+/**
+ * Persist a not-yet-started lobby so it survives host/player disconnects and server restarts.
+ * Started lobbies become regular games (persisted via saveGame) and are removed from the
+ * pending table.
+ */
+function persistLobby(l: Lobby): void {
+  if (l.started) return;
+  savePendingLobby({
+    id: l.id,
+    name: l.name,
+    hostId: l.host,
+    maxPlayers: l.maxPlayers,
+    players: l.players.map((p) => ({ id: p.id, name: p.name, clanId: p.clanId })),
+    invitedUserIds: l.invitedUserIds,
+    invitedClans: l.invitedClans,
+    config: l.config,
+    createdAt: l.createdAt,
+  });
+}
+
+/** Build an in-memory Lobby (with disconnected/null sockets) from a persisted pending lobby. */
+function lobbyFromPersisted(p: DbPendingLobby): Lobby {
+  return {
+    id: p.id,
+    name: p.name,
+    host: p.hostId,
+    players: p.players.map((pl) => ({ id: pl.id, name: pl.name, clanId: pl.clanId, ws: null })),
+    maxPlayers: p.maxPlayers,
+    gameState: null,
+    started: false,
+    persistentGameId: null,
+    config: (p.config as Lobby['config']) ?? null,
+    recruitUndoSnapshot: null,
+    betrayUndoSnapshot: null,
+    invitedUserIds: p.invitedUserIds || [],
+    invitedClans: p.invitedClans || {},
+    createdAt: p.createdAt,
+  };
+}
+
+/** Get a lobby from memory, rehydrating it from the database if necessary. */
+function getOrRehydrateLobby(id: string): Lobby | undefined {
+  const existing = lobbies.get(id);
+  if (existing) return existing;
+  const persisted = getPendingLobby(id);
+  if (!persisted) return undefined;
+  const l = lobbyFromPersisted(persisted);
+  lobbies.set(id, l);
+  return l;
+}
+
 const lobbies = new Map<string, Lobby>();
 
 // Initialize the database
 initDatabase();
+
+// Rehydrate persisted pending lobbies (waiting rooms) so they survive a server restart.
+// Their player sockets start as null and are re-attached when players reconnect.
+try {
+  for (const persisted of getAllPendingLobbies()) {
+    if (!lobbies.has(persisted.id)) {
+      lobbies.set(persisted.id, lobbyFromPersisted(persisted));
+    }
+  }
+} catch (e) {
+  console.error('Failed to rehydrate pending lobbies', e);
+}
 
 // --- Auth endpoints ---
 
@@ -666,6 +743,8 @@ function startLobbyGame(l: Lobby): void {
     }
   }
   l.started = true;
+  // The lobby is now a real game; remove its pending-lobby record.
+  deletePendingLobby(l.id);
 
   // Persist game to database
   const persistId = l.gameState.id || uuidv4();
@@ -683,9 +762,7 @@ function startLobbyGame(l: Lobby): void {
     addGamePlayer(persistId, p.id, p.clanId);
   }
 
-  l.players.forEach((p) =>
-    p.ws.send(JSON.stringify({ type: 'GAME_START', state: l.gameState }))
-  );
+  l.players.forEach((p) => safeSend(p.ws, { type: 'GAME_START', state: l.gameState }));
 }
 
 wss.on('connection', (ws: WebSocket, req) => {
@@ -771,13 +848,17 @@ wss.on('connection', (ws: WebSocket, req) => {
           };
           lobbies.set(lobbyId, l);
           currentLobbyId = lobbyId;
+          persistLobby(l);
           ws.send(JSON.stringify({ type: 'LOBBY_CREATED', lobbyId }));
           broadcastLobby(l);
           break;
         }
 
         case 'JOIN_LOBBY': {
-          const l = lobbies.get(data.lobbyId);
+          // Rehydrate from the database if the lobby is not currently in memory (e.g. after a
+          // server restart or once every player had disconnected). This is what makes pending
+          // games survive disconnections.
+          const l = getOrRehydrateLobby(data.lobbyId);
           if (!l) {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Lobby not found' }));
             return;
@@ -789,6 +870,7 @@ wss.on('connection', (ws: WebSocket, req) => {
               existing.ws = ws;
               currentLobbyId = l.id;
               ws.send(JSON.stringify({ type: 'LOBBY_JOINED', lobbyId: l.id }));
+              persistLobby(l);
               broadcastLobby(l);
               break;
             }
@@ -837,6 +919,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             }
           }
 
+          persistLobby(l);
           ws.send(JSON.stringify({ type: 'LOBBY_JOINED', lobbyId: l.id }));
           broadcastLobby(l);
 
@@ -851,7 +934,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         }
 
         case 'SELECT_CLAN': {
-          const l = lobbies.get(data.lobbyId || currentLobbyId || '');
+          const l = getOrRehydrateLobby(data.lobbyId || currentLobbyId || '');
           if (!l) {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Lobby not found' }));
             return;
@@ -878,6 +961,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             return;
           }
           player.clanId = clanId;
+          persistLobby(l);
           broadcastLobby(l);
 
           // Check if all players have selected a clan and lobby is full
@@ -2579,24 +2663,14 @@ wss.on('connection', (ws: WebSocket, req) => {
           // Build and broadcast rejoin status
           const rejoinPlayers = l.gameState!.players.map(gp => {
             const lobbyPlayer = l.players.find(lp => lp.id === gp.id);
-            const connected = !!(lobbyPlayer && lobbyPlayer.ws.readyState === WebSocket.OPEN);
+            const connected = !!(lobbyPlayer && lobbyPlayer.ws && lobbyPlayer.ws.readyState === WebSocket.OPEN);
             return { id: gp.id, name: gp.name, clanId: gp.clanId, connected };
           });
           const allConnected = rejoinPlayers.every(p => p.connected);
-          const rejoinMsg = JSON.stringify({ type: 'REJOIN_STATUS', players: rejoinPlayers, allConnected });
-          l.players.forEach(p => {
-            if (p.ws.readyState === WebSocket.OPEN) {
-              p.ws.send(rejoinMsg);
-            }
-          });
+          l.players.forEach(p => safeSend(p.ws, { type: 'REJOIN_STATUS', players: rejoinPlayers, allConnected }));
 
           if (allConnected) {
-            const completeMsg = JSON.stringify({ type: 'REJOIN_COMPLETE' });
-            l.players.forEach(p => {
-              if (p.ws.readyState === WebSocket.OPEN) {
-                p.ws.send(completeMsg);
-              }
-            });
+            l.players.forEach(p => safeSend(p.ws, { type: 'REJOIN_COMPLETE' }));
           }
           break;
         }
@@ -2608,43 +2682,45 @@ wss.on('connection', (ws: WebSocket, req) => {
   });
 
   ws.on('close', () => {
-    if (currentLobbyId) {
-      const l = lobbies.get(currentLobbyId);
-      if (l) {
-        if (l.host === playerId && !l.started) {
-          // Host disconnected - destroy the lobby and notify remaining players
-          l.players.forEach((p) => {
-            if (p.id !== playerId && p.ws.readyState === WebSocket.OPEN) {
-              p.ws.send(JSON.stringify({ type: 'LOBBY_CLOSED', message: 'Host disconnected' }));
-            }
-          });
-          lobbies.delete(currentLobbyId);
+    if (!currentLobbyId) return;
+    const l = lobbies.get(currentLobbyId);
+    if (!l) return;
+
+    if (!l.started) {
+      // Pre-game waiting room. The lobby is persisted in the database, so a disconnect
+      // (host included) must NOT lose the game. Reserve the host's and invited players'
+      // slots (just drop their socket); free a random open-slot joiner's slot.
+      const player = l.players.find((p) => p.id === playerId);
+      if (player) {
+        const isHost = playerId === l.host;
+        const isInvited = l.invitedUserIds.includes(playerId);
+        if (isHost || isInvited) {
+          player.ws = null;
         } else {
           l.players = l.players.filter((p) => p.id !== playerId);
-          if (l.players.length === 0) lobbies.delete(currentLobbyId);
-          else {
-            // NOTE: If the last player disconnects (lobby deleted above) and quickly reconnects,
-            // they will create a brand-new lobby from the snapshot. This is acceptable behavior
-            // since the snapshot is the source of truth, but it means transient WS flaps for
-            // the last connected player will reset the lobby state to the last persisted snapshot.
-            broadcastLobby(l);
-            // If the game is started (rejoin scenario), broadcast updated rejoin status
-            if (l.started && l.gameState) {
-              const rejoinPlayers = l.gameState.players.map(gp => {
-                const lobbyPlayer = l.players.find(lp => lp.id === gp.id);
-                const connected = !!(lobbyPlayer && lobbyPlayer.ws.readyState === WebSocket.OPEN);
-                return { id: gp.id, name: gp.name, clanId: gp.clanId, connected };
-              });
-              const allConnected = rejoinPlayers.every(p => p.connected);
-              const rejoinMsg = JSON.stringify({ type: 'REJOIN_STATUS', players: rejoinPlayers, allConnected });
-              l.players.forEach(p => {
-                if (p.ws.readyState === WebSocket.OPEN) {
-                  p.ws.send(rejoinMsg);
-                }
-              });
-            }
-          }
         }
+      }
+      persistLobby(l);
+      broadcastLobby(l);
+      // Keep the lobby in memory even if empty; it is also persisted and can be rehydrated.
+      return;
+    }
+
+    // Started game (rejoin scenario) - preserve existing behaviour.
+    l.players = l.players.filter((p) => p.id !== playerId);
+    if (l.players.length === 0) {
+      lobbies.delete(currentLobbyId);
+    } else {
+      broadcastLobby(l);
+      if (l.gameState) {
+        const rejoinPlayers = l.gameState.players.map(gp => {
+          const lobbyPlayer = l.players.find(lp => lp.id === gp.id);
+          const connected = !!(lobbyPlayer && lobbyPlayer.ws && lobbyPlayer.ws.readyState === WebSocket.OPEN);
+          return { id: gp.id, name: gp.name, clanId: gp.clanId, connected };
+        });
+        const allConnected = rejoinPlayers.every(p => p.connected);
+        const rejoinMsg = { type: 'REJOIN_STATUS', players: rejoinPlayers, allConnected };
+        l.players.forEach(p => safeSend(p.ws, rejoinMsg));
       }
     }
   });
@@ -2662,11 +2738,7 @@ function broadcastState(l: Lobby) {
     }
   }
 
-  l.players.forEach((p) => {
-    if (p.ws.readyState === WebSocket.OPEN) {
-      p.ws.send(JSON.stringify({ type: 'GAME_STATE', state: l.gameState }));
-    }
-  });
+  l.players.forEach((p) => safeSend(p.ws, { type: 'GAME_STATE', state: l.gameState }));
 }
 
 function broadcastLobby(l: Lobby) {
@@ -2687,9 +2759,7 @@ function broadcastLobby(l: Lobby) {
       openSlots: openSlotCount(l),
     },
   };
-  l.players.forEach((p) => {
-    if (p.ws.readyState === WebSocket.OPEN) p.ws.send(JSON.stringify(s));
-  });
+  l.players.forEach((p) => safeSend(p.ws, s));
 }
 
 const PORT = process.env.PORT || 3001;

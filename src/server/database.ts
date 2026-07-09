@@ -79,6 +79,19 @@ export function initDatabase(): void {
     );
 
     CREATE INDEX IF NOT EXISTS idx_friends_user_id ON friends(user_id);
+
+    CREATE TABLE IF NOT EXISTS pending_lobbies (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      host_id TEXT,
+      max_players INTEGER,
+      players_json TEXT,
+      invited_user_ids_json TEXT,
+      invited_clans_json TEXT,
+      config_json TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    );
   `);
 
   // Migration: add is_admin column if it doesn't exist (for existing databases)
@@ -359,6 +372,91 @@ export function getFriends(userId: string): { id: string; username: string; emai
     ORDER BY u.username COLLATE NOCASE ASC
   `);
   return stmt.all(userId) as { id: string; username: string; email: string }[];
+}
+
+// --- Pending lobby persistence ---
+// Waiting rooms (pre-game lobbies) are persisted so a host/player disconnection (or a server
+// restart) does not lose the game. They are removed once the game actually starts.
+
+export interface DbPendingLobby {
+  id: string;
+  name: string;
+  hostId: string;
+  maxPlayers: number;
+  players: { id: string; name: string; clanId: string }[];
+  invitedUserIds: string[];
+  invitedClans: Record<string, string>;
+  config: unknown;
+  createdAt: string;
+}
+
+interface PendingLobbyRow {
+  id: string;
+  name: string;
+  host_id: string;
+  max_players: number;
+  players_json: string;
+  invited_user_ids_json: string;
+  invited_clans_json: string;
+  config_json: string;
+  created_at: string;
+  updated_at: string;
+}
+
+function rowToPendingLobby(row: PendingLobbyRow): DbPendingLobby {
+  const safeParse = <T>(json: string, fallback: T): T => {
+    try {
+      return json ? (JSON.parse(json) as T) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  return {
+    id: row.id,
+    name: row.name,
+    hostId: row.host_id,
+    maxPlayers: row.max_players,
+    players: safeParse(row.players_json, [] as { id: string; name: string; clanId: string }[]),
+    invitedUserIds: safeParse(row.invited_user_ids_json, [] as string[]),
+    invitedClans: safeParse(row.invited_clans_json, {} as Record<string, string>),
+    config: safeParse(row.config_json, null),
+    createdAt: row.created_at,
+  };
+}
+
+export function savePendingLobby(lobby: DbPendingLobby): void {
+  const now = new Date().toISOString();
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO pending_lobbies
+      (id, name, host_id, max_players, players_json, invited_user_ids_json, invited_clans_json, config_json, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  stmt.run(
+    lobby.id,
+    lobby.name,
+    lobby.hostId,
+    lobby.maxPlayers,
+    JSON.stringify(lobby.players),
+    JSON.stringify(lobby.invitedUserIds),
+    JSON.stringify(lobby.invitedClans),
+    JSON.stringify(lobby.config ?? null),
+    lobby.createdAt || now,
+    now
+  );
+}
+
+export function getPendingLobby(id: string): DbPendingLobby | undefined {
+  const row = db.prepare(`SELECT * FROM pending_lobbies WHERE id = ?`).get(id) as PendingLobbyRow | undefined;
+  return row ? rowToPendingLobby(row) : undefined;
+}
+
+export function getAllPendingLobbies(): DbPendingLobby[] {
+  const rows = db.prepare(`SELECT * FROM pending_lobbies ORDER BY created_at DESC`).all() as PendingLobbyRow[];
+  return rows.map(rowToPendingLobby);
+}
+
+export function deletePendingLobby(id: string): void {
+  db.prepare(`DELETE FROM pending_lobbies WHERE id = ?`).run(id);
 }
 
 // --- Admin functions ---

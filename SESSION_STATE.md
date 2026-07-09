@@ -503,3 +503,33 @@ Worked directly on `main`. Full `npx tsc -b` and `npm run build` pass.
 - Note: the created lobby is still in-memory and tied to the host's WebSocket connection (it is
   destroyed if the host fully disconnects). Full persistence of pending lobbies would require
   storing them in the DB; flagged for follow-up.
+
+
+
+## Changelog - 2026-07-09 (pending lobbies persisted — survive disconnect & server restart)
+
+Waiting rooms (pre-game lobbies) are now persisted so a host/player disconnection — or a full
+server restart — no longer loses the game.
+
+- **DB** (`server/database.ts`): new `pending_lobbies` table + `savePendingLobby`,
+  `getPendingLobby`, `getAllPendingLobbies`, `deletePendingLobby` (+ `DbPendingLobby` type). Stores
+  id, name, host, maxPlayers, players (id/name/clanId), invitedUserIds, invitedClans, config and
+  timestamps as JSON.
+- **Server** (`server/index.ts`):
+  - Lobby player `ws` is now `WebSocket | null` (null = disconnected/reserved slot or a lobby
+    rehydrated from the DB). Added a `safeSend(sock, payload)` helper; all player broadcasts
+    (`broadcastState`, `broadcastLobby`, rejoin/GAME_START) are null-safe.
+  - `persistLobby(l)` writes the lobby to the DB on **create**, **join** and **clan-select**.
+  - `lobbyFromPersisted` / `getOrRehydrateLobby` rebuild an in-memory lobby from the DB on demand
+    (used by JOIN_LOBBY and SELECT_CLAN); all pending lobbies are also rehydrated on **server start**.
+  - **Disconnect handling rewritten**: for a not-yet-started lobby, the host's and invited players'
+    slots are *reserved* (socket set to null, player kept) instead of destroying the lobby; a random
+    open-slot joiner's slot is freed. The lobby stays in memory and in the DB, so it survives even if
+    everyone disconnects. Started-game rejoin behaviour is unchanged.
+  - `startLobbyGame` calls `deletePendingLobby(l.id)` once the game starts (it becomes a normal
+    persisted game).
+- Reconnection relies on a stable player id, which for online play is the authenticated user id, so
+  a returning host/invited player re-attaches to their existing slot (JOIN_LOBBY dedupe).
+- **Verified**: `scripts/test-lobby-persistence.mjs` (WebSocket integration test) — a lobby survives
+  a host disconnect and can be rejoined; a fresh server start rehydrates persisted lobbies into
+  `/api/lobbies/visible`. `npx tsc -b` and `npm run build` pass. (`data/` is gitignored.)
