@@ -606,7 +606,28 @@ export const ActionPanel = () => {
                   <span className="recruit-type-count">{cp?.bushi ?? 0}</span>
                 </button>
                 )}
-                {(cp?.shinto ?? 0) > 0 && (
+                {(() => {
+                  // Effective shinto: player.shinto + shinto-type monsters in reserve (not deployed, not praying)
+                  const SHINTO_MONSTER_IDS_LOCAL = ['sp-komainu', 'su-hotei'];
+                  const deployedIds = new Set<string>();
+                  Object.values(gameState.provinces).forEach((prov) => {
+                    prov.figures.forEach((f) => {
+                      if (f.type === 'monster' && f.owner === cp?.id && f.monsterCardId) {
+                        deployedIds.add(f.monsterCardId);
+                      }
+                    });
+                  });
+                  const prayingIds = new Set<string>();
+                  gameState.temples.forEach(temple => {
+                    temple.figures.forEach(f => {
+                      if (f.playerId === cp?.id && f.monsterCardId) {
+                        prayingIds.add(f.monsterCardId);
+                      }
+                    });
+                  });
+                  const shintoMonstersInReserve = cp?.seasonCards.filter(c => c.cardType === 'monster' && SHINTO_MONSTER_IDS_LOCAL.includes(c.id) && !deployedIds.has(c.id) && !prayingIds.has(c.id)).length || 0;
+                  const effectiveShintoReserve = (cp?.shinto ?? 0) + shintoMonstersInReserve;
+                  return effectiveShintoReserve > 0 ? (
                 <button
                   className={`recruit-type-btn ${recruitFigureType === 'shinto' && recruitMode ? 'active' : ''}`}
                   onClick={() => { if (recruitFigureType === 'shinto' && recruitMode) { toggleRecruitMode(); } else { setRecruitFigureType('shinto'); if (!recruitMode) toggleRecruitMode(); } }}
@@ -614,9 +635,10 @@ export const ActionPanel = () => {
                 >
                   <ShintoIcon size={18} color={recruitFigureType === 'shinto' && recruitMode ? (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })() : 'var(--text-secondary)'} />
                   <span className="recruit-type-label">{t('actions.recruitShinto')}</span>
-                  <span className="recruit-type-count">{cp?.shinto ?? 0}</span>
+                  <span className="recruit-type-count">{effectiveShintoReserve}</span>
                 </button>
-                )}
+                  ) : null;
+                })()}
                 {cp && (() => {
                   const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
                   const deployedMonsterCardIds = new Set<string>();
@@ -627,14 +649,19 @@ export const ActionPanel = () => {
                       }
                     });
                   });
-                  // Monster count: reserve monsters minus daimyo-type monsters (those show in daimyo button)
-                  const monsterCardsInReserve = cp.seasonCards.filter(
-                    (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
+                  // Detect praying monsters at temples
+                  const prayingMonsterCardIds = new Set<string>();
+                  gameState.temples.forEach(temple => {
+                    temple.figures.forEach(f => {
+                      if (f.playerId === cp.id && f.monsterCardId) {
+                        prayingMonsterCardIds.add(f.monsterCardId);
+                      }
+                    });
+                  });
+                  // Monster cards in reserve: not deployed on map AND not praying at temple
+                  const actualReserveMonsters = cp.seasonCards.filter(
+                    (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id) && !prayingMonsterCardIds.has(card.id)
                   );
-                  // Komainu at temple check
-                  const notOnMapCount = monsterCardsInReserve.length;
-                  const komainuAtTemple = notOnMapCount > cp.monsters && monsterCardsInReserve.some(c => c.id === 'sp-komainu');
-                  const actualReserveMonsters = komainuAtTemple ? monsterCardsInReserve.filter(c => c.id !== 'sp-komainu') : monsterCardsInReserve;
                   const nonDaimyoMonsters = actualReserveMonsters.filter(c => !DAIMYO_MONSTER_IDS.includes(c.id));
                   const monsterCount = nonDaimyoMonsters.length;
                   // Daimyo count: normal daimyo + daimyo-type monsters in reserve
@@ -682,12 +709,17 @@ export const ActionPanel = () => {
                     }
                   });
                 });
-                const monsterCardsInReserve = cp.seasonCards.filter(
-                  (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
+                const prayingMonsterCardIds = new Set<string>();
+                gameState.temples.forEach(temple => {
+                  temple.figures.forEach(f => {
+                    if (f.playerId === cp.id && f.monsterCardId) {
+                      prayingMonsterCardIds.add(f.monsterCardId);
+                    }
+                  });
+                });
+                const actualReserveMonsters = cp.seasonCards.filter(
+                  (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id) && !prayingMonsterCardIds.has(card.id)
                 );
-                // Komainu at temple check
-                const komainuAtTemple = monsterCardsInReserve.length > cp.monsters && monsterCardsInReserve.some(c => c.id === 'sp-komainu');
-                const actualReserveMonsters = komainuAtTemple ? monsterCardsInReserve.filter(c => c.id !== 'sp-komainu') : monsterCardsInReserve;
                 const nonDaimyoMonsters = actualReserveMonsters.filter(c => !DAIMYO_MONSTER_IDS.includes(c.id));
                 return createPortal(
                   <div className="monster-placement-popup">
@@ -730,11 +762,17 @@ export const ActionPanel = () => {
                     }
                   });
                 });
-                const monsterCardsInReserve = cp.seasonCards.filter(
-                  (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
+                const prayingMonsterCardIds = new Set<string>();
+                gameState.temples.forEach(temple => {
+                  temple.figures.forEach(f => {
+                    if (f.playerId === cp.id && f.monsterCardId) {
+                      prayingMonsterCardIds.add(f.monsterCardId);
+                    }
+                  });
+                });
+                const actualReserveMonsters = cp.seasonCards.filter(
+                  (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id) && !prayingMonsterCardIds.has(card.id)
                 );
-                const komainuAtTemple = monsterCardsInReserve.length > cp.monsters && monsterCardsInReserve.some(c => c.id === 'sp-komainu');
-                const actualReserveMonsters = komainuAtTemple ? monsterCardsInReserve.filter(c => c.id !== 'sp-komainu') : monsterCardsInReserve;
                 const daimyoMonstersInReserve = actualReserveMonsters.filter(c => DAIMYO_MONSTER_IDS.includes(c.id));
                 const clanName = cpClan?.name || '';
                 return createPortal(

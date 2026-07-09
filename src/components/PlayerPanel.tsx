@@ -19,7 +19,16 @@ const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
 function computeReserveTotals(player: Player, gameState: GameState) {
   // Gather all figures on the map owned by this player
   const allMapFigures = Object.values(gameState.provinces).flatMap(p => p.figures.filter(f => f.owner === player.id));
-  // Gather all figures in temples owned by this player
+  // Gather all temple figures that belong to this player AND have a monsterCardId (praying monsters)
+  const prayingMonsterCardIds = new Set<string>();
+  gameState.temples.forEach(t => {
+    t.figures.forEach(f => {
+      if (f.playerId === player.id && f.monsterCardId) {
+        prayingMonsterCardIds.add(f.monsterCardId);
+      }
+    });
+  });
+  // All temple figures for this player (for shinto count)
   const allTempleFigures = gameState.temples.flatMap(t => t.figures.filter(f => f.playerId === player.id));
 
   // Determine which monster cards are deployed on the map (have a figure with monsterCardId)
@@ -30,17 +39,9 @@ function computeReserveTotals(player: Player, gameState: GameState) {
   const monsterCards = player.seasonCards.filter(c => c.cardType === 'monster');
   const totalMonsters = monsterCards.length;
 
-  // Monsters in reserve = authoritative count from player state
-  const monstersInReserve = player.monsters;
-
-  // Determine which specific monster cards are in reserve (not deployed on map)
-  const notOnMap = monsterCards.filter(c => !deployedMonsterCardIds.has(c.id));
-
-  // Among notOnMap cards, some may be at temples (only Komainu can be at a temple).
-  // If notOnMap count exceeds player.monsters (authoritative reserve count), the difference
-  // must be at temples. The only monster that can be at a temple is Komainu (sp-komainu).
-  const komainuAtTemple = notOnMap.length > player.monsters && notOnMap.some(c => c.id === 'sp-komainu');
-  const monsterCardsInReserve = komainuAtTemple ? notOnMap.filter(c => c.id !== 'sp-komainu') : notOnMap;
+  // Monsters in reserve = total owned - deployed on map - praying at temples
+  const monsterCardsInReserve = monsterCards.filter(c => !deployedMonsterCardIds.has(c.id) && !prayingMonsterCardIds.has(c.id));
+  const monstersInReserve = monsterCardsInReserve.length;
 
   // Dual-type bonus counts for secondary types (only when monster is in reserve)
   const shintoMonstersInReserve = monsterCardsInReserve.filter(c => SHINTO_MONSTER_IDS.includes(c.id)).length;
@@ -59,7 +60,7 @@ function computeReserveTotals(player: Player, gameState: GameState) {
   const shintoInTemples = allTempleFigures.length;
   const shintoReserve = player.shinto;
   const shintoTotal = shintoOnMap + shintoInTemples + shintoReserve;
-  // Effective shinto reserve includes dual-type monsters in reserve
+  // Effective shinto reserve includes shinto-type monsters in reserve
   const effectiveShintoReserve = shintoReserve + shintoMonstersInReserve;
   const effectiveShintoTotal = shintoTotal + shintoMonstersOwned;
 
@@ -76,7 +77,7 @@ function computeReserveTotals(player: Player, gameState: GameState) {
   // Daimyo
   const daimyoReserve = player.hasDaimyo ? 1 : 0;
   const daimyoTotal = 1; // Always has 1 daimyo
-  // Effective daimyo reserve includes dual-type monsters in reserve
+  // Effective daimyo reserve includes daimyo-type monsters in reserve
   const effectiveDaimyoReserve = daimyoReserve + daimyoMonstersInReserve;
   const effectiveDaimyoTotal = daimyoTotal + daimyoMonstersOwned;
 
@@ -100,10 +101,24 @@ const PlayerReserves = ({ player, gameState }: { player: Player; gameState: Game
   const deployedMonsterCardIds = new Set<string>();
   allMapFigures.forEach(f => { if (f.type === 'monster' && f.monsterCardId) deployedMonsterCardIds.add(f.monsterCardId); });
 
+  // Determine which monster cards are praying at temples
+  const prayingMonsterCardIds = new Set<string>();
+  gameState.temples.forEach(t => {
+    t.figures.forEach(f => {
+      if (f.playerId === player.id && f.monsterCardId) {
+        prayingMonsterCardIds.add(f.monsterCardId);
+      }
+    });
+  });
+
   // Get list of monster cards with deployment status
   const monsterCards = player.seasonCards
     .filter(c => c.cardType === 'monster')
-    .map(c => ({ name: c.name, id: c.id, deployed: deployedMonsterCardIds.has(c.id) }));
+    .map(c => ({
+      name: c.name,
+      id: c.id,
+      status: deployedMonsterCardIds.has(c.id) ? 'deployed' as const : prayingMonsterCardIds.has(c.id) ? 'praying' as const : 'reserve' as const,
+    }));
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLSpanElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -153,7 +168,7 @@ const PlayerReserves = ({ player, gameState }: { player: Player; gameState: Game
             }}
           >
             {monsterCards.map((mc, idx) => (
-              <span key={idx} className="figure-tooltip-name" style={{ color: mc.deployed ? '#888' : clan.color }}>{mc.name}{mc.deployed ? ' (mapa)' : ''}</span>
+              <span key={idx} className="figure-tooltip-name" style={{ color: mc.status === 'reserve' ? clan.color : '#888' }}>{mc.name}{mc.status === 'deployed' ? ' (mapa)' : mc.status === 'praying' ? ' (Rezando)' : ''}</span>
             ))}
           </span>,
           document.body

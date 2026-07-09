@@ -1507,7 +1507,7 @@ wss.on('connection', (ws: WebSocket, req) => {
               }
             }
 
-            updatedFigures = [...updatedFigures, { playerId: data.playerId, figureId }];
+            updatedFigures = [...updatedFigures, { playerId: data.playerId, figureId, monsterCardId: cardId }];
             const updatedTemples = [...s.temples];
             updatedTemples[templeIndex] = { ...temple, figures: updatedFigures };
 

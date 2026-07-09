@@ -2178,7 +2178,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     // Add the new shinto figure to the temple
-    updatedFigures = [...updatedFigures, { playerId: komainuPrayPlayerId, figureId }];
+    updatedFigures = [...updatedFigures, { playerId: komainuPrayPlayerId, figureId, monsterCardId: komainuPrayCardId || undefined }];
 
     const updatedTemples = [...gameState.temples];
     updatedTemples[templeIndex] = {

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, KAMI_DATA } from '../types/game';
+import { CLANS, KAMI_DATA, SEASON_CARDS_DATA } from '../types/game';
 import type { KamiType } from '../types/game';
 import type { TranslationKey } from '../i18n';
 import { useT } from '../i18n';
+import { MonsterIcon } from './Icons';
+import { getCardEffectKey } from '../utils/cardTranslations';
 
 interface HoteiReplacementTarget {
   templeId: string;
@@ -199,6 +201,23 @@ export const TemplePanel = () => {
                     const player = gameState.players.find(pl => pl.id === fig.playerId);
                     const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
                     const figColor = clan?.color || '#666';
+                    // If figure has a monsterCardId, show MonsterIcon with tooltip
+                    if (fig.monsterCardId) {
+                      const cardData = SEASON_CARDS_DATA.find(c => c.id === fig.monsterCardId);
+                      const monsterName = cardData?.name || 'Monstruo';
+                      const monsterEffect = cardData ? t(getCardEffectKey(cardData.id)) : '';
+                      const monsterForce = cardData?.force ?? '';
+                      const tooltipText = `${monsterName}${monsterForce ? ` (F:${monsterForce})` : ''}${monsterEffect ? ` - ${monsterEffect}` : ''}`;
+                      return (
+                        <span
+                          key={i}
+                          className="kami-figure-dot"
+                          title={tooltipText}
+                        >
+                          <MonsterIcon size={24} color={figColor} />
+                        </span>
+                      );
+                    }
                     return (
                       <span
                         key={i}

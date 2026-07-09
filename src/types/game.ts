@@ -43,7 +43,7 @@ export interface Temple {
   id: string;
   position: number;
   kamiType: KamiType;
-  figures: { playerId: string; figureId: string }[];
+  figures: { playerId: string; figureId: string; monsterCardId?: string }[];
 }
 
 export interface KamiData {
