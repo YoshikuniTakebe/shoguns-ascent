@@ -757,6 +757,9 @@ export const en = {
   'lobby.selectPlayer': 'Select player',
   'lobby.you': 'You',
   'lobby.createdOn': 'Created {date}',
+  'lobby.friendsCanJoin': 'Your invited friends can join this game directly from their lobby — no code needed.',
+  'lobby.backToLobby': 'Back to lobby',
+  'lobby.pendingGames': 'Games waiting to start',
 } as const;
 
 export type TranslationKey = keyof typeof en;

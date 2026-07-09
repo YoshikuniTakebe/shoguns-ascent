@@ -4089,7 +4089,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         // WS closed while waiting for players to rejoin - reset popup and return to menu
         set({ ws: null, rejoinWaitingVisible: false, rejoinPlayerStatuses: [], lobbyState: null, lobbyId: null, screen: 'menu' });
       } else if (currentScreen === 'lobby') {
-        set({ ws: null, lobbyState: null, lobbyId: null, screen: 'menu' });
+        // If the connection drops from the waiting room, take authenticated users back to the
+        // games lobby (where they can re-enter) rather than all the way out to the main menu.
+        const authed = !!get().authToken;
+        set({ ws: null, lobbyState: null, lobbyId: null, screen: authed ? 'games-lobby' : 'menu' });
       } else {
         set({ ws: null });
       }

@@ -205,11 +205,19 @@ export const GamesLobby = () => {
     return CLANS.find(c => c.id === clanId)?.color || '#fff';
   };
 
-  // Task 7: connect and join/enter a waiting lobby (invited or open game).
+  // Task 7: enter/join a waiting lobby (invited or open game). If we already hold an open
+  // connection to this lobby (e.g. the host who stepped back to the list), just re-open the
+  // waiting room instead of opening a second socket (which would drop the original one and
+  // tear the lobby down server-side).
   const handleEnterLobby = (lobbyId: string) => {
+    const { ws, lobbyId: currentLobbyId } = useGameStore.getState();
+    if (ws && ws.readyState === WebSocket.OPEN && currentLobbyId === lobbyId) {
+      setScreen('lobby');
+      return;
+    }
     const playerName = authUser?.username || 'Player';
-    connectWebSocket(getServerWsUrl(), (ws) => {
-      ws.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId, playerName }));
+    connectWebSocket(getServerWsUrl(), (socket) => {
+      socket.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId, playerName }));
       setLobbyId(lobbyId);
     });
   };
@@ -349,14 +357,17 @@ export const GamesLobby = () => {
       </span>
     );
 
+    const currentPlayer = type !== 'finished' && game.currentPlayerIndex != null ? game.players[game.currentPlayerIndex] : null;
+
     return (
       <div
         key={game.id}
         className={cardClass}
         onClick={() => type === 'finished' ? loadFinishedGameScore(game.id) : handleResumeGame(game.id, game.mode)}
       >
-        <div className="games-lobby-card-header">
-          <span className="games-lobby-card-gamename">
+        {/* Left: name + identifier + creation date, and player names grid */}
+        <div className="games-lobby-card-left">
+          <div className="games-lobby-card-title-row">
             {passwordGames.has(game.id) && (
               <span className="games-lobby-lock-icon" title={t('game.passwordProtected')}>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
@@ -365,68 +376,55 @@ export const GamesLobby = () => {
                 </svg>
               </span>
             )}
-            {game.name}
+            <span className="games-lobby-card-gamename">{game.name}</span>
             <span className="games-lobby-card-gameid">({getGameIdentifier(game)})</span>
-          </span>
-          <span className="games-lobby-card-header-right">
-            {modeIcon}
-            <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
-          </span>
-        </div>
-        {/* Creation date shown under the title */}
-        <div className="games-lobby-card-created">{t('lobby.createdOn', { date: formatDate(game.createdAt) })}</div>
-        <div className="games-lobby-card-body">
-          {/* Current-turn player's seal, shown large and centered */}
-          {type !== 'finished' && game.currentPlayerIndex != null && game.players[game.currentPlayerIndex] && (() => {
-            const currentPlayer = game.players[game.currentPlayerIndex!];
-            const clanColor = getClanColor(currentPlayer.clanId);
-            return (
-              <div className="games-lobby-card-turn-seal">
-                <span className="games-lobby-card-turn-seal-label">{t('lobby.turnOf')}</span>
-                <ClanShield clanId={currentPlayer.clanId} size={64} />
-                <span className="games-lobby-card-turn-seal-name" style={{ color: clanColor }}>{currentPlayer.name}</span>
-              </div>
-            );
-          })()}
-          {/* Player names in a 4-per-row grid (2 rows for up to 8 players) */}
+            <span className="games-lobby-card-created-inline">· {t('lobby.createdOn', { date: formatDate(game.createdAt) })}</span>
+          </div>
           <span className="games-lobby-card-clans games-lobby-card-clans-grid">
             {game.players.map((p, i) => (
               <span
                 key={i}
                 className={`games-lobby-card-clan-entry${type !== 'finished' && game.currentPlayerIndex === i ? ' games-lobby-card-clan-entry-active' : ''}`}
               >
-                <ClanShield clanId={p.clanId} size={18} />
+                <ClanShield clanId={p.clanId} size={16} />
                 <span style={{ color: getClanColor(p.clanId) }}>{p.name}</span>
               </span>
             ))}
           </span>
-          <div className="games-lobby-card-info">
-            {game.lastSeason && (
-              <span className="games-lobby-card-progress">{getProgressPoint(game)}</span>
+        </div>
+
+        {/* Center: current-turn player seal (compact) */}
+        {currentPlayer && (
+          <div className="games-lobby-card-turn-seal">
+            <span className="games-lobby-card-turn-seal-label">{t('lobby.turnOf')}</span>
+            <ClanShield clanId={currentPlayer.clanId} size={38} />
+            <span className="games-lobby-card-turn-seal-name" style={{ color: getClanColor(currentPlayer.clanId) }}>{currentPlayer.name}</span>
+          </div>
+        )}
+
+        {/* Right: mode + date + progress + actions */}
+        <div className="games-lobby-card-right">
+          <span className="games-lobby-card-header-right">
+            {modeIcon}
+            <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
+          </span>
+          {game.lastSeason && (
+            <span className="games-lobby-card-progress">{getProgressPoint(game)}</span>
+          )}
+          <div className="games-lobby-card-actions">
+            {type === 'your-turn' && (
+              <button className="games-lobby-play-btn" onClick={handleAction}>{t('lobby.play')}</button>
+            )}
+            {type === 'waiting' && (
+              <button className="games-lobby-view-btn" onClick={handleAction}>{t('lobby.view')}</button>
+            )}
+            {type === 'finished' && (
+              <button className="games-lobby-view-btn" onClick={handleAction}>{t('lobby.replay')}</button>
+            )}
+            {isAdmin && (
+              <button className="games-lobby-delete-btn" onClick={(e) => handleDeleteGame(e, game.id)} title={t('admin.deleteGame')}>✕</button>
             )}
           </div>
-        </div>
-        <div className="games-lobby-card-actions">
-          {type === 'your-turn' && (
-            <button className="games-lobby-play-btn" onClick={handleAction}>
-              {t('lobby.play')}
-            </button>
-          )}
-          {type === 'waiting' && (
-            <button className="games-lobby-view-btn" onClick={handleAction}>
-              {t('lobby.view')}
-            </button>
-          )}
-          {type === 'finished' && (
-            <button className="games-lobby-view-btn" onClick={handleAction}>
-              {t('lobby.replay')}
-            </button>
-          )}
-          {isAdmin && (
-            <button className="games-lobby-delete-btn" onClick={(e) => handleDeleteGame(e, game.id)} title={t('admin.deleteGame')}>
-              ✕
-            </button>
-          )}
         </div>
       </div>
     );
@@ -539,51 +537,47 @@ export const GamesLobby = () => {
       {modeFilter === 'online' && waitingLobbies.length > 0 && (
         <div className="games-lobby-section">
           <h2 className="games-lobby-section-title">
-            {t('lobby.waiting')}
+            {t('lobby.pendingGames')}
             <span className="games-lobby-section-count">{waitingLobbies.length}</span>
           </h2>
           <div className="games-lobby-grid">
             {waitingLobbies.map((l) => {
               const highlight = l.invited || l.isHost || l.isParticipant;
-              const canJoin = !l.isParticipant && (l.open || l.invited || l.isHost);
+              const canEnter = l.isParticipant || l.isHost || l.invited || l.open;
               return (
                 <div
                   key={l.id}
                   className={`games-lobby-card games-lobby-card-waiting${highlight ? ' games-lobby-card-invited' : ''}`}
-                  onClick={() => canJoin && handleEnterLobby(l.id)}
+                  onClick={() => canEnter && handleEnterLobby(l.id)}
                 >
-                  <div className="games-lobby-card-header">
-                    <span className="games-lobby-card-gamename">
-                      {l.name}
+                  <div className="games-lobby-card-left">
+                    <div className="games-lobby-card-title-row">
+                      <span className="games-lobby-card-gamename">{l.name}</span>
                       {l.open && <span className="games-lobby-card-gameid">{t('lobby.openGame')}</span>}
-                    </span>
-                    <span className="games-lobby-card-header-right">
-                      <span className="games-lobby-card-date">{l.playerCount}/{l.maxPlayers}</span>
-                    </span>
-                  </div>
-                  <div className="games-lobby-card-created">{t('lobby.createdOn', { date: formatDate(l.createdAt) })}</div>
-                  <div className="games-lobby-card-body">
+                      <span className="games-lobby-card-created-inline">· {t('lobby.createdOn', { date: formatDate(l.createdAt) })}</span>
+                    </div>
                     <span className="games-lobby-card-clans games-lobby-card-clans-grid">
                       {l.players.map((p, i) => (
                         <span key={i} className="games-lobby-card-clan-entry">
-                          {p.clanId ? <ClanShield clanId={p.clanId} size={18} /> : null}
+                          {p.clanId ? <ClanShield clanId={p.clanId} size={16} /> : null}
                           <span style={{ color: getClanColor(p.clanId) }}>{p.name}</span>
                         </span>
                       ))}
                     </span>
-                    {l.openSlots > 0 && (
-                      <div className="games-lobby-card-info">
-                        <span className="games-lobby-card-progress">{t('lobby.openSlots', { count: l.openSlots })}</span>
-                      </div>
-                    )}
                   </div>
-                  <div className="games-lobby-card-actions">
-                    <button
-                      className={l.invited || l.isHost || l.isParticipant ? 'games-lobby-play-btn' : 'games-lobby-view-btn'}
-                      onClick={(e) => { e.stopPropagation(); handleEnterLobby(l.id); }}
-                    >
-                      {l.isParticipant || l.isHost || l.invited ? t('lobby.play') : t('lobby.join')}
-                    </button>
+                  <div className="games-lobby-card-right">
+                    <span className="games-lobby-card-playercount">{l.playerCount}/{l.maxPlayers}</span>
+                    {l.openSlots > 0 && (
+                      <span className="games-lobby-card-progress">{t('lobby.openSlots', { count: l.openSlots })}</span>
+                    )}
+                    <div className="games-lobby-card-actions">
+                      <button
+                        className={highlight ? 'games-lobby-play-btn' : 'games-lobby-view-btn'}
+                        onClick={(e) => { e.stopPropagation(); handleEnterLobby(l.id); }}
+                      >
+                        {highlight ? t('lobby.play') : t('lobby.join')}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

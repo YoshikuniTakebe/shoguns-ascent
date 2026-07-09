@@ -32,11 +32,13 @@ const LobbyScreen = () => {
       </p>
 
       <div className="lobby-info-section">
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{t('lobby.gameId')}:</p>
-        <code style={{ background: 'var(--bg-panel)', padding: '0.5rem 1rem', borderRadius: '6px', color: 'var(--accent-gold)', fontSize: '1.2rem', display: 'inline-block', marginBottom: '0.5rem' }}>
-          {lobbyId}
-        </code>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('lobby.shareId')}</p>
+        <p style={{ color: 'var(--accent-gold)', fontSize: '0.95rem', marginBottom: '0.35rem' }}>{t('lobby.friendsCanJoin')}</p>
+        <details style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+          <summary style={{ cursor: 'pointer' }}>{t('lobby.shareId')}</summary>
+          <code style={{ background: 'var(--bg-panel)', padding: '0.35rem 0.75rem', borderRadius: '6px', color: 'var(--accent-gold)', fontSize: '0.85rem', display: 'inline-block', marginTop: '0.4rem' }}>
+            {lobbyId}
+          </code>
+        </details>
       </div>
 
       <div className="lobby-players-list">
@@ -106,8 +108,17 @@ const LobbyScreen = () => {
         </div>
       )}
 
-      <button className="btn-secondary" style={{ marginTop: '1rem' }} onClick={() => useGameStore.setState({ screen: 'menu', lobbyState: null })}>
-        {t('menu.back')}
+      <button
+        className="btn-secondary"
+        style={{ marginTop: '1rem' }}
+        onClick={() => {
+          // Keep the socket + lobby state alive so the game stays open and the host can
+          // re-enter it from the games lobby (and invited friends can still join it).
+          const authed = !!useGameStore.getState().authToken;
+          useGameStore.setState({ screen: authed ? 'games-lobby' : 'menu' });
+        }}
+      >
+        {t('lobby.backToLobby')}
       </button>
     </div>
   );

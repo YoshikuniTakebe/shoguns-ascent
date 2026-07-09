@@ -378,7 +378,11 @@
 .games-lobby-section-count{background:rgba(200,169,81,0.2);color:var(--accent-gold);font-size:0.75rem;padding:0.15rem 0.5rem;border-radius:10px;font-weight:600}
 .games-lobby-empty{color:var(--text-secondary);font-style:italic;padding:1rem;text-align:center}
 .games-lobby-grid{display:flex;flex-direction:column;gap:0.75rem}
-.games-lobby-card{display:flex;flex-direction:column;gap:0.5rem;background:linear-gradient(145deg,var(--bg-panel),var(--bg-medium));border-radius:10px;padding:0.85rem 1.25rem;transition:all 0.2s;cursor:pointer;border:1px solid transparent}
+.games-lobby-card{display:flex;flex-direction:row;align-items:center;gap:1rem;background:linear-gradient(145deg,var(--bg-panel),var(--bg-medium));border-radius:10px;padding:0.55rem 1.1rem;transition:all 0.2s;cursor:pointer;border:1px solid transparent}
+.games-lobby-card-left{flex:1;display:flex;flex-direction:column;gap:0.3rem;min-width:0}
+.games-lobby-card-title-row{display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap}
+.games-lobby-card-created-inline{font-size:0.68rem;color:var(--text-secondary);opacity:0.8;font-weight:normal;font-style:normal}
+.games-lobby-card-right{display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem;flex-shrink:0}
 .games-lobby-card-your-turn{border:1px solid var(--accent-gold);box-shadow:0 0 10px rgba(200,169,81,0.15),inset 0 0 20px rgba(200,169,81,0.03)}
 .games-lobby-card-waiting{border:1px solid rgba(52,152,219,0.4)}
 .games-lobby-card-finished{border:1px solid rgba(149,165,166,0.3)}
@@ -544,10 +548,10 @@
 .friends-list-avatar{width:26px;height:26px;border-radius:50%;background:rgba(200,169,81,0.2);display:flex;align-items:center;justify-content:center;color:var(--accent-gold);font-weight:bold;font-size:0.8rem}
 
 /* Lobby card: current-turn seal centered + 2-row names */
-.games-lobby-card-turn-seal{display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0.4rem 0}
-.games-lobby-card-turn-seal-label{font-size:0.68rem;color:var(--text-secondary);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.2rem}
-.games-lobby-card-turn-seal-name{font-size:0.8rem;font-weight:bold;margin-top:0.15rem}
-.games-lobby-card-clans-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.3rem 0.5rem;width:100%}
+.games-lobby-card-turn-seal{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;margin:0}
+.games-lobby-card-turn-seal-label{font-size:0.6rem;color:var(--text-secondary);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.1rem}
+.games-lobby-card-turn-seal-name{font-size:0.72rem;font-weight:bold;margin-top:0.1rem}
+.games-lobby-card-clans-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0.2rem 0.5rem}
 .games-lobby-card-gameid{font-size:0.72rem;color:var(--text-secondary);font-weight:normal;margin-left:0.3rem}
 
 

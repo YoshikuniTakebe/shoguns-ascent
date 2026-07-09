@@ -759,4 +759,7 @@ export const es: Record<TranslationKey, string> = {
   'lobby.selectPlayer': 'Selecciona jugador',
   'lobby.you': 'Tú',
   'lobby.createdOn': 'Creada {date}',
+  'lobby.friendsCanJoin': 'Tus amigos invitados pueden unirse a esta partida directamente desde su lobby, sin ningún código.',
+  'lobby.backToLobby': 'Volver al lobby',
+  'lobby.pendingGames': 'Partidas por empezar',
 };

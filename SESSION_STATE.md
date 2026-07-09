@@ -477,3 +477,29 @@ Worked directly on `main`. Full `npx tsc -b` and `npm run build` pass.
 
 - Added `config.*`, `friends.*`, and `lobby.*` (inviteFriends, invite, invited, join, openGame,
   openSlots, you, createdOn, etc.) keys to both `en.ts` and `es.ts`.
+
+
+
+## Changelog - 2026-07-09 (follow-up: lobby cards compacted + waiting-room navigation)
+
+- **Compact lobby cards** (`GamesLobby.tsx` + `App.css`): `renderGameCard` and the waiting-lobby
+  cards are now a single-row 3-column layout (left: name + `(identifier)` + creation date inline +
+  player-name grid; center: compact turn seal at 38px; right: mode + date + progress + actions).
+  `.games-lobby-card` is now `flex-direction:row`; added `.games-lobby-card-left/right`,
+  `.games-lobby-card-title-row`, `.games-lobby-card-created-inline`. This significantly reduces card
+  height (the previous stacked layout with a 64px seal took too much vertical space).
+- **Create -> waiting room / back to lobby without a code**:
+  - The waiting room "Volver" button now returns authenticated users to the **games lobby**
+    (`screen: 'games-lobby'`) while keeping the socket + `lobbyState` alive, so the created lobby
+    stays open and the host can re-enter it. Button label -> `lobby.backToLobby`.
+  - `ws.onclose` on the `lobby` screen now routes authenticated users to `games-lobby` (instead of
+    all the way back to `menu`).
+  - `handleEnterLobby` (GamesLobby) reuses the existing open socket when re-entering the same lobby
+    (host/participant) instead of opening a second socket that would tear down the lobby server-side.
+  - Waiting room de-emphasizes the long game ID (now inside a collapsible `<details>`) and shows
+    `lobby.friendsCanJoin`: invited friends join directly from their own lobby, no code needed.
+  - The pre-game waiting section in the lobby is titled `lobby.pendingGames` ("Partidas por
+    empezar") to distinguish it from the in-progress "Waiting" section.
+- Note: the created lobby is still in-memory and tied to the host's WebSocket connection (it is
+  destroyed if the host fully disconnects). Full persistence of pending lobbies would require
+  storing them in the DB; flagged for follow-up.
