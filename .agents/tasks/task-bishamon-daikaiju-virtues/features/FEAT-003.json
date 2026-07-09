@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Implement ALL virtue card effects (14 virtue cards with game logic triggers)",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "1. COURAGE (sp-courage): In resolveNextBattle in gameLogic.ts, after a battle winner is determined and the war province token is awarded (around line 3112), check if the winner has sp-courage card. If so, award 2 VP. Log it. Use hasCard pattern with the player's seasonCards cardIds set.",
     "2. PIETY (sp-piety): In the same battle resolution area, after war token is awarded, check if winner has sp-piety AND if the winner has at least one shinto figure in that battle province. If both conditions met, gain Honor (move up in honorTrack) and 3 VP. Use gainHonor utility.",

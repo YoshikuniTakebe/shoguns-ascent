@@ -43,6 +43,7 @@ import {
   finalizeCleanupAndAdvance,
   determineTacticWinners,
   applyFireDragonEffect,
+  hasCard,
 } from '../utils/gameLogic';
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -2036,6 +2037,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       provinces: updatedProvinces,
       log: [...gameState.log, `${monsterPlacementCard.name} colocado en ${province.name}`],
     };
+
+    // Virtue: Dignity (sp-dignity) - Gain 2 VP when summoning a monster
+    const dignityPlayer = ns.players.find(p => p.id === monsterPlacementPlayerId);
+    if (dignityPlayer) {
+      const dignityCardIds = new Set(dignityPlayer.seasonCards.map(c => c.id));
+      if (hasCard(dignityCardIds, 'sp-dignity')) {
+        dignityPlayer.victoryPoints += 2;
+        ns.log = [...ns.log, `🐉 ${dignityPlayer.name} gana 2 PV (Dignidad - invocar monstruo)`];
+      }
+    }
 
     // If placing during Ryujin kami resolution, advance kami resolution instead of train
     if (ns.kamiResolutionActive) {

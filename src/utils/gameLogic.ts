@@ -35,6 +35,42 @@ function createFigure(type: Figure['type'], owner: string): Figure {
   return { type, owner, id: generateId() };
 }
 
+/**
+ * Helper to check if a player has a card by base ID, accounting for duplicate
+ * cards that have a '-2' suffix (e.g. 'su-path-of-might-2').
+ */
+export function hasCard(cardIds: Set<string>, baseId: string): boolean {
+  return cardIds.has(baseId) || cardIds.has(baseId + '-2');
+}
+
+/**
+ * Virtue: Loyalty (su-loyalty) - When you gain VP and have an ally, gain 1 extra VP.
+ * Call this after any explicit VP gain for the player.
+ */
+function applyLoyaltyBonus(state: GameState, playerId: string, context: string): void {
+  const player = state.players.find(p => p.id === playerId);
+  if (!player || player.allies.length === 0) return;
+  const cardIds = new Set(player.seasonCards.map(c => c.id));
+  if (hasCard(cardIds, 'su-loyalty')) {
+    player.victoryPoints += 1;
+    state.log = [...state.log, `💎 ${player.name} gana 1 PV extra (Lealtad - ${context})`];
+  }
+}
+
+/**
+ * Virtue: Righteousness (sp-righteousness) - For each of your own figures killed, gain 1 VP.
+ */
+function applyRighteousnessVP(state: GameState, playerId: string, killCount: number): void {
+  if (killCount <= 0) return;
+  const player = state.players.find(p => p.id === playerId);
+  if (!player) return;
+  const cardIds = new Set(player.seasonCards.map(c => c.id));
+  if (hasCard(cardIds, 'sp-righteousness')) {
+    player.victoryPoints += killCount;
+    state.log = [...state.log, `⚔️ ${player.name} gana ${killCount} PV (Rectitud - figuras propias eliminadas)`];
+  }
+}
+
 // ============================================================
 // Deck Building
 // ============================================================
@@ -629,6 +665,23 @@ export function chooseMandateTile(state: GameState, mandate: MandateType, player
 
   // Execute the mandate
   newState = executeMandate(newState, mandate, playerId);
+
+  // Virtue: Generosity (sp-generosity) - After mandate, give 1 coin to poorest player, gain Honor
+  const genPlayer = newState.players.find(p => p.id === playerId);
+  if (genPlayer) {
+    const genCardIds = new Set(genPlayer.seasonCards.map(c => c.id));
+    if (hasCard(genCardIds, 'sp-generosity') && genPlayer.coins >= 1) {
+      const others = newState.players.filter(p => p.id !== playerId);
+      if (others.length > 0) {
+        const poorest = others.reduce((a, b) => a.coins <= b.coins ? a : b);
+        genPlayer.coins -= 1;
+        poorest.coins += 1;
+        gainHonor(newState, playerId);
+        newState.log = [...newState.log, `🎁 ${genPlayer.name} ofrece 1 Moneda a ${poorest.name} (Generosidad) y gana Honor`];
+      }
+    }
+  }
+
   return newState;
 }
 
@@ -640,6 +693,23 @@ export function lotoChooseActualMandate(state: GameState, mandate: MandateType, 
     lastMandateIssuerId: playerId,
   };
   newState = executeMandate(newState, mandate, playerId);
+
+  // Virtue: Generosity (sp-generosity) - After mandate, give 1 coin to poorest player, gain Honor
+  const genPlayer = newState.players.find(p => p.id === playerId);
+  if (genPlayer) {
+    const genCardIds = new Set(genPlayer.seasonCards.map(c => c.id));
+    if (hasCard(genCardIds, 'sp-generosity') && genPlayer.coins >= 1) {
+      const others = newState.players.filter(p => p.id !== playerId);
+      if (others.length > 0) {
+        const poorest = others.reduce((a, b) => a.coins <= b.coins ? a : b);
+        genPlayer.coins -= 1;
+        poorest.coins += 1;
+        gainHonor(newState, playerId);
+        newState.log = [...newState.log, `🎁 ${genPlayer.name} ofrece 1 Moneda a ${poorest.name} (Generosidad) y gana Honor`];
+      }
+    }
+  }
+
   return newState;
 }
 
@@ -656,6 +726,14 @@ export function executeMandate(state: GameState, mandate: MandateType, playerId:
   if (!player) return state;
 
   newState.log = [...newState.log, `${player.name} emite mandato ${mandate.toUpperCase()}`];
+
+  // Virtue: Honesty (sp-honesty) - Gain 2 VP when selecting non-Betray mandate while having an ally
+  const mandatePlayerCardIds = new Set(player.seasonCards.map(c => c.id));
+  if (hasCard(mandatePlayerCardIds, 'sp-honesty') && mandate !== 'betray' && player.allies.length > 0) {
+    player.victoryPoints += 2;
+    newState.log = [...newState.log, `🤝 ${player.name} gana 2 PV (Honestidad - mandato no traicion con aliado)`];
+    applyLoyaltyBonus(newState, playerId, 'honestidad');
+  }
 
   switch (mandate) {
     case 'recruit':
@@ -1086,6 +1164,26 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
 
   if (IS_DEV) {
     console.log('[buySeasonCard]', { playerId, cardId, cardName: card.name, newSeasonCards: newState.players.find(p => p.id === playerId)?.seasonCards.map(c => c.id) });
+  }
+
+  // Virtue: Benevolence (sp-benevolence) - When spending coins, give 1 to another player, gain Honor and 2 VP
+  if (effectiveCost > 0) {
+    const buyingPlayer = newState.players.find(p => p.id === playerId);
+    if (buyingPlayer) {
+      const buyerCardIds = new Set(buyingPlayer.seasonCards.map(c => c.id));
+      if (hasCard(buyerCardIds, 'sp-benevolence') && buyingPlayer.coins >= 1) {
+        const others = newState.players.filter(p => p.id !== playerId);
+        if (others.length > 0) {
+          const poorest = others.reduce((a, b) => a.coins <= b.coins ? a : b);
+          buyingPlayer.coins -= 1;
+          poorest.coins += 1;
+          gainHonor(newState, playerId);
+          buyingPlayer.victoryPoints += 2;
+          newState.log = [...newState.log, `🙏 ${buyingPlayer.name} da 1 Moneda a ${poorest.name} (Benevolencia) y gana Honor y 2 PV`];
+          applyLoyaltyBonus(newState, playerId, 'benevolencia');
+        }
+      }
+    }
   }
 
   return newState;
@@ -1646,6 +1744,9 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
 
   newState.log = [...newState.log, `${issuer.name} reemplaza ${figure.type} de ${figureOwner.name} en ${province.name}`];
 
+  // Virtue: Righteousness (sp-righteousness) - figure owner's figure was killed/replaced by betray
+  applyRighteousnessVP(newState, figure.owner, 1);
+
   // If no selections remaining, keep betrayMandateActive true (wait for 'Terminar' button)
   if (newState.betraySelectionsRemaining <= 0) {
     return newState;
@@ -1824,6 +1925,16 @@ export function resolveKamiTurn(state: GameState): GameState {
         // Apply the kami ability
         newState = resolveKamiAbility(newState, temple.kamiType, winnerId);
       }
+    }
+  }
+
+  // Virtue: Patience (su-patience) - End of each Kami Turn, if you don't have most VP, gain 1 VP
+  const maxVP = Math.max(...newState.players.map(p => p.victoryPoints));
+  for (const p of newState.players) {
+    const pCardIds = new Set(p.seasonCards.map(c => c.id));
+    if (hasCard(pCardIds, 'su-patience') && p.victoryPoints < maxVP) {
+      p.victoryPoints += 1;
+      newState.log = [...newState.log, `⏳ ${p.name} gana 1 PV (Paciencia - no tiene mas PV)`];
     }
   }
 
@@ -2511,6 +2622,9 @@ export function applyFireDragonEffect(state: GameState, provinceId: string): Gam
 
     newState.log = [...newState.log, `🐉 Dragón de Fuego incinera: ${player.name} pierde 1 ${figureTypeName}`];
 
+    // Virtue: Righteousness (sp-righteousness) - own figure killed by Fire Dragon
+    applyRighteousnessVP(newState, playerId, 1);
+
     // Handle Koneko death trigger
     if (targetFigure.type === 'monster' && targetFigure.monsterCardId === 'su-koneko') {
       applyKonekoDeathEffect(newState, provinceId, playerId);
@@ -2935,6 +3049,9 @@ export function resolveNextBattle(state: GameState): GameState {
         if (killCount > 0) {
           applyJikinikniEffect(newState, battle.provinceId, killCount);
         }
+        // Virtue: Righteousness (sp-righteousness) - own figures killed in seppuku
+        applyRighteousnessVP(newState, highestBidder, killCount);
+        applyLoyaltyBonus(newState, highestBidder, 'seppuku');
         // Compute figure type breakdown for seppuku
         const figTypeCounts: Record<string, number> = {};
         for (const fig of ownFigures) {
@@ -2967,6 +3084,44 @@ export function resolveNextBattle(state: GameState): GameState {
             else if (enemyFigure.type === 'monster') victim.monsters += 1;
           }
           newState.log = [...newState.log, `${bidder.name} toma un rehén de ${victim?.name}`];
+
+          // Virtue: Sincerity (su-sincerity) - Gain Honor and 1 extra VP when taking hostage
+          const bidderCardIds = new Set(bidder.seasonCards.map(c => c.id));
+          if (hasCard(bidderCardIds, 'su-sincerity')) {
+            gainHonor(newState, highestBidder);
+            bidder.victoryPoints += 1;
+            newState.log = [...newState.log, `🎎 ${bidder.name} gana Honor y 1 PV extra (Sinceridad - tomar rehen)`];
+            applyLoyaltyBonus(newState, highestBidder, 'sinceridad');
+          }
+          applyLoyaltyBonus(newState, highestBidder, 'tomar rehen');
+
+          // Virtue: Respect (su-respect) - Take 1 additional hostage
+          if (hasCard(bidderCardIds, 'su-respect')) {
+            const curProvAfter = newState.provinces[battle.provinceId];
+            const secondEnemy = curProvAfter.figures.find(
+              (f) => f.owner !== highestBidder && (f.type === 'bushi' || f.type === 'shinto' || (f.type === 'monster' && f.monsterCardId && !['su-yurei', 'sp-fukurokuju'].includes(f.monsterCardId)))
+            );
+            if (secondEnemy) {
+              const hostageMonsterName2 = secondEnemy.type === 'monster' && secondEnemy.monsterCardId
+                ? (SEASON_CARDS_DATA.find(c => c.id === secondEnemy.monsterCardId)?.name || secondEnemy.type)
+                : secondEnemy.type;
+              const hostage2: Hostage = { fromClanId: secondEnemy.owner, figureType: secondEnemy.type, figureName: hostageMonsterName2 };
+              bidder.hostages.push(hostage2);
+              bidder.victoryPoints += 1;
+              newState.provinces[battle.provinceId] = {
+                ...curProvAfter,
+                figures: curProvAfter.figures.filter((f) => f.id !== secondEnemy.id),
+              };
+              const victim2 = newState.players.find((p) => p.id === secondEnemy.owner);
+              if (victim2) {
+                if (secondEnemy.type === 'bushi') victim2.bushi += 1;
+                else if (secondEnemy.type === 'shinto') victim2.shinto += 1;
+                else if (secondEnemy.type === 'monster') victim2.monsters += 1;
+              }
+              newState.log = [...newState.log, `🙏 ${bidder.name} toma un rehen adicional (Respeto)`];
+              applyLoyaltyBonus(newState, highestBidder, 'respeto');
+            }
+          }
         }
         break;
       }
@@ -3079,6 +3234,7 @@ export function resolveNextBattle(state: GameState): GameState {
     if (kitsuneFigure) {
       winner.victoryPoints += 6;
       newState.log = [...newState.log, `🦊 Kitsune: ${winner.name} gana 6 PV por ganar la batalla`];
+      applyLoyaltyBonus(newState, winnerId!, 'kitsune');
     }
 
     // Winner gets the war province token
@@ -3087,36 +3243,80 @@ export function resolveNextBattle(state: GameState): GameState {
       winner.warProvinceTokens.push({ season: slot.season, provinceId: slot.provinceId });
     }
 
+    // Virtue: Courage (sp-courage) - Gain 2 VP each time you win a War symbol
+    const winnerCardIds = new Set(winner.seasonCards.map(c => c.id));
+    if (hasCard(winnerCardIds, 'sp-courage')) {
+      winner.victoryPoints += 2;
+      newState.log = [...newState.log, `🎌 ${winner.name} gana 2 PV (Coraje - ganar simbolo de guerra)`];
+      applyLoyaltyBonus(newState, winnerId!, 'coraje');
+    }
+
+    // Virtue: Piety (sp-piety) - If you win a War symbol with a Shinto, gain Honor and 3 VP
+    if (hasCard(winnerCardIds, 'sp-piety')) {
+      const battleProv = newState.provinces[battle.provinceId];
+      const hasShinto = battleProv.figures.some(f => f.owner === winnerId && (f.type === 'shinto' || (f.type === 'monster' && (f.monsterCardId === 'sp-komainu' || f.monsterCardId === 'su-hotei'))));
+      if (hasShinto) {
+        gainHonor(newState, winnerId!);
+        winner.victoryPoints += 3;
+        newState.log = [...newState.log, `⛩️ ${winner.name} gana Honor y 3 PV (Piedad - ganar guerra con Shinto)`];
+        applyLoyaltyBonus(newState, winnerId!, 'piedad');
+      }
+    }
+
     // Losing players' figures are killed (return to reserve).
     // Allied figures of the winner are also protected.
+    // Virtue: Mercy (su-mercy) - May leave all opponent figures alive and gain 2 VP instead
+    const mercyActive = hasCard(winnerCardIds, 'su-mercy');
+    const wouldKillFigures = battle.participants.some((pid) => {
+      if (pid === winnerId) return false;
+      if (winner.allies.includes(pid)) return false;
+      return finalProvince.figures.some((f) => f.owner === pid && f.type !== 'fortress');
+    });
+    if (mercyActive && wouldKillFigures) {
+      winner.victoryPoints += 2;
+      newState.log = [...newState.log, `🕊️ ${winner.name} muestra Misericordia: +2 PV, figuras enemigas sobreviven`];
+      applyLoyaltyBonus(newState, winnerId!, 'misericordia');
+    }
+
     const killedMap: Record<string, Record<string, number>> = {};
     const killedMonsterNames: Record<string, string[]> = {};
-    battle.participants.forEach((pid) => {
-      if (pid === winnerId) return;
-      // Skip killing figures of players allied with the winner
-      if (winner.allies.includes(pid)) return;
-      const loserFigures = finalProvince.figures.filter((f) => f.owner === pid);
-      loserFigures.forEach((fig) => {
-        if (fig.type === 'fortress') return; // Fortresses immune
-        const loser = newState.players.find((p) => p.id === pid)!;
-        if (fig.type === 'bushi') loser.bushi += 1;
-        else if (fig.type === 'shinto') loser.shinto += 1;
-        else if (fig.type === 'daimyo') loser.hasDaimyo = true;
-        else if (fig.type === 'monster') {
-          loser.monsters += 1;
-          // Track monster names for display
-          if (fig.monsterCardId) {
-            const key = `${pid}|monster`;
-            if (!killedMonsterNames[key]) killedMonsterNames[key] = [];
-            const monsterName = SEASON_CARDS_DATA.find(c => c.id === fig.monsterCardId)?.name;
-            if (monsterName) killedMonsterNames[key].push(monsterName);
+    let oniKilledCount = 0; // Track Oni kills for Boldness virtue
+    if (!mercyActive || !wouldKillFigures) {
+      // Normal kill logic (no mercy)
+      battle.participants.forEach((pid) => {
+        if (pid === winnerId) return;
+        // Skip killing figures of players allied with the winner
+        if (winner.allies.includes(pid)) return;
+        const loserFigures = finalProvince.figures.filter((f) => f.owner === pid);
+        loserFigures.forEach((fig) => {
+          if (fig.type === 'fortress') return; // Fortresses immune
+          const loser = newState.players.find((p) => p.id === pid)!;
+          if (fig.type === 'bushi') loser.bushi += 1;
+          else if (fig.type === 'shinto') loser.shinto += 1;
+          else if (fig.type === 'daimyo') loser.hasDaimyo = true;
+          else if (fig.type === 'monster') {
+            loser.monsters += 1;
+            // Track monster names for display
+            if (fig.monsterCardId) {
+              const key = `${pid}|monster`;
+              if (!killedMonsterNames[key]) killedMonsterNames[key] = [];
+              const monsterName = SEASON_CARDS_DATA.find(c => c.id === fig.monsterCardId)?.name;
+              if (monsterName) killedMonsterNames[key].push(monsterName);
+              // Track Oni kills for Boldness virtue
+              if (fig.monsterCardId.includes('oni-of')) {
+                oniKilledCount++;
+              }
+            }
           }
-        }
-        // Track killed figures for display
-        if (!killedMap[pid]) killedMap[pid] = {};
-        killedMap[pid][fig.type] = (killedMap[pid][fig.type] || 0) + 1;
+          // Track killed figures for display
+          if (!killedMap[pid]) killedMap[pid] = {};
+          killedMap[pid][fig.type] = (killedMap[pid][fig.type] || 0) + 1;
+        });
+        // Virtue: Righteousness - for each loser whose figures are killed
+        const loserKillCount = Object.values(killedMap[pid] || {}).reduce((sum, c) => sum + c, 0);
+        applyRighteousnessVP(newState, pid, loserKillCount);
       });
-    });
+    }
 
     // Build killedFigures array from the map
     const killedFigures: { owner: string; figureType: string; count: number; monsterNames?: string[] }[] = [];
@@ -3133,6 +3333,28 @@ export function resolveNextBattle(state: GameState): GameState {
       }
     }
     battle.killedFigures = killedFigures;
+
+    // Virtue: Justice (su-justice) - Gain 3 VP when killing figures of a player with less Honor
+    if (hasCard(winnerCardIds, 'su-justice') && Object.keys(killedMap).length > 0) {
+      const winnerHonorIdx = newState.honorTrack.indexOf(winnerId!);
+      const playersWithLessHonorKilled = Object.keys(killedMap).filter(pid => {
+        const pidHonorIdx = newState.honorTrack.indexOf(pid);
+        return pidHonorIdx > winnerHonorIdx; // higher index = less honor
+      });
+      if (playersWithLessHonorKilled.length > 0) {
+        winner.victoryPoints += 3;
+        newState.log = [...newState.log, `⚖️ ${winner.name} gana 3 PV (Justicia - matar figuras de jugador con menos Honor)`];
+        applyLoyaltyBonus(newState, winnerId!, 'justicia');
+      }
+    }
+
+    // Virtue: Boldness (au-boldness) - Gain 4 VP per enemy Oni killed in battle
+    if (hasCard(winnerCardIds, 'au-boldness') && oniKilledCount > 0) {
+      const boldnessVP = oniKilledCount * 4;
+      winner.victoryPoints += boldnessVP;
+      newState.log = [...newState.log, `🔥 ${winner.name} gana ${boldnessVP} PV (Audacia - ${oniKilledCount} Oni eliminados)`];
+      applyLoyaltyBonus(newState, winnerId!, 'audacia');
+    }
 
     // Imperial Poets: award VP for total figures that died during this battle
     const battleCasualtyCount = killedFigures.reduce((sum, kf) => sum + kf.count, 0);
@@ -3160,6 +3382,7 @@ export function resolveNextBattle(state: GameState): GameState {
       const poetsBidder = newState.players.find((p) => p.id === imperialPoetsBidder)!;
       poetsBidder.victoryPoints += totalDeaths;
       newState.log = [...newState.log, `${poetsBidder.name} obtiene ${totalDeaths} PV de Poetas Imperiales`];
+      applyLoyaltyBonus(newState, imperialPoetsBidder, 'poetas imperiales');
       // Store on resolutionData for popup display
       if (stepByStepMode) {
         battle.resolutionData = {
@@ -3217,33 +3440,38 @@ export function resolveNextBattle(state: GameState): GameState {
     }
 
     // Koneko and Ebisu death triggers for battle casualties
-    battle.participants.forEach((pid) => {
-      if (pid === winnerId) return;
-      if (winner.allies.includes(pid)) return;
-      const loserFiguresForTriggers = finalProvince.figures.filter(f => f.owner === pid && f.type !== 'fortress');
-      for (const fig of loserFiguresForTriggers) {
-        if (fig.type === 'monster' && fig.monsterCardId === 'su-koneko') {
-          applyKonekoDeathEffect(newState, battle.provinceId, pid);
+    if (!mercyActive || !wouldKillFigures) {
+      battle.participants.forEach((pid) => {
+        if (pid === winnerId) return;
+        if (winner.allies.includes(pid)) return;
+        const loserFiguresForTriggers = finalProvince.figures.filter(f => f.owner === pid && f.type !== 'fortress');
+        for (const fig of loserFiguresForTriggers) {
+          if (fig.type === 'monster' && fig.monsterCardId === 'su-koneko') {
+            applyKonekoDeathEffect(newState, battle.provinceId, pid);
+          }
+          if (fig.type === 'monster' && fig.monsterCardId === 'au-ebisu') {
+            applyEbisuDeathEffect(newState, pid);
+          }
         }
-        if (fig.type === 'monster' && fig.monsterCardId === 'au-ebisu') {
-          applyEbisuDeathEffect(newState, pid);
-        }
-      }
-    });
+      });
 
-    // Jikininki effect for battle casualties
-    const totalBattleCasualties = killedFigures.reduce((sum, kf) => sum + kf.count, 0);
-    if (totalBattleCasualties > 0) {
-      applyJikinikniEffect(newState, battle.provinceId, totalBattleCasualties);
+      // Jikininki effect for battle casualties
+      const totalBattleCasualties = killedFigures.reduce((sum, kf) => sum + kf.count, 0);
+      if (totalBattleCasualties > 0) {
+        applyJikinikniEffect(newState, battle.provinceId, totalBattleCasualties);
+      }
     }
 
     // Remove killed figures from province (keep winner's figures, allied figures, daimyos, and fortresses)
-    newState.provinces[battle.provinceId] = {
-      ...finalProvince,
-      figures: finalProvince.figures.filter(
-        (f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'fortress'
-      ),
-    };
+    // If mercy is active and figures would have been killed, skip removal
+    if (!mercyActive || !wouldKillFigures) {
+      newState.provinces[battle.provinceId] = {
+        ...finalProvince,
+        figures: finalProvince.figures.filter(
+          (f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'fortress'
+        ),
+      };
+    }
 
     // Revert Jorogumo effect (return captured figure to original owner)
     if (jorogumoCaptured) {
@@ -3252,20 +3480,22 @@ export function resolveNextBattle(state: GameState): GameState {
     }
 
     // Phoenix revival in battle: if any killed loser figure was Phoenix, revive it
-    const phoenixKilled = battle.participants
-      .filter((pid) => pid !== winnerId && !winner.allies.includes(pid))
-      .flatMap((pid) => finalProvince.figures.filter((f) => f.owner === pid && f.monsterCardId === 'sp-phoenix'));
-    if (phoenixKilled.length > 0) {
-      const phoenixFig = phoenixKilled[0];
-      const phoenixOwner = newState.players.find((p) => p.id === phoenixFig.owner)!;
-      const figureId = Math.random().toString(36).substring(2, 10);
-      const newPhoenixFigure = { type: 'monster' as const, owner: phoenixFig.owner, id: figureId, monsterCardId: 'sp-phoenix' };
-      newState.provinces[battle.provinceId] = {
-        ...newState.provinces[battle.provinceId],
-        figures: [...newState.provinces[battle.provinceId].figures, newPhoenixFigure],
-      };
-      phoenixOwner.monsters -= 1;
-      newState.log = [...newState.log, `Fenix revive en ${finalProvince.name || battle.provinceId}`];
+    if (!mercyActive || !wouldKillFigures) {
+      const phoenixKilled = battle.participants
+        .filter((pid) => pid !== winnerId && !winner.allies.includes(pid))
+        .flatMap((pid) => finalProvince.figures.filter((f) => f.owner === pid && f.monsterCardId === 'sp-phoenix'));
+      if (phoenixKilled.length > 0) {
+        const phoenixFig = phoenixKilled[0];
+        const phoenixOwner = newState.players.find((p) => p.id === phoenixFig.owner)!;
+        const figureId = Math.random().toString(36).substring(2, 10);
+        const newPhoenixFigure = { type: 'monster' as const, owner: phoenixFig.owner, id: figureId, monsterCardId: 'sp-phoenix' };
+        newState.provinces[battle.provinceId] = {
+          ...newState.provinces[battle.provinceId],
+          figures: [...newState.provinces[battle.provinceId].figures, newPhoenixFigure],
+        };
+        phoenixOwner.monsters -= 1;
+        newState.log = [...newState.log, `Fenix revive en ${finalProvince.name || battle.provinceId}`];
+      }
     }
 
     // Distribute winner's bid coins equally to losers
@@ -3755,6 +3985,8 @@ function applyMonsterEnterEffects(state: GameState, provinceId: string, figure: 
           }
           killCount++;
           state.log = [...state.log, `👹 Oni of Hate: elimina ${target.type} de ${victim?.name || 'jugador'}`];
+          // Virtue: Righteousness (sp-righteousness) - own figure killed by Oni of Hate
+          applyRighteousnessVP(state, pid, 1);
         }
       }
     }
@@ -4025,14 +4257,6 @@ function applySolTiebreakBonus(state: GameState, winnerId: string, losers: strin
     }
   }
   state.log = [...state.log, `${winner.name} (Sol) gana 1 Moneda y 1 PV por empate y ganar en Honor a ${losers.map((id) => state.players.find((p) => p.id === id)?.name ?? id).join(', ')} que pierde 1 Moneda y 1 PV`];
-}
-
-/**
- * Helper to check if a player has a card by base ID, accounting for duplicate
- * cards that have a '-2' suffix (e.g. 'su-path-of-might-2').
- */
-function hasCard(cardIds: Set<string>, baseId: string): boolean {
-  return cardIds.has(baseId) || cardIds.has(baseId + '-2');
 }
 
 export function calculateForce(province: Province & { figures: Figure[] }, playerId: string, state: GameState): number {

@@ -44,6 +44,7 @@ import {
   finalizeCleanupAndAdvance,
   determineTacticWinners,
   applyFireDragonEffect,
+  hasCard,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 import { SEASON_CARDS_DATA } from '../types/game';
@@ -1634,6 +1635,15 @@ wss.on('connection', (ws: WebSocket, req) => {
               },
               log: [...s.log, `Monstruo colocado en ${province.name}`],
             };
+            // Virtue: Dignity (sp-dignity) - Gain 2 VP when summoning a monster
+            const dignityPlayer = s.players.find(p => p.id === data.playerId);
+            if (dignityPlayer) {
+              const dignityCardIds = new Set(dignityPlayer.seasonCards.map(c => c.id));
+              if (hasCard(dignityCardIds, 'sp-dignity')) {
+                dignityPlayer.victoryPoints += 2;
+                s = { ...s, log: [...s.log, `🐉 ${dignityPlayer.name} gana 2 PV (Dignidad - invocar monstruo)`] };
+              }
+            }
           } else if (reserve) {
             // Monster goes to reserve (Luna no valid province or cancel)
             s = {
