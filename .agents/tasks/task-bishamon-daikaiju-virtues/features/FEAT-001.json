@@ -1,0 +1,21 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix Bishamon force calculation: force 4 only when an OPPONENT monster is in the same province (different owner), not any monster from same clan",
+  "status": "in_progress",
+  "steps": [
+    "In src/utils/gameLogic.ts around line 4144, find the su-bishamon case in calculateForce function",
+    "Change the condition from checking if ANY other monster exists to checking if there is a monster owned by a DIFFERENT player (f.owner !== fig.owner). The current code checks f.monsterCardId !== 'su-bishamon' && f.id !== fig.id, but does NOT check f.owner !== fig.owner",
+    "The fix: change `province.figures.some(f => f.type === 'monster' && f.monsterCardId !== 'su-bishamon' && f.id !== fig.id)` to `province.figures.some(f => f.type === 'monster' && f.owner !== fig.owner)`"
+  ],
+  "acceptance_criteria": [
+    "Bishamon is force 4 only when an opponent's monster (any player with different owner) exists in the same province",
+    "Bishamon remains force 1 if the only other monsters in the province belong to the same player",
+    "npm run build passes without errors"
+  ],
+  "verification": [
+    "cd /projects/sandbox/shoguns-ascent && npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

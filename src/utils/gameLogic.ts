@@ -4142,8 +4142,8 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
         figForce = (state.currentPhase === 'politics' && state.harvestMandateActive) ? 8 : 1;
         if (isLuna) figForce = Math.max(figForce, 2);
       } else if (fig.monsterCardId === 'su-bishamon') {
-        const hasOtherMonster = province.figures.some(f => f.type === 'monster' && f.monsterCardId !== 'su-bishamon' && f.id !== fig.id);
-        figForce = hasOtherMonster ? 4 : 1;
+        const hasOpponentMonster = province.figures.some(f => f.type === 'monster' && f.owner !== fig.owner);
+        figForce = hasOpponentMonster ? 4 : 1;
         if (isLuna) figForce = Math.max(figForce, 2);
       } else if (fig.monsterCardId === 'au-sacred-warrior') {
         const virtueCount = player?.seasonCards.filter(c => c.cardType === 'virtue').length || 0;
