@@ -107,7 +107,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted, rejoinWaitingVisible, rejoinPlayerStatuses } = useGameStore();
   const t = useT();
 
   const [isDragging, setIsDragging] = useState(false);
@@ -1051,6 +1051,47 @@ export const GameBoard = () => {
                   {t('war.summary.accept')}
                 </button>
               )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Rejoin Waiting Popup */}
+      {rejoinWaitingVisible && createPortal(
+        <div className="battle-popup-overlay" style={{ zIndex: 99999 }}>
+          <div className="battle-popup-card" style={{ maxWidth: '420px', minWidth: '300px' }}>
+            <h3 style={{ color: '#e2b13c', textAlign: 'center', margin: '0 0 16px 0', fontSize: '1.3rem' }}>
+              {t('rejoin.title')}
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+              {rejoinPlayerStatuses.map(player => {
+                const clan = CLANS.find(c => c.id === player.clanId);
+                return (
+                  <div key={player.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', borderRadius: '8px', background: player.connected ? 'rgba(39, 174, 96, 0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${player.connected ? '#27ae6033' : '#88888833'}` }}>
+                    <ClanShield clanId={player.clanId} size={24} />
+                    <span style={{ flex: 1, fontWeight: 'bold', color: clan?.color || '#ccc', fontSize: '0.95rem' }}>
+                      {player.name}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: player.connected ? '#27ae60' : '#d4a020' }}>
+                      {player.connected ? t('rejoin.ready') : t('rejoin.waiting')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  const ws = useGameStore.getState().ws;
+                  if (ws) ws.close();
+                  useGameStore.setState({ rejoinWaitingVisible: false, rejoinPlayerStatuses: [], ws: null, screen: 'games-lobby' });
+                }}
+                style={{ background: 'rgba(255,255,255,0.1)', borderColor: '#888', color: '#ccc' }}
+              >
+                {t('rejoin.backToLobby')}
+              </button>
             </div>
           </div>
         </div>,

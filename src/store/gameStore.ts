@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { GameState, MandateType, DeckConfig, SeasonCard, BattleResolutionData, Hostage, FigureType } from '../types/game';
 import { SEASON_CARDS_DATA } from '../types/game';
-import { API_BASE } from '../config';
+import { API_BASE, WS_BASE } from '../config';
 import {
   createInitialGameState,
   setupSeason,
@@ -448,6 +448,10 @@ interface GameStore {
   lobbyState: { id: string; name: string; host: string; players: { id: string; name: string; clanId: string }[]; maxPlayers: number; started: boolean; availableClans: string[]; deckConfig: unknown; kamiMode: string; autoAssignClan?: boolean } | null;
   sendCreateLobby: (params: { playerName: string; clanId: string; maxPlayers: number; availableClans: string[]; deckConfig: unknown; kamiMode: string; selectedKami?: string[] }) => void;
   sendSelectClan: (lobbyId: string, clanId: string) => void;
+
+  // Rejoin
+  rejoinWaitingVisible: boolean;
+  rejoinPlayerStatuses: { id: string; name: string; clanId: string; connected: boolean }[];
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -814,7 +818,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (snapshots.length === 0) return;
       const lastSnapshot = snapshots[snapshots.length - 1];
       const gameState = lastSnapshot.state as GameState;
-      // Prefer matching by authenticated user ID, fallback to stored playerId, then username
+
+      // Check if this is an online game - if so, connect via WebSocket
+      if (gameState.mode === 'online') {
+        set({
+          persistentGameId: gameId,
+          screen: 'game',
+          rejoinWaitingVisible: true,
+          rejoinPlayerStatuses: [],
+        });
+        get().connectWebSocket(WS_BASE, (wsConn) => {
+          wsConn.send(JSON.stringify({ type: 'REJOIN_GAME', gameId }));
+        });
+        return;
+      }
+
+      // Hotseat flow - load snapshot directly
       const authUser = get().authUser;
       const storedPlayerId = localStorage.getItem('shoguns-ascent-playerId');
       const storedUsername = get().username;
@@ -3867,7 +3886,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           set({ localPlayerId: d.playerId });
           break;
         case 'LOBBY_JOINED':
-          set({ lobbyId: d.lobbyId, screen: 'lobby' });
+          set({ lobbyId: d.lobbyId, screen: get().rejoinWaitingVisible ? get().screen : 'lobby' });
           break;
         case 'LOBBY_CREATED':
           set({ lobbyId: d.lobbyId, screen: 'lobby' });
@@ -3880,6 +3899,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
           break;
         case 'LOBBY_CLOSED':
           set({ lobbyState: null, lobbyId: null, screen: 'menu' });
+          break;
+        case 'REJOIN_STATUS':
+          set({ rejoinPlayerStatuses: d.players, rejoinWaitingVisible: true });
+          break;
+        case 'REJOIN_COMPLETE':
+          set({ rejoinWaitingVisible: false, rejoinPlayerStatuses: [] });
           break;
         case 'ERROR':
           console.error('[WS] Server error:', d.message);
@@ -3904,6 +3929,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   setLobbyId: (id) => set({ lobbyId: id }),
   lobbyState: null,
+  rejoinWaitingVisible: false,
+  rejoinPlayerStatuses: [],
   sendCreateLobby: (params) => {
     const { ws } = get();
     if (ws && ws.readyState === WebSocket.OPEN) {

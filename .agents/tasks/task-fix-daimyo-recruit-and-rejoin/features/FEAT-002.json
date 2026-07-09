@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Implement online saved game rejoin with a 'waiting for all players' popup. Currently, resumeGame() (in gameStore.ts) only loads the snapshot via REST API without establishing a WebSocket connection, so players cannot send/receive actions (e.g., tea ceremony proposals don't arrive). The fix requires: (1) a server-side REJOIN_GAME WebSocket message handler that creates/finds a lobby for the game, loads the latest snapshot, and adds the player to the lobby, (2) the client resumeGame function connecting via WebSocket and sending REJOIN_GAME instead of just loading the snapshot locally, (3) a 'waiting for players' popup shown when entering a saved game that displays all players with their clan shield, name (in clan color), and status (Listo!/Ready! or Esperando.../Waiting...), blocking all game interaction until all players are connected, then auto-closing.",
+  "status": "in_progress",
+  "steps": [
+    "In src/server/index.ts, add a new WebSocket message handler 'REJOIN_GAME' inside the ws.on('message') switch block. This handler should: (a) accept data.gameId, (b) check if a lobby with persistentGameId matching data.gameId already exists (iterate lobbies Map), (c) if no lobby exists, create one: load the latest snapshot from the database using getLatestSnapshot(data.gameId), parse the state, create a new Lobby with the game state, set started=true, persistentGameId=data.gameId, maxPlayers = gameState.players.length, (d) check if the authenticated user's playerId matches any player in the gameState.players array, (e) add the reconnecting player to the lobby's players array (with their ws reference), update their ws if they were already there, (f) send GAME_STATE to the reconnecting player plus a REJOIN_STATUS message with all player IDs and which are currently connected, (g) broadcast REJOIN_STATUS to all connected lobby players so they update their popup.",
+    "In src/server/index.ts, add a REJOIN_STATUS broadcast helper. After each REJOIN_GAME, broadcast to all connected lobby players a message: { type: 'REJOIN_STATUS', players: [{id, name, clanId, connected: boolean}...], allConnected: boolean }. When allConnected becomes true, also broadcast a REJOIN_COMPLETE message so clients can dismiss the popup and resume normal play.",
+    "In src/store/gameStore.ts, modify the resumeGame function. For online mode games (gameState.mode === 'online'), instead of just loading the snapshot locally, connect to WebSocket and send REJOIN_GAME: (a) Use connectWebSocket to establish a WS connection, (b) In the onOpen callback, send { type: 'REJOIN_GAME', gameId }, (c) The GAME_STATE message handler already sets the gameState - rely on that. Set screen to 'game' and show the rejoin waiting popup.",
+    "In src/store/gameStore.ts, add new state fields: rejoinWaitingVisible (boolean, default false), rejoinPlayerStatuses (array of {id, name, clanId, connected} objects, default []). Add handlers in the WebSocket onmessage for: REJOIN_STATUS (update rejoinPlayerStatuses and rejoinWaitingVisible=true), REJOIN_COMPLETE (set rejoinWaitingVisible=false, clear rejoinPlayerStatuses).",
+    "In src/components/GameBoard.tsx (or a new component), add a modal/popup overlay that renders when rejoinWaitingVisible is true. It should display: a title like 'Reconnecting Players' / 'Reconectando Jugadores', a list of all players with their ClanShield, their name colored in their clan color, and a status indicator ('Listo!' in green or 'Esperando...' in gray/amber). Also include a 'Back to Lobby' button that disconnects the WebSocket and returns to the games lobby. The popup must block all game interactions (overlay on top of everything).",
+    "Add i18n translation keys in src/i18n/en.ts and src/i18n/es.ts for the rejoin popup: 'rejoin.title' ('Reconnecting Players' / 'Reconectando Jugadores'), 'rejoin.ready' ('Ready!' / 'Listo!'), 'rejoin.waiting' ('Waiting...' / 'Esperando...'), 'rejoin.backToLobby' ('Back to Lobby' / 'Volver al Lobby').",
+    "Run 'npx tsc --noEmit' to verify no type errors."
+  ],
+  "acceptance_criteria": [
+    "When an authenticated user clicks an active online game in GamesLobby, it connects via WebSocket and sends REJOIN_GAME instead of just loading the snapshot locally",
+    "Server creates/finds a lobby for the game, loads the latest snapshot, and adds the player to it",
+    "A blocking popup appears showing all players with their connection status",
+    "The popup auto-dismisses when all players are connected (REJOIN_COMPLETE)",
+    "Players cannot interact with the game while the rejoin popup is visible",
+    "The popup has a back-to-lobby button that disconnects and returns to the games lobby",
+    "Tea ceremony proposals and all other WebSocket actions work correctly after all players rejoin",
+    "TypeScript compilation passes without errors"
+  ],
+  "verification": [
+    "npx tsc --noEmit"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

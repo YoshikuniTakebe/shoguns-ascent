@@ -2207,6 +2207,101 @@ wss.on('connection', (ws: WebSocket, req) => {
           broadcastState(l);
           break;
         }
+        case 'REJOIN_GAME': {
+          const gameId = data.gameId;
+          if (!gameId) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'gameId required' }));
+            return;
+          }
+
+          // Check if a lobby already exists for this persistent game
+          let existingLobby: Lobby | undefined;
+          for (const [, lobby] of lobbies) {
+            if (lobby.persistentGameId === gameId) {
+              existingLobby = lobby;
+              break;
+            }
+          }
+
+          let l: Lobby;
+          if (existingLobby) {
+            l = existingLobby;
+          } else {
+            // Create a new lobby from the saved game state
+            const snapshot = getLatestSnapshot(gameId);
+            if (!snapshot) {
+              ws.send(JSON.stringify({ type: 'ERROR', message: 'No snapshot found for game' }));
+              return;
+            }
+            const gameRecord = getGameById(gameId);
+            const gameState: GameState = typeof snapshot.state_json === 'string'
+              ? JSON.parse(snapshot.state_json)
+              : snapshot.state_json;
+            const lobbyId = uuidv4();
+            l = {
+              id: lobbyId,
+              name: gameRecord?.name || 'Resumed Game',
+              host: playerId,
+              players: [],
+              maxPlayers: gameState.players.length,
+              gameState,
+              started: true,
+              persistentGameId: gameId,
+              config: null,
+              recruitUndoSnapshot: null,
+              betrayUndoSnapshot: null,
+            };
+            lobbies.set(lobbyId, l);
+          }
+
+          // Match authenticated player to a gameState player
+          const matchedPlayer = l.gameState?.players.find(p => p.id === playerId);
+          if (!matchedPlayer) {
+            ws.send(JSON.stringify({ type: 'ERROR', message: 'Player not part of this game' }));
+            return;
+          }
+
+          // Add or update player in the lobby
+          const existingPlayer = l.players.find(p => p.id === playerId);
+          if (existingPlayer) {
+            existingPlayer.ws = ws;
+          } else {
+            l.players.push({ id: playerId, name: matchedPlayer.name, clanId: matchedPlayer.clanId, ws });
+          }
+
+          currentLobbyId = l.id;
+
+          // Send game state to the reconnecting player
+          ws.send(JSON.stringify({ type: 'GAME_STATE', state: l.gameState }));
+
+          // Send lobby ID so the client can use sendAction
+          ws.send(JSON.stringify({ type: 'LOBBY_JOINED', lobbyId: l.id }));
+
+          // Build and broadcast rejoin status
+          const rejoinPlayers = l.gameState!.players.map(gp => {
+            const lobbyPlayer = l.players.find(lp => lp.id === gp.id);
+            const connected = !!(lobbyPlayer && lobbyPlayer.ws.readyState === WebSocket.OPEN);
+            return { id: gp.id, name: gp.name, clanId: gp.clanId, connected };
+          });
+          const allConnected = rejoinPlayers.every(p => p.connected);
+          const rejoinMsg = JSON.stringify({ type: 'REJOIN_STATUS', players: rejoinPlayers, allConnected });
+          l.players.forEach(p => {
+            if (p.ws.readyState === WebSocket.OPEN) {
+              p.ws.send(rejoinMsg);
+            }
+          });
+
+          if (allConnected) {
+            const completeMsg = JSON.stringify({ type: 'REJOIN_COMPLETE' });
+            l.players.forEach(p => {
+              if (p.ws.readyState === WebSocket.OPEN) {
+                p.ws.send(completeMsg);
+              }
+            });
+          }
+          break;
+        }
+
       }
     } catch (e) {
       console.error(e);
@@ -2228,7 +2323,24 @@ wss.on('connection', (ws: WebSocket, req) => {
         } else {
           l.players = l.players.filter((p) => p.id !== playerId);
           if (l.players.length === 0) lobbies.delete(currentLobbyId);
-          else broadcastLobby(l);
+          else {
+            broadcastLobby(l);
+            // If the game is started (rejoin scenario), broadcast updated rejoin status
+            if (l.started && l.gameState) {
+              const rejoinPlayers = l.gameState.players.map(gp => {
+                const lobbyPlayer = l.players.find(lp => lp.id === gp.id);
+                const connected = !!(lobbyPlayer && lobbyPlayer.ws.readyState === WebSocket.OPEN);
+                return { id: gp.id, name: gp.name, clanId: gp.clanId, connected };
+              });
+              const allConnected = rejoinPlayers.every(p => p.connected);
+              const rejoinMsg = JSON.stringify({ type: 'REJOIN_STATUS', players: rejoinPlayers, allConnected });
+              l.players.forEach(p => {
+                if (p.ws.readyState === WebSocket.OPEN) {
+                  p.ws.send(rejoinMsg);
+                }
+              });
+            }
+          }
         }
       }
     }

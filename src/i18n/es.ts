@@ -700,6 +700,12 @@ export const es: Record<TranslationKey, string> = {
   'auth.error': 'Error de autenticacion',
   'auth.success': 'Exito',
 
+  // Rejoin
+  'rejoin.title': 'Reconectando Jugadores',
+  'rejoin.ready': 'Listo!',
+  'rejoin.waiting': 'Esperando...',
+  'rejoin.backToLobby': 'Volver al Lobby',
+
   // Admin
   'admin.deleteGame': 'Eliminar Partida',
   'admin.confirmDelete': 'Seguro que quieres eliminar esta partida?',

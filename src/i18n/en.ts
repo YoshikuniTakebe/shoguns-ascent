@@ -698,6 +698,12 @@ export const en = {
   'auth.error': 'Authentication error',
   'auth.success': 'Success',
 
+  // Rejoin
+  'rejoin.title': 'Reconnecting Players',
+  'rejoin.ready': 'Ready!',
+  'rejoin.waiting': 'Waiting...',
+  'rejoin.backToLobby': 'Back to Lobby',
+
   // Admin
   'admin.deleteGame': 'Delete Game',
   'admin.confirmDelete': 'Are you sure you want to delete this game?',
