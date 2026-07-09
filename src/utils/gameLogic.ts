@@ -2190,7 +2190,7 @@ export function initiateWarPhase(state: GameState): GameState {
       const bp = newState.provinces[bpId];
       if (!bp) return false;
       const owners = [...new Set(bp.figures.map(f => f.owner))];
-      return owners.length >= 2 || owners.length >= 1;
+      return owners.length >= 1;
     });
     if (!targetBattleProvince) continue;
     // Move Daikaiju to the battle province (if not already there)
@@ -2801,21 +2801,18 @@ export function resolveNextBattle(state: GameState): GameState {
   }
 
   // Apply Earth Dragon effect (move 1 figure of each other player out)
-  if (!stepByStepMode) {
-    const earthDragonResult = applyEarthDragonEffect(newState, battle.provinceId);
-    newState.players = earthDragonResult.players;
-    newState.provinces = earthDragonResult.provinces;
-    newState.log = earthDragonResult.log;
-  }
+  // Applied regardless of step-by-step mode since it's a start-of-battle effect
+  const earthDragonResult = applyEarthDragonEffect(newState, battle.provinceId);
+  newState.players = earthDragonResult.players;
+  newState.provinces = earthDragonResult.provinces;
+  newState.log = earthDragonResult.log;
 
   // Apply Jorogumo effect (take control of 1 enemy figure)
-  let jorogumoCaptured: { figureId: string; originalOwner: string } | null = null;
-  if (!stepByStepMode) {
-    const jorogumoResult = applyJorogumoEffect(newState, battle.provinceId);
-    newState.provinces = jorogumoResult.state.provinces;
-    newState.log = jorogumoResult.state.log;
-    jorogumoCaptured = jorogumoResult.captured;
-  }
+  // Applied regardless of step-by-step mode since it's a start-of-battle effect
+  const jorogumoResult = applyJorogumoEffect(newState, battle.provinceId);
+  newState.provinces = jorogumoResult.state.provinces;
+  newState.log = jorogumoResult.state.log;
+  const jorogumoCaptured = jorogumoResult.captured;
 
   // Re-read province reference after potential Fire Dragon kills
   const provinceAfterDragon = newState.provinces[battle.provinceId];
@@ -3758,7 +3755,8 @@ function applyMonsterEnterEffects(state: GameState, provinceId: string, figure: 
   // Oni of Hate: kill 1 Bushi or Shinto of each player with higher honor
   if (figure.monsterCardId === 'au-oni-of-hate') {
     const oniOwnerHonorIdx = state.honorTrack.indexOf(playerId);
-    const playersInProvince = [...new Set(province.figures.map(f => f.owner))].filter(pid => pid !== playerId);
+    const currentProvFigures = state.provinces[provinceId].figures;
+    const playersInProvince = [...new Set(currentProvFigures.map(f => f.owner))].filter(pid => pid !== playerId);
     let killCount = 0;
     for (const pid of playersInProvince) {
       const pidHonorIdx = state.honorTrack.indexOf(pid);
@@ -3792,7 +3790,8 @@ function applyMonsterEnterEffects(state: GameState, provinceId: string, figure: 
     const oniOwnerHonorIdx = state.honorTrack.indexOf(playerId);
     const owner = state.players.find(p => p.id === playerId);
     if (!owner) return;
-    const playersInProvince = [...new Set(province.figures.map(f => f.owner))].filter(pid => pid !== playerId);
+    const currentProvFiguresForSpite = state.provinces[provinceId].figures;
+    const playersInProvince = [...new Set(currentProvFiguresForSpite.map(f => f.owner))].filter(pid => pid !== playerId);
     for (const pid of playersInProvince) {
       const pidHonorIdx = state.honorTrack.indexOf(pid);
       if (pidHonorIdx < oniOwnerHonorIdx) {
@@ -3896,7 +3895,8 @@ export function moveForces(
 
     // Apply on-enter monster effects for moved figures
     for (const figureId of figureIds) {
-      const movedFig = currentToFigures.find(f => f.id === figureId);
+      const latestFigures = newState.provinces[toProvinceId].figures;
+      const movedFig = latestFigures.find(f => f.id === figureId);
       if (!movedFig || movedFig.type !== 'monster' || !movedFig.monsterCardId) continue;
       applyMonsterEnterEffects(newState, toProvinceId, movedFig, playerId);
     }

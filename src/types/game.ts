@@ -434,7 +434,7 @@ export const SPRING_CARDS: SeasonCard[] = [
 ];
 
 export const SUMMER_CARDS: SeasonCard[] = [
-  { id: 'su-bishamon', name: 'Bishamon', cost: 2, season: 'summer', group: 'Dynasty Invasion', cardType: 'monster', effect: 'Force 4 while opponent Monster in same Province.', force: 4 },
+  { id: 'su-bishamon', name: 'Bishamon', cost: 2, season: 'summer', group: 'Dynasty Invasion', cardType: 'monster', effect: 'Force 4 while opponent Monster in same Province.', force: 1 },
   { id: 'su-fire-dragon', name: 'Fire Dragon', cost: 3, season: 'summer', group: 'Kickstarter Exclusive', cardType: 'monster', effect: 'At start of Battle, kill 1 other local figure of each player (including you).', force: 3 },
   { id: 'su-hotei', name: 'Hotei', cost: 2, season: 'summer', group: 'Dynasty Invasion', cardType: 'monster', effect: 'Counts as Shinto. Can replace any Shinto when sent to Worship.' },
   { id: 'su-jikininki', name: 'Jikininki', cost: 2, season: 'summer', group: 'Kickstarter Exclusive', cardType: 'monster', effect: 'Each time another figure killed in this Province, gain 1 VP and lose Honor.' },
