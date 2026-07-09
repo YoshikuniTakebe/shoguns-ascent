@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { API_BASE } from '../config';
+import { API_BASE, getServerWsUrl } from '../config';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { CLANS } from '../types/game';
@@ -26,9 +26,24 @@ interface GameRecord {
   currentPlayerIndex: number | null;
 }
 
+interface WaitingLobby {
+  id: string;
+  name: string;
+  maxPlayers: number;
+  playerCount: number;
+  open: boolean;
+  openSlots: number;
+  invited: boolean;
+  isHost: boolean;
+  isParticipant: boolean;
+  createdAt: string;
+  players: { name: string; clanId: string; userId: string }[];
+}
+
 export const GamesLobby = () => {
-  const { setScreen, resumeGame, loadFinishedGameScore, authToken, authUser, logout } = useGameStore();
+  const { setScreen, resumeGame, loadFinishedGameScore, authToken, authUser, logout, connectWebSocket, setLobbyId } = useGameStore();
   const t = useT();
+  const [waitingLobbies, setWaitingLobbies] = useState<WaitingLobby[]>([]);
   const [yourTurnGames, setYourTurnGames] = useState<GameRecord[]>([]);
   const [waitingGames, setWaitingGames] = useState<GameRecord[]>([]);
   const [finishedGames, setFinishedGames] = useState<GameRecord[]>([]);
@@ -50,6 +65,16 @@ export const GamesLobby = () => {
         const headers: Record<string, string> = {};
         if (authToken) {
           headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
+        // Task 7: waiting lobbies visible to this user (invited or open games)
+        try {
+          const lobbiesRes = await fetch(`${API_BASE}/api/lobbies/visible`, { headers });
+          if (lobbiesRes.ok) {
+            setWaitingLobbies(await lobbiesRes.json());
+          }
+        } catch {
+          setWaitingLobbies([]);
         }
 
         if (authToken) {
@@ -178,6 +203,15 @@ export const GamesLobby = () => {
 
   const getClanColor = (clanId: string) => {
     return CLANS.find(c => c.id === clanId)?.color || '#fff';
+  };
+
+  // Task 7: connect and join/enter a waiting lobby (invited or open game).
+  const handleEnterLobby = (lobbyId: string) => {
+    const playerName = authUser?.username || 'Player';
+    connectWebSocket(getServerWsUrl(), (ws) => {
+      ws.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId, playerName }));
+      setLobbyId(lobbyId);
+    });
   };
 
   const isAdmin = authUser?.isAdmin || false;
@@ -500,6 +534,63 @@ export const GamesLobby = () => {
           {t('game.modeHotseat')}
         </button>
       </div>
+
+      {/* Waiting lobbies: games you are invited to, host, or open games anyone can join */}
+      {modeFilter === 'online' && waitingLobbies.length > 0 && (
+        <div className="games-lobby-section">
+          <h2 className="games-lobby-section-title">
+            {t('lobby.waiting')}
+            <span className="games-lobby-section-count">{waitingLobbies.length}</span>
+          </h2>
+          <div className="games-lobby-grid">
+            {waitingLobbies.map((l) => {
+              const highlight = l.invited || l.isHost || l.isParticipant;
+              const canJoin = !l.isParticipant && (l.open || l.invited || l.isHost);
+              return (
+                <div
+                  key={l.id}
+                  className={`games-lobby-card games-lobby-card-waiting${highlight ? ' games-lobby-card-invited' : ''}`}
+                  onClick={() => canJoin && handleEnterLobby(l.id)}
+                >
+                  <div className="games-lobby-card-header">
+                    <span className="games-lobby-card-gamename">
+                      {l.name}
+                      {l.open && <span className="games-lobby-card-gameid">{t('lobby.openGame')}</span>}
+                    </span>
+                    <span className="games-lobby-card-header-right">
+                      <span className="games-lobby-card-date">{l.playerCount}/{l.maxPlayers}</span>
+                    </span>
+                  </div>
+                  <div className="games-lobby-card-created">{t('lobby.createdOn', { date: formatDate(l.createdAt) })}</div>
+                  <div className="games-lobby-card-body">
+                    <span className="games-lobby-card-clans games-lobby-card-clans-grid">
+                      {l.players.map((p, i) => (
+                        <span key={i} className="games-lobby-card-clan-entry">
+                          {p.clanId ? <ClanShield clanId={p.clanId} size={18} /> : null}
+                          <span style={{ color: getClanColor(p.clanId) }}>{p.name}</span>
+                        </span>
+                      ))}
+                    </span>
+                    {l.openSlots > 0 && (
+                      <div className="games-lobby-card-info">
+                        <span className="games-lobby-card-progress">{t('lobby.openSlots', { count: l.openSlots })}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="games-lobby-card-actions">
+                    <button
+                      className={l.invited || l.isHost || l.isParticipant ? 'games-lobby-play-btn' : 'games-lobby-view-btn'}
+                      onClick={(e) => { e.stopPropagation(); handleEnterLobby(l.id); }}
+                    >
+                      {l.isParticipant || l.isHost || l.invited ? t('lobby.play') : t('lobby.join')}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Your Turn section */}
       {yourTurnGames.filter(g => g.mode === modeFilter).length > 0 && (

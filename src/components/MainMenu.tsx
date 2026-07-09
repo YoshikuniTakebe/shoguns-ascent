@@ -9,7 +9,8 @@ import { useT } from '../i18n';
 import { shuffle } from '../utils/gameLogic';
 import { getServerWsUrl } from '../config';
 import { ConfigModal } from './ConfigModal';
-import { AddFriendModal, FriendsListModal } from './FriendsModal';
+import { AddFriendModal, FriendsListModal, fetchFriends } from './FriendsModal';
+import type { Friend } from './FriendsModal';
 import titleImg from '../img/NoboruTaiyo.png';
 import typeGameBgImg from '../img/type_game_bg.png';
 
@@ -25,7 +26,7 @@ const CLAN_POWERS: Record<string, string> = {
 };
 
 export const MainMenu = () => {
-  const { createGame, connectWebSocket, setLobbyId, setScreen, setAuthInitialMode, language, setLanguage, isAuthenticated, authUser, logout } = useGameStore();
+  const { createGame, connectWebSocket, setLobbyId, setScreen, setAuthInitialMode, language, setLanguage, isAuthenticated, authUser, authToken, logout } = useGameStore();
   const t = useT();
   const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>(() => {
     const menuMode = useGameStore.getState().menuMode;
@@ -53,23 +54,26 @@ export const MainMenu = () => {
 
   // Create game specific state
   const [createPc, setCreatePc] = useState(3);
-  const [createClans, setCreateClans] = useState(CLANS.map(c => c.id));
   const [createDeck, setCreateDeck] = useState<DeckName | 'random'>('random');
   const [createExtraMonsters, setCreateExtraMonsters] = useState<0 | 1 | 2>(0);
   const [createKamiMode, setCreateKamiMode] = useState<'random' | 'manual'>('random');
   const [createSelectedKami, setCreateSelectedKami] = useState<KamiType[]>([]);
 
-  const [createHostClan, setCreateHostClan] = useState('koi');
   const [createMode, setCreateMode] = useState<'manual' | 'random'>('manual');
   const [randomClans, setRandomClans] = useState<string[]>(() => shuffle(CLANS.map(c => c.id)).slice(0, createPc));
 
-  // Reset host clan selection when available clans change (issue: stale default)
-  const effectiveActiveClans = createMode === 'manual' ? createClans.slice(0, createPc) : randomClans;
+  // Task 7: friends + per-slot assignments for online game creation
+  const [friends, setFriends] = useState<Friend[]>([]);
+  // Clan chosen per player slot (index 0 = you/host). Defaults to distinct clans.
+  const [slotClans, setSlotClans] = useState<string[]>(() => CLANS.map(c => c.id));
+  // Friend user id assigned per slot (index 0 unused = you). null = open slot.
+  const [slotFriends, setSlotFriends] = useState<(string | null)[]>(() => Array(8).fill(null));
+  // Friends invited in random mode.
+  const [inviteFriendIds, setInviteFriendIds] = useState<string[]>([]);
+
   useEffect(() => {
-    if (effectiveActiveClans.length > 0 && !effectiveActiveClans.includes(createHostClan)) {
-      setCreateHostClan(effectiveActiveClans[0]);
-    }
-  }, [effectiveActiveClans.join(','), createHostClan]);
+    if (authToken) fetchFriends(authToken).then(setFriends);
+  }, [authToken]);
 
   const hasSolOrLuna = clans.slice(0, pc).some(id => id === 'sol' || id === 'luna');
 
@@ -451,90 +455,120 @@ export const MainMenu = () => {
             </div>
           </div>
 
-          {/* Player count selector - only in random mode */}
-          {createMode === 'random' && (
-            <div className="player-count-select" style={{ marginTop: '1rem' }}>
-              <label>{t('menu.players')}</label>
-              <select value={createPc} onChange={e => {
-                const newPc = +e.target.value;
-                setCreatePc(newPc);
-                setRandomClans(shuffle(CLANS.map(c => c.id)).slice(0, newPc));
-              }}>
-                {[2, 3, 4, 5, 6, 7, 8].map(n => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Clan configuration */}
-          <div className="player-setup-list">
-            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{t('lobby.availableClans')}</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {createMode === 'manual' ? (
-                // Manual mode: interactive clan toggles
-                CLANS.map(c => {
-                  const isSelected = createClans.slice(0, createPc).includes(c.id);
-                  return (
-                    <button
-                      key={c.id}
-                      className={`deck-group-btn${isSelected ? ' active' : ''}`}
-                      style={{ borderColor: isSelected ? c.color : undefined, color: isSelected ? c.color : undefined }}
-                      onClick={() => {
-                        const current = createClans.slice(0, createPc);
-                        if (current.includes(c.id)) {
-                          if (current.length <= 2) return;
-                          const filtered = current.filter(id => id !== c.id);
-                          const rest = CLANS.map(cl => cl.id).filter(id => !filtered.includes(id));
-                          setCreateClans([...filtered, ...rest]);
-                          setCreatePc(filtered.length);
-                        } else {
-                          const newActive = [...current, c.id];
-                          const rest = CLANS.map(cl => cl.id).filter(id => !newActive.includes(id));
-                          setCreateClans([...newActive, ...rest]);
-                          setCreatePc(newActive.length);
-                        }
-                      }}
-                    >
-                      <ClanShield clanId={c.id} size={16} /> {c.name}
-                    </button>
-                  );
-                })
-              ) : (
-                // Random mode: non-interactive badges
-                randomClans.map(clanId => {
-                  const clan = CLANS.find(c => c.id === clanId);
-                  if (!clan) return null;
-                  return (
-                    <span
-                      key={clan.id}
-                      className="deck-group-btn active"
-                      style={{ borderColor: clan.color, color: clan.color, cursor: 'default', pointerEvents: 'none' }}
-                    >
-                      <ClanShield clanId={clan.id} size={16} /> {clan.name}
-                    </span>
-                  );
-                })
-              )}
-            </div>
+          {/* Player count selector (both modes) */}
+          <div className="player-count-select" style={{ marginTop: '1rem' }}>
+            <label>{t('menu.players')}</label>
+            <select value={createPc} onChange={e => {
+              const newPc = +e.target.value;
+              setCreatePc(newPc);
+              setRandomClans(shuffle(CLANS.map(c => c.id)).slice(0, newPc));
+              setInviteFriendIds(prev => prev.slice(0, newPc - 1));
+            }}>
+              {[2, 3, 4, 5, 6, 7, 8].map(n => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
           </div>
 
-          {/* Host clan selector - only in manual mode */}
-          {createMode === 'manual' && (
-            <div className="online-form">
-              <label>{t('menu.clan')} (Host)</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <ClanShield clanId={createHostClan} size={24} />
-                <span style={{ fontWeight: 'bold', color: CLANS.find(c => c.id === createHostClan)?.color || '#fff' }}>
-                  {CLANS.find(c => c.id === createHostClan)?.name || ''}
+          {createMode === 'manual' ? (
+            /* Manual mode: one row per player. Slot 0 is you; other slots pick a friend + clan
+               (leave a slot as "open" to create an open game anyone can join). */
+            <div className="player-setup-list">
+              {Array.from({ length: createPc }, (_, i) => {
+                const usedClans = slotClans.slice(0, createPc).filter((_, idx) => idx !== i);
+                const usedFriends = slotFriends.slice(0, createPc).filter((v, idx) => idx !== i && v);
+                const clanColor = CLANS.find(c => c.id === slotClans[i])?.color || '#fff';
+                return (
+                  <div key={i} className="player-setup-row">
+                    <div className="player-setup-clan-icon">
+                      <ClanShield clanId={slotClans[i]} size={40} />
+                    </div>
+                    {i === 0 ? (
+                      <span style={{ flex: 1, fontWeight: 'bold', color: clanColor }}>
+                        {authUser?.username || t('lobby.you')} ({t('lobby.you')})
+                      </span>
+                    ) : (
+                      <select
+                        style={{ flex: 1 }}
+                        value={slotFriends[i] ?? ''}
+                        onChange={e => {
+                          const v = e.target.value || null;
+                          setSlotFriends(prev => { const n = [...prev]; n[i] = v; return n; });
+                        }}
+                      >
+                        <option value="">{t('lobby.openGame')}</option>
+                        {friends
+                          .filter(f => f.id === slotFriends[i] || !usedFriends.includes(f.id))
+                          .map(f => (
+                            <option key={f.id} value={f.id}>{f.username}</option>
+                          ))}
+                      </select>
+                    )}
+                    <select
+                      value={slotClans[i]}
+                      style={{ color: clanColor }}
+                      onChange={e => {
+                        const c = [...slotClans]; c[i] = e.target.value; setSlotClans(c);
+                      }}
+                    >
+                      {CLANS.filter(c => !usedClans.includes(c.id) || c.id === slotClans[i]).map(c => (
+                        <option key={c.id} value={c.id} style={{ color: c.color }}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
+              {friends.length === 0 && createPc > 1 && (
+                <p className="deck-config-hint">{t('friends.empty')}</p>
+              )}
+            </div>
+          ) : (
+            /* Random mode: available clan badges + invite friends */
+            <>
+              <div className="player-setup-list">
+                <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{t('lobby.availableClans')}</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {randomClans.map(clanId => {
+                    const clan = CLANS.find(c => c.id === clanId);
+                    if (!clan) return null;
+                    return (
+                      <span
+                        key={clan.id}
+                        className="deck-group-btn active"
+                        style={{ borderColor: clan.color, color: clan.color, cursor: 'default', pointerEvents: 'none' }}
+                      >
+                        <ClanShield clanId={clan.id} size={16} /> {clan.name}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="player-setup-list">
+                <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{t('lobby.inviteFriends')}</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {friends.length === 0 ? (
+                    <p className="deck-config-hint">{t('friends.empty')}</p>
+                  ) : friends.map(f => {
+                    const invited = inviteFriendIds.includes(f.id);
+                    const full = !invited && inviteFriendIds.length >= createPc - 1;
+                    return (
+                      <button
+                        key={f.id}
+                        className={`deck-group-btn${invited ? ' active' : ''}`}
+                        disabled={full}
+                        onClick={() => setInviteFriendIds(prev => invited ? prev.filter(id => id !== f.id) : [...prev, f.id])}
+                      >
+                        {invited ? '✓ ' : ''}{f.username}
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="deck-config-hint">
+                  {inviteFriendIds.length}/{createPc - 1} {t('lobby.invited')}
+                  {createPc - 1 - inviteFriendIds.length > 0 ? ` · ${t('lobby.openSlots', { count: createPc - 1 - inviteFriendIds.length })}` : ''}
                 </span>
               </div>
-              <select value={createHostClan} onChange={e => setCreateHostClan(e.target.value)}>
-                {CLANS.filter(c => effectiveActiveClans.includes(c.id)).map(c => (
-                  <option key={c.id} value={c.id} style={{ color: c.color }}>{c.name}</option>
-                ))}
-              </select>
-            </div>
+            </>
           )}
 
           <div className="deck-config-section">
@@ -638,18 +672,32 @@ export const MainMenu = () => {
                 };
 
                 if (createMode === 'manual') {
-                  const availableClans = createClans.slice(0, createPc);
+                  // Slot 0 is the host (you). Other slots may assign a friend (invited, with a
+                  // reserved clan) or be left open (anyone can Join).
+                  const availableClans = slotClans.slice(0, createPc);
+                  const hostClan = slotClans[0];
+                  const invitedUserIds: string[] = [];
+                  const invitedClans: Record<string, string> = {};
+                  for (let i = 1; i < createPc; i++) {
+                    const fid = slotFriends[i];
+                    if (fid) {
+                      invitedUserIds.push(fid);
+                      invitedClans[fid] = slotClans[i];
+                    }
+                  }
                   connectWebSocket(getServerWsUrl(), (ws) => {
                     ws.send(JSON.stringify({
                       type: 'CREATE_LOBBY',
                       playerName,
-                      clanId: createHostClan,
+                      clanId: hostClan,
                       maxPlayers: createPc,
                       availableClans,
                       deckConfig,
                       kamiMode: createKamiMode,
                       selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
                       autoAssignClan: false,
+                      invitedUserIds,
+                      invitedClans,
                     }));
                   });
                 } else {
@@ -666,6 +714,8 @@ export const MainMenu = () => {
                       kamiMode: createKamiMode,
                       selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
                       autoAssignClan: true,
+                      invitedUserIds: inviteFriendIds,
+                      invitedClans: {},
                     }));
                   });
                 }

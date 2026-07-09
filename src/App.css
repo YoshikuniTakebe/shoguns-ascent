@@ -552,3 +552,8 @@
 
 
 .games-lobby-card-created{font-size:0.68rem;color:var(--text-secondary);opacity:0.8;margin:0.1rem 0 0.3rem 0}
+
+
+/* Invited/waiting game card: pulsing highlight to draw the invitee's attention */
+.games-lobby-card-invited{border-color:var(--accent-gold)!important;animation:invited-blink 1.3s ease-in-out infinite}
+@keyframes invited-blink{0%,100%{box-shadow:0 0 4px rgba(200,169,81,0.35)}50%{box-shadow:0 0 16px rgba(200,169,81,0.9)}}

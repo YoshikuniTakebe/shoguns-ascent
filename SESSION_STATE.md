@@ -389,3 +389,91 @@ npm run lint
 - `gainHonor()` is void/mutative - use directly without reassigning state
 - Loyalty virtue must not trigger on itself to avoid infinite recursion
 - Mercy completely prevents ALL kill-related logic when active (including death triggers for Koneko, Ebisu, Jikininki, and Phoenix revival)
+
+
+
+## Changelog - 2026-07-09 (Bugfixes, virtues, config, friends, lobby & game-creation overhaul)
+
+Worked directly on `main`. Full `npx tsc -b` and `npm run build` pass.
+
+### Game logic fixes
+
+- **Dignity (`sp-dignity`) on ocean summons**: Removed the `provinceId !== 'ocean'` guard in
+  `gameStore.ts` (`doPlaceMonster`) and `server/index.ts` (`MONSTER_PLACED`). Summoning a monster
+  into the Ocean (e.g. Daikaiju) now correctly grants +2 VP, since it is still a summon.
+
+- **Path of the Warlord (`sp-path-of-the-warlord`) — +1 coin per Summon**: Newly implemented.
+  Added helpers in `gameLogic.ts`: `grantWarlordSummonCoin(state, playerId)` (immutable, one coin
+  if the player owns the card) and `grantRecruitWarlordCoinOnce(state, playerId)` (awards at most
+  once per recruit turn via the new optional `GameState.recruitWarlordCoinAwarded` flag, reset in
+  `advanceRecruitResolution`). Summons that grant the coin:
+  - **Recruit mandate** = a single summon regardless of how many figures are placed
+    (`recruitPlaceFigure`, `recruitPlaceDaimyo`, temple-shinto placement in store + server).
+  - **Raijin shrine effect** (hotseat `doRaijinPlace`, revertable by undo snapshot; server at
+    `RAIJIN_CONFIRM`), awarded to whoever executes the summon.
+  - **Buying/placing a monster on the board** (province incl. Ocean, and Komainu/Hotei at a
+    temple) via `doPlaceMonster`, `doKomainuPlaceAtTemple`, server `MONSTER_PLACED` province +
+    temple branches.
+  - **No coin** when the figure cannot be placed and goes to reserve (e.g. Luna with no space).
+
+### UI fixes
+
+- **Shrine monster tooltips** (`TemplePanel.tsx`): monster icons in shrines now show the same rich
+  hover tooltip as the map (`ShrineMonsterTooltip` + `figure-icon-wrapper`), replacing the plain
+  `title` attribute. Shows name, Force and effect.
+- **Kami shrine popup breakdown** (`TemplePanel.tsx`): replaced the `(Fuerza: X)` text with a Fist
+  (force) icon + number. Each clan row now shows the Shinto icon + count of normal shinto and the
+  name(s) of any shinto-monsters (Komainu/Hotei).
+- **Bushi Dragonfly (libelula) figure size** +2%: `RegionDetailModal.tsx` `FIGURE_SIZE_OVERRIDES`
+  `bushi-libelula` 0.87 -> 0.8874.
+
+### Admin server config (hidden from users)
+
+- `config.ts`: `getServerWsUrl()` / `getConfiguredServerUrl()` / `setConfiguredServerUrl()` — the
+  server URL is an admin-only setting persisted in localStorage (`shoguns-ascent-serverUrl`),
+  falling back to the derived `WS_BASE`. Removed the "Server" URL inputs from the online
+  create/join forms; the URL is now injected transparently.
+- `ConfigModal.tsx`: admin-only config panel (server URL). A **Config** button (gear) appears in
+  the MainMenu and GamesLobby headers only when `authUser.isAdmin`.
+
+### Friends system
+
+- DB (`server/database.ts`): new `friends` table + `findUserByUsernameOrEmail`, `addFriend`,
+  `getFriends`, `areFriends`.
+- REST (`server/index.ts`): `POST /api/friends/add` (search by username or email; returns the
+  friend or 404), `GET /api/friends` (list). `getAuthUserId(req)` helper.
+- UI (`FriendsModal.tsx`): `AddFriendModal` (title "Introduce usuario o email de tu amigo",
+  confirmation "X ha sido añadido a tu lista de amigos!") and `FriendsListModal`. Add-friend
+  (person+) and friends-list (two-people) buttons next to username/logout in MainMenu + GamesLobby.
+
+### Lobby list UI (`GamesLobby.tsx`)
+
+- Game identifier shown in parentheses after the name: `getGameIdentifier` = `DDMMYYHHMM`
+  (from `createdAt`) + a themed word derived deterministically from the game id.
+- Creation date line added under each card title.
+- Current-turn player's clan seal rendered large (64px) and centered.
+- Player names laid out in a 4-per-row grid (`games-lobby-card-clans-grid`, 2 rows for up to 8).
+
+### Game creation overhaul & matchmaking (Task partially requires live multiplayer testing)
+
+- **Manual online create** (`MainMenu.tsx`): removed the single "Host clan" selector. Now shows one
+  row per player: slot 0 is you (name shown) + clan selector; other slots pick a friend + clan, or
+  are left **open** (anyone can Join). Invited friends + their reserved clans are sent to the server.
+- **Random online create**: added an **"Invitar amigos"** section to invite friends; remaining
+  uncovered slots become open.
+- **Server** (`server/index.ts`): `Lobby` gained `invitedUserIds`, `invitedClans`, `createdAt`.
+  `CREATE_LOBBY` stores invites; `JOIN_LOBBY` enforces invite/open rules (`openSlotCount`,
+  `isOpenLobby`), auto-assigns an invited player's reserved clan, and de-dupes reconnections.
+  New `GET /api/lobbies/visible` returns waiting lobbies where the user is host/invited or the game
+  is open. `broadcastLobby` now includes `invitedUserIds` + `openSlots`.
+- **Lobby UI**: a "waiting" section lists visible lobbies; invited/host/participant games get a
+  pulsing highlight (`games-lobby-card-invited` blink) and a **Play** button; open games anyone can
+  join show a **Join** button. Clicking connects and sends `JOIN_LOBBY`.
+- **Note**: the real-time end-to-end matchmaking flow (invitee blink -> join -> waiting room ->
+  host starts, open-slot Join->Play transition) is implemented at the data/UI layer but has not been
+  verified with a live multiplayer session and may need follow-up tuning.
+
+### i18n
+
+- Added `config.*`, `friends.*`, and `lobby.*` (inviteFriends, invite, invited, join, openGame,
+  openSlots, you, createdOn, etc.) keys to both `en.ts` and `es.ts`.

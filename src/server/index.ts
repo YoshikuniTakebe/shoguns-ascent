@@ -121,6 +121,25 @@ interface Lobby {
   config: LobbyConfig | null;
   recruitUndoSnapshot: GameState | null;
   betrayUndoSnapshot: GameState | null;
+  // Task 7 matchmaking: user ids invited to this game (excluding the host). When some slots
+  // remain uninvited, the game is "open" and any player may Join an open slot. An empty list
+  // means the classic behaviour (join by shared id), preserving backward compatibility.
+  invitedUserIds: string[];
+  // Optional preferred clan per invited user (by user id).
+  invitedClans: Record<string, string>;
+  createdAt: string;
+}
+
+/** Number of unreserved (open-to-anyone) slots in a lobby. */
+function openSlotCount(l: Lobby): number {
+  if (!l.invitedUserIds || l.invitedUserIds.length === 0) return 0;
+  const reserved = 1 /* host */ + l.invitedUserIds.length;
+  return Math.max(0, l.maxPlayers - reserved);
+}
+
+/** Whether a lobby is an "open game" (visible to everyone with a Join button). */
+function isOpenLobby(l: Lobby): boolean {
+  return openSlotCount(l) > 0;
 }
 
 const lobbies = new Map<string, Lobby>();
@@ -240,6 +259,40 @@ app.get('/api/lobbies', (_req, res) => {
   );
 });
 
+// Task 7: waiting lobbies visible to the requesting user. A lobby is visible if the user
+// hosts it, is invited to it, or it is an "open game" (has unreserved slots for anyone).
+app.get('/api/lobbies/visible', (req, res) => {
+  const userId = getAuthUserId(req);
+  const result = Array.from(lobbies.values())
+    .filter((l) => !l.started)
+    .filter((l) => {
+      const isHost = !!userId && l.host === userId;
+      const isInvited = !!userId && l.invitedUserIds.includes(userId);
+      // Classic lobbies (no invites) are treated as open so they remain joinable by id.
+      const open = l.invitedUserIds.length === 0 || isOpenLobby(l);
+      return isHost || isInvited || open;
+    })
+    .map((l) => {
+      const isHost = !!userId && l.host === userId;
+      const isInvited = !!userId && l.invitedUserIds.includes(userId);
+      const isParticipant = !!userId && l.players.some((p) => p.id === userId);
+      return {
+        id: l.id,
+        name: l.name,
+        maxPlayers: l.maxPlayers,
+        playerCount: l.players.length,
+        open: isOpenLobby(l),
+        openSlots: openSlotCount(l),
+        invited: isInvited,
+        isHost,
+        isParticipant,
+        createdAt: l.createdAt,
+        players: l.players.map((p) => ({ name: p.name, clanId: p.clanId, userId: p.id })),
+      };
+    });
+  res.json(result);
+});
+
 app.post('/api/lobbies', (req, res) => {
   const { name, maxPlayers } = req.body;
   const lobby: Lobby = {
@@ -254,6 +307,9 @@ app.post('/api/lobbies', (req, res) => {
     config: null,
     recruitUndoSnapshot: null,
     betrayUndoSnapshot: null,
+    invitedUserIds: [],
+    invitedClans: {},
+    createdAt: new Date().toISOString(),
   };
   lobbies.set(lobby.id, lobby);
   res.json({ id: lobby.id });
@@ -691,6 +747,12 @@ wss.on('connection', (ws: WebSocket, req) => {
             return;
           }
           const playerName = authenticatedUsername || data.playerName || 'Host';
+          const invitedUserIds: string[] = Array.isArray(data.invitedUserIds)
+            ? data.invitedUserIds.filter((id: unknown): id is string => typeof id === 'string' && id !== playerId)
+            : [];
+          const invitedClans: Record<string, string> = (data.invitedClans && typeof data.invitedClans === 'object')
+            ? data.invitedClans
+            : {};
           const l: Lobby = {
             id: lobbyId,
             name: playerName ? `${playerName}'s game` : 'New Game',
@@ -703,6 +765,9 @@ wss.on('connection', (ws: WebSocket, req) => {
             config,
             recruitUndoSnapshot: null,
             betrayUndoSnapshot: null,
+            invitedUserIds,
+            invitedClans,
+            createdAt: new Date().toISOString(),
           };
           lobbies.set(lobbyId, l);
           currentLobbyId = lobbyId;
@@ -717,17 +782,53 @@ wss.on('connection', (ws: WebSocket, req) => {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Lobby not found' }));
             return;
           }
+          // Reconnection: if this player is already in the lobby, just re-attach their socket.
+          {
+            const existing = l.players.find((p) => p.id === playerId);
+            if (existing) {
+              existing.ws = ws;
+              currentLobbyId = l.id;
+              ws.send(JSON.stringify({ type: 'LOBBY_JOINED', lobbyId: l.id }));
+              broadcastLobby(l);
+              break;
+            }
+          }
           if (l.started || l.players.length >= l.maxPlayers) {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Cannot join' }));
             return;
+          }
+          // Task 7: enforce invite rules for invite-based lobbies. Classic lobbies
+          // (no invitedUserIds) keep the old "join by id" behaviour.
+          if (l.invitedUserIds.length > 0) {
+            const isInvited = !!userId && l.invitedUserIds.includes(userId);
+            const isHost = playerId === l.host;
+            if (!isInvited && !isHost) {
+              // Only allowed to take an OPEN slot, and only if open slots remain.
+              const nonReservedJoiners = l.players.filter(
+                p => p.id !== l.host && !l.invitedUserIds.includes(p.id)
+              ).length;
+              if (openSlotCount(l) - nonReservedJoiners <= 0) {
+                ws.send(JSON.stringify({ type: 'ERROR', message: 'This game is private or full' }));
+                return;
+              }
+            }
           }
           const joinPlayerName = authenticatedUsername || data.playerName || `Player ${l.players.length + 1}`;
           const newPlayer = { id: playerId, name: joinPlayerName, clanId: '', ws };
           l.players.push(newPlayer);
           currentLobbyId = l.id;
 
-          // Auto-assign clan if autoAssignClan is enabled
-          if (l.config?.autoAssignClan) {
+          // If this invited user has a preferred clan and it's still free, assign it.
+          if (userId && l.invitedClans[userId]) {
+            const preferred = l.invitedClans[userId];
+            const takenClans = l.players.filter(p => p.clanId !== '').map(p => p.clanId);
+            if ((l.config?.availableClans || []).includes(preferred) && !takenClans.includes(preferred)) {
+              newPlayer.clanId = preferred;
+            }
+          }
+
+          // Auto-assign clan if autoAssignClan is enabled (and not already assigned above)
+          if (l.config?.autoAssignClan && newPlayer.clanId === '') {
             const takenClans = l.players.filter(p => p.clanId !== '').map(p => p.clanId);
             const availableForAssign = (l.config.availableClans || []).filter(c => !takenClans.includes(c));
             if (availableForAssign.length > 0) {
@@ -2445,6 +2546,9 @@ wss.on('connection', (ws: WebSocket, req) => {
               config: null,
               recruitUndoSnapshot: null,
               betrayUndoSnapshot: null,
+              invitedUserIds: [],
+              invitedClans: {},
+              createdAt: new Date().toISOString(),
             };
             lobbies.set(lobbyId, l);
           }
@@ -2579,6 +2683,8 @@ function broadcastLobby(l: Lobby) {
       deckConfig: l.config?.deckConfig || null,
       kamiMode: l.config?.kamiMode || 'random',
       autoAssignClan: l.config?.autoAssignClan || false,
+      invitedUserIds: l.invitedUserIds,
+      openSlots: openSlotCount(l),
     },
   };
   l.players.forEach((p) => {
