@@ -1,0 +1,47 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Implement ALL virtue card effects (14 virtue cards with game logic triggers)",
+  "status": "pending",
+  "steps": [
+    "1. COURAGE (sp-courage): In resolveNextBattle in gameLogic.ts, after a battle winner is determined and the war province token is awarded (around line 3112), check if the winner has sp-courage card. If so, award 2 VP. Log it. Use hasCard pattern with the player's seasonCards cardIds set.",
+    "2. PIETY (sp-piety): In the same battle resolution area, after war token is awarded, check if winner has sp-piety AND if the winner has at least one shinto figure in that battle province. If both conditions met, gain Honor (move up in honorTrack) and 3 VP. Use gainHonor utility.",
+    "3. DIGNITY (sp-dignity): When a monster is summoned (in the doPlaceMonster action in gameStore.ts, and in the server MONSTER_PLACED handler), after the monster is placed, check if the placing player has sp-dignity. If so, +2 VP. Also check in Jinmenju placement.",
+    "4. HONESTY (sp-honesty): In chooseMandateTile/executeMandate in gameLogic.ts, after the mandate is selected, check if the issuing player has sp-honesty AND has at least one ally AND the mandate is NOT betray. If all conditions met, +2 VP.",
+    "5. RIGHTEOUSNESS (sp-righteousness): Whenever any of the owner's figures are killed (battle casualties, seppuku, Fire Dragon, Oni of Hate, betray), check if the player has sp-righteousness. For each figure killed, +1 VP. Key kill locations: (a) resolveNextBattle where loser figures are removed, (b) seppuku resolution, (c) applyFireDragonEffect, (d) Oni of Hate entry effect, (e) betray figure replacement.",
+    "6. JUSTICE (su-justice): In resolveNextBattle, after the winner kills enemy figures, check if the winner has su-justice. For each PLAYER with less honor whose figures were killed, gain 3 VP (once per player, not per figure). Check honorTrack positions.",
+    "7. LOYALTY (su-loyalty): This triggers whenever the player gains VP. Create a helper function applyLoyaltyBonus(player, vpGained, state) that checks if player has su-loyalty AND has at least one ally. If so, add 1 extra VP. Call this helper at all VP gain points. NOTE: To avoid infinite recursion, loyalty should NOT trigger on itself. The simplest approach: add the loyalty bonus inline wherever VP is explicitly awarded (battle wins, hostages, seppuku, card effects, harvest VP, etc.). Add it after each explicit victoryPoints += N assignment for the relevant player.",
+    "8. MERCY (su-mercy): In resolveNextBattle, this is complex - it would require an interactive choice for the winner to choose NOT to kill. For now, implement it as automatic: if the winner has su-mercy and would kill 1+ figures, automatically leave them alive and gain 2 VP instead of killing them. This changes the battle resolution flow significantly. Alternative simpler implementation: Mercy triggers automatically ONLY if the winner has the card - they get 2 VP but figures are still killed (treat it as a passive bonus for winning battles where kills happen). ACTUALLY per the card text 'may leave them all alive', this is an optional choice. For this implementation, make it automatic (always use mercy if available) - the winner gains 2 VP and enemy figures are NOT killed. This must be carefully integrated into the kill logic.",
+    "9. PATIENCE (su-patience): In resolveKamiTurn in gameLogic.ts, at the END of the function (after all temples are resolved), check each player for su-patience. If the player does NOT have the most VP among all players, gain 1 VP.",
+    "10. RESPECT (su-respect): In the take-hostage tactic resolution (around line 2971 in gameLogic.ts), after the first hostage is taken, check if the tactic winner has su-respect. If so, take 1 additional hostage (same logic as the first one but for a second figure).",
+    "11. SINCERITY (su-sincerity): In the same take-hostage tactic resolution, after a hostage is successfully taken, check if the taker has su-sincerity. If so, gain Honor and +1 extra VP (on top of the normal +1 VP from hostage).",
+    "12. BOLDNESS (au-boldness): In resolveNextBattle, after battle resolution kills enemy figures, check if the winner has au-boldness. For each enemy Oni monster killed in that battle, gain 4 VP. Oni monsters are identified by monsterCardId containing 'oni-of' (sp-oni-of-skulls, su-oni-of-blood, su-oni-of-souls, au-oni-of-hate, au-oni-of-plagues, au-oni-of-spite).",
+    "13. BENEVOLENCE (sp-benevolence): This triggers 'when you spend Coins'. Complex interactive trigger. For a simpler implementation: whenever a player spends coins (buying cards in train, bidding in war tactics, building fortresses), they MAY give 1 coin to another player. For this implementation, make it automatic and simple: each time the player spends coins in train (buying a card), they gain Honor and 2 VP (skipping the interactive 'give coin to another player' part since that requires UI). Actually the card says 'if you do' - meaning it is conditional on actually giving. Implement as: when buying a season card during train mandate, if player has benevolence, give 1 coin to the player with lowest coins (automatic), gain Honor and 2 VP. If no other player exists or player has 0 coins after purchase, skip.",
+    "14. GENEROSITY (sp-generosity): After playing a mandate, may offer 1 coin to any player. Similar to benevolence - interactive. Implement as automatic: after executeMandate is called, if the issuer has sp-generosity and has at least 1 coin, give 1 coin to the player with fewest coins (auto-select), gain Honor.",
+    "15. Add log messages for ALL virtue triggers so players can see when virtues activate.",
+    "16. Add i18n translations for virtue trigger log messages in both en.ts and es.ts"
+  ],
+  "acceptance_criteria": [
+    "All 14 virtue cards have game logic effects that trigger at appropriate times",
+    "Courage: +2 VP when winning a war symbol",
+    "Piety: +Honor +3 VP when winning war symbol with a Shinto present",
+    "Dignity: +2 VP when summoning a monster",
+    "Honesty: +2 VP when selecting non-Betray mandate while having an ally",
+    "Righteousness: +1 VP per own figure killed",
+    "Justice: +3 VP when killing figures of player with less honor",
+    "Loyalty: +1 extra VP whenever gaining VP (if has ally)",
+    "Mercy: +2 VP instead of killing in battle (automatic)",
+    "Patience: +1 VP at end of Kami turn if not leading in VP",
+    "Respect: +1 additional hostage in take-hostage tactic",
+    "Sincerity: +Honor +1 VP when taking hostage",
+    "Boldness: +4 VP per enemy Oni killed in battle",
+    "Benevolence: +Honor +2 VP when spending coins on train (auto-gives coin)",
+    "Generosity: +Honor after mandate if has coin (auto-gives coin)",
+    "npm run build passes without errors"
+  ],
+  "verification": [
+    "cd /projects/sandbox/shoguns-ascent && npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

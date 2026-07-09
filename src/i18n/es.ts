@@ -376,6 +376,16 @@ export const es: Record<TranslationKey, string> = {
   'war.summary.discarded': 'Descartada',
   'war.summary.accept': 'Aceptar',
 
+  // Daikaiju Placement
+  'daikaiju.placement.title': 'Daikaiju',
+  'daikaiju.placement.choose': 'Elige una provincia para colocar a Daikaiju',
+  'daikaiju.placement.waiting': 'Esperando a que {player} coloque a Daikaiju...',
+  'daikaiju.summary.title': 'Daikaiju ha llegado!',
+  'daikaiju.summary.province': 'Daikaiju se ha colocado en {province}',
+  'daikaiju.summary.fortresses': '{count} fortaleza(s) destruida(s)',
+  'daikaiju.summary.owner': '{player}: {count} fortaleza(s)',
+  'daikaiju.summary.accept': 'Aceptar',
+
   // Rule violations
   'rule.invalidMove': 'Movimiento no valido',
 

@@ -205,6 +205,8 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
     honorTrack: _honorTrack,
     harvestMandateActive: _harvestMandateActive,
     raijinPlacementActive,
+    daikaijuPlacementActive,
+    daikaijuPlacementPlayerId,
     currentSeason: _currentSeason,
   } = useGameStore(useShallow(s => ({
     players: s.gameState?.players,
@@ -223,6 +225,8 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
     honorTrack: s.gameState?.honorTrack ?? [],
     harvestMandateActive: s.gameState?.harvestMandateActive ?? false,
     raijinPlacementActive: s.gameState?.raijinPlacementActive ?? false,
+    daikaijuPlacementActive: s.gameState?.daikaijuPlacementActive ?? false,
+    daikaijuPlacementPlayerId: s.gameState?.daikaijuPlacementPlayerId ?? null,
     currentSeason: s.gameState?.currentSeason,
   })));
   const selectedRegion = useGameStore(s => s.selectedRegion);
@@ -347,7 +351,15 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   }
 
   const handleClick = () => {
-    const { selectRegion, doMoveForces, setMoveFrom, setSelectedFigures, doBuildFortress, doBuildFukurokuju, doRecruitPlaceFigure, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, doJinmenjuPlace } = useGameStore.getState();
+    const { selectRegion, doMoveForces, setMoveFrom, setSelectedFigures, doBuildFortress, doBuildFukurokuju, doRecruitPlaceFigure, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, doJinmenjuPlace, doDaikaijuPlaceProvince } = useGameStore.getState();
+    // Daikaiju placement: click province to place Daikaiju
+    if (daikaijuPlacementActive && regionId !== 'ocean') {
+      const isOwner = mode === 'hotseat' || localPlayerId === daikaijuPlacementPlayerId;
+      if (isOwner) {
+        doDaikaijuPlaceProvince(regionId);
+        return;
+      }
+    }
     // Zorro placement: click province to place bushi
     if (zorroPlacementActive && isZorroTarget) {
       doZorroPlaceBushi(regionId);
@@ -511,9 +523,12 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
     }
   }
 
+  // Daikaiju placement target (any province except ocean)
+  const isDaikaijuTarget = daikaijuPlacementActive && regionId !== 'ocean' && (mode === 'hotseat' || localPlayerId === daikaijuPlacementPlayerId);
+
   return (
     <div
-      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${isMonsterDimmed ? 'recruit-dimmed' : ''} ${isZorroTarget ? 'recruit-target' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''} ${isMarshalDimmed ? 'recruit-dimmed' : ''}`}
+      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${isMonsterDimmed ? 'recruit-dimmed' : ''} ${isZorroTarget ? 'recruit-target' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''} ${isMarshalDimmed ? 'recruit-dimmed' : ''} ${isDaikaijuTarget ? 'monster-target' : ''}`}
       style={{ ...style, ...(hasTroopsForGlow ? { '--marshal-glow-color': marshalGlowColor } as React.CSSProperties : {}) }}
       onClick={handleClick}
     >

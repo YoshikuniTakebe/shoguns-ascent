@@ -1,0 +1,25 @@
+{
+  "project_type": "TypeScript Vite + React frontend with WebSocket server for a board game",
+  "language": "TypeScript",
+  "build_system": "npm with Vite for frontend, tsx for server",
+  "test_framework": "No formal test framework. Validation via build.",
+  "build_command": "cd /projects/sandbox/shoguns-ascent && npm run build",
+  "test_command": "cd /projects/sandbox/shoguns-ascent && npm run build",
+  "verification_instructions": "Run npm run build to confirm TypeScript compiles without errors",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/shoguns-ascent && npm install",
+  "environment_constraints": "Full internet access available. No Docker used.",
+  "contribution_requirements": "Push directly to main branch.",
+  "key_patterns": "Game state flows through GameState interface (src/types/game.ts). Logic in gameLogic.ts exports pure functions. Store in gameStore.ts uses Zustand with WebSocket for online mode. Server in src/server/index.ts handles socket events and broadcasts state. Interactive popups use patterns: (1) state flag like zorroPlacementActive + playerId + remaining count, (2) UI state in store like warPhasePopupVisible, (3) ready-player arrays like warPhaseReadyPlayers for multi-player acknowledgment, (4) server case handlers that accumulate readyPlayers then transition state when all players ready.",
+  "relevant_files": [
+    "src/types/game.ts",
+    "src/utils/gameLogic.ts",
+    "src/store/gameStore.ts",
+    "src/server/index.ts",
+    "src/components/GameBoard.tsx",
+    "src/components/BattlePanel.tsx",
+    "src/i18n/es.ts",
+    "src/i18n/en.ts"
+  ],
+  "directory_structure": "src/types/game.ts (types + card data + provinces), src/utils/gameLogic.ts (4848 lines, all game logic), src/store/gameStore.ts (3966 lines, Zustand store + UI state), src/server/index.ts (2414 lines, WebSocket server), src/components/ (React components), src/i18n/ (translations en.ts/es.ts)"
+}

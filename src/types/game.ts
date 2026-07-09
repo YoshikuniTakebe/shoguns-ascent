@@ -289,6 +289,11 @@ export interface GameState {
   hostageReturnReadyPlayers: string[];
   cleanupTeaCeremonyReady: boolean;
   cleanupTeaCeremonyReadyPlayers: string[];
+  daikaijuPlacementActive: boolean;
+  daikaijuPlacementPlayerId: string | null;
+  daikaijuSummaryVisible: boolean;
+  daikaijuSummaryReadyPlayers: string[];
+  daikaijuSummaryData: { provinceId: string; provinceName: string; destroyedFortresses: { playerId: string; playerName: string; count: number }[] } | null;
   log: string[];
   logHistory: { [season: string]: string[] };
   hostId?: string;
@@ -322,6 +327,7 @@ export const PROVINCES_DATA: Province[] = [
   { id: 'nagato', name: 'Nagato', adjacentProvinces: ['kansai'], seaRoutes: [], harvestRewards: { vp: 1, coins: 1, ronin: 1 } },
   { id: 'shikoku', name: 'Shikoku', adjacentProvinces: [], seaRoutes: ['kansai', 'kyushu'], harvestRewards: { coins: 3 } },
   { id: 'kyushu', name: 'Kyushu', adjacentProvinces: [], seaRoutes: ['shikoku', 'kansai', 'hokkaido'], harvestRewards: { vp: 1, coins: 1, ronin: 1 } },
+  { id: 'ocean', name: 'Ocean', adjacentProvinces: [], seaRoutes: [], harvestRewards: {} },
 ];
 
 // --- Home Provinces (one per clan, in clan order) ---

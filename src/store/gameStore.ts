@@ -65,7 +65,7 @@ function lunaHasValidProvince(gameState: GameState, playerId: string): boolean {
  * Returns partial store state to set battleStepPhase if war is active, empty object otherwise.
  */
 function detectWarTransition(state: GameState): Partial<{ battleStepPhase: 'popup' | 'bidding' | 'seppuku-decision' | 'seppuku-result' | 'hostage-selection' | 'ronin-result' | 'result' | null; battleCurrentBiddingIndex: number }> {
-  if (state.currentPhase === 'war' && state.activeBattles.some(b => !b.resolved) && !state.zorroPlacementActive) {
+  if (state.currentPhase === 'war' && state.activeBattles.some(b => !b.resolved) && !state.zorroPlacementActive && !state.daikaijuPlacementActive && !state.daikaijuSummaryVisible) {
     return { battleStepPhase: 'popup' as const, battleCurrentBiddingIndex: 0 };
   }
   return {};
@@ -377,6 +377,10 @@ interface GameStore {
   warPhasePopupVisible: boolean;
   warPhaseUpgradeSummary: { playerName: string; clanId: string; bonuses: { cardName: string; resource: string; amount: number }[] }[];
   dismissWarPhasePopup: () => void;
+
+  // Daikaiju Placement
+  doDaikaijuPlaceProvince: (provinceId: string) => void;
+  doDaikaijuSummaryReady: () => void;
 
   // War Summary Popup (end of war phase)
   warSummaryVisible: boolean;
@@ -1962,8 +1966,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- Monster Placement Actions ---
   confirmMonsterPlacement: () => {
-    const { gameState, monsterPlacementPlayerId } = get();
+    const { gameState, monsterPlacementPlayerId, monsterPlacementCard } = get();
     if (!gameState || !monsterPlacementPlayerId) return;
+
+    // Daikaiju: auto-place in ocean without requiring province selection
+    if (monsterPlacementCard && monsterPlacementCard.id === 'au-daikaiju') {
+      get().doPlaceMonster('ocean');
+      return;
+    }
 
     // Luna clan power: max 2 figures per province. Check if Luna has ANY valid province to place.
     const placingPlayer = gameState.players.find(p => p.id === monsterPlacementPlayerId);
@@ -3504,8 +3514,110 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
+    // Hotseat: if Daikaiju placement is active, don't resolve battles yet
+    if (gameState.daikaijuPlacementActive) {
+      set({ warPhasePopupVisible: false, warPhaseUpgradeSummary: [] });
+      return;
+    }
+
     const updatedState = resolveUncontestedBattles(gameState);
     set({ gameState: updatedState, warPhasePopupVisible: false, warPhaseUpgradeSummary: [], battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+  },
+
+  // --- Daikaiju Placement Actions ---
+  doDaikaijuPlaceProvince: (provinceId: string) => {
+    const { gameState, ws } = get();
+    if (!gameState) return;
+    if (!gameState.daikaijuPlacementActive || !gameState.daikaijuPlacementPlayerId) return;
+
+    // Online mode: send to server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'DAIKAIJU_PLACE_PROVINCE', playerId: get().localPlayerId, payload: { provinceId } });
+      return;
+    }
+
+    // Hotseat: do the logic locally
+    const targetProvince = gameState.provinces[provinceId];
+    if (!targetProvince || provinceId === 'ocean') return;
+
+    const daikaijuPlayerId = gameState.daikaijuPlacementPlayerId;
+    const oceanProv = gameState.provinces['ocean'];
+    if (!oceanProv) return;
+    const daikaijuFigure = oceanProv.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-daikaiju');
+    if (!daikaijuFigure) return;
+
+    // Move Daikaiju from ocean to target province
+    let ns: GameState = {
+      ...gameState,
+      provinces: {
+        ...gameState.provinces,
+        ocean: { ...oceanProv, figures: oceanProv.figures.filter(f => f.id !== daikaijuFigure.id) },
+        [provinceId]: { ...targetProvince, figures: [...targetProvince.figures, daikaijuFigure] },
+      },
+    };
+
+    // Destroy ALL fortresses in target province (including own and Tortuga's)
+    const allFortresses = ns.provinces[provinceId].figures.filter(f => f.type === 'fortress');
+    const destroyedFortressMap: { [playerId: string]: number } = {};
+    for (const fort of allFortresses) {
+      destroyedFortressMap[fort.owner] = (destroyedFortressMap[fort.owner] || 0) + 1;
+    }
+
+    // Remove fortresses from province and return to owners
+    ns = {
+      ...ns,
+      provinces: {
+        ...ns.provinces,
+        [provinceId]: {
+          ...ns.provinces[provinceId],
+          figures: ns.provinces[provinceId].figures.filter(f => f.type !== 'fortress'),
+        },
+      },
+      players: ns.players.map(p => {
+        const returned = destroyedFortressMap[p.id] || 0;
+        if (returned > 0) return { ...p, fortresses: p.fortresses + returned };
+        return p;
+      }),
+    };
+
+    // Build summary data
+    const destroyedFortresses = Object.entries(destroyedFortressMap).map(([pId, count]) => {
+      const player = ns.players.find(p => p.id === pId);
+      return { playerId: pId, playerName: player?.name || 'jugador', count };
+    });
+
+    const daikaijuOwner = ns.players.find(p => p.id === daikaijuPlayerId);
+    ns = {
+      ...ns,
+      daikaijuPlacementActive: false,
+      daikaijuSummaryVisible: true,
+      daikaijuSummaryReadyPlayers: [],
+      daikaijuSummaryData: { provinceId, provinceName: targetProvince.name, destroyedFortresses },
+      log: [...ns.log, `🦕 Daikaiju de ${daikaijuOwner?.name || 'jugador'} aparece en ${targetProvince.name} y destruye ${allFortresses.length} fortaleza(s)`],
+    };
+
+    set({ gameState: ns });
+  },
+
+  doDaikaijuSummaryReady: () => {
+    const { gameState, ws } = get();
+    if (!gameState) return;
+
+    // Online mode: send to server
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'DAIKAIJU_SUMMARY_READY', playerId: get().localPlayerId });
+      return;
+    }
+
+    // Hotseat: clear summary and proceed to battles
+    const ns: GameState = {
+      ...gameState,
+      daikaijuSummaryVisible: false,
+      daikaijuSummaryReadyPlayers: [],
+      daikaijuSummaryData: null,
+    };
+    const updatedState = resolveUncontestedBattles(ns);
+    set({ gameState: updatedState, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
   },
 
   // --- War Summary Popup (end of all battles) ---
@@ -3770,9 +3882,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // When warPhaseReadyPlayers clears (all accepted war summary), start battle flow
             const prevWarPhaseReady = prevGameState?.warPhaseReadyPlayers?.length || 0;
             if (prevWarPhaseReady > 0 && (state.warPhaseReadyPlayers?.length || 0) === 0 && !state.zorroPlacementActive) {
-              // War phase popup accepted by all - start battles
+              // War phase popup accepted by all - hide popup
               uiResets.warPhasePopupVisible = false;
               uiResets.warPhaseUpgradeSummary = [];
+              // Only start battles if Daikaiju placement is not active
+              if (!state.daikaijuPlacementActive) {
+                uiResets.battleStepPhase = 'popup';
+                uiResets.battleCurrentBiddingIndex = 0;
+              }
+            }
+
+            // When daikaijuSummaryVisible goes from true to false (all players accepted), start battles
+            if (prevGameState?.daikaijuSummaryVisible && !state.daikaijuSummaryVisible) {
               uiResets.battleStepPhase = 'popup';
               uiResets.battleCurrentBiddingIndex = 0;
             }

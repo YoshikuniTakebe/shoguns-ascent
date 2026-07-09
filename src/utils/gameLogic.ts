@@ -293,6 +293,11 @@ export function createInitialGameState(
     hostageReturnReadyPlayers: [],
     cleanupTeaCeremonyReady: false,
     cleanupTeaCeremonyReadyPlayers: [],
+    daikaijuPlacementActive: false,
+    daikaijuPlacementPlayerId: null,
+    daikaijuSummaryVisible: false,
+    daikaijuSummaryReadyPlayers: [],
+    daikaijuSummaryData: null,
     log: ['Juego iniciado! Estación: Primavera'],
     logHistory: {},
     hostId,
@@ -339,7 +344,7 @@ export function setupSeason(state: GameState, season: Season): GameState {
 
   // Place war province tokens (numPlayers + 2) on random provinces
   const numTokens = newState.players.length + 2;
-  const provinceIds = Object.keys(newState.provinces);
+  const provinceIds = Object.keys(newState.provinces).filter(id => id !== 'ocean');
   const selectedProvinces = shuffle(provinceIds).slice(0, Math.min(numTokens, provinceIds.length));
   const warSlots: WarProvinceSlot[] = selectedProvinces.map((pid, idx) => ({
     provinceId: pid,
@@ -2093,6 +2098,11 @@ export function initiateWarPhase(state: GameState): GameState {
     hostageReturnReadyPlayers: [],
     cleanupTeaCeremonyReady: false,
     cleanupTeaCeremonyReadyPlayers: [],
+    daikaijuPlacementActive: false,
+    daikaijuPlacementPlayerId: null,
+    daikaijuSummaryVisible: false,
+    daikaijuSummaryReadyPlayers: [],
+    daikaijuSummaryData: null,
     players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages], seasonCards: [...p.seasonCards] })),
     log: [...state.log, '=== Comienza la Fase de Guerra ==='],
   };
@@ -2180,51 +2190,16 @@ export function initiateWarPhase(state: GameState): GameState {
     newState.log = [...newState.log, `🐍 Nure-Onna de ${nureOwner?.name || 'jugador'} cruza ruta maritima para unirse a batalla en ${destProv?.name || targetBattleProvince}`];
   }
 
-  // Daikaiju effect: at start of war phase, place in a war province and destroy all enemy fortresses
-  for (const provId of Object.keys(newState.provinces)) {
-    const prov = newState.provinces[provId];
-    const daikaijuFigure = prov.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-daikaiju');
-    if (!daikaijuFigure) continue;
-    // Find first battle province with contested battle (multiple players)
-    let targetBattleProvince = battleProvinceIds.find(bpId => {
-      const bp = newState.provinces[bpId];
-      if (!bp) return false;
-      const owners = [...new Set(bp.figures.map(f => f.owner))];
-      return owners.length >= 2;
-    });
-    // Fallback to first battle province if no contested one found
-    if (!targetBattleProvince) {
-      targetBattleProvince = battleProvinceIds[0];
+  // Daikaiju effect: detect if Daikaiju is in ocean, set up interactive placement
+  const oceanProv = newState.provinces['ocean'];
+  if (oceanProv) {
+    const daikaijuFigure = oceanProv.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-daikaiju');
+    if (daikaijuFigure) {
+      newState.daikaijuPlacementActive = true;
+      newState.daikaijuPlacementPlayerId = daikaijuFigure.owner;
+      const daikaijuOwner = newState.players.find(p => p.id === daikaijuFigure.owner);
+      newState.log = [...newState.log, `🦕 Daikaiju de ${daikaijuOwner?.name || 'jugador'} espera para ser colocado en una provincia`];
     }
-    if (!targetBattleProvince) continue;
-    // Move Daikaiju to the battle province (if not already there)
-    if (provId !== targetBattleProvince) {
-      newState.provinces[provId] = {
-        ...newState.provinces[provId],
-        figures: newState.provinces[provId].figures.filter(f => f.id !== daikaijuFigure.id),
-      };
-      newState.provinces[targetBattleProvince] = {
-        ...newState.provinces[targetBattleProvince],
-        figures: [...newState.provinces[targetBattleProvince].figures, daikaijuFigure],
-      };
-    }
-    // Destroy all enemy fortresses in the target province
-    const targetProv = newState.provinces[targetBattleProvince];
-    const enemyFortresses = targetProv.figures.filter(f => f.type === 'fortress' && f.owner !== daikaijuFigure.owner);
-    if (enemyFortresses.length > 0) {
-      newState.provinces[targetBattleProvince] = {
-        ...newState.provinces[targetBattleProvince],
-        figures: newState.provinces[targetBattleProvince].figures.filter(f => !(f.type === 'fortress' && f.owner !== daikaijuFigure.owner)),
-      };
-      for (const fort of enemyFortresses) {
-        const fortOwner = newState.players.find(p => p.id === fort.owner);
-        if (fortOwner) fortOwner.fortresses += 1;
-      }
-    }
-    const daikaijuOwner = newState.players.find(p => p.id === daikaijuFigure.owner);
-    const destProvName = newState.provinces[targetBattleProvince]?.name || targetBattleProvince;
-    newState.log = [...newState.log, `🦕 Daikaiju de ${daikaijuOwner?.name || 'jugador'} aparece en ${destProvName} y destruye ${enemyFortresses.length} fortalezas enemigas`];
-    break; // Only one Daikaiju
   }
 
   // Sort war province slots by number (ascending order)

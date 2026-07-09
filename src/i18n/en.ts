@@ -374,6 +374,16 @@ export const en = {
   'war.summary.discarded': 'Discarded',
   'war.summary.accept': 'Accept',
 
+  // Daikaiju Placement
+  'daikaiju.placement.title': 'Daikaiju',
+  'daikaiju.placement.choose': 'Choose a province to place Daikaiju',
+  'daikaiju.placement.waiting': 'Waiting for {player} to place Daikaiju...',
+  'daikaiju.summary.title': 'Daikaiju has arrived!',
+  'daikaiju.summary.province': 'Daikaiju has been placed in {province}',
+  'daikaiju.summary.fortresses': '{count} fortress(es) destroyed',
+  'daikaiju.summary.owner': '{player}: {count} fortress(es)',
+  'daikaiju.summary.accept': 'Accept',
+
   // Rule violations
   'rule.invalidMove': 'Invalid move',
 

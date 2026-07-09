@@ -511,6 +511,9 @@ export const BattlePanel = () => {
   // --- WAR PHASE POPUP: suppress battle popups while war summary is visible ---
   if (warPhasePopupVisible) return null;
 
+  // --- DAIKAIJU: suppress battle popups while Daikaiju placement/summary is active ---
+  if (gameState.daikaijuPlacementActive || gameState.daikaijuSummaryVisible) return null;
+
   // --- WAR SUMMARY POPUP: suppress battle popups while war summary is visible ---
   if (warSummaryVisible) return null;
 

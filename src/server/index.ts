@@ -1328,9 +1328,107 @@ wss.on('connection', (ws: WebSocket, req) => {
             l.gameState = { ...l.gameState, warPhaseReadyPlayers: [...l.gameState.warPhaseReadyPlayers, playerId] };
           }
           if (l.gameState.warPhaseReadyPlayers.length >= l.gameState.players.length) {
-            // All players accepted war summary - resolve uncontested battles and clear
+            // All players accepted war summary
+            if (l.gameState.daikaijuPlacementActive) {
+              // Daikaiju placement pending - don't resolve battles yet, just clear ready players
+              l.gameState = { ...l.gameState, warPhaseReadyPlayers: [] };
+            } else {
+              // No Daikaiju - resolve uncontested battles and proceed
+              l.gameState = resolveUncontestedBattles(l.gameState);
+              l.gameState = { ...l.gameState, warPhaseReadyPlayers: [] };
+            }
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'DAIKAIJU_PLACE_PROVINCE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          if (!l.gameState.daikaijuPlacementActive) return;
+          if (playerId !== l.gameState.daikaijuPlacementPlayerId) return;
+          const { provinceId: daikaijuTargetId } = data.payload || {};
+          if (!daikaijuTargetId || daikaijuTargetId === 'ocean') return;
+          const targetProv = l.gameState.provinces[daikaijuTargetId];
+          if (!targetProv) return;
+
+          const oceanProv = l.gameState.provinces['ocean'];
+          if (!oceanProv) return;
+          const daikaijuFig = oceanProv.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-daikaiju');
+          if (!daikaijuFig) return;
+
+          // Move Daikaiju from ocean to target province
+          let dkState: GameState = {
+            ...l.gameState,
+            provinces: {
+              ...l.gameState.provinces,
+              ocean: { ...oceanProv, figures: oceanProv.figures.filter(f => f.id !== daikaijuFig.id) },
+              [daikaijuTargetId]: { ...targetProv, figures: [...targetProv.figures, daikaijuFig] },
+            },
+          };
+
+          // Destroy ALL fortresses in target province (including own and Tortuga's)
+          const allForts = dkState.provinces[daikaijuTargetId].figures.filter(f => f.type === 'fortress');
+          const destroyedMap: { [pid: string]: number } = {};
+          for (const fort of allForts) {
+            destroyedMap[fort.owner] = (destroyedMap[fort.owner] || 0) + 1;
+          }
+
+          dkState = {
+            ...dkState,
+            provinces: {
+              ...dkState.provinces,
+              [daikaijuTargetId]: {
+                ...dkState.provinces[daikaijuTargetId],
+                figures: dkState.provinces[daikaijuTargetId].figures.filter(f => f.type !== 'fortress'),
+              },
+            },
+            players: dkState.players.map(p => {
+              const returned = destroyedMap[p.id] || 0;
+              if (returned > 0) return { ...p, fortresses: p.fortresses + returned };
+              return p;
+            }),
+          };
+
+          // Build summary data
+          const destroyedFortresses = Object.entries(destroyedMap).map(([pId, count]) => {
+            const player = dkState.players.find(p => p.id === pId);
+            return { playerId: pId, playerName: player?.name || 'jugador', count };
+          });
+
+          const dkOwner = dkState.players.find(p => p.id === playerId);
+          dkState = {
+            ...dkState,
+            daikaijuPlacementActive: false,
+            daikaijuSummaryVisible: true,
+            daikaijuSummaryReadyPlayers: [],
+            daikaijuSummaryData: { provinceId: daikaijuTargetId, provinceName: targetProv.name, destroyedFortresses },
+            log: [...dkState.log, `🦕 Daikaiju de ${dkOwner?.name || 'jugador'} aparece en ${targetProv.name} y destruye ${allForts.length} fortaleza(s)`],
+          };
+
+          l.gameState = dkState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'DAIKAIJU_SUMMARY_READY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (!playerId) return;
+          if (!l.gameState.daikaijuSummaryVisible) return;
+          if (!l.gameState.daikaijuSummaryReadyPlayers.includes(playerId)) {
+            l.gameState = { ...l.gameState, daikaijuSummaryReadyPlayers: [...l.gameState.daikaijuSummaryReadyPlayers, playerId] };
+          }
+          if (l.gameState.daikaijuSummaryReadyPlayers.length >= l.gameState.players.length) {
+            // All players acknowledged - clear summary and resolve battles
+            l.gameState = {
+              ...l.gameState,
+              daikaijuSummaryVisible: false,
+              daikaijuSummaryReadyPlayers: [],
+              daikaijuSummaryData: null,
+            };
             l.gameState = resolveUncontestedBattles(l.gameState);
-            l.gameState = { ...l.gameState, warPhaseReadyPlayers: [] };
           }
           broadcastState(l);
           break;

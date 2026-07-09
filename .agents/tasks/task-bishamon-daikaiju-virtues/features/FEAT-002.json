@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Complete rework of Daikaiju: interactive province selection popup after war phase summary, with multi-player acknowledgment flow",
+  "status": "in_progress",
+  "steps": [
+    "1. Add new GameState properties in src/types/game.ts GameState interface: daikaijuPlacementActive: boolean, daikaijuPlacementPlayerId: string | null, daikaijuSummaryVisible: boolean, daikaijuSummaryReadyPlayers: string[], daikaijuSummaryData: { provinceId: string; provinceName: string; destroyedFortresses: { playerId: string; playerName: string; count: number }[] } | null",
+    "2. In src/utils/gameLogic.ts initiateWarPhase function (around line 2183), REMOVE the existing automatic Daikaiju placement logic. Replace with: find if any player has Daikaiju on the map (it should be in a special 'ocean' province). If found, set daikaijuPlacementActive = true and daikaijuPlacementPlayerId to the owner's id. Also initialize daikaijuSummaryVisible = false, daikaijuSummaryReadyPlayers = [], daikaijuSummaryData = null in the newState reset at the top of initiateWarPhase.",
+    "3. Handle Daikaiju 'ocean' placement: When a monster card au-daikaiju is bought/placed, instead of placing it in a real province, store it in a special province 'ocean' (add 'ocean' to PROVINCES_DATA with no adjacency/sea routes/harvest rewards, OR use a state flag like daikaijuInOcean: boolean with daikaijuOwnerId: string | null). The simpler approach: add a province { id: 'ocean', name: 'Ocean', adjacentProvinces: [], seaRoutes: [], harvestRewards: {} } to PROVINCES_DATA, and initialize it in createInitialGameState. The monster figure gets placed there during train/recruit. Make sure ocean province is excluded from harvest, war province tokens, movement destinations, etc.",
+    "4. In src/store/gameStore.ts: Add UI state for daikaijuPlacementPopupVisible (shown to the Daikaiju owner to pick a province) and the dismiss/confirm actions. Add 'doDaikaijuPlaceProvince(provinceId: string)' action that: validates the player is the daikaiju owner, moves Daikaiju from ocean to chosen province, destroys ALL fortresses in that province (including own/Tortuga), returns fortress counts to players, sets daikaijuSummaryVisible = true with summary data, sets daikaijuPlacementActive = false. For online mode, send action to server.",
+    "5. In src/store/gameStore.ts: Add 'doDaikaijuSummaryReady()' action that sends DAIKAIJU_SUMMARY_READY to server (online) or locally advances past the summary (hotseat).",
+    "6. In src/store/gameStore.ts: The flow is: after dismissWarPhasePopup (all players acknowledged war upgrades), check if daikaijuPlacementActive is true. If yes, show the Daikaiju placement popup to the owner (other players see waiting). Once placement is done and summary acknowledged by all, THEN proceed to resolveUncontestedBattles and battle phase.",
+    "7. In src/server/index.ts: Add case 'DAIKAIJU_PLACE_PROVINCE' that validates the player, moves Daikaiju, destroys all fortresses (ALL fortresses, not just enemy), generates summary data, broadcasts state. Add case 'DAIKAIJU_SUMMARY_READY' that accumulates ready players, and when all are ready, clears summary state and proceeds to resolveUncontestedBattles/battle phase.",
+    "8. In src/server/index.ts: Modify the WAR_PHASE_READY handler: after all players are ready with war phase popup, check if daikaijuPlacementActive. If true, do NOT call resolveUncontestedBattles yet - just clear warPhaseReadyPlayers and broadcast (so clients show Daikaiju placement UI). If false, proceed as before.",
+    "9. In src/components/GameBoard.tsx: Add Daikaiju placement popup UI. When daikaijuPlacementActive is true and the local player is the Daikaiju owner, show a popup saying they must choose a province. Other players see a waiting message. Reuse the 'harvest-popup-backdrop' pattern. The owner clicks on a province in the map to select it (set a click handler on provinces when daikaijuPlacementActive && isOwner).",
+    "10. In src/components/GameBoard.tsx: Add Daikaiju summary popup UI. When daikaijuSummaryVisible is true, show a popup to all players with: which province Daikaiju went to, how many fortresses destroyed, whose fortresses. All players must click Accept to continue.",
+    "11. Ensure the ocean province does not appear in the game map UI, is not selectable for movement/marshal/recruit (exclude 'ocean' from province lists in relevant logic), and fortresses/figures there cannot be interacted with by other players.",
+    "12. Add i18n translations for the new popups in both en.ts and es.ts"
+  ],
+  "acceptance_criteria": [
+    "When Daikaiju is summoned (train mandate), it is placed in the 'ocean' zone instead of a normal province",
+    "At start of war phase, after war upgrade summary popup is dismissed by all players, the Daikaiju owner gets an interactive popup to choose ANY province",
+    "Other players see a waiting message during Daikaiju placement",
+    "Once province is chosen, Daikaiju moves there and ALL fortresses (including own and Tortuga's) are destroyed",
+    "A summary popup shows to ALL players with province name, number of fortresses destroyed, and whose fortresses",
+    "All players must acknowledge the summary before the game continues to battles",
+    "The flow works in both hotseat and online mode",
+    "npm run build passes without errors"
+  ],
+  "verification": [
+    "cd /projects/sandbox/shoguns-ascent && npm run build"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

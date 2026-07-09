@@ -62,7 +62,7 @@ const HARVEST_BADGE_META: Record<string, { color: string; position: { x: number;
 
 // Derive reward display data from PROVINCES_DATA (single source of truth)
 const HARVEST_REWARDS: Record<string, { rewards: { type: 'vp' | 'coin' | 'ronin' | 'honor'; count: number }[]; color: string; position: { x: number; y: number } }> = Object.fromEntries(
-  PROVINCES_DATA.map((province) => {
+  PROVINCES_DATA.filter(p => p.id !== 'ocean').map((province) => {
     const meta = HARVEST_BADGE_META[province.id] || { color: '#888', position: { x: 0, y: 0 } };
     const rewards: { type: 'vp' | 'coin' | 'ronin' | 'honor'; count: number }[] = [];
     const hr = province.harvestRewards;
@@ -107,7 +107,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted, rejoinWaitingVisible, rejoinPlayerStatuses } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted, rejoinWaitingVisible, rejoinPlayerStatuses, doDaikaijuSummaryReady } = useGameStore();
   const t = useT();
 
   const [isDragging, setIsDragging] = useState(false);
@@ -580,7 +580,7 @@ export const GameBoard = () => {
                 })}
               </svg>
               <div className="regions-overlay">
-                {PROVINCES_DATA.map(r => {
+                {PROVINCES_DATA.filter(r => r.id !== 'ocean').map(r => {
                   return (
                     <RegionCard
                       key={r.id}
@@ -934,6 +934,72 @@ export const GameBoard = () => {
               ) : (
                 <button className="btn-primary harvest-popup-btn" onClick={dismissWarPhasePopup} style={{ borderColor: '#DC143C' }}>
                   {t('war.phaseStart.accept')}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Daikaiju Placement Popup */}
+      {gameState && gameState.daikaijuPlacementActive && !warPhasePopupVisible && !gameState.daikaijuSummaryVisible && (
+        <div className="harvest-popup-backdrop">
+          <div className="harvest-popup" style={{ borderColor: '#4A0E8F', maxWidth: '400px', minWidth: '300px' }}>
+            <h3 style={{ color: '#4A0E8F', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.3rem' }}>
+              {t('daikaiju.placement.title')}
+            </h3>
+            {(() => {
+              const isOwner = gameState.mode === 'hotseat' || localPlayerId === gameState.daikaijuPlacementPlayerId;
+              const ownerPlayer = gameState.players.find(p => p.id === gameState.daikaijuPlacementPlayerId);
+              if (isOwner) {
+                return (
+                  <p style={{ textAlign: 'center', fontSize: '0.95rem', opacity: 0.9 }}>
+                    {t('daikaiju.placement.choose')}
+                  </p>
+                );
+              } else {
+                return (
+                  <p style={{ textAlign: 'center', fontSize: '0.95rem', opacity: 0.9 }}>
+                    {t('daikaiju.placement.waiting', { player: ownerPlayer?.name || '' })}
+                  </p>
+                );
+              }
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Daikaiju Summary Popup */}
+      {gameState && gameState.daikaijuSummaryVisible && gameState.daikaijuSummaryData && (
+        <div className="harvest-popup-backdrop">
+          <div className="harvest-popup" style={{ borderColor: '#4A0E8F', maxWidth: '420px', minWidth: '300px' }}>
+            <h3 style={{ color: '#4A0E8F', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.3rem' }}>
+              {t('daikaiju.summary.title')}
+            </h3>
+            <p style={{ textAlign: 'center', fontSize: '0.95rem', marginBottom: '8px' }}>
+              {t('daikaiju.summary.province', { province: gameState.daikaijuSummaryData.provinceName })}
+            </p>
+            {gameState.daikaijuSummaryData.destroyedFortresses.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
+                {gameState.daikaijuSummaryData.destroyedFortresses.map((df, idx) => (
+                  <p key={idx} style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.9 }}>
+                    {t('daikaiju.summary.owner', { player: df.playerName, count: String(df.count) })}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.7, fontStyle: 'italic', marginBottom: '12px' }}>
+                {t('daikaiju.summary.fortresses', { count: '0' })}
+              </p>
+            )}
+            <div style={{ textAlign: 'center' }}>
+              {gameState.mode === 'online' && localPlayerId && gameState.daikaijuSummaryReadyPlayers.includes(localPlayerId) ? (
+                <p style={{ color: '#4A0E8F', fontSize: '1rem', fontWeight: 'bold' }}>
+                  {t('kami.summary.waiting', { count: String(gameState.daikaijuSummaryReadyPlayers.length), total: String(gameState.players.length) })}
+                </p>
+              ) : (
+                <button className="btn-primary harvest-popup-btn" onClick={doDaikaijuSummaryReady} style={{ borderColor: '#4A0E8F' }}>
+                  {t('daikaiju.summary.accept')}
                 </button>
               )}
             </div>
