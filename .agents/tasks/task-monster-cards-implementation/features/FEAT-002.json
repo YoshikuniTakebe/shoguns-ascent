@@ -1,0 +1,46 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Implement all remaining unimplemented monster card effects in the game logic. These monsters are defined in game.ts but have NO logic in gameLogic.ts: Jorogumo (take control of 1 local Bushi/Shinto at start of battle), Nure-Onna (may cross sea route to join battle), Sunakake-Baba (at start of war phase take hostage 1 Bushi/Shinto), Daikaiju (summon in ocean, at start of war phase place in province and destroy all enemy fortresses), Jikininki (each time another figure killed in province gain 1 VP lose honor), Koneko (if killed gain 2 coins 2 ronin, others in province lose 2 coins 2 ronin), Ebisu (if killed gain 8 coins), Benten (when entering province force a player to move out 1 monster), Kitsune (whoever wins this war symbol gains 6 VP), Oni of Hate (when entering province kill 1 bushi/shinto of each player with higher honor), Oni of Spite (when entering province steal 2 VP from each player with higher honor and any force there), Oni of Plagues (players with higher honor cannot move figures to this province), Earth Dragon (at start of battle move 1 figure of each other player out of this province).",
+  "status": "pending",
+  "steps": [
+    "FORCE CALCULATIONS: In calculateForce (src/utils/gameLogic.ts ~line 3550), add special case for 'sp-jorogumo': during war phase battles, the Jorogumo owner gets +1 force for the captured figure. This is complex - for now, set Jorogumo base force to 1 (generic handler handles it since no force field defined). The actual 'take control' mechanic needs to be in the battle resolution. For Kitsune (au-kitsune), it has no force field so defaults to 1 - this is correct.",
+    "EARTH DRAGON EFFECT (src/utils/gameLogic.ts): Create a new function `applyEarthDragonEffect(state, provinceId)` similar to `applyFireDragonEffect`. When Earth Dragon (sp-earth-dragon) is present in a battle province, at start of battle, for each OTHER player with figures there, move 1 of their figures (lowest priority: bushi > shinto > monster, excluding daimyo and daimyo-type monsters) to an adjacent province. The Earth Dragon owner chooses, but for automated resolution pick the first adjacent province. Call this function in `resolveNextBattle` right after Fire Dragon effect. Also handle Phoenix resurrection if the moved figure would have been killed (Earth Dragon moves, not kills, so Phoenix is NOT triggered).",
+    "JOROGUMO EFFECT (src/utils/gameLogic.ts): Create `applyJorogumoEffect(state, provinceId)` - at start of battle, if Jorogumo (sp-jorogumo) is present, take control of 1 enemy Bushi or Shinto in the province until end of battle. Implementation: temporarily change the owner of that figure to the Jorogumo owner. After battle resolution (in resolveNextBattle, after winner determined and casualties processed), revert the figure's owner. Call after Earth Dragon in resolveNextBattle.",
+    "NURE-ONNA EFFECT (src/utils/gameLogic.ts): In the `initiateWarPhase` function, before creating battles, check if any player has Nure-Onna (su-nure-onna) deployed in a province. For each war province with a battle, if Nure-Onna is in a province connected by sea route to that battle province, automatically move Nure-Onna to join the battle. Add the Nure-Onna figure to the battle province's figures. The actual movement should happen before battles are created.",
+    "SUNAKAKE-BABA EFFECT (src/utils/gameLogic.ts): In `applyWarUpgrades` function (~line 1994), add a case for checking if any player has Sunakake-Baba (su-sunakake-baba) deployed on the map. At start of War Phase, for the province where Sunakake-Baba is located, capture 1 enemy Bushi or Shinto as hostage (similar to take-hostage tactic logic). Add the hostage to the Sunakake-Baba owner's hostages array, remove the figure from province, increment the victim's reserve.",
+    "DAIKAIJU EFFECT (src/utils/gameLogic.ts): In `initiateWarPhase`, add logic for Daikaiju (au-daikaiju). If Daikaiju is deployed (it summons in 'ocean' - for this game, treat it as not in any province initially, the card data has force:5), at start of war phase, place it in a war province (choose the first one with battles) and destroy all enemy fortresses there. Remove all fortress figures owned by other players from that province, increment their fortress reserves.",
+    "JIKININKI EFFECT (src/utils/gameLogic.ts): This is a passive trigger effect. Whenever a figure is killed in the same province as Jikininki (su-jikininki), the Jikininki owner gains 1 VP and loses honor. Add helper function `applyJikinikniEffect(state, provinceId, killedCount)` that checks if Jikininki is in the province and applies the VP/honor effect. Call this function after: (1) Fire Dragon kills in `applyFireDragonEffect`, (2) after seppuku kills in `resolveNextBattle`, (3) after battle casualties in `resolveNextBattle`, (4) after Keiri kills if the province matches.",
+    "KONEKO EFFECT (src/utils/gameLogic.ts): Add Koneko (su-koneko) death trigger. When Koneko is killed (in battle casualties or by Fire Dragon), the owner gains 2 Coins and 2 Ronin, and all OTHER players with figures in that province lose 2 Coins and 2 Ronin (min 0). Add this check in: (1) `applyFireDragonEffect` after killing Koneko, (2) in `resolveNextBattle` in the battle casualty section where loser figures are removed. Also handle Phoenix-style placement in the existing battle death flow.",
+    "EBISU EFFECT (src/utils/gameLogic.ts): Add Ebisu (au-ebisu) death trigger. When Ebisu is killed, owner gains 8 Coins. Add check in: (1) `applyFireDragonEffect` if the killed figure is Ebisu, (2) in `resolveNextBattle` battle casualties. Handle similar to Phoenix resurrection pattern but just gives coins.",
+    "BENTEN EFFECT (src/utils/gameLogic.ts): In the `moveFigures` function (~line 3360), after a monster figure with monsterCardId 'au-benten' moves into a province, check if there are other players' monsters in the destination province. If so, move 1 enemy monster out to an adjacent province (pick first adjacent). Add this after the figure placement in the marshal movement section and the Fujin movement section.",
+    "KITSUNE EFFECT (src/utils/gameLogic.ts): In `resolveNextBattle`, after the winner is determined, check if Kitsune (au-kitsune) is present in the battle province. If so, the battle winner gains 6 VP. Add a log entry.",
+    "ONI OF HATE EFFECT (src/utils/gameLogic.ts): In the `moveFigures` function, after a monster figure with monsterCardId 'au-oni-of-hate' moves into a province, kill 1 Bushi or Shinto of each player in that province who has HIGHER honor (lower index in honorTrack) than the Oni of Hate owner. Return killed figures to reserves. Include Phoenix resurrection check for killed figures. Include Jikininki trigger if present. Add log entries.",
+    "ONI OF SPITE EFFECT (src/utils/gameLogic.ts): In the `moveFigures` function, after a monster figure with monsterCardId 'au-oni-of-spite' moves into a province, steal 2 VP from each player with higher honor who has any force (figures) in that province. Add log entries.",
+    "ONI OF PLAGUES EFFECT (src/utils/gameLogic.ts): In the `moveFigures` function, in the marshal movement validation section, before allowing a figure to move to a province, check if Oni of Plagues (au-oni-of-plagues) is present in the destination province. If the moving player has HIGHER honor (lower index in honorTrack) than the Oni of Plagues owner, reject the movement. Also apply this check in Fujin movement section."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compiles without errors (npx tsc --noEmit)",
+    "All 13 monster effects have logic implemented in gameLogic.ts",
+    "Earth Dragon moves 1 figure of each other player out at start of battle",
+    "Jorogumo temporarily takes control of 1 enemy figure during battle",
+    "Nure-Onna can join battles via sea route",
+    "Sunakake-Baba takes a hostage at start of war phase",
+    "Daikaiju places in a province and destroys enemy fortresses at war start",
+    "Jikininki triggers VP gain and honor loss when figures die in its province",
+    "Koneko gives owner coins/ronin and penalizes others when killed",
+    "Ebisu gives owner 8 coins when killed",
+    "Benten forces an enemy monster to move out when entering a province",
+    "Kitsune gives 6 VP to battle winner",
+    "Oni of Hate kills a figure of higher-honor players on entering",
+    "Oni of Spite steals 2 VP from higher-honor players on entering",
+    "Oni of Plagues blocks higher-honor players from moving figures to its province",
+    "Vite build succeeds (npm run build)"
+  ],
+  "verification": [
+    "Run `npx tsc --noEmit` in the project root to confirm TypeScript compiles",
+    "Run `npm run build` to confirm Vite production build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

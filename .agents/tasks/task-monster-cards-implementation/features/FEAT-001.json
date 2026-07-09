@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix Bishamon and Sacred Warrior force calculation bugs, and ensure Phoenix revives from ANY cause of death (not just Fire Dragon, Seppuku, and Battle). Currently: Bishamon always has force 4 (should be force 1 base, force 4 only if another monster from any player is in the same province). Sacred Warrior has no force field and falls to default 1 (should be force 1 base + 1 per virtue card the player owns). Phoenix only revives after Fire Dragon kills, Seppuku, and Battle death - must also revive after Betray mandate replaces it (betray removes the figure from the province and returns to reserve - if Phoenix is targeted, it should be resurrected back in the same province instead of going to reserve).",
+  "status": "completed",
+  "steps": [
+    "In src/types/game.ts, add `force: 1` to the `au-sacred-warrior` card definition (it currently has no force field)",
+    "In src/utils/gameLogic.ts calculateForce function (~line 3550), add a special case for 'su-bishamon' BEFORE the generic else branch: force is 1 base, but becomes 4 if there is any OTHER monster figure (from ANY player, including the Bishamon owner) in the same province. Use `province.figures.some(f => f.type === 'monster' && f.monsterCardId !== 'su-bishamon' && f.id !== fig.id)` to check. Apply Luna max(force, 2) as with other monsters.",
+    "In src/utils/gameLogic.ts calculateForce function, add a special case for 'au-sacred-warrior': force is 1 base + 1 for each card with `cardType === 'virtue'` in the player's seasonCards. Use `player.seasonCards.filter(c => c.cardType === 'virtue').length` to count virtues. Apply Luna max(force, 2).",
+    "In src/utils/gameLogic.ts betraySelectFigure function (~line 1509), add Phoenix resurrection logic: after the figure is removed from the province (line ~1578 where newFigures filters out the figure), if the removed figure is `type === 'monster'` and `monsterCardId === 'sp-phoenix'`, then: (1) gain 1 VP for the figure owner, (2) create a new Phoenix figure and add it back to the province figures, (3) do NOT increment figureOwner.monsters (since Phoenix stays on map), (4) add log entry. The replacement figure from the issuer should still be placed as normal.",
+    "In src/server/index.ts seppuku handling (~line 858-877), verify Phoenix revival is already working (it is). No changes needed there.",
+    "Verify that the generic else branch in calculateForce still correctly handles River Dragon (au-river-dragon with force: 5) - it does, since it reads monsterCard.force from the card data. No changes needed for River Dragon."
+  ],
+  "acceptance_criteria": [
+    "TypeScript compiles without errors (npx tsc --noEmit)",
+    "Bishamon (su-bishamon) returns force 1 when alone or only with non-monster figures, and force 4 when another monster is in the same province",
+    "Sacred Warrior (au-sacred-warrior) returns force 1 + number of virtue cards the player owns",
+    "Phoenix (sp-phoenix) is resurrected when targeted by Betray mandate (stays in province, owner gains 1 VP, issuer still places their replacement)",
+    "River Dragon (au-river-dragon) continues to have force 5 via the generic handler",
+    "Vite build succeeds (npm run build)"
+  ],
+  "verification": [
+    "Run `npx tsc --noEmit` in the project root to confirm TypeScript compiles",
+    "Run `npm run build` to confirm Vite production build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": "All changes compile and build successfully. Pre-existing TS2688 type definition warnings for vite/client and node are present but do not affect the build (exit code 0). Phoenix resurrection in betray uses the same pattern as the existing Fire Dragon and seppuku resurrection logic."
+}

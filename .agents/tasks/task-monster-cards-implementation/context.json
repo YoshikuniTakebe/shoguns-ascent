@@ -1,0 +1,21 @@
+{
+  "project_type": "TypeScript Vite + React board game with WebSocket server",
+  "language": "TypeScript",
+  "build_system": "npm + Vite + tsx (for server)",
+  "test_framework": "No test framework exists - no test files found",
+  "build_command": "npm run build",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "Run `npx tsc --noEmit` to verify TypeScript compiles without errors. Run `npm run build` to verify Vite build succeeds.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/shoguns-ascent && npm install",
+  "environment_constraints": "Internet available for npm packages. No test framework. Verification is TypeScript compilation only.",
+  "contribution_requirements": "Work directly on main branch. Push directly to main.",
+  "key_patterns": "Game logic is centralized in src/utils/gameLogic.ts (4327 lines). Card data defined in src/types/game.ts (SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS). calculateForce function at ~line 3550 handles monster force calculation with special cases for specific monster IDs. Phoenix resurrection pattern: detect kill, gain 1 VP, place back in same province, decrement monsters reserve. Betray mandate does NOT kill - it replaces (returns to reserve). Movement is handled in moveFigures function (~line 3360). War upgrade effects applied in applyWarUpgrades (~line 1994). Server mirrors some logic in src/server/index.ts for online mode (seppuku resolution). Store in src/store/gameStore.ts handles client-side state.",
+  "relevant_files": [
+    "src/utils/gameLogic.ts",
+    "src/types/game.ts",
+    "src/server/index.ts",
+    "src/store/gameStore.ts"
+  ],
+  "directory_structure": "src/types/game.ts - all types and card data constants. src/utils/gameLogic.ts - all game logic functions (4327 lines). src/server/index.ts - WebSocket server with online game handling. src/store/gameStore.ts - Zustand store for client state. src/components/ - React UI. src/i18n/ - translations (en.ts, es.ts)."
+}
