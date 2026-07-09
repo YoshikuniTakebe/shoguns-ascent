@@ -881,7 +881,6 @@ export function recruitPlaceDaimyo(state: GameState, playerId: string, provinceI
     return newState;
   } else if (DAIMYO_MONSTER_IDS.includes(daimyoType)) {
     // Daimyo-type monster
-    if (player.monsters <= 0) return state;
     const monsterCard = player.seasonCards.find(c => c.id === daimyoType && c.cardType === 'monster');
     if (!monsterCard) return state;
     // Verify it's not already deployed
@@ -902,7 +901,7 @@ export function recruitPlaceDaimyo(state: GameState, playerId: string, provinceI
       ...state,
       provinces: { ...state.provinces },
       players: state.players.map((p) => {
-        if (p.id === playerId) return { ...p, monsters: p.monsters - 1 };
+        if (p.id === playerId) return { ...p, monsters: Math.max(0, p.monsters - 1) };
         return { ...p };
       }),
       recruitPlacementsRemaining: state.recruitPlacementsRemaining - 1,
