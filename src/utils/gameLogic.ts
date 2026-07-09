@@ -71,6 +71,54 @@ function applyRighteousnessVP(state: GameState, playerId: string, killCount: num
   }
 }
 
+/**
+ * Upgrade: Path of the Warlord (sp-path-of-the-warlord) - After you Summon, gain 1 Coin.
+ *
+ * A "summon" is any action that puts a figure on the board. Rules clarifications:
+ *  - A Recruit mandate is a single summon, no matter how many figures are placed.
+ *  - Any card/effect that uses the word "Summon" is a summon (e.g. Raijin shrine, Jinmenju).
+ *  - Buying a monster and placing it on the board is a summon.
+ *  - If the figure cannot actually be placed on the board (e.g. Luna with no space, so the
+ *    monster goes to reserve), then no summon occurred and no coin is awarded.
+ *
+ * Returns a NEW GameState with the coin/log applied if the player owns the card, otherwise
+ * returns the original state unchanged.
+ */
+export function grantWarlordSummonCoin(state: GameState, playerId: string): GameState {
+  const player = state.players.find(p => p.id === playerId);
+  if (!player) return state;
+  const cardIds = new Set(player.seasonCards.map(c => c.id));
+  if (!hasCard(cardIds, 'sp-path-of-the-warlord')) return state;
+  return {
+    ...state,
+    players: state.players.map(p => (p.id === playerId ? { ...p, coins: p.coins + 1 } : p)),
+    log: [...state.log, `🪙 ${player.name} gana 1 moneda (Camino del Señor de la Guerra - invocación)`],
+  };
+}
+
+/**
+ * Award the Path of the Warlord coin for a Recruit turn. A whole Recruit turn counts as a
+ * single summon regardless of how many figures (bushi at fortresses, temple shinto, etc.) are
+ * placed, so this awards the coin at most once per recruit turn via recruitWarlordCoinAwarded.
+ * Returns a NEW GameState (or the original if nothing to award).
+ */
+export function grantRecruitWarlordCoinOnce(state: GameState, playerId: string): GameState {
+  if (state.recruitWarlordCoinAwarded) return state;
+  const player = state.players.find(p => p.id === playerId);
+  if (!player) return state;
+  const cardIds = new Set(player.seasonCards.map(c => c.id));
+  if (!hasCard(cardIds, 'sp-path-of-the-warlord')) {
+    // Mark as handled so we don't re-check every placement this turn.
+    return { ...state, recruitWarlordCoinAwarded: true };
+  }
+  return {
+    ...state,
+    recruitWarlordCoinAwarded: true,
+    players: state.players.map(p => (p.id === playerId ? { ...p, coins: p.coins + 1 } : p)),
+    log: [...state.log, `🪙 ${player.name} gana 1 moneda (Camino del Señor de la Guerra - invocación)`],
+  };
+}
+
 // ============================================================
 // Deck Building
 // ============================================================
@@ -889,7 +937,9 @@ export function recruitPlaceFigure(state: GameState, playerId: string, provinceI
     updatedPlayer.hasDaimyo = false;
   }
 
-  return newState;
+  // Path of the Warlord: a Recruit is a single summon regardless of how many figures are
+  // placed, so award the coin at most once per recruit turn (see grantRecruitWarlordCoinOnce).
+  return grantRecruitWarlordCoinOnce(newState, playerId);
 }
 
 /**
@@ -954,7 +1004,8 @@ export function recruitPlaceDaimyo(state: GameState, playerId: string, provinceI
 
     const prov = newState.provinces[provinceId];
     newState.provinces[provinceId] = { ...prov, figures: [...prov.figures, newFigure] };
-    return newState;
+    // Path of the Warlord: recruit counts as a single summon; award at most once per turn.
+    return grantRecruitWarlordCoinOnce(newState, playerId);
   } else if (DAIMYO_MONSTER_IDS.includes(daimyoType)) {
     // Daimyo-type monster
     const monsterCard = player.seasonCards.find(c => c.id === daimyoType && c.cardType === 'monster');
@@ -987,7 +1038,8 @@ export function recruitPlaceDaimyo(state: GameState, playerId: string, provinceI
 
     const prov = newState.provinces[provinceId];
     newState.provinces[provinceId] = { ...prov, figures: [...prov.figures, newFigure] };
-    return newState;
+    // Path of the Warlord: recruit counts as a single summon; award at most once per turn.
+    return grantRecruitWarlordCoinOnce(newState, playerId);
   }
 
   return state;
@@ -1041,7 +1093,7 @@ function advanceRecruitResolution(state: GameState): GameState {
   }
 
   if (nextPlayerIdx >= 0) {
-    return { ...state, currentPlayerIndex: nextPlayerIdx, recruitPlacementsRemaining: placements, recruitUsedFortressProvinces: [] };
+    return { ...state, currentPlayerIndex: nextPlayerIdx, recruitPlacementsRemaining: placements, recruitUsedFortressProvinces: [], recruitWarlordCoinAwarded: false };
   }
   return state;
 }

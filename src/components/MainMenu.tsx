@@ -7,7 +7,9 @@ import { ClanShield } from './ClanShields';
 import { HonorIcon, CoinIcon } from './Icons';
 import { useT } from '../i18n';
 import { shuffle } from '../utils/gameLogic';
-import { WS_BASE } from '../config';
+import { getServerWsUrl } from '../config';
+import { ConfigModal } from './ConfigModal';
+import { AddFriendModal, FriendsListModal } from './FriendsModal';
 import titleImg from '../img/NoboruTaiyo.png';
 import typeGameBgImg from '../img/type_game_bg.png';
 
@@ -43,7 +45,9 @@ export const MainMenu = () => {
   const [kamiMode, setKamiMode] = useState<'random' | 'manual'>('random');
   const [selectedKami, setSelectedKami] = useState<KamiType[]>([]);
   const [hotseatPassword, setHotseatPassword] = useState('');
-  const [url, setUrl] = useState(WS_BASE);
+  const [showConfig, setShowConfig] = useState(false);
+  const [showAddFriend, setShowAddFriend] = useState(false);
+  const [showFriendsList, setShowFriendsList] = useState(false);
 
   const [lid, setLid] = useState('');
 
@@ -56,7 +60,6 @@ export const MainMenu = () => {
   const [createSelectedKami, setCreateSelectedKami] = useState<KamiType[]>([]);
 
   const [createHostClan, setCreateHostClan] = useState('koi');
-  const [createUrl, setCreateUrl] = useState(WS_BASE);
   const [createMode, setCreateMode] = useState<'manual' | 'random'>('manual');
   const [randomClans, setRandomClans] = useState<string[]>(() => shuffle(CLANS.map(c => c.id)).slice(0, createPc));
 
@@ -133,12 +136,36 @@ export const MainMenu = () => {
         ) : (
           <span className="auth-user-info">
             <span className="auth-username">{authUser?.username}</span>
+            <button className="friends-btn friends-btn-add" onClick={() => setShowAddFriend(true)} title={t('friends.add')}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="9" cy="7" r="3.5" />
+                <path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6" />
+                <path d="M18 8v6M15 11h6" />
+              </svg>
+            </button>
+            <button className="friends-btn friends-btn-list" onClick={() => setShowFriendsList(true)} title={t('friends.list')}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="8" cy="7" r="3" />
+                <circle cx="16" cy="7" r="3" />
+                <path d="M2 19c0-3 2.5-5 6-5s6 2 6 5" />
+                <path d="M14 14c3.5 0 6 2 6 5" />
+              </svg>
+            </button>
+            {authUser?.isAdmin && (
+              <button className="auth-btn auth-btn-config" onClick={() => setShowConfig(true)} title={t('config.title')}>
+                &#9881; {t('config.button')}
+              </button>
+            )}
             <button className="auth-btn auth-btn-logout" onClick={logout}>
               {t('auth.logout')}
             </button>
           </span>
         )}
       </div>
+
+      {showConfig && <ConfigModal onClose={() => setShowConfig(false)} />}
+      {showAddFriend && <AddFriendModal onClose={() => setShowAddFriend(false)} />}
+      {showFriendsList && <FriendsListModal onClose={() => setShowFriendsList(false)} />}
 
       <div className="menu-header">
         <img src={titleImg} alt="Noboru Taiyo" style={{ maxWidth: '600px', width: '100%', height: 'auto', objectFit: 'contain' }} />
@@ -398,11 +425,6 @@ export const MainMenu = () => {
       {mode === 'online-create' && (
         <div className="setup-panel">
           <h2>{t('lobby.createGame')}</h2>
-          <div className="online-form">
-            <label>{t('menu.server')}</label>
-            <input value={createUrl} onChange={e => setCreateUrl(e.target.value)} />
-
-          </div>
 
           {/* Game Type selector - Manual / Aleatorio */}
           <div className="deck-config-section">
@@ -617,7 +639,7 @@ export const MainMenu = () => {
 
                 if (createMode === 'manual') {
                   const availableClans = createClans.slice(0, createPc);
-                  connectWebSocket(createUrl, (ws) => {
+                  connectWebSocket(getServerWsUrl(), (ws) => {
                     ws.send(JSON.stringify({
                       type: 'CREATE_LOBBY',
                       playerName,
@@ -633,7 +655,7 @@ export const MainMenu = () => {
                 } else {
                   // Random mode: pick a random host clan from the random list
                   const randomHostClan = randomClans[Math.floor(Math.random() * randomClans.length)];
-                  connectWebSocket(createUrl, (ws) => {
+                  connectWebSocket(getServerWsUrl(), (ws) => {
                     ws.send(JSON.stringify({
                       type: 'CREATE_LOBBY',
                       playerName,
@@ -660,9 +682,6 @@ export const MainMenu = () => {
         <div className="setup-panel">
           <h2>{t('lobby.joinGame')}</h2>
           <div className="online-form">
-            <label>{t('menu.server')}</label>
-            <input value={url} onChange={e => setUrl(e.target.value)} />
-
             <label>{t('lobby.gameId')}</label>
             <input value={lid} onChange={e => setLid(e.target.value)} placeholder="Game ID" />
           </div>
@@ -671,7 +690,7 @@ export const MainMenu = () => {
               className="btn-primary"
               onClick={() => {
                 const playerName = authUser?.username || 'Player';
-                connectWebSocket(url, (ws) => {
+                connectWebSocket(getServerWsUrl(), (ws) => {
                   ws.send(JSON.stringify({ type: 'JOIN_LOBBY', lobbyId: lid, playerName }));
                   setLobbyId(lid);
                 });

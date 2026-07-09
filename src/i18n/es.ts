@@ -722,4 +722,41 @@ export const es: Record<TranslationKey, string> = {
   'admin.purgeOrphans': 'Purgar Partidas Antiguas',
   'admin.confirmPurge': 'Esto eliminara todas las partidas sin jugadores asignados. Continuar?',
   'admin.gamesPurged': 'partida(s) purgada(s)',
+
+  // Config (solo admin)
+  'config.button': 'Config',
+  'config.title': 'Configuración',
+  'config.serverUrl': 'URL del Servidor',
+  'config.serverUrlHint': 'Dirección interna del servidor para el juego online. Se inyecta automáticamente para los jugadores. Deja vacío para usar la predeterminada.',
+  'config.save': 'Guardar',
+  'config.saved': '¡Guardado!',
+  'config.close': 'Cerrar',
+
+  // Amigos
+  'friends.add': 'Añadir amigo',
+  'friends.list': 'Amigos',
+  'friends.addTitle': 'Introduce usuario o email de tu amigo',
+  'friends.addPlaceholder': 'Usuario o email',
+  'friends.addButton': 'Agregar',
+  'friends.added': '¡{name} ha sido añadido a tu lista de amigos!',
+  'friends.notFound': 'No se encontró ningún usuario con ese usuario o email',
+  'friends.accept': 'Aceptar',
+  'friends.listTitle': 'Tus amigos',
+  'friends.empty': 'Aún no tienes amigos',
+  'friends.close': 'Cerrar',
+  'friends.alreadyFriend': '{name} ya está en tu lista de amigos',
+  'friends.self': 'No puedes agregarte a ti mismo',
+  'friends.error': 'Algo salió mal. Inténtalo de nuevo.',
+
+  // Lobby añadidos
+  'lobby.inviteFriends': 'Invitar amigos',
+  'lobby.invite': 'Invitar',
+  'lobby.invited': 'Invitado',
+  'lobby.remove': 'Quitar',
+  'lobby.join': 'Unirse',
+  'lobby.openGame': 'Partida abierta',
+  'lobby.openSlots': '{count} plaza(s) abierta(s)',
+  'lobby.selectPlayer': 'Selecciona jugador',
+  'lobby.you': 'Tú',
+  'lobby.createdOn': 'Creada {date}',
 };

@@ -4,9 +4,29 @@ import { CLANS, KAMI_DATA, SEASON_CARDS_DATA } from '../types/game';
 import type { KamiType } from '../types/game';
 import type { TranslationKey } from '../i18n';
 import { useT } from '../i18n';
-import { MonsterIcon } from './Icons';
+import { MonsterIcon, ShintoIcon, FistIcon } from './Icons';
 import { getCardEffectKey } from '../utils/cardTranslations';
 import { getPrayingMonsterCardIds, getDeployedMonsterCardIds } from '../utils/reserveUtils';
+import { renderCardEffect } from '../utils/renderCardEffect';
+
+/**
+ * Rich hover tooltip for a monster figure in a shrine, matching the map tooltip
+ * (see RegionCard's FigureIcon): shows name, Force and the monster's effect.
+ */
+function ShrineMonsterTooltip({ cardId, color, isLuna, effectText }: { cardId: string; color: string; isLuna: boolean; effectText: string }) {
+  const cardData = SEASON_CARDS_DATA.find(c => c.id === cardId);
+  const monsterName = cardData?.name || 'Monstruo';
+  // Komainu/Hotei count as Shinto (no card force) -> 1 force, doubled to 2 for Luna.
+  const baseForce = cardData?.force ?? 1;
+  const force = isLuna ? Math.max(baseForce, 2) : baseForce;
+  return (
+    <span className="figure-tooltip" style={{ borderColor: color }}>
+      <span className="figure-tooltip-name">{monsterName}</span>
+      <span className="figure-tooltip-force">Force: {force}</span>
+      {effectText && <span className="figure-tooltip-power">{renderCardEffect(effectText)}</span>}
+    </span>
+  );
+}
 
 interface HoteiReplacementTarget {
   templeId: string;
@@ -98,20 +118,46 @@ export const TemplePanel = () => {
     ? KAMI_DATA.find(k => k.type === selectedKami)
     : null;
 
-  // Group figures by clan for the modal
-  const figuresByClan: { clanId: string; clanName: string; color: string; count: number }[] = [];
+  // Group figures by clan for the modal, breaking down normal shinto vs shinto-monsters
+  // (Komainu/Hotei) so the popup can show the shinto icon + count and each monster's name.
+  const figuresByClan: {
+    clanId: string;
+    clanName: string;
+    color: string;
+    count: number;
+    normalShinto: number;
+    monsterNames: string[];
+    force: number;
+  }[] = [];
   if (selectedTemple) {
-    const clanCounts: Record<string, number> = {};
+    const clanAgg: Record<string, { count: number; normalShinto: number; monsterNames: string[] }> = {};
     for (const fig of selectedTemple.figures) {
       const player = gameState.players.find(pl => pl.id === fig.playerId);
-      if (player) {
-        clanCounts[player.clanId] = (clanCounts[player.clanId] || 0) + 1;
+      if (!player) continue;
+      if (!clanAgg[player.clanId]) {
+        clanAgg[player.clanId] = { count: 0, normalShinto: 0, monsterNames: [] };
+      }
+      clanAgg[player.clanId].count += 1;
+      if (fig.monsterCardId) {
+        const cardData = SEASON_CARDS_DATA.find(c => c.id === fig.monsterCardId);
+        clanAgg[player.clanId].monsterNames.push(cardData?.name || 'Monstruo');
+      } else {
+        clanAgg[player.clanId].normalShinto += 1;
       }
     }
-    for (const [clanId, count] of Object.entries(clanCounts)) {
+    for (const [clanId, agg] of Object.entries(clanAgg)) {
       const clan = CLANS.find(c => c.id === clanId);
       if (clan) {
-        figuresByClan.push({ clanId, clanName: clan.name, color: clan.color, count });
+        const force = clanId === 'luna' ? agg.count * 2 : agg.count * 1;
+        figuresByClan.push({
+          clanId,
+          clanName: clan.name,
+          color: clan.color,
+          count: agg.count,
+          normalShinto: agg.normalShinto,
+          monsterNames: agg.monsterNames,
+          force,
+        });
       }
     }
   }
@@ -205,17 +251,15 @@ export const TemplePanel = () => {
                     // If figure has a monsterCardId, show MonsterIcon with tooltip
                     if (fig.monsterCardId) {
                       const cardData = SEASON_CARDS_DATA.find(c => c.id === fig.monsterCardId);
-                      const monsterName = cardData?.name || 'Monstruo';
                       const monsterEffect = cardData ? t(getCardEffectKey(cardData.id)) : '';
-                      const monsterForce = cardData?.force ?? '';
-                      const tooltipText = `${monsterName}${monsterForce ? ` (F:${monsterForce})` : ''}${monsterEffect ? ` - ${monsterEffect}` : ''}`;
+                      const isLuna = player?.clanId === 'luna';
                       return (
                         <span
                           key={i}
-                          className="kami-figure-dot"
-                          title={tooltipText}
+                          className="kami-figure-dot figure-icon-wrapper"
                         >
                           <MonsterIcon size={24} color={figColor} />
+                          <ShrineMonsterTooltip cardId={fig.monsterCardId} color={figColor} isLuna={isLuna} effectText={monsterEffect} />
                         </span>
                       );
                     }
@@ -245,17 +289,15 @@ export const TemplePanel = () => {
                               if (untaggedIndexForPlayer < untaggedPraying.length) {
                                 const inferredCardId = untaggedPraying[untaggedIndexForPlayer];
                                 const cardData = SEASON_CARDS_DATA.find(c => c.id === inferredCardId);
-                                const monsterName = cardData?.name || 'Monstruo';
                                 const monsterEffect = cardData ? t(getCardEffectKey(cardData.id)) : '';
-                                const monsterForce = cardData?.force ?? '';
-                                const tooltipText = `${monsterName}${monsterForce ? ` (F:${monsterForce})` : ''}${monsterEffect ? ` - ${monsterEffect}` : ''}`;
+                                const isLuna = player?.clanId === 'luna';
                                 return (
                                   <span
                                     key={i}
-                                    className="kami-figure-dot"
-                                    title={tooltipText}
+                                    className="kami-figure-dot figure-icon-wrapper"
                                   >
                                     <MonsterIcon size={24} color={figColor} />
+                                    <ShrineMonsterTooltip cardId={inferredCardId} color={figColor} isLuna={isLuna} effectText={monsterEffect} />
                                   </span>
                                 );
                               }
@@ -319,18 +361,32 @@ export const TemplePanel = () => {
             {figuresByClan.length > 0 && (
               <div className="kami-modal-figures">
                 <h4 className="kami-modal-figures-title">{t('kamiModal.shintoFigures')}</h4>
-                {figuresByClan.map(({ clanId, clanName, color, count }) => {
-                  const force = clanId === 'luna' ? count * 2 : count * 1;
+                {figuresByClan.map(({ clanId, clanName, color, normalShinto, monsterNames, force }) => {
                   return (
-                    <div key={clanId} className="kami-modal-figure-row">
+                    <div key={clanId} className="kami-modal-figure-row" style={{ flexWrap: 'wrap' }}>
                       <span
                         className="kami-modal-clan-dot"
                         style={{ backgroundColor: color }}
                       />
                       <span className="kami-modal-clan-name">{clanName}</span>
-                      <span className="kami-modal-figure-count">{count}</span>
-                      <span className="kami-modal-figure-force" style={{ color: '#DAA520', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
-                        (Fuerza: {force})
+                      {/* Normal shinto: shinto icon + count */}
+                      {normalShinto > 0 && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }} title="Shinto">
+                          <ShintoIcon size={16} color={color} />
+                          <span className="kami-modal-figure-count">{normalShinto}</span>
+                        </span>
+                      )}
+                      {/* Shinto monsters (Komainu/Hotei): show icon + name */}
+                      {monsterNames.map((name, mi) => (
+                        <span key={mi} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <MonsterIcon size={16} color={color} />
+                          <span style={{ fontSize: '0.78rem', color: '#e0d5b0' }}>{name}</span>
+                        </span>
+                      ))}
+                      {/* Force: force icon + number (replaces the old "(Fuerza: X)" text) */}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', color: '#DAA520', marginLeft: '0.4rem' }} title="Fuerza">
+                        <FistIcon size={15} color="#DAA520" />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{force}</span>
                       </span>
                     </div>
                   );

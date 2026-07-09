@@ -5,6 +5,8 @@ import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
+import { ConfigModal } from './ConfigModal';
+import { AddFriendModal, FriendsListModal } from './FriendsModal';
 import titleImg from '../img/NoboruTaiyo.png';
 
 interface GameRecord {
@@ -38,6 +40,9 @@ export const GamesLobby = () => {
   const [passwordError, setPasswordError] = useState(false);
   const [passwordGames, setPasswordGames] = useState<Set<string>>(new Set());
   const [modeFilter, setModeFilter] = useState<'online' | 'hotseat'>(authToken ? 'online' : 'hotseat');
+  const [showConfig, setShowConfig] = useState(false);
+  const [showAddFriend, setShowAddFriend] = useState(false);
+  const [showFriendsList, setShowFriendsList] = useState(false);
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -229,6 +234,32 @@ export const GamesLobby = () => {
     }
   };
 
+  // Build the human-friendly game identifier shown in parentheses after the game name,
+  // e.g. "2607050028origami": DDMMYY + HHMM from the creation date + a themed word derived
+  // deterministically from the game id so it stays stable across reloads.
+  const GAME_ID_WORDS = ['origami', 'sakura', 'katana', 'shogun', 'ronin', 'daimyo', 'tsuki', 'kaze', 'yama', 'hana', 'take', 'mori'];
+  const getGameIdentifier = (game: GameRecord): string => {
+    let digits = '';
+    try {
+      const d = new Date(game.createdAt);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yy = String(d.getFullYear()).slice(-2);
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mi = String(d.getMinutes()).padStart(2, '0');
+      digits = `${dd}${mm}${yy}${hh}${mi}`;
+    } catch {
+      digits = '';
+    }
+    // Deterministic word from the game id hash
+    let hash = 0;
+    for (let i = 0; i < game.id.length; i++) {
+      hash = (hash * 31 + game.id.charCodeAt(i)) >>> 0;
+    }
+    const word = GAME_ID_WORDS[hash % GAME_ID_WORDS.length];
+    return `${digits}${word}`;
+  };
+
   const getProgressPoint = (game: GameRecord): string => {
     if (!game.lastSeason || !game.lastPhase) return '';
     const seasonKey = `season.${game.lastSeason}` as TranslationKey;
@@ -301,14 +332,30 @@ export const GamesLobby = () => {
               </span>
             )}
             {game.name}
+            <span className="games-lobby-card-gameid">({getGameIdentifier(game)})</span>
           </span>
           <span className="games-lobby-card-header-right">
             {modeIcon}
             <span className="games-lobby-card-date">{formatDate(game.updatedAt || game.createdAt)}</span>
           </span>
         </div>
+        {/* Creation date shown under the title */}
+        <div className="games-lobby-card-created">{t('lobby.createdOn', { date: formatDate(game.createdAt) })}</div>
         <div className="games-lobby-card-body">
-          <span className="games-lobby-card-clans">
+          {/* Current-turn player's seal, shown large and centered */}
+          {type !== 'finished' && game.currentPlayerIndex != null && game.players[game.currentPlayerIndex] && (() => {
+            const currentPlayer = game.players[game.currentPlayerIndex!];
+            const clanColor = getClanColor(currentPlayer.clanId);
+            return (
+              <div className="games-lobby-card-turn-seal">
+                <span className="games-lobby-card-turn-seal-label">{t('lobby.turnOf')}</span>
+                <ClanShield clanId={currentPlayer.clanId} size={64} />
+                <span className="games-lobby-card-turn-seal-name" style={{ color: clanColor }}>{currentPlayer.name}</span>
+              </div>
+            );
+          })()}
+          {/* Player names in a 4-per-row grid (2 rows for up to 8 players) */}
+          <span className="games-lobby-card-clans games-lobby-card-clans-grid">
             {game.players.map((p, i) => (
               <span
                 key={i}
@@ -323,15 +370,6 @@ export const GamesLobby = () => {
             {game.lastSeason && (
               <span className="games-lobby-card-progress">{getProgressPoint(game)}</span>
             )}
-            {type !== 'finished' && game.currentPlayerIndex != null && game.players[game.currentPlayerIndex] && (() => {
-              const currentPlayer = game.players[game.currentPlayerIndex!];
-              const clanColor = getClanColor(currentPlayer.clanId);
-              return (
-                <span className="games-lobby-card-turn" style={{ color: clanColor }}>
-                  {t('lobby.turnOf')} <ClanShield clanId={currentPlayer.clanId} size={14} /> {currentPlayer.name}
-                </span>
-              );
-            })()}
           </div>
         </div>
         <div className="games-lobby-card-actions">
@@ -381,12 +419,38 @@ export const GamesLobby = () => {
             <span className="games-lobby-user-name">
               {t('lobby.loggedAs')} <strong>{authUser.username}</strong>
             </span>
+            {/* Add friend (person with +) */}
+            <button className="friends-btn friends-btn-add" onClick={() => setShowAddFriend(true)} title={t('friends.add')}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="9" cy="7" r="3.5" />
+                <path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6" />
+                <path d="M18 8v6M15 11h6" />
+              </svg>
+            </button>
+            {/* Friends list (two people) */}
+            <button className="friends-btn friends-btn-list" onClick={() => setShowFriendsList(true)} title={t('friends.list')}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="8" cy="7" r="3" />
+                <circle cx="16" cy="7" r="3" />
+                <path d="M2 19c0-3 2.5-5 6-5s6 2 6 5" />
+                <path d="M14 14c3.5 0 6 2 6 5" />
+              </svg>
+            </button>
+            {authUser.isAdmin && (
+              <button className="friends-btn" onClick={() => setShowConfig(true)} title={t('config.title')}>
+                &#9881; {t('config.button')}
+              </button>
+            )}
             <button className="games-lobby-logout-btn" onClick={logout}>
               {t('auth.logout')}
             </button>
           </div>
         )}
       </div>
+
+      {showConfig && <ConfigModal onClose={() => setShowConfig(false)} />}
+      {showAddFriend && <AddFriendModal onClose={() => setShowAddFriend(false)} />}
+      {showFriendsList && <FriendsListModal onClose={() => setShowFriendsList(false)} />}
 
       {/* Action buttons */}
       <div className="games-lobby-actions">

@@ -511,3 +511,44 @@
 
 /* Monster Reserve Tooltip Portal */
 .monster-reserve-tooltip-portal{background:linear-gradient(145deg,rgba(15,52,96,0.98),rgba(10,35,65,0.98));padding:6px 10px;border-radius:8px;white-space:nowrap;display:flex;flex-direction:column;gap:2px;border-width:2px;border-style:solid;pointer-events:none;min-width:80px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+
+
+
+/* Admin Config button + modal */
+.auth-btn-config{margin-left:0.75rem;background:rgba(200,169,81,0.12);border-color:var(--border-gold)}
+.config-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:3000}
+.config-modal{position:relative;background:linear-gradient(145deg,rgba(15,15,25,0.98),rgba(22,33,62,0.98));border:1.5px solid var(--accent-gold);border-radius:12px;padding:1.5rem 1.75rem;min-width:340px;max-width:440px;box-shadow:0 12px 40px rgba(0,0,0,0.7)}
+.config-modal-close{position:absolute;top:0.5rem;right:0.75rem;background:none;border:none;color:var(--accent-gold);font-size:1.5rem;cursor:pointer;line-height:1}
+.config-modal-title{color:var(--accent-gold);margin:0 0 1rem 0;font-size:1.2rem}
+.config-modal-label{display:block;color:var(--text-secondary);font-size:0.85rem;margin-bottom:0.35rem}
+.config-modal-input{width:100%;box-sizing:border-box;padding:0.5rem 0.7rem;background:rgba(0,0,0,0.35);border:1px solid var(--border-gold);border-radius:6px;color:var(--accent-cream);font-size:0.9rem}
+.config-modal-hint{color:var(--text-secondary);font-size:0.72rem;margin:0.4rem 0 1rem 0;line-height:1.4}
+.config-modal-actions{display:flex;gap:0.6rem;justify-content:flex-end}
+
+/* Friends buttons + modals */
+.friends-btn{display:inline-flex;align-items:center;gap:0.3rem;background:rgba(200,169,81,0.12);border:1px solid var(--border-gold);border-radius:6px;color:var(--accent-cream);padding:0.35rem 0.6rem;cursor:pointer;font-size:0.8rem}
+.friends-btn:hover{background:rgba(200,169,81,0.22)}
+.friends-btn-add{margin-left:1.5rem}
+.friends-btn-list{margin-left:0.5rem}
+.friends-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:3000}
+.friends-modal{position:relative;background:linear-gradient(145deg,rgba(15,15,25,0.98),rgba(22,33,62,0.98));border:1.5px solid var(--accent-gold);border-radius:12px;padding:1.5rem 1.75rem;min-width:320px;max-width:420px;box-shadow:0 12px 40px rgba(0,0,0,0.7)}
+.friends-modal-close{position:absolute;top:0.5rem;right:0.75rem;background:none;border:none;color:var(--accent-gold);font-size:1.5rem;cursor:pointer;line-height:1}
+.friends-modal-title{color:var(--accent-gold);margin:0 0 1rem 0;font-size:1.1rem}
+.friends-modal-input{width:100%;box-sizing:border-box;padding:0.5rem 0.7rem;background:rgba(0,0,0,0.35);border:1px solid var(--border-gold);border-radius:6px;color:var(--accent-cream);font-size:0.9rem;margin-bottom:0.75rem}
+.friends-modal-actions{display:flex;gap:0.6rem;justify-content:flex-end}
+.friends-modal-msg{font-size:0.85rem;margin:0.5rem 0;text-align:center}
+.friends-modal-msg-ok{color:#7CFC7C}
+.friends-modal-msg-err{color:#FF8080}
+.friends-list-entry{display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.5rem;border-bottom:1px solid rgba(200,169,81,0.15);color:var(--accent-cream)}
+.friends-list-entry:last-child{border-bottom:none}
+.friends-list-avatar{width:26px;height:26px;border-radius:50%;background:rgba(200,169,81,0.2);display:flex;align-items:center;justify-content:center;color:var(--accent-gold);font-weight:bold;font-size:0.8rem}
+
+/* Lobby card: current-turn seal centered + 2-row names */
+.games-lobby-card-turn-seal{display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0.4rem 0}
+.games-lobby-card-turn-seal-label{font-size:0.68rem;color:var(--text-secondary);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.2rem}
+.games-lobby-card-turn-seal-name{font-size:0.8rem;font-weight:bold;margin-top:0.15rem}
+.games-lobby-card-clans-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.3rem 0.5rem;width:100%}
+.games-lobby-card-gameid{font-size:0.72rem;color:var(--text-secondary);font-weight:normal;margin-left:0.3rem}
+
+
+.games-lobby-card-created{font-size:0.68rem;color:var(--text-secondary);opacity:0.8;margin:0.1rem 0 0.3rem 0}

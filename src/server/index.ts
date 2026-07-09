@@ -45,6 +45,8 @@ import {
   determineTacticWinners,
   applyFireDragonEffect,
   hasCard,
+  grantWarlordSummonCoin,
+  grantRecruitWarlordCoinOnce,
 } from '../utils/gameLogic';
 import type { GameState } from '../types/game';
 import { SEASON_CARDS_DATA } from '../types/game';
@@ -70,6 +72,10 @@ import {
   deleteGame,
   purgeOrphanGames,
   getGamePasswordHash,
+  findUserByUsernameOrEmail,
+  addFriend,
+  getFriends,
+  areFriends,
 } from './database';
 import { generateToken, verifyToken } from './auth';
 import bcrypt from 'bcryptjs';
@@ -283,6 +289,52 @@ app.get('/api/games/my-games', (req, res) => {
 
   const games = getGamesByUserId(payload.userId);
   res.json(games.map(formatGame));
+});
+
+// --- Friends endpoints ---
+
+/** Resolve the authenticated user id from the Authorization header, or null. */
+function getAuthUserId(req: { headers: { authorization?: string } }): string | null {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const payload = verifyToken(authHeader.slice(7));
+  return payload?.userId ?? null;
+}
+
+// Add a friend by username or email.
+app.post('/api/friends/add', (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+  const identifier = (req.body?.identifier || '').trim();
+  if (!identifier) {
+    res.status(400).json({ error: 'missing identifier' });
+    return;
+  }
+  const target = findUserByUsernameOrEmail(identifier);
+  if (!target) {
+    res.status(404).json({ error: 'not_found' });
+    return;
+  }
+  if (target.id === userId) {
+    res.status(400).json({ error: 'self' });
+    return;
+  }
+  const already = areFriends(userId, target.id);
+  addFriend(userId, target.id);
+  res.json({ friend: { id: target.id, username: target.username, email: target.email }, alreadyFriend: already });
+});
+
+// List the authenticated user's friends.
+app.get('/api/friends', (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+  res.json(getFriends(userId));
 });
 
 app.get('/api/games/:id', (req, res) => {
@@ -1618,6 +1670,8 @@ wss.on('connection', (ws: WebSocket, req) => {
               temples: updatedTemples,
               log: [...s.log, `Komainu/Hotei colocado como shinto en santuario`],
             };
+            // Upgrade: Path of the Warlord - placing a purchased monster (Komainu/Hotei) is a summon.
+            s = grantWarlordSummonCoin(s, data.playerId);
           } else if (provinceId) {
             // Monster placed in province
             const province = s.provinces[provinceId];
@@ -1635,8 +1689,9 @@ wss.on('connection', (ws: WebSocket, req) => {
               },
               log: [...s.log, `Monstruo colocado en ${province.name}`],
             };
-            // Virtue: Dignity (sp-dignity) - Gain 2 VP when summoning a monster (skip ocean auto-placement)
-            if (provinceId !== 'ocean') {
+            // Virtue: Dignity (sp-dignity) - Gain 2 VP when summoning a monster.
+            // Summoning into the Ocean (e.g. Daikaiju) is still a summon, so it counts too.
+            {
               const dignityPlayer = s.players.find(p => p.id === data.playerId);
               if (dignityPlayer) {
                 const dignityCardIds = new Set(dignityPlayer.seasonCards.map(c => c.id));
@@ -1646,6 +1701,8 @@ wss.on('connection', (ws: WebSocket, req) => {
                 }
               }
             }
+            // Upgrade: Path of the Warlord - placing a purchased monster on the board is a summon.
+            s = grantWarlordSummonCoin(s, data.playerId);
           } else if (reserve) {
             // Monster goes to reserve (Luna no valid province or cancel)
             s = {
@@ -1914,6 +1971,9 @@ wss.on('connection', (ws: WebSocket, req) => {
             recruitPlacementsRemaining: l.gameState.recruitPlacementsRemaining - 1,
             log: [...l.gameState.log, `${recruitPlayer.name} coloca un shinto en santuario`],
           };
+          // Path of the Warlord: recruit counts as a single summon; award at most once per turn
+          // (covers players who recruit only into temples). Undo snapshot was saved above.
+          l.gameState = grantRecruitWarlordCoinOnce(l.gameState, data.playerId);
           broadcastState(l);
           break;
         }
@@ -2149,7 +2209,13 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l.gameState.raijinPlacementDone) return;
           if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
+          const raijinTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
           let s: GameState = { ...l.gameState, raijinPlacementDone: false };
+          // Path of the Warlord: the Raijin shrine effect is a summon; award the coin to the
+          // executor once the placement is confirmed (undo happens before confirm, so no coin).
+          if (raijinTemple?.winnerId) {
+            s = grantWarlordSummonCoin(s, raijinTemple.winnerId);
+          }
           s = advanceKamiResolution(s);
           l.gameState = s;
           broadcastState(l);

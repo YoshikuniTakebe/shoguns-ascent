@@ -69,6 +69,16 @@ export function initDatabase(): void {
 
     CREATE INDEX IF NOT EXISTS idx_game_players_game_id ON game_players(game_id);
     CREATE INDEX IF NOT EXISTS idx_game_players_user_id ON game_players(user_id);
+
+    CREATE TABLE IF NOT EXISTS friends (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT REFERENCES users(id),
+      friend_user_id TEXT REFERENCES users(id),
+      created_at TEXT,
+      UNIQUE(user_id, friend_user_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_friends_user_id ON friends(user_id);
   `);
 
   // Migration: add is_admin column if it doesn't exist (for existing databases)
@@ -316,6 +326,39 @@ export function getGamePlayersByGameId(gameId: string): {
 }[] {
   const stmt = db.prepare(`SELECT game_id, user_id, clan_id, joined_at FROM game_players WHERE game_id = ?`);
   return stmt.all(gameId) as any[];
+}
+
+// --- Friends functions ---
+
+/** Find a user by exact username or exact email (used for the "add friend" search). */
+export function findUserByUsernameOrEmail(identifier: string): DbUser | undefined {
+  const stmt = db.prepare(`SELECT * FROM users WHERE username = ? OR email = ?`);
+  return stmt.get(identifier, identifier) as DbUser | undefined;
+}
+
+/** Add friendUserId to userId's friends list (directed). Returns false if already present. */
+export function addFriend(userId: string, friendUserId: string): boolean {
+  const now = new Date().toISOString();
+  const existing = db.prepare(`SELECT id FROM friends WHERE user_id = ? AND friend_user_id = ?`).get(userId, friendUserId);
+  if (existing) return false;
+  db.prepare(`INSERT INTO friends (user_id, friend_user_id, created_at) VALUES (?, ?, ?)`).run(userId, friendUserId, now);
+  return true;
+}
+
+export function areFriends(userId: string, friendUserId: string): boolean {
+  const row = db.prepare(`SELECT id FROM friends WHERE user_id = ? AND friend_user_id = ?`).get(userId, friendUserId);
+  return !!row;
+}
+
+/** Get the list of a user's friends (basic public info). */
+export function getFriends(userId: string): { id: string; username: string; email: string }[] {
+  const stmt = db.prepare(`
+    SELECT u.id, u.username, u.email FROM friends f
+    INNER JOIN users u ON u.id = f.friend_user_id
+    WHERE f.user_id = ?
+    ORDER BY u.username COLLATE NOCASE ASC
+  `);
+  return stmt.all(userId) as { id: string; username: string; email: string }[];
 }
 
 // --- Admin functions ---

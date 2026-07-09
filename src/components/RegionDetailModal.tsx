@@ -34,7 +34,7 @@ const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'shinto-zorro': 0.81,
   'daimyo-zorro': 0.94,
   'bushi-koi': 0.95,
-  'bushi-libelula': 0.87,
+  'bushi-libelula': 0.8874,
   'bushi-sol': 0.91,
   'bushi-bonsai': 0.85,
   'su-hotei': 1.15,

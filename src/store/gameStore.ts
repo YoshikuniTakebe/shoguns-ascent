@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { GameState, MandateType, DeckConfig, SeasonCard, BattleResolutionData, Hostage, FigureType } from '../types/game';
 import { SEASON_CARDS_DATA } from '../types/game';
-import { API_BASE, WS_BASE } from '../config';
+import { API_BASE, getServerWsUrl } from '../config';
 import {
   createInitialGameState,
   setupSeason,
@@ -44,6 +44,8 @@ import {
   determineTacticWinners,
   applyFireDragonEffect,
   hasCard,
+  grantWarlordSummonCoin,
+  grantRecruitWarlordCoinOnce,
 } from '../utils/gameLogic';
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -831,7 +833,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           rejoinWaitingVisible: true,
           rejoinPlayerStatuses: [],
         });
-        get().connectWebSocket(WS_BASE, (wsConn) => {
+        get().connectWebSocket(getServerWsUrl(), (wsConn) => {
           wsConn.send(JSON.stringify({ type: 'REJOIN_GAME', gameId }));
         });
         return;
@@ -1723,6 +1725,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       log: [...gameState.log, `${player.name} coloca un shinto en santuario de ${capitalize(temple.kamiType)}`],
     };
 
+    // Path of the Warlord: recruit counts as a single summon; award at most once per turn
+    // (covers players who recruit only into temples).
+    ns = grantRecruitWarlordCoinOnce(ns, apid);
+
     // Do NOT auto-advance when placements reach 0 - player must press Terminar manually
     set({ gameState: ns });
   },
@@ -2038,8 +2044,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       log: [...gameState.log, `${monsterPlacementCard.name} colocado en ${province.name}`],
     };
 
-    // Virtue: Dignity (sp-dignity) - Gain 2 VP when summoning a monster (skip ocean auto-placement)
-    if (provinceId !== 'ocean') {
+    // Virtue: Dignity (sp-dignity) - Gain 2 VP when summoning a monster.
+    // Summoning into the Ocean (e.g. Daikaiju) is still a summon, so it counts too.
+    {
       const dignityPlayer = ns.players.find(p => p.id === monsterPlacementPlayerId);
       if (dignityPlayer) {
         const dignityCardIds = new Set(dignityPlayer.seasonCards.map(c => c.id));
@@ -2049,6 +2056,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
       }
     }
+
+    // Upgrade: Path of the Warlord - buying/placing a monster on the board is a summon.
+    // This path only runs when the monster was actually placed (not sent to reserve).
+    ns = grantWarlordSummonCoin(ns, monsterPlacementPlayerId);
 
     // If placing during Ryujin kami resolution, advance kami resolution instead of train
     if (ns.kamiResolutionActive) {
@@ -2217,6 +2228,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       temples: updatedTemples,
       log: [...gameState.log, logMessage],
     };
+
+    // Path of the Warlord (hotseat): placing a purchased monster (Komainu/Hotei) is a summon.
+    // In online mode the server awards this coin when it processes the MONSTER_PLACED action.
+    if (gameState.mode === 'hotseat') {
+      ns = grantWarlordSummonCoin(ns, komainuPrayPlayerId);
+    }
 
     // If placing during Ryujin kami resolution, advance kami resolution instead of train
     if (ns.kamiResolutionActive) {
@@ -2596,7 +2613,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return p;
     });
 
-    const ns: GameState = {
+    let ns: GameState = {
       ...gameState,
       provinces: updatedProvinces,
       players: updatedPlayers,
@@ -2604,6 +2621,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       raijinPlacementDone: true,
       log: [...gameState.log, `${player.name} invoca un Bushi en ${province.name} (Raijin)`],
     };
+
+    // Path of the Warlord: the Raijin shrine effect is a summon (awarded to the executor).
+    // preState was captured before this placement, so an undo cleanly reverts the coin too.
+    ns = grantWarlordSummonCoin(ns, currentTemple.winnerId);
 
     // Do NOT advance kami resolution yet - wait for player to confirm
     set({ gameState: ns, raijinPrePlaceState: preState });

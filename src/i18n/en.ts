@@ -720,6 +720,43 @@ export const en = {
   'admin.purgeOrphans': 'Purge Old Games',
   'admin.confirmPurge': 'This will delete all games without assigned players. Continue?',
   'admin.gamesPurged': 'game(s) purged',
+
+  // Config (admin only)
+  'config.button': 'Config',
+  'config.title': 'Configuration',
+  'config.serverUrl': 'Server URL',
+  'config.serverUrlHint': 'Internal server address for online play. Injected automatically for players. Leave empty to use the default.',
+  'config.save': 'Save',
+  'config.saved': 'Saved!',
+  'config.close': 'Close',
+
+  // Friends
+  'friends.add': 'Add friend',
+  'friends.list': 'Friends',
+  'friends.addTitle': "Enter your friend's username or email",
+  'friends.addPlaceholder': 'Username or email',
+  'friends.addButton': 'Add',
+  'friends.added': '{name} has been added to your friends list!',
+  'friends.notFound': 'No user found with that username or email',
+  'friends.accept': 'Accept',
+  'friends.listTitle': 'Your friends',
+  'friends.empty': 'You have no friends yet',
+  'friends.close': 'Close',
+  'friends.alreadyFriend': '{name} is already in your friends list',
+  'friends.self': 'You cannot add yourself',
+  'friends.error': 'Something went wrong. Try again.',
+
+  // Lobby additions
+  'lobby.inviteFriends': 'Invite friends',
+  'lobby.invite': 'Invite',
+  'lobby.invited': 'Invited',
+  'lobby.remove': 'Remove',
+  'lobby.join': 'Join',
+  'lobby.openGame': 'Open game',
+  'lobby.openSlots': '{count} open slot(s)',
+  'lobby.selectPlayer': 'Select player',
+  'lobby.you': 'You',
+  'lobby.createdOn': 'Created {date}',
 } as const;
 
 export type TranslationKey = keyof typeof en;

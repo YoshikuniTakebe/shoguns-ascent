@@ -229,6 +229,10 @@ export interface GameState {
   recruitMandateIssuerId: string | null;
   recruitPlacementsRemaining: number;
   recruitUsedFortressProvinces: string[];
+  // Whether the Path of the Warlord "1 coin per summon" bonus has already been awarded for
+  // the current player's recruit turn (a whole recruit turn counts as a single summon).
+  // Optional so existing GameState construction sites don't need to change; treated as false.
+  recruitWarlordCoinAwarded?: boolean;
   jinmenjuUsedThisMandate: boolean;
   betrayMandateActive: boolean;
   betraySelectionsRemaining: number;
