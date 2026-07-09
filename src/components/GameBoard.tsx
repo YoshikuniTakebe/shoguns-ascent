@@ -313,7 +313,7 @@ export const GameBoard = () => {
             );
           })()}
         </div>
-        <div className="legend-button-wrapper" style={{ left: '20rem' }}>
+        <div className="legend-button-wrapper" style={{ right: '-18rem' }}>
           <span className="game-name-header">{gameState.gameName}</span>
           <button className="legend-btn">?</button>
           <div className="legend-tooltip">

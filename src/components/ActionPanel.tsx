@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
@@ -688,30 +689,33 @@ export const ActionPanel = () => {
                 const komainuAtTemple = monsterCardsInReserve.length > cp.monsters && monsterCardsInReserve.some(c => c.id === 'sp-komainu');
                 const actualReserveMonsters = komainuAtTemple ? monsterCardsInReserve.filter(c => c.id !== 'sp-komainu') : monsterCardsInReserve;
                 const nonDaimyoMonsters = actualReserveMonsters.filter(c => !DAIMYO_MONSTER_IDS.includes(c.id));
-                return (
-                  <div style={{ background: 'rgba(15,52,96,0.97)', border: `2px solid ${cpClan?.color || '#87CEEB'}`, borderRadius: '10px', padding: '12px', margin: '8px 0' }}>
-                    <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Elige monstruo</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }}>
-                      {nonDaimyoMonsters.map((card) => (
-                        <button
-                          key={card.id}
-                          className="btn-alliance"
-                          style={{ borderColor: cpClan?.color || '#87CEEB', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 12px' }}
-                          onClick={() => doRecruitConfirmMonster(card.id)}
-                        >
-                          <span style={{ color: cpClan?.color || '#87CEEB', fontWeight: 'bold' }}>{card.name}</span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t(getCardEffectKey(card.id))}</span>
-                        </button>
-                      ))}
+                return createPortal(
+                  <div className="monster-placement-popup">
+                    <div className="monster-placement-popup-content" style={{ border: `2px solid ${cpClan?.color || '#87CEEB'}`, maxWidth: '400px' }}>
+                      <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Elige monstruo</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }}>
+                        {nonDaimyoMonsters.map((card) => (
+                          <button
+                            key={card.id}
+                            className="btn-alliance"
+                            style={{ borderColor: cpClan?.color || '#87CEEB', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 12px' }}
+                            onClick={() => doRecruitConfirmMonster(card.id)}
+                          >
+                            <span style={{ color: cpClan?.color || '#87CEEB', fontWeight: 'bold' }}>{card.name}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t(getCardEffectKey(card.id))}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        className="btn-secondary"
+                        style={{ width: '100%', marginTop: '4px' }}
+                        onClick={() => doRecruitDismissSelection()}
+                      >
+                        Cancelar
+                      </button>
                     </div>
-                    <button
-                      className="btn-secondary"
-                      style={{ width: '100%', marginTop: '4px' }}
-                      onClick={() => doRecruitDismissSelection()}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
+                  </div>,
+                  document.body
                 );
               })()}
               {/* Daimyo selection popup for recruit */}
@@ -733,39 +737,42 @@ export const ActionPanel = () => {
                 const actualReserveMonsters = komainuAtTemple ? monsterCardsInReserve.filter(c => c.id !== 'sp-komainu') : monsterCardsInReserve;
                 const daimyoMonstersInReserve = actualReserveMonsters.filter(c => DAIMYO_MONSTER_IDS.includes(c.id));
                 const clanName = cpClan?.name || '';
-                return (
-                  <div style={{ background: 'rgba(15,52,96,0.97)', border: `2px solid ${cpClan?.color || '#87CEEB'}`, borderRadius: '10px', padding: '12px', margin: '8px 0' }}>
-                    <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Elige daimyo</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }}>
-                      {cp.hasDaimyo && (
-                        <button
-                          className="btn-alliance"
-                          style={{ borderColor: cpClan?.color || '#87CEEB', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 12px' }}
-                          onClick={() => doRecruitConfirmDaimyo('normal')}
-                        >
-                          <span style={{ color: cpClan?.color || '#87CEEB', fontWeight: 'bold' }}>Daimyo Clan {clanName}</span>
-                        </button>
-                      )}
-                      {daimyoMonstersInReserve.map((card) => (
-                        <button
-                          key={card.id}
-                          className="btn-alliance"
-                          style={{ borderColor: cpClan?.color || '#87CEEB', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 12px' }}
-                          onClick={() => doRecruitConfirmDaimyo(card.id)}
-                        >
-                          <span style={{ color: cpClan?.color || '#87CEEB', fontWeight: 'bold' }}>{card.name}</span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t(getCardEffectKey(card.id))}</span>
-                        </button>
-                      ))}
+                return createPortal(
+                  <div className="monster-placement-popup">
+                    <div className="monster-placement-popup-content" style={{ border: `2px solid ${cpClan?.color || '#87CEEB'}`, maxWidth: '400px' }}>
+                      <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Elige daimyo</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }}>
+                        {cp.hasDaimyo && (
+                          <button
+                            className="btn-alliance"
+                            style={{ borderColor: cpClan?.color || '#87CEEB', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 12px' }}
+                            onClick={() => doRecruitConfirmDaimyo('normal')}
+                          >
+                            <span style={{ color: cpClan?.color || '#87CEEB', fontWeight: 'bold' }}>Daimyo Clan {clanName}</span>
+                          </button>
+                        )}
+                        {daimyoMonstersInReserve.map((card) => (
+                          <button
+                            key={card.id}
+                            className="btn-alliance"
+                            style={{ borderColor: cpClan?.color || '#87CEEB', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '8px 12px' }}
+                            onClick={() => doRecruitConfirmDaimyo(card.id)}
+                          >
+                            <span style={{ color: cpClan?.color || '#87CEEB', fontWeight: 'bold' }}>{card.name}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{t(getCardEffectKey(card.id))}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        className="btn-secondary"
+                        style={{ width: '100%', marginTop: '4px' }}
+                        onClick={() => doRecruitDismissSelection()}
+                      >
+                        Cancelar
+                      </button>
                     </div>
-                    <button
-                      className="btn-secondary"
-                      style={{ width: '100%', marginTop: '4px' }}
-                      onClick={() => doRecruitDismissSelection()}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
+                  </div>,
+                  document.body
                 );
               })()}
               {/* Jinmenju ability button */}
