@@ -1,7 +1,7 @@
 {
   "task_id": "task-monster-cards-implementation",
   "task_description": "Fix bugs in Bishamon and Sacred Warrior force calculation, fix Phoenix to revive from any cause of death (including betray), and implement all remaining unimplemented monster card effects (Earth Dragon, Jorogumo, Nure-Onna, Sunakake-Baba, Daikaiju, Jikininki, Koneko, Ebisu, Benten, Kitsune, Oni of Hate, Oni of Spite, Oni of Plagues).",
-  "status": "in_progress",
+  "status": "completed",
   "feature_order": ["FEAT-001", "FEAT-002"],
   "blocked_reason": null
 }
