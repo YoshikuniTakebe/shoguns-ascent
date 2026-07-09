@@ -631,6 +631,25 @@ export function drawMandateTiles(state: GameState): GameState {
   return newState;
 }
 
+/** Helper: Apply Generosity virtue effect after mandate execution */
+function applyGenerosity(state: GameState, playerId: string): GameState {
+  const genPlayer = state.players.find(p => p.id === playerId);
+  if (genPlayer) {
+    const genCardIds = new Set(genPlayer.seasonCards.map(c => c.id));
+    if (hasCard(genCardIds, 'sp-generosity') && genPlayer.coins >= 1) {
+      const others = state.players.filter(p => p.id !== playerId);
+      if (others.length > 0) {
+        const poorest = others.reduce((a, b) => a.coins <= b.coins ? a : b);
+        genPlayer.coins -= 1;
+        poorest.coins += 1;
+        gainHonor(state, playerId);
+        state.log = [...state.log, `🎁 ${genPlayer.name} ofrece 1 Moneda a ${poorest.name} (Generosidad) y gana Honor`];
+      }
+    }
+  }
+  return state;
+}
+
 export function chooseMandateTile(state: GameState, mandate: MandateType, playerId: string): GameState {
   let newState: GameState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [...state.drawnMandates] };
 
@@ -667,20 +686,7 @@ export function chooseMandateTile(state: GameState, mandate: MandateType, player
   newState = executeMandate(newState, mandate, playerId);
 
   // Virtue: Generosity (sp-generosity) - After mandate, give 1 coin to poorest player, gain Honor
-  const genPlayer = newState.players.find(p => p.id === playerId);
-  if (genPlayer) {
-    const genCardIds = new Set(genPlayer.seasonCards.map(c => c.id));
-    if (hasCard(genCardIds, 'sp-generosity') && genPlayer.coins >= 1) {
-      const others = newState.players.filter(p => p.id !== playerId);
-      if (others.length > 0) {
-        const poorest = others.reduce((a, b) => a.coins <= b.coins ? a : b);
-        genPlayer.coins -= 1;
-        poorest.coins += 1;
-        gainHonor(newState, playerId);
-        newState.log = [...newState.log, `🎁 ${genPlayer.name} ofrece 1 Moneda a ${poorest.name} (Generosidad) y gana Honor`];
-      }
-    }
-  }
+  newState = applyGenerosity(newState, playerId);
 
   return newState;
 }
@@ -695,20 +701,7 @@ export function lotoChooseActualMandate(state: GameState, mandate: MandateType, 
   newState = executeMandate(newState, mandate, playerId);
 
   // Virtue: Generosity (sp-generosity) - After mandate, give 1 coin to poorest player, gain Honor
-  const genPlayer = newState.players.find(p => p.id === playerId);
-  if (genPlayer) {
-    const genCardIds = new Set(genPlayer.seasonCards.map(c => c.id));
-    if (hasCard(genCardIds, 'sp-generosity') && genPlayer.coins >= 1) {
-      const others = newState.players.filter(p => p.id !== playerId);
-      if (others.length > 0) {
-        const poorest = others.reduce((a, b) => a.coins <= b.coins ? a : b);
-        genPlayer.coins -= 1;
-        poorest.coins += 1;
-        gainHonor(newState, playerId);
-        newState.log = [...newState.log, `🎁 ${genPlayer.name} ofrece 1 Moneda a ${poorest.name} (Generosidad) y gana Honor`];
-      }
-    }
-  }
+  newState = applyGenerosity(newState, playerId);
 
   return newState;
 }
@@ -3099,7 +3092,7 @@ export function resolveNextBattle(state: GameState): GameState {
           if (hasCard(bidderCardIds, 'su-respect')) {
             const curProvAfter = newState.provinces[battle.provinceId];
             const secondEnemy = curProvAfter.figures.find(
-              (f) => f.owner !== highestBidder && (f.type === 'bushi' || f.type === 'shinto' || (f.type === 'monster' && f.monsterCardId && !['su-yurei', 'sp-fukurokuju'].includes(f.monsterCardId)))
+              (f) => f.owner !== highestBidder && !bidder.allies.includes(f.owner) && (f.type === 'bushi' || f.type === 'shinto' || (f.type === 'monster' && f.monsterCardId && !['su-yurei', 'sp-fukurokuju'].includes(f.monsterCardId)))
             );
             if (secondEnemy) {
               const hostageMonsterName2 = secondEnemy.type === 'monster' && secondEnemy.monsterCardId

@@ -1635,13 +1635,15 @@ wss.on('connection', (ws: WebSocket, req) => {
               },
               log: [...s.log, `Monstruo colocado en ${province.name}`],
             };
-            // Virtue: Dignity (sp-dignity) - Gain 2 VP when summoning a monster
-            const dignityPlayer = s.players.find(p => p.id === data.playerId);
-            if (dignityPlayer) {
-              const dignityCardIds = new Set(dignityPlayer.seasonCards.map(c => c.id));
-              if (hasCard(dignityCardIds, 'sp-dignity')) {
-                dignityPlayer.victoryPoints += 2;
-                s = { ...s, log: [...s.log, `🐉 ${dignityPlayer.name} gana 2 PV (Dignidad - invocar monstruo)`] };
+            // Virtue: Dignity (sp-dignity) - Gain 2 VP when summoning a monster (skip ocean auto-placement)
+            if (provinceId !== 'ocean') {
+              const dignityPlayer = s.players.find(p => p.id === data.playerId);
+              if (dignityPlayer) {
+                const dignityCardIds = new Set(dignityPlayer.seasonCards.map(c => c.id));
+                if (hasCard(dignityCardIds, 'sp-dignity')) {
+                  dignityPlayer.victoryPoints += 2;
+                  s = { ...s, log: [...s.log, `🐉 ${dignityPlayer.name} gana 2 PV (Dignidad - invocar monstruo)`] };
+                }
               }
             }
           } else if (reserve) {
