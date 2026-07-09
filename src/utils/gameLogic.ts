@@ -2093,7 +2093,7 @@ export function initiateWarPhase(state: GameState): GameState {
     hostageReturnReadyPlayers: [],
     cleanupTeaCeremonyReady: false,
     cleanupTeaCeremonyReadyPlayers: [],
-    players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], seasonCards: [...p.seasonCards] })),
+    players: state.players.map((p) => ({ ...p, warProvinceTokens: [...p.warProvinceTokens], hostages: [...p.hostages], seasonCards: [...p.seasonCards] })),
     log: [...state.log, '=== Comienza la Fase de Guerra ==='],
   };
 
@@ -2128,6 +2128,100 @@ export function initiateWarPhase(state: GameState): GameState {
 
   // Apply war upgrade card effects at start of war phase
   applyWarUpgrades(newState);
+
+  // Sunakake-Baba effect: take hostage 1 enemy Bushi or Shinto from its province
+  for (const provId of Object.keys(newState.provinces)) {
+    const prov = newState.provinces[provId];
+    const sunakakeFigure = prov.figures.find(f => f.type === 'monster' && f.monsterCardId === 'su-sunakake-baba');
+    if (!sunakakeFigure) continue;
+    const sunakakeOwner = newState.players.find(p => p.id === sunakakeFigure.owner);
+    if (!sunakakeOwner) continue;
+    const targetFigure = prov.figures.find(
+      f => f.owner !== sunakakeFigure.owner && (f.type === 'bushi' || f.type === 'shinto')
+    );
+    if (!targetFigure) continue;
+    const victim = newState.players.find(p => p.id === targetFigure.owner);
+    if (!victim) continue;
+    const hostage: Hostage = { fromClanId: targetFigure.owner, figureType: targetFigure.type };
+    sunakakeOwner.hostages = [...sunakakeOwner.hostages, hostage];
+    newState.provinces[provId] = {
+      ...prov,
+      figures: prov.figures.filter(f => f.id !== targetFigure.id),
+    };
+    if (targetFigure.type === 'bushi') victim.bushi += 1;
+    else if (targetFigure.type === 'shinto') victim.shinto += 1;
+    newState.log = [...newState.log, `🧹 Sunakake-Baba de ${sunakakeOwner.name} toma rehén ${targetFigure.type} de ${victim.name} en ${prov.name}`];
+  }
+
+  // Nure-Onna effect: may cross a sea route to join a battle
+  const battleProvinceIds = newState.warProvinceSlots.map(s => s.provinceId);
+  for (const provId of Object.keys(newState.provinces)) {
+    const prov = newState.provinces[provId];
+    const nureOnnaFigure = prov.figures.find(f => f.type === 'monster' && f.monsterCardId === 'su-nure-onna');
+    if (!nureOnnaFigure) continue;
+    // Check if Nure-Onna is already in a battle province
+    if (battleProvinceIds.includes(provId)) continue;
+    // Find a battle province connected by sea route
+    const provData = PROVINCES_DATA.find(p => p.id === provId);
+    if (!provData) continue;
+    const targetBattleProvince = battleProvinceIds.find(bpId => provData.seaRoutes.includes(bpId));
+    if (!targetBattleProvince) continue;
+    // Move Nure-Onna to the battle province
+    newState.provinces[provId] = {
+      ...newState.provinces[provId],
+      figures: newState.provinces[provId].figures.filter(f => f.id !== nureOnnaFigure.id),
+    };
+    newState.provinces[targetBattleProvince] = {
+      ...newState.provinces[targetBattleProvince],
+      figures: [...newState.provinces[targetBattleProvince].figures, nureOnnaFigure],
+    };
+    const nureOwner = newState.players.find(p => p.id === nureOnnaFigure.owner);
+    const destProv = newState.provinces[targetBattleProvince];
+    newState.log = [...newState.log, `🐍 Nure-Onna de ${nureOwner?.name || 'jugador'} cruza ruta maritima para unirse a batalla en ${destProv?.name || targetBattleProvince}`];
+  }
+
+  // Daikaiju effect: at start of war phase, place in a war province and destroy all enemy fortresses
+  for (const provId of Object.keys(newState.provinces)) {
+    const prov = newState.provinces[provId];
+    const daikaijuFigure = prov.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-daikaiju');
+    if (!daikaijuFigure) continue;
+    // Find first battle province with contested battle
+    const targetBattleProvince = battleProvinceIds.find(bpId => {
+      const bp = newState.provinces[bpId];
+      if (!bp) return false;
+      const owners = [...new Set(bp.figures.map(f => f.owner))];
+      return owners.length >= 2 || owners.length >= 1;
+    });
+    if (!targetBattleProvince) continue;
+    // Move Daikaiju to the battle province (if not already there)
+    if (provId !== targetBattleProvince) {
+      newState.provinces[provId] = {
+        ...newState.provinces[provId],
+        figures: newState.provinces[provId].figures.filter(f => f.id !== daikaijuFigure.id),
+      };
+      newState.provinces[targetBattleProvince] = {
+        ...newState.provinces[targetBattleProvince],
+        figures: [...newState.provinces[targetBattleProvince].figures, daikaijuFigure],
+      };
+    }
+    // Destroy all enemy fortresses in the target province
+    const targetProv = newState.provinces[targetBattleProvince];
+    const enemyFortresses = targetProv.figures.filter(f => f.type === 'fortress' && f.owner !== daikaijuFigure.owner);
+    if (enemyFortresses.length > 0) {
+      newState.provinces[targetBattleProvince] = {
+        ...newState.provinces[targetBattleProvince],
+        figures: newState.provinces[targetBattleProvince].figures.filter(f => !(f.type === 'fortress' && f.owner !== daikaijuFigure.owner)),
+      };
+      for (const fort of enemyFortresses) {
+        const fortOwner = newState.players.find(p => p.id === fort.owner);
+        if (fortOwner) fortOwner.fortresses += 1;
+      }
+    }
+    const daikaijuOwner = newState.players.find(p => p.id === daikaijuFigure.owner);
+    const destProvName = newState.provinces[targetBattleProvince]?.name || targetBattleProvince;
+    newState.log = [...newState.log, `🦕 Daikaiju de ${daikaijuOwner?.name || 'jugador'} aparece en ${destProvName} y destruye ${enemyFortresses.length} fortalezas enemigas`];
+    break; // Only one Daikaiju
+  }
 
   // Sort war province slots by number (ascending order)
   const sortedSlots = [...newState.warProvinceSlots].sort((a, b) => a.number - b.number);
@@ -2438,6 +2532,19 @@ export function applyFireDragonEffect(state: GameState, provinceId: string): Gam
 
     newState.log = [...newState.log, `🐉 Dragón de Fuego incinera: ${player.name} pierde 1 ${figureTypeName}`];
 
+    // Handle Koneko death trigger
+    if (targetFigure.type === 'monster' && targetFigure.monsterCardId === 'su-koneko') {
+      applyKonekoDeathEffect(newState, provinceId, playerId);
+    }
+
+    // Handle Ebisu death trigger
+    if (targetFigure.type === 'monster' && targetFigure.monsterCardId === 'au-ebisu') {
+      applyEbisuDeathEffect(newState, playerId);
+    }
+
+    // Jikininki trigger for Fire Dragon kill
+    applyJikinikniEffect(newState, provinceId, 1);
+
     // Handle Phoenix resurrection: if Phoenix was killed, gain 1 VP and place it back
     if (targetFigure.type === 'monster' && targetFigure.monsterCardId === 'sp-phoenix') {
       player.victoryPoints += 1;
@@ -2453,6 +2560,203 @@ export function applyFireDragonEffect(state: GameState, provinceId: string): Gam
   }
 
   return newState;
+}
+
+/**
+ * Earth Dragon pre-battle effect.
+ * At start of battle, for each OTHER player with figures in the province, move 1 figure out
+ * to an adjacent province. Priority: bushi > shinto > non-immune monster. Skip daimyo/daimyo-type monsters.
+ * Earth Dragon MOVES figures, it does NOT kill them (no Phoenix trigger).
+ */
+export function applyEarthDragonEffect(state: GameState, provinceId: string): GameState {
+  const province = state.provinces[provinceId];
+  if (!province) return state;
+
+  const earthDragonFigure = province.figures.find(f => f.type === 'monster' && f.monsterCardId === 'sp-earth-dragon');
+  if (!earthDragonFigure) return state;
+
+  const earthDragonOwner = earthDragonFigure.owner;
+
+  const newState: GameState = {
+    ...state,
+    players: state.players.map(p => ({ ...p })),
+    provinces: { ...state.provinces },
+    log: [...state.log],
+  };
+
+  const DAIMYO_IMMUNE_MONSTERS = ['su-yurei', 'sp-fukurokuju'];
+
+  const playersInProvince = [...new Set(province.figures.map(f => f.owner))].filter(pid => pid !== earthDragonOwner);
+
+  for (const playerId of playersInProvince) {
+    const currentProv = newState.provinces[provinceId];
+    const playerFigures = currentProv.figures.filter(f => f.owner === playerId);
+
+    const isImmune = (f: Figure): boolean => {
+      if (f.type === 'daimyo') return true;
+      if (f.type === 'fortress') return true;
+      if (f.type === 'monster' && f.monsterCardId && DAIMYO_IMMUNE_MONSTERS.includes(f.monsterCardId)) return true;
+      return false;
+    };
+
+    let targetFigure: Figure | undefined;
+    targetFigure = playerFigures.find(f => f.type === 'bushi');
+    if (!targetFigure) targetFigure = playerFigures.find(f => f.type === 'shinto');
+    if (!targetFigure) targetFigure = playerFigures.find(f => f.type === 'monster' && !isImmune(f));
+
+    if (!targetFigure) continue;
+
+    // Find first valid adjacent province
+    const provData = PROVINCES_DATA.find(p => p.id === provinceId);
+    if (!provData) continue;
+    const adjacentIds = [...provData.adjacentProvinces, ...provData.seaRoutes];
+    const destProvinceId = adjacentIds.find(id => newState.provinces[id]);
+    if (!destProvinceId) continue;
+
+    // Move the figure
+    newState.provinces[provinceId] = {
+      ...newState.provinces[provinceId],
+      figures: newState.provinces[provinceId].figures.filter(f => f.id !== targetFigure!.id),
+    };
+    newState.provinces[destProvinceId] = {
+      ...newState.provinces[destProvinceId],
+      figures: [...newState.provinces[destProvinceId].figures, targetFigure],
+    };
+
+    const player = newState.players.find(p => p.id === playerId);
+    const destProv = newState.provinces[destProvinceId];
+    const figureTypeName = targetFigure.type === 'monster' && targetFigure.monsterCardId
+      ? (SEASON_CARDS_DATA.find(c => c.id === targetFigure!.monsterCardId)?.name || 'monster')
+      : targetFigure.type;
+    newState.log = [...newState.log, `🐲 Dragon de Tierra mueve ${figureTypeName} de ${player?.name || 'jugador'} a ${destProv?.name || destProvinceId}`];
+  }
+
+  return newState;
+}
+
+/**
+ * Jorogumo pre-battle effect.
+ * At start of battle, take control of 1 enemy Bushi or Shinto in the province.
+ * Returns the modified state and the capture info for later reversion.
+ */
+export function applyJorogumoEffect(state: GameState, provinceId: string): { state: GameState; captured: { figureId: string; originalOwner: string } | null } {
+  const province = state.provinces[provinceId];
+  if (!province) return { state, captured: null };
+
+  const jorogumoFigure = province.figures.find(f => f.type === 'monster' && f.monsterCardId === 'sp-jorogumo');
+  if (!jorogumoFigure) return { state, captured: null };
+
+  const jorogumoOwner = jorogumoFigure.owner;
+
+  // Find an enemy Bushi or Shinto to take control of
+  const targetFigure = province.figures.find(
+    f => f.owner !== jorogumoOwner && (f.type === 'bushi' || f.type === 'shinto')
+  );
+  if (!targetFigure) return { state, captured: null };
+
+  const newState: GameState = {
+    ...state,
+    provinces: { ...state.provinces },
+    log: [...state.log],
+  };
+
+  const originalOwner = targetFigure.owner;
+
+  // Change the figure's owner temporarily
+  newState.provinces[provinceId] = {
+    ...newState.provinces[provinceId],
+    figures: newState.provinces[provinceId].figures.map(f =>
+      f.id === targetFigure.id ? { ...f, owner: jorogumoOwner } : f
+    ),
+  };
+
+  const jorogumoOwnerPlayer = state.players.find(p => p.id === jorogumoOwner);
+  const victimPlayer = state.players.find(p => p.id === originalOwner);
+  newState.log = [...newState.log, `🕷️ Jorogumo de ${jorogumoOwnerPlayer?.name || 'jugador'} toma control de ${targetFigure.type} de ${victimPlayer?.name || 'jugador'}`];
+
+  return { state: newState, captured: { figureId: targetFigure.id, originalOwner } };
+}
+
+/**
+ * Revert Jorogumo effect: change captured figure back to original owner.
+ */
+export function revertJorogumoEffect(state: GameState, provinceId: string, captured: { figureId: string; originalOwner: string }): GameState {
+  const province = state.provinces[provinceId];
+  if (!province) return state;
+
+  const newState: GameState = {
+    ...state,
+    provinces: { ...state.provinces },
+  };
+
+  newState.provinces[provinceId] = {
+    ...newState.provinces[provinceId],
+    figures: newState.provinces[provinceId].figures.map(f =>
+      f.id === captured.figureId ? { ...f, owner: captured.originalOwner } : f
+    ),
+  };
+
+  return newState;
+}
+
+/**
+ * Jikininki passive effect.
+ * Each time another figure is killed in the same province as Jikininki,
+ * the Jikininki owner gains 1 VP and loses honor per kill.
+ */
+export function applyJikinikniEffect(state: GameState, provinceId: string, killedCount: number): void {
+  const province = state.provinces[provinceId];
+  if (!province || killedCount <= 0) return;
+
+  const jikinikiFigure = province.figures.find(f => f.type === 'monster' && f.monsterCardId === 'su-jikininki');
+  if (!jikinikiFigure) return;
+
+  const owner = state.players.find(p => p.id === jikinikiFigure.owner);
+  if (!owner) return;
+
+  owner.victoryPoints += killedCount;
+  for (let i = 0; i < killedCount; i++) {
+    loseHonor(state, jikinikiFigure.owner);
+  }
+  state.log = [...state.log, `💀 Jikininki: ${owner.name} gana ${killedCount} PV y pierde ${killedCount} Honor`];
+}
+
+/**
+ * Koneko death trigger.
+ * When Koneko is killed, owner gains 2 Coins and 2 Ronin.
+ * All OTHER players with figures in that province lose 2 Coins and 2 Ronin.
+ */
+function applyKonekoDeathEffect(state: GameState, provinceId: string, konekoOwnerId: string): void {
+  const province = state.provinces[provinceId];
+  if (!province) return;
+
+  const owner = state.players.find(p => p.id === konekoOwnerId);
+  if (!owner) return;
+
+  owner.coins += 2;
+  owner.ronin += 2;
+
+  const otherPlayersInProvince = [...new Set(province.figures.map(f => f.owner))].filter(pid => pid !== konekoOwnerId);
+  for (const pid of otherPlayersInProvince) {
+    const other = state.players.find(p => p.id === pid);
+    if (!other) continue;
+    other.coins = Math.max(0, other.coins - 2);
+    other.ronin = Math.max(0, other.ronin - 2);
+  }
+
+  state.log = [...state.log, `🐱 Koneko muere: ${owner.name} gana 2 Monedas y 2 Ronin. Otros pierden 2 Monedas y 2 Ronin`];
+}
+
+/**
+ * Ebisu death trigger.
+ * When Ebisu is killed, owner gains 8 Coins.
+ */
+function applyEbisuDeathEffect(state: GameState, ebisuOwnerId: string): void {
+  const owner = state.players.find(p => p.id === ebisuOwnerId);
+  if (!owner) return;
+
+  owner.coins += 8;
+  state.log = [...state.log, `💰 Ebisu muere: ${owner.name} gana 8 Monedas. Total {coin} ${owner.coins}`];
 }
 
 export function resolveNextBattle(state: GameState): GameState {
@@ -2494,6 +2798,23 @@ export function resolveNextBattle(state: GameState): GameState {
     newState.players = fireDragonResult.players;
     newState.provinces = fireDragonResult.provinces;
     newState.log = fireDragonResult.log;
+  }
+
+  // Apply Earth Dragon effect (move 1 figure of each other player out)
+  if (!stepByStepMode) {
+    const earthDragonResult = applyEarthDragonEffect(newState, battle.provinceId);
+    newState.players = earthDragonResult.players;
+    newState.provinces = earthDragonResult.provinces;
+    newState.log = earthDragonResult.log;
+  }
+
+  // Apply Jorogumo effect (take control of 1 enemy figure)
+  let jorogumoCaptured: { figureId: string; originalOwner: string } | null = null;
+  if (!stepByStepMode) {
+    const jorogumoResult = applyJorogumoEffect(newState, battle.provinceId);
+    newState.provinces = jorogumoResult.state.provinces;
+    newState.log = jorogumoResult.state.log;
+    jorogumoCaptured = jorogumoResult.captured;
   }
 
   // Re-read province reference after potential Fire Dragon kills
@@ -2634,6 +2955,10 @@ export function resolveNextBattle(state: GameState): GameState {
         battleDeathCount += killCount;
         const seppukuHonorPos = getHonorRank(newState, highestBidder);
         newState.log = [...newState.log, `${bidder.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV y ${killCount} Honor ahora ${bidder.victoryPoints} PV y posicion ${seppukuHonorPos} en Honor`];
+        // Jikininki trigger for seppuku kills
+        if (killCount > 0) {
+          applyJikinikniEffect(newState, battle.provinceId, killCount);
+        }
         // Compute figure type breakdown for seppuku
         const figTypeCounts: Record<string, number> = {};
         for (const fig of ownFigures) {
@@ -2773,6 +3098,13 @@ export function resolveNextBattle(state: GameState): GameState {
     battle.winner = winnerId;
     const winner = newState.players.find((p) => p.id === winnerId)!;
 
+    // Kitsune effect: whoever wins this war symbol gains 6 VP
+    const kitsuneFigure = finalProvince.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-kitsune');
+    if (kitsuneFigure) {
+      winner.victoryPoints += 6;
+      newState.log = [...newState.log, `🦊 Kitsune: ${winner.name} gana 6 PV por ganar la batalla`];
+    }
+
     // Winner gets the war province token
     const slot = state.warProvinceSlots.find((s) => s.provinceId === battle.provinceId);
     if (slot) {
@@ -2908,6 +3240,27 @@ export function resolveNextBattle(state: GameState): GameState {
       };
     }
 
+    // Koneko and Ebisu death triggers for battle casualties
+    battle.participants.forEach((pid) => {
+      if (pid === winnerId) return;
+      if (winner.allies.includes(pid)) return;
+      const loserFiguresForTriggers = finalProvince.figures.filter(f => f.owner === pid && f.type !== 'fortress');
+      for (const fig of loserFiguresForTriggers) {
+        if (fig.type === 'monster' && fig.monsterCardId === 'su-koneko') {
+          applyKonekoDeathEffect(newState, battle.provinceId, pid);
+        }
+        if (fig.type === 'monster' && fig.monsterCardId === 'au-ebisu') {
+          applyEbisuDeathEffect(newState, pid);
+        }
+      }
+    });
+
+    // Jikininki effect for battle casualties
+    const totalBattleCasualties = killedFigures.reduce((sum, kf) => sum + kf.count, 0);
+    if (totalBattleCasualties > 0) {
+      applyJikinikniEffect(newState, battle.provinceId, totalBattleCasualties);
+    }
+
     // Remove killed figures from province (keep winner's figures, allied figures, daimyos, and fortresses)
     newState.provinces[battle.provinceId] = {
       ...finalProvince,
@@ -2915,6 +3268,12 @@ export function resolveNextBattle(state: GameState): GameState {
         (f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'fortress'
       ),
     };
+
+    // Revert Jorogumo effect (return captured figure to original owner)
+    if (jorogumoCaptured) {
+      const revertedState = revertJorogumoEffect(newState, battle.provinceId, jorogumoCaptured);
+      newState.provinces = revertedState.provinces;
+    }
 
     // Phoenix revival in battle: if any killed loser figure was Phoenix, revive it
     const phoenixKilled = battle.participants
@@ -3357,6 +3716,99 @@ export function scoreWinterUpgrade(gameState: GameState, player: Player, card: S
 // Movement & Utility
 // ============================================================
 
+/**
+ * Apply on-enter effects for monster figures: Benten, Oni of Hate, Oni of Spite.
+ * Called after a monster figure has been placed in a destination province.
+ * Mutates the state in place.
+ */
+function applyMonsterEnterEffects(state: GameState, provinceId: string, figure: Figure, playerId: string): void {
+  if (!figure.monsterCardId) return;
+
+  const province = state.provinces[provinceId];
+  if (!province) return;
+
+  // Benten: force a player to move out 1 of their monsters
+  if (figure.monsterCardId === 'au-benten') {
+    const enemyMonster = province.figures.find(
+      f => f.type === 'monster' && f.owner !== playerId && f.id !== figure.id
+    );
+    if (enemyMonster) {
+      const provData = PROVINCES_DATA.find(p => p.id === provinceId);
+      if (provData) {
+        const adjacentIds = [...provData.adjacentProvinces, ...provData.seaRoutes];
+        const destId = adjacentIds.find(id => state.provinces[id]);
+        if (destId) {
+          state.provinces[provinceId] = {
+            ...state.provinces[provinceId],
+            figures: state.provinces[provinceId].figures.filter(f => f.id !== enemyMonster.id),
+          };
+          state.provinces[destId] = {
+            ...state.provinces[destId],
+            figures: [...state.provinces[destId].figures, enemyMonster],
+          };
+          const enemyOwner = state.players.find(p => p.id === enemyMonster.owner);
+          const monsterName = SEASON_CARDS_DATA.find(c => c.id === enemyMonster.monsterCardId)?.name || 'monster';
+          const destName = state.provinces[destId]?.name || destId;
+          state.log = [...state.log, `✨ Benten fuerza a ${monsterName} de ${enemyOwner?.name || 'jugador'} a moverse a ${destName}`];
+        }
+      }
+    }
+  }
+
+  // Oni of Hate: kill 1 Bushi or Shinto of each player with higher honor
+  if (figure.monsterCardId === 'au-oni-of-hate') {
+    const oniOwnerHonorIdx = state.honorTrack.indexOf(playerId);
+    const playersInProvince = [...new Set(province.figures.map(f => f.owner))].filter(pid => pid !== playerId);
+    let killCount = 0;
+    for (const pid of playersInProvince) {
+      const pidHonorIdx = state.honorTrack.indexOf(pid);
+      if (pidHonorIdx < oniOwnerHonorIdx) {
+        // This player has higher honor (lower index) - kill 1 of their bushi or shinto
+        const currentProv = state.provinces[provinceId];
+        const target = currentProv.figures.find(f => f.owner === pid && (f.type === 'bushi' || f.type === 'shinto'));
+        if (target) {
+          state.provinces[provinceId] = {
+            ...state.provinces[provinceId],
+            figures: state.provinces[provinceId].figures.filter(f => f.id !== target.id),
+          };
+          const victim = state.players.find(p => p.id === pid);
+          if (victim) {
+            if (target.type === 'bushi') victim.bushi += 1;
+            else if (target.type === 'shinto') victim.shinto += 1;
+          }
+          killCount++;
+          state.log = [...state.log, `👹 Oni of Hate: elimina ${target.type} de ${victim?.name || 'jugador'}`];
+        }
+      }
+    }
+    // Jikininki trigger for Oni of Hate kills
+    if (killCount > 0) {
+      applyJikinikniEffect(state, provinceId, killCount);
+    }
+  }
+
+  // Oni of Spite: steal 2 VP from each player with higher honor and any force there
+  if (figure.monsterCardId === 'au-oni-of-spite') {
+    const oniOwnerHonorIdx = state.honorTrack.indexOf(playerId);
+    const owner = state.players.find(p => p.id === playerId);
+    if (!owner) return;
+    const playersInProvince = [...new Set(province.figures.map(f => f.owner))].filter(pid => pid !== playerId);
+    for (const pid of playersInProvince) {
+      const pidHonorIdx = state.honorTrack.indexOf(pid);
+      if (pidHonorIdx < oniOwnerHonorIdx) {
+        // This player has higher honor and has figures here - steal 2 VP
+        const victim = state.players.find(p => p.id === pid);
+        if (victim) {
+          const stolen = Math.min(2, victim.victoryPoints);
+          victim.victoryPoints -= stolen;
+          owner.victoryPoints += stolen;
+          state.log = [...state.log, `😈 Oni of Spite: roba ${stolen} PV de ${victim.name}`];
+        }
+      }
+    }
+  }
+}
+
 export function moveForces(
   state: GameState,
   playerId: string,
@@ -3366,7 +3818,9 @@ export function moveForces(
 ): GameState {
   const newState: GameState = {
     ...state,
+    players: state.players.map(p => ({ ...p })),
     provinces: { ...state.provinces },
+    honorTrack: [...state.honorTrack],
     log: [...state.log],
   };
 
@@ -3405,6 +3859,14 @@ export function moveForces(
         if (fromProvinceId === toProvinceId) continue;
       }
 
+      // Oni of Plagues: players with higher honor cannot move figures to this province
+      const oniOfPlaguesFigure = currentToFigures.find(f => f.type === 'monster' && f.monsterCardId === 'au-oni-of-plagues');
+      if (oniOfPlaguesFigure && oniOfPlaguesFigure.owner !== playerId) {
+        const oniOwnerHonorIdx = state.honorTrack.indexOf(oniOfPlaguesFigure.owner);
+        const moverHonorIdx = state.honorTrack.indexOf(playerId);
+        if (moverHonorIdx < oniOwnerHonorIdx) continue; // Higher honor (lower index) is blocked
+      }
+
       // Luna clan power: max 2 figures per province (excluding fortresses)
       if (player.clanId === 'luna' && figure.type !== 'fortress') {
         const lunaFiguresInDest = currentToFigures.filter(
@@ -3431,6 +3893,13 @@ export function moveForces(
     newState.provinces[toProvinceId] = { ...toProvince, figures: currentToFigures };
     newState.marshalMovedFigures = movedFigureIds;
     newState.log = logEntries;
+
+    // Apply on-enter monster effects for moved figures
+    for (const figureId of figureIds) {
+      const movedFig = currentToFigures.find(f => f.id === figureId);
+      if (!movedFig || movedFig.type !== 'monster' || !movedFig.monsterCardId) continue;
+      applyMonsterEnterEffects(newState, toProvinceId, movedFig, playerId);
+    }
 
     return newState;
   }
@@ -3460,6 +3929,14 @@ export function moveForces(
       if (fromProvinceId === toProvinceId) return state;
     }
 
+    // Oni of Plagues: players with higher honor cannot move figures to this province
+    const oniOfPlaguesFujin = toProvince.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-oni-of-plagues');
+    if (oniOfPlaguesFujin && oniOfPlaguesFujin.owner !== playerId) {
+      const oniOwnerHonorIdx = state.honorTrack.indexOf(oniOfPlaguesFujin.owner);
+      const moverHonorIdx = state.honorTrack.indexOf(playerId);
+      if (moverHonorIdx < oniOwnerHonorIdx) return state; // Higher honor (lower index) is blocked
+    }
+
     // Luna clan power: max 2 figures per province (excluding fortresses)
     if (player.clanId === 'luna' && figure.type !== 'fortress') {
       const lunaFiguresInDest = toProvince.figures.filter(
@@ -3480,12 +3957,25 @@ export function moveForces(
       : figure.type;
     newState.log = [...newState.log, `${player.name} mueve ${figureDisplayName} de ${fromProvince.name} a ${toProvince.name} (Fujin)`];
 
+    // Apply on-enter monster effects for moved figure
+    if (figure.type === 'monster' && figure.monsterCardId) {
+      applyMonsterEnterEffects(newState, toProvinceId, figure, playerId);
+    }
+
     return newState;
   }
 
   // Non-marshal movement (standard)
   // Check valid move (adjacent or sea route)
   if (!isValidMove(fromProvinceId, toProvinceId)) return state;
+
+  // Oni of Plagues: players with higher honor cannot move figures to this province
+  const oniOfPlaguesStd = toProvince.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-oni-of-plagues');
+  if (oniOfPlaguesStd && oniOfPlaguesStd.owner !== playerId) {
+    const oniOwnerHonorIdx = state.honorTrack.indexOf(oniOfPlaguesStd.owner);
+    const moverHonorIdx = state.honorTrack.indexOf(playerId);
+    if (moverHonorIdx < oniOwnerHonorIdx) return state; // Higher honor (lower index) is blocked
+  }
 
   // Verify all figures belong to the player and are in the source province
   const figuresValid = figureIds.every((fid) =>
@@ -3503,6 +3993,13 @@ export function moveForces(
   const player = newState.players.find((p) => p.id === playerId);
   if (player) {
     newState.log = [...newState.log, `${player.name} mueve ${figureIds.length} figuras de ${fromProvince.name} a ${toProvince.name}`];
+  }
+
+  // Apply on-enter monster effects for moved figures
+  for (const fig of movedFigures) {
+    if (fig.type === 'monster' && fig.monsterCardId) {
+      applyMonsterEnterEffects(newState, toProvinceId, fig, playerId);
+    }
   }
 
   return newState;
