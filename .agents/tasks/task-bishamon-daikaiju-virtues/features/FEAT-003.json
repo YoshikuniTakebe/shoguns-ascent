@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Implement ALL virtue card effects (14 virtue cards with game logic triggers)",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. COURAGE (sp-courage): In resolveNextBattle in gameLogic.ts, after a battle winner is determined and the war province token is awarded (around line 3112), check if the winner has sp-courage card. If so, award 2 VP. Log it. Use hasCard pattern with the player's seasonCards cardIds set.",
     "2. PIETY (sp-piety): In the same battle resolution area, after war token is awarded, check if winner has sp-piety AND if the winner has at least one shinto figure in that battle province. If both conditions met, gain Honor (move up in honorTrack) and 3 VP. Use gainHonor utility.",
@@ -43,5 +43,5 @@
     "cd /projects/sandbox/shoguns-ascent && npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "All 14 virtue card effects implemented. Key design decisions: (1) hasCard moved to top of file and exported for use in gameStore.ts and server. (2) applyLoyaltyBonus and applyRighteousnessVP helper functions created at top of file for reuse. (3) Mercy completely prevents killing - wraps all kill logic, death triggers (Koneko/Ebisu/Jikininki), figure removal, and Phoenix revival in mercy check. (4) Righteousness triggers in 5 locations: battle casualties, seppuku, Fire Dragon, Oni of Hate, and betray figure replacement. (5) Loyalty bonus applied at major VP gain points (battle win effects, hostage taking, seppuku, kitsune, imperial poets). (6) Generosity and benevolence auto-select poorest player as recipient. (7) gainHonor is void/mutative - used directly without reassigning state. (8) Dignity implemented in both gameStore.ts (hotseat) and server index.ts (online mode)."
 }
