@@ -504,7 +504,7 @@ export const AUTUMN_CARDS: SeasonCard[] = [
   { id: 'au-path-of-the-unrighteous-2', name: 'Path of the Unrighteous', cost: 0, season: 'autumn', group: 'Teapot', cardType: 'upgrade', effect: 'Dishonorable Upgrade - Each time you Betray, may replace 1 additional figure of any player (even worshipping Shinto).' },
   { id: 'au-path-of-the-spirit', name: 'Path of the Spirit', cost: 2, season: 'autumn', group: 'Horseman', cardType: 'upgrade', effect: 'After you Summon, gain 2 Coins and 2 VP if you have highest Honor.' },
   { id: 'au-river-dragon', name: 'River Dragon', cost: 3, season: 'autumn', group: 'Core', cardType: 'monster', effect: 'Force 5.', force: 5 },
-  { id: 'au-sacred-warrior', name: 'Sacred Warrior', cost: 0, season: 'autumn', group: 'Kickstarter Exclusive', cardType: 'monster', effect: 'Force +1 per Virtue card you own.' },
+  { id: 'au-sacred-warrior', name: 'Sacred Warrior', cost: 0, season: 'autumn', group: 'Kickstarter Exclusive', cardType: 'monster', effect: 'Force +1 per Virtue card you own.', force: 1 },
   { id: 'au-way-of-naginata', name: 'Way of Naginata', cost: 0, season: 'autumn', group: 'Tower', cardType: 'warUpgrade', effect: 'At start of War Phase - Move one of your Bushi to any Province.' },
   { id: 'au-way-of-the-katana', name: 'Way of the Katana', cost: 3, season: 'autumn', group: 'Archway', cardType: 'warUpgrade', effect: 'During War Phase all your Bushi have Force 2.' },
   { id: 'au-way-of-the-keiri', name: 'Way of the Keiri', cost: 0, season: 'autumn', group: 'Mountain', cardType: 'warUpgrade', effect: 'At start of War Phase - Kill up to 2 opponent Bushi/Shinto in Daimyo Province, gain 3 VP each.' },

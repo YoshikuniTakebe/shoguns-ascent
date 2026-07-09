@@ -1591,7 +1591,19 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
   } else if (figure.type === 'shinto') {
     figureOwner.shinto += 1;
   } else if (figure.type === 'monster') {
-    figureOwner.monsters += 1;
+    // Phoenix resurrection: if Phoenix is targeted by Betray, it revives in the same province
+    if (figure.monsterCardId === 'sp-phoenix') {
+      figureOwner.victoryPoints += 1;
+      const phoenixId = Math.random().toString(36).substring(2, 10);
+      const phoenixFigure: Figure = { type: 'monster', owner: figure.owner, id: phoenixId, monsterCardId: 'sp-phoenix' };
+      newState.provinces[provinceId] = {
+        ...newState.provinces[provinceId],
+        figures: [...newState.provinces[provinceId].figures, phoenixFigure],
+      };
+      newState.log = [...newState.log, `Phoenix renace en ${province.name} - ${figureOwner.name} gana 1 PV`];
+    } else {
+      figureOwner.monsters += 1;
+    }
   }
 
   // Decrement issuer's reserve
@@ -3627,6 +3639,14 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
         if (isLuna) figForce = Math.max(figForce, 2);
       } else if (fig.monsterCardId === 'sp-daikokuten') {
         figForce = (state.currentPhase === 'politics' && state.harvestMandateActive) ? 8 : 1;
+        if (isLuna) figForce = Math.max(figForce, 2);
+      } else if (fig.monsterCardId === 'su-bishamon') {
+        const hasOtherMonster = province.figures.some(f => f.type === 'monster' && f.monsterCardId !== 'su-bishamon' && f.id !== fig.id);
+        figForce = hasOtherMonster ? 4 : 1;
+        if (isLuna) figForce = Math.max(figForce, 2);
+      } else if (fig.monsterCardId === 'au-sacred-warrior') {
+        const virtueCount = player?.seasonCards.filter(c => c.cardType === 'virtue').length || 0;
+        figForce = 1 + virtueCount;
         if (isLuna) figForce = Math.max(figForce, 2);
       } else {
         // Other monsters with defined force always use their card force
