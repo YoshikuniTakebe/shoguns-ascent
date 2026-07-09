@@ -1,0 +1,27 @@
+{
+  "project_type": "React + TypeScript + Vite frontend with Express 5 + WebSocket + SQLite backend",
+  "language": "TypeScript",
+  "build_system": "Vite + npm scripts",
+  "test_framework": "No test framework detected; manual verification only",
+  "build_command": "npm run build",
+  "test_command": "npx tsc --noEmit",
+  "verification_instructions": "1. Run 'npx tsc --noEmit' to verify TypeScript compiles. 2. Run 'npm run build' to verify Vite build succeeds.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "npm install",
+  "environment_constraints": "No test runner. No docker. Verification is TypeScript compilation and Vite build.",
+  "contribution_requirements": "Push directly to main branch.",
+  "key_patterns": "Zustand store in src/store/gameStore.ts (3953 lines) holds all game logic for hotseat mode plus client-side optimistic updates. Server in src/server/index.ts (2412 lines) handles online message routing. Types in src/types/game.ts. Game logic utilities in src/utils/gameLogic.ts. CSS in src/App.css (single file). Dual-type monsters: Fukurokuju (sp-fukurokuju) = daimyo + fortress, Hotei (su-hotei) = shinto, Komainu (sp-komainu) = shinto, Yurei (su-yurei) = daimyo. Temple figures stored as { playerId, figureId } without monsterCardId. Monster placement uses monsterPlacementPopupVisible/monsterPlacementCard/komainuChoiceVisible in store. Reserve display via computeReserveTotals in PlayerPanel.tsx. Kami summary ready-check uses KAMI_SUMMARY_READY messages to server; server checks kamiSummaryReadyPlayers count but does NOT validate that kamiSummaryVisible is true before accepting ready signals.",
+  "relevant_files": [
+    "src/components/GameBoard.tsx",
+    "src/components/ActionPanel.tsx",
+    "src/components/PlayerPanel.tsx",
+    "src/components/TemplePanel.tsx",
+    "src/components/KamiSummaryPopup.tsx",
+    "src/store/gameStore.ts",
+    "src/server/index.ts",
+    "src/utils/gameLogic.ts",
+    "src/types/game.ts",
+    "src/App.css"
+  ],
+  "directory_structure": "src/components/ - all UI components, src/store/gameStore.ts - Zustand state, src/server/index.ts - Express+WS server, src/utils/gameLogic.ts - pure game logic functions, src/types/game.ts - TypeScript types and constants, src/App.css - all styles"
+}

@@ -1,0 +1,29 @@
+{
+  "id": "FEAT-002",
+  "type": "fix",
+  "description": "Fix dual-type monster reserve counting in PlayerPanel and recruit button counts. Fix monster tooltip to show praying status. Show monster icon in temples instead of shinto icon for praying monsters.",
+  "status": "completed",
+  "steps": [
+    "STEP 1: Update the Temple type in src/types/game.ts to include an optional monsterCardId field in temple figures: change the figures array type from { playerId: string; figureId: string }[] to { playerId: string; figureId: string; monsterCardId?: string }[].",
+    "STEP 2: In src/store/gameStore.ts, in the doKomainuPlaceAtTemple function (around line 2129), when adding the new figure to updatedFigures, include the monsterCardId from komainuPrayCardId. Change { playerId: komainuPrayPlayerId, figureId } to { playerId: komainuPrayPlayerId, figureId, monsterCardId: komainuPrayCardId }.",
+    "STEP 3: In src/server/index.ts, in the MONSTER_PLACED case (around line 1500) where templeId is handled and a figure is added with { playerId: data.playerId, figureId }, also include monsterCardId: cardId.",
+    "STEP 4: Fix the computeReserveTotals function in src/components/PlayerPanel.tsx. Current issue: player.monsters only decrements when a monster is placed on the MAP, not when it goes to pray at a temple. The code currently uses a heuristic (notOnMap.length > player.monsters) to detect Komainu at temple. The correct fix:\n  - Gather temple figures that belong to this player AND have a monsterCardId. These are shinto-type monsters praying.\n  - The monstersInReserve should be: total monster cards owned MINUS deployed on map MINUS praying at temples.\n  - For the effective monster reserve count, include ALL monsters in reserve (whether shinto-type or daimyo-type).\n  - For shinto reserve: add shinto-type monsters that are IN RESERVE (not deployed, not praying) to player.shinto.\n  - For daimyo reserve: add daimyo-type monsters that are IN RESERVE (not deployed, not praying) to player.hasDaimyo count.\n  - For the tooltip: monsters in reserve show in clan color; monsters deployed on map show grey with '(mapa)'; monsters praying at temple show grey with '(Rezando)'.",
+    "STEP 5: In the ActionPanel.tsx recruit buttons section, the count displayed next to each recruit type button should match the effective reserve count (including dual types). Currently the monster button shows cp.monsters (which doesn't account for praying), bushi shows cp.bushi, shinto shows cp.shinto. Change the shinto button count to show (cp.shinto + shinto-type monsters in reserve that are not praying), and the monster button to show the actual monster cards in reserve count. The daimyo count logic already accounts for daimyo-type monsters.",
+    "STEP 6: In src/components/TemplePanel.tsx, when rendering figures in a temple slot (the section with kami-figure-dot spans around line 160), check if the figure has a monsterCardId. If it does, render the MonsterIcon SVG instead of the shinto torii SVG. Import MonsterIcon from './Icons'. Also add a tooltip (title attribute or custom tooltip) that shows the monster name and its effect/force, similar to how monsters are shown on the map. Find the monster card data from SEASON_CARDS_DATA (import from types/game.ts) using the monsterCardId to get name, effect, and force.",
+    "STEP 7: When a dual-type monster (shinto-type: Komainu/Hotei) is recruited from reserve, the shinto reserve count should also decrease. And when a daimyo-type monster (Yurei/Fukurokuju) is recruited, the daimyo reserve count should also decrease. The display logic in computeReserveTotals already handles this because recruiting decrements player.monsters, and the computeReserveTotals derives effective counts. Verify that the recruit button count in ActionPanel also updates. No code change needed here if the counts are computed dynamically from state - just verify."
+  ],
+  "acceptance_criteria": [
+    "Temple figures can store monsterCardId when a monster (Komainu/Hotei) is placed at a temple",
+    "PlayerPanel reserve display shows correct counts: shinto reserve includes shinto-type monsters in reserve (not praying, not on map); daimyo reserve includes daimyo-type monsters in reserve; monster reserve shows actual monsters in reserve (total owned - deployed - praying)",
+    "Monster tooltip shows monsters in clan color if in reserve, grey with '(mapa)' if on map, grey with '(Rezando)' if praying at temple",
+    "TemplePanel shows MonsterIcon (not shinto torii) for praying monsters, with a tooltip showing monster name and effect",
+    "Recruit button counts match effective reserve values",
+    "TypeScript compilation passes"
+  ],
+  "verification": [
+    "Run 'npx tsc --noEmit' to confirm no type errors",
+    "Run 'npm run build' to confirm Vite build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": "Successfully replaced the brittle player.monsters heuristic with explicit monsterCardId tracking on temple figures. The Temple type now stores monsterCardId when Komainu/Hotei is placed. computeReserveTotals scans temple figures for monsterCardId to determine praying status. All recruit button popups in ActionPanel also updated to use temple-based praying detection. TemplePanel shows MonsterIcon with tooltip for praying monsters. TypeScript and Vite build pass cleanly. Post-review: extracted all reserve computation into src/utils/reserveUtils.ts shared utility, added fallback heuristic for legacy saves (temple figures without monsterCardId are inferred as praying monsters when player owns unaccounted shinto-type monsters), and removed 3 duplicated IIFE blocks in ActionPanel."
+}

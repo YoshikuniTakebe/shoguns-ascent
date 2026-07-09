@@ -1,0 +1,23 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Legend button position fix and monster selector as centered popup modal during recruit",
+  "status": "completed",
+  "steps": [
+    "In src/components/GameBoard.tsx, find the div with class 'legend-button-wrapper' (around line 230) and change its inline style from style={{ left: '20rem' }} to style={{ right: '-18rem' }}.",
+    "In src/components/ActionPanel.tsx, the two monster selection sections (recruitMonsterSelectionVisible block around line 475 and recruitDaimyoSelectionVisible block around line 510) currently render inline within the recruit-active div. Refactor both into centered popup modals. They should render via createPortal to document.body, using a backdrop (class 'monster-placement-popup' or similar full-screen overlay) and a centered card content area. Keep the same selection buttons/layout inside but wrap them in a popup container styled similarly to other game popups (dark overlay, centered card with border in clan color). Import createPortal from 'react-dom' if not already imported.",
+    "Add CSS styles in src/App.css for the monster recruit popup if needed, or reuse existing monster-placement-popup styles which already provide a centered backdrop+card layout."
+  ],
+  "acceptance_criteria": [
+    "The legend button wrapper uses style right: -18rem instead of left: 20rem",
+    "During recruit, when clicking to place a monster and multiple options exist, the selection appears as a centered modal/popup over the entire viewport, not embedded in the sidebar",
+    "Same for daimyo selection popup - appears as centered modal",
+    "TypeScript compilation passes with no errors"
+  ],
+  "verification": [
+    "Run 'npx tsc --noEmit' to confirm no type errors",
+    "Run 'npm run build' to confirm Vite build succeeds"
+  ],
+  "blocked_reason": null,
+  "findings": "Both changes applied cleanly. Used existing .monster-placement-popup and .monster-placement-popup-content CSS classes for the centered modals. The border color is overridden via inline style to use the clan color. No additional CSS needed."
+}
