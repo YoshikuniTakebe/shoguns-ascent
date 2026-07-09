@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "fix",
   "description": "Fix the Kami phase race condition in online play where a player can accept the KamiSummaryPopup before other clients have received the state update showing the summary, causing the phase to break.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "STEP 1: In src/server/index.ts, in the 'KAMI_SUMMARY_READY' case handler (around line 1168), add a guard at the top that rejects the ready signal if kamiSummaryVisible is NOT true on the server state. This prevents players from sending early ready signals before the summary is actually active. Add: if (!l.gameState.kamiSummaryVisible) return;",
     "STEP 2: In the same KAMI_SUMMARY_READY handler, also ensure that after the Ryujin monster purchase flow completes (advanceKamiResolution is called), the kamiSummaryVisible is properly set. The current flow for Ryujin buying a monster during kami resolution is: RYUJIN_BUY -> if monster, wait for MONSTER_PLACED -> in MONSTER_PLACED handler, call advanceKamiResolution. If that was the last temple, advanceKamiResolution sets kamiSummaryVisible: true. Verify this path is correct by reading the MONSTER_PLACED handler where kamiResolutionActive is true (line ~1546). The issue is: the summary becomes visible in the broadcast, but the resolving player's client may get the updated state and immediately click 'accept' before other clients have rendered the popup. The guard in step 1 fixes this at the server level because the server state has kamiSummaryVisible: true only after broadcastState. The real race is: Player A receives broadcast, renders popup, clicks accept immediately while Player B's state update is still in flight. But since the server state already has kamiSummaryVisible: true, the guard works. The fix from step 1 is sufficient.",
@@ -20,5 +20,5 @@
     "Run 'npm run build' to confirm Vite build succeeds"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Server guard and client debounce both implemented. The server guard is the primary fix (rejects early KAMI_SUMMARY_READY if kamiSummaryVisible is false). The 500ms client debounce is a secondary safety net. Both tsc and vite build pass cleanly."
 }
