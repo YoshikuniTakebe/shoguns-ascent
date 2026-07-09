@@ -813,14 +813,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   resumeGame: async (gameId) => {
     try {
-      const snapshotsRes = await fetch(`${API_BASE}/api/games/${gameId}/snapshots`);
-      const snapshots = await snapshotsRes.json();
-      if (snapshots.length === 0) return;
-      const lastSnapshot = snapshots[snapshots.length - 1];
-      const gameState = lastSnapshot.state as GameState;
+      // Fetch game record to check mode without loading full snapshots
+      const gameRes = await fetch(`${API_BASE}/api/games/${gameId}`);
+      const gameRecord = await gameRes.json();
 
-      // Check if this is an online game - if so, connect via WebSocket
-      if (gameState.mode === 'online') {
+      // Check if this is an online game - if so, connect via WebSocket for rejoin
+      if (gameRecord.mode === 'online') {
         set({
           persistentGameId: gameId,
           screen: 'game',
@@ -834,6 +832,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
 
       // Hotseat flow - load snapshot directly
+      const snapshotsRes = await fetch(`${API_BASE}/api/games/${gameId}/snapshots`);
+      const snapshots = await snapshotsRes.json();
+      if (snapshots.length === 0) return;
+      const lastSnapshot = snapshots[snapshots.length - 1];
+      const gameState = lastSnapshot.state as GameState;
+
       const authUser = get().authUser;
       const storedPlayerId = localStorage.getItem('shoguns-ascent-playerId');
       const storedUsername = get().username;
@@ -3913,7 +3917,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     };
     ws.onclose = () => {
       const currentScreen = get().screen;
-      if (currentScreen === 'lobby') {
+      if (get().rejoinWaitingVisible) {
+        // WS closed while waiting for players to rejoin - reset popup and return to menu
+        set({ ws: null, rejoinWaitingVisible: false, rejoinPlayerStatuses: [], lobbyState: null, lobbyId: null, screen: 'menu' });
+      } else if (currentScreen === 'lobby') {
         set({ ws: null, lobbyState: null, lobbyId: null, screen: 'menu' });
       } else {
         set({ ws: null });

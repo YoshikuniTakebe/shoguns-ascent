@@ -2223,6 +2223,23 @@ wss.on('connection', (ws: WebSocket, req) => {
             }
           }
 
+          // Verify player membership before creating or joining a lobby
+          if (existingLobby) {
+            const matchedPlayer = existingLobby.gameState?.players.find(p => p.id === playerId);
+            if (!matchedPlayer) {
+              ws.send(JSON.stringify({ type: 'ERROR', message: 'Player not part of this game' }));
+              return;
+            }
+          } else {
+            // Check membership via game_players table before loading snapshot
+            const gamePlayers = getGamePlayersByGameId(gameId);
+            const isMember = gamePlayers.some(gp => gp.user_id === playerId);
+            if (!isMember) {
+              ws.send(JSON.stringify({ type: 'ERROR', message: 'Player not part of this game' }));
+              return;
+            }
+          }
+
           let l: Lobby;
           if (existingLobby) {
             l = existingLobby;
@@ -2324,6 +2341,10 @@ wss.on('connection', (ws: WebSocket, req) => {
           l.players = l.players.filter((p) => p.id !== playerId);
           if (l.players.length === 0) lobbies.delete(currentLobbyId);
           else {
+            // NOTE: If the last player disconnects (lobby deleted above) and quickly reconnects,
+            // they will create a brand-new lobby from the snapshot. This is acceptable behavior
+            // since the snapshot is the source of truth, but it means transient WS flaps for
+            // the last connected player will reset the lobby state to the last persisted snapshot.
             broadcastLobby(l);
             // If the game is started (rejoin scenario), broadcast updated rejoin status
             if (l.started && l.gameState) {
