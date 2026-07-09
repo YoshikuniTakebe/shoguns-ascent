@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Implement online saved game rejoin with a 'waiting for all players' popup. Currently, resumeGame() (in gameStore.ts) only loads the snapshot via REST API without establishing a WebSocket connection, so players cannot send/receive actions (e.g., tea ceremony proposals don't arrive). The fix requires: (1) a server-side REJOIN_GAME WebSocket message handler that creates/finds a lobby for the game, loads the latest snapshot, and adds the player to the lobby, (2) the client resumeGame function connecting via WebSocket and sending REJOIN_GAME instead of just loading the snapshot locally, (3) a 'waiting for players' popup shown when entering a saved game that displays all players with their clan shield, name (in clan color), and status (Listo!/Ready! or Esperando.../Waiting...), blocking all game interaction until all players are connected, then auto-closing.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "In src/server/index.ts, add a new WebSocket message handler 'REJOIN_GAME' inside the ws.on('message') switch block. This handler should: (a) accept data.gameId, (b) check if a lobby with persistentGameId matching data.gameId already exists (iterate lobbies Map), (c) if no lobby exists, create one: load the latest snapshot from the database using getLatestSnapshot(data.gameId), parse the state, create a new Lobby with the game state, set started=true, persistentGameId=data.gameId, maxPlayers = gameState.players.length, (d) check if the authenticated user's playerId matches any player in the gameState.players array, (e) add the reconnecting player to the lobby's players array (with their ws reference), update their ws if they were already there, (f) send GAME_STATE to the reconnecting player plus a REJOIN_STATUS message with all player IDs and which are currently connected, (g) broadcast REJOIN_STATUS to all connected lobby players so they update their popup.",
     "In src/server/index.ts, add a REJOIN_STATUS broadcast helper. After each REJOIN_GAME, broadcast to all connected lobby players a message: { type: 'REJOIN_STATUS', players: [{id, name, clanId, connected: boolean}...], allConnected: boolean }. When allConnected becomes true, also broadcast a REJOIN_COMPLETE message so clients can dismiss the popup and resume normal play.",
@@ -26,5 +26,5 @@
     "npx tsc --noEmit"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation completed successfully. The REJOIN_GAME handler on the server reuses existing lobbies when available (keyed by persistentGameId), otherwise creates a new lobby from the latest snapshot. The LOBBY_JOINED message handler on the client was modified to not switch to 'lobby' screen when rejoinWaitingVisible is true (since we are already on the 'game' screen). The server close handler now broadcasts REJOIN_STATUS to remaining players when someone disconnects from a started game lobby. TypeScript compilation passes cleanly."
 }
