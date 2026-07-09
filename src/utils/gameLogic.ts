@@ -2185,13 +2185,17 @@ export function initiateWarPhase(state: GameState): GameState {
     const prov = newState.provinces[provId];
     const daikaijuFigure = prov.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-daikaiju');
     if (!daikaijuFigure) continue;
-    // Find first battle province with contested battle
-    const targetBattleProvince = battleProvinceIds.find(bpId => {
+    // Find first battle province with contested battle (multiple players)
+    let targetBattleProvince = battleProvinceIds.find(bpId => {
       const bp = newState.provinces[bpId];
       if (!bp) return false;
       const owners = [...new Set(bp.figures.map(f => f.owner))];
-      return owners.length >= 1;
+      return owners.length >= 2;
     });
+    // Fallback to first battle province if no contested one found
+    if (!targetBattleProvince) {
+      targetBattleProvince = battleProvinceIds[0];
+    }
     if (!targetBattleProvince) continue;
     // Move Daikaiju to the battle province (if not already there)
     if (provId !== targetBattleProvince) {
