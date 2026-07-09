@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Complete rework of Daikaiju: interactive province selection popup after war phase summary, with multi-player acknowledgment flow",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "1. Add new GameState properties in src/types/game.ts GameState interface: daikaijuPlacementActive: boolean, daikaijuPlacementPlayerId: string | null, daikaijuSummaryVisible: boolean, daikaijuSummaryReadyPlayers: string[], daikaijuSummaryData: { provinceId: string; provinceName: string; destroyedFortresses: { playerId: string; playerName: string; count: number }[] } | null",
     "2. In src/utils/gameLogic.ts initiateWarPhase function (around line 2183), REMOVE the existing automatic Daikaiju placement logic. Replace with: find if any player has Daikaiju on the map (it should be in a special 'ocean' province). If found, set daikaijuPlacementActive = true and daikaijuPlacementPlayerId to the owner's id. Also initialize daikaijuSummaryVisible = false, daikaijuSummaryReadyPlayers = [], daikaijuSummaryData = null in the newState reset at the top of initiateWarPhase.",
@@ -31,5 +31,5 @@
     "cd /projects/sandbox/shoguns-ascent && npm run build"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Implementation complete. Key design decisions: (1) Daikaiju auto-places in ocean province during confirmMonsterPlacement (no province selection UI needed for initial placement). (2) The flow is: War popup -> all dismiss -> Daikaiju placement popup (owner clicks map, others wait) -> summary popup (all must accept) -> resolveUncontestedBattles/battles. (3) Online mode uses DAIKAIJU_PLACE_PROVINCE and DAIKAIJU_SUMMARY_READY socket messages. (4) detectWarTransition blocks battle start when daikaijuPlacementActive or daikaijuSummaryVisible. (5) Ocean province excluded from war token selection, map rendering, and RegionCard list. (6) ALL fortresses destroyed including Daikaiju owner's own."
 }
