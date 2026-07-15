@@ -958,3 +958,16 @@ server restart — no longer loses the game.
   soon as the bought card disappears from the shared deck (including Benevolence follow-up flows).
 - The saved affected game still had Benevolence in the deck and Sol as the active Train buyer, so no
   card, Coin or turn data was lost by the failed attempt. The production build passes.
+
+## Changelog - 2026-07-16 (legacy Jurojin placement recovery)
+
+- The repeated Benevolence rejection was traced to the affected snapshot, not to Benevolence: an
+  older self-triggering Jurojin notice advanced Train from Granvi to Noboru before Jurojin was ever
+  placed, while leaving `pendingMonsterPlacementCardId=sp-jurojin` behind.
+- Resume now removes that specific invalid self-reward notice, log entry and 3 Coins while preserving
+  Jurojin as an unfinished placement. Granvi receives the normal placement UI after reconnecting.
+- A restored Monster placement may now be completed by its authenticated owner even when Train has
+  already moved to the next buyer. Completing it does not increment Train a second time, so Noboru
+  remains the current Sol buyer and can then purchase Benevolence normally.
+- The current snapshot was verified to contain no Jurojin figure on the map or in a shrine, with
+  pending order index 2 and current Train index 3. The production build passes.

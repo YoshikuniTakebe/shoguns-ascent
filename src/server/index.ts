@@ -870,7 +870,32 @@ function startLobbyGame(l: Lobby): void {
 }
 
 function restorePendingMonsterPlacement(state: GameState): GameState {
-  if (state.pendingMonsterPlacementCardId && state.pendingMonsterPlacementPlayerId) return state;
+  if (state.pendingMonsterPlacementCardId && state.pendingMonsterPlacementPlayerId) {
+    // Repair snapshots created while Jurojin incorrectly rewarded its own purchase. The
+    // acknowledgement advanced Train before the Monster was placed, leaving a stale placement
+    // that blocked every later purchase. Keep the placement pending, but undo only that reward.
+    if (state.pendingMonsterPlacementCardId === 'sp-jurojin') {
+      const ownerId = state.pendingMonsterPlacementPlayerId;
+      const owner = state.players.find(player => player.id === ownerId);
+      const rewardPrefix = owner ? `${owner.name} obtiene 3 monedas por adquirir Jurojin (Jurojin).` : null;
+      const invalidRewardIndex = rewardPrefix
+        ? state.log.findIndex(entry => entry.startsWith(rewardPrefix))
+        : -1;
+      if (owner && invalidRewardIndex >= 0) {
+        return {
+          ...state,
+          players: state.players.map(player => player.id === ownerId
+            ? { ...player, coins: Math.max(0, player.coins - 3) }
+            : player),
+          log: state.log.filter((_, index) => index !== invalidRewardIndex),
+          pendingRuleNotices: (state.pendingRuleNotices || []).filter(notice =>
+            !(notice.type === 'jurojin' && notice.actorId === ownerId)
+          ),
+        };
+      }
+    }
+    return state;
+  }
   if (!state.trainMandateActive) return state;
 
   const expectedPlayerId = state.trainResolutionOrder[state.trainResolutionIndex];
@@ -2246,10 +2271,14 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'MONSTER_PLACED': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
-          // Validate that the sender is the current train resolution player
-          if (l.gameState.trainMandateActive) {
+          const pendingPlacementPlayerId = l.gameState.pendingMonsterPlacementPlayerId;
+          // A restored placement may belong to the previous Train buyer. That owner must finish
+          // placing while the current buyer keeps their purchase turn.
+          if (pendingPlacementPlayerId) {
+            if (playerId !== pendingPlacementPlayerId) return;
+          } else if (l.gameState.trainMandateActive) {
             const expectedPlayer = l.gameState.trainResolutionOrder[l.gameState.trainResolutionIndex];
-            if (data.playerId !== expectedPlayer) return;
+            if (playerId !== expectedPlayer) return;
           }
           // Validate that the sender is the kami resolution player (for Ryujin monster purchases)
           if (l.gameState.kamiResolutionActive && l.gameState.kamiResolutionCurrentPlayerId) {
@@ -2259,8 +2288,12 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!cardId) return;
           if (l.gameState.pendingMonsterPlacementCardId && (
             l.gameState.pendingMonsterPlacementCardId !== cardId ||
-            l.gameState.pendingMonsterPlacementPlayerId !== data.playerId
+            l.gameState.pendingMonsterPlacementPlayerId !== playerId
           )) return;
+          const placementTrainIndex = l.gameState.trainResolutionOrder.indexOf(playerId);
+          const placementWasFromEarlierTrainTurn = l.gameState.trainMandateActive
+            && placementTrainIndex >= 0
+            && placementTrainIndex < l.gameState.trainResolutionIndex;
           let s = l.gameState;
           let placementRuleNoticeAdded = false;
 
@@ -2273,12 +2306,12 @@ wss.on('connection', (ws: WebSocket, req) => {
 
             let updatedFigures = [...temple.figures];
             let updatedPlayers = s.players;
-            const placingPlayer = s.players.find(p => p.id === data.playerId);
+            const placingPlayer = s.players.find(p => p.id === playerId);
             let placementLog = `${placingPlayer?.name || 'Jugador'} coloca a ${cardId === 'su-hotei' ? 'Hotei' : 'Komainu'} como shinto en santuario de ${capitalize(temple.kamiType)}`;
 
             // Hotei replacement logic
             if (replaceFigureId) {
-              const replacedFigure = temple.figures.find(f => f.figureId === replaceFigureId && f.playerId !== data.playerId);
+              const replacedFigure = temple.figures.find(f => f.figureId === replaceFigureId && f.playerId !== playerId);
               if (replacedFigure) {
                 const victim = s.players.find(p => p.id === replacedFigure.playerId);
                 const replacedName = replacedFigure.monsterCardId
@@ -2295,7 +2328,7 @@ wss.on('connection', (ws: WebSocket, req) => {
                   pendingRuleNotices: [...(s.pendingRuleNotices || []), {
                     id: uuidv4(),
                     type: 'hotei',
-                    actorId: data.playerId,
+                    actorId: playerId,
                     targetId: replacedFigure.playerId,
                     requiredPlayerIds: [replacedFigure.playerId],
                     acknowledgedPlayerIds: [],
@@ -2309,7 +2342,7 @@ wss.on('connection', (ws: WebSocket, req) => {
               placementLog = `${placingPlayer?.name || 'Jugador'} coloca a Hotei en santuario de ${capitalize(temple.kamiType)} sin sustituir ninguna figura`;
             }
 
-            updatedFigures = [...updatedFigures, { playerId: data.playerId, figureId, monsterCardId: cardId }];
+            updatedFigures = [...updatedFigures, { playerId, figureId, monsterCardId: cardId }];
             const updatedTemples = [...s.temples];
             updatedTemples[templeIndex] = { ...temple, figures: updatedFigures };
 
@@ -2319,16 +2352,16 @@ wss.on('connection', (ws: WebSocket, req) => {
               temples: updatedTemples,
               log: [...s.log, placementLog],
             };
-            applyDignityMonsterSummon(s, data.playerId);
+            applyDignityMonsterSummon(s, playerId);
             // Upgrade: Path of the Warlord - placing a purchased monster (Komainu/Hotei) is a summon.
-            s = grantWarlordSummonCoin(s, data.playerId);
+            s = grantWarlordSummonCoin(s, playerId);
           } else if (provinceId) {
             // Monster placed in province
             const province = s.provinces[provinceId];
             if (!province) return;
             const monsterName = SEASON_CARDS_DATA.find(card => card.id === cardId)?.name || 'Monstruo';
             const figureId = Math.random().toString(36).substring(2, 10);
-            const newFigure = { type: 'monster' as const, owner: data.playerId, id: figureId, monsterCardId: cardId };
+            const newFigure = { type: 'monster' as const, owner: playerId, id: figureId, monsterCardId: cardId };
             s = {
               ...s,
               provinces: {
@@ -2340,9 +2373,9 @@ wss.on('connection', (ws: WebSocket, req) => {
               },
               log: [...s.log, `${monsterName} colocado en ${province.name}`],
             };
-            applyDignityMonsterSummon(s, data.playerId);
+            applyDignityMonsterSummon(s, playerId);
             // Upgrade: Path of the Warlord - placing a purchased monster on the board is a summon.
-            s = grantWarlordSummonCoin(s, data.playerId);
+            s = grantWarlordSummonCoin(s, playerId);
             s = prepareMonsterEnterDecision(s, provinceId, figureId, s.kamiResolutionActive && !s.trainMandateActive ? 'advance-kami' : 'advance-train');
           } else if (reserve) {
             // Monster goes to reserve (Luna no valid province or cancel)
@@ -2372,7 +2405,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (s.kamiResolutionActive && !s.trainMandateActive) {
             // Monster placed during kami resolution (e.g., Ryujin purchase)
             s = advanceKamiResolution(s);
-          } else {
+          } else if (!placementWasFromEarlierTrainTurn) {
             // Monster placed during train mandate resolution
             s = { ...s, trainResolutionIndex: s.trainResolutionIndex + 1 };
             s = advanceTrainResolution(s);
