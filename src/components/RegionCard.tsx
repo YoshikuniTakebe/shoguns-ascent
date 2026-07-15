@@ -6,7 +6,7 @@ import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, SPRING_CARDS, SUMMER_CARDS, AUT
 import type { Figure, GameState } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon } from './Icons';
-import { getPlayerSeasonCardEffects } from '../utils/gameLogic';
+import { countVirtueCards, getFujinMovementCost, getPlayerSeasonCardEffects } from '../utils/gameLogic';
 import { renderCardEffect } from '../utils/renderCardEffect';
 import { getCardEffectKey } from '../utils/cardTranslations';
 
@@ -76,19 +76,40 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
       return ownerClanId === 'tortuga' ? 1 : 0;
     case 'monster':
       if (figure.monsterCardId) {
+        const isLuna = ownerClanId === 'luna';
+        const province = gameState.provinces[regionId];
+        if (figure.monsterCardId === 'sp-oni-of-skulls' || figure.monsterCardId === 'su-oni-of-blood') {
+          const ownerIds = [...new Set(province?.figures.map(f => f.owner) || [])];
+          const ownerHonorIndex = gameState.honorTrack.indexOf(figure.owner);
+          const otherOwnerIds = ownerIds.filter(id => id !== figure.owner);
+          const hasLowestHonor = otherOwnerIds.length > 0 && otherOwnerIds.every(id => gameState.honorTrack.indexOf(id) <= ownerHonorIndex);
+          const force = figure.monsterCardId === 'sp-oni-of-skulls'
+            ? (hasLowestHonor ? 3 : 1)
+            : (hasLowestHonor ? 4 : 2);
+          return isLuna ? Math.max(force, 2) : force;
+        }
         if (figure.monsterCardId === 'sp-daikokuten') {
-          const isLuna = ownerClanId === 'luna';
           const base = (gameState.currentPhase === 'politics' && gameState.harvestMandateActive) ? 8 : 1;
           return isLuna ? Math.max(base, 2) : base;
+        }
+        if (figure.monsterCardId === 'su-bishamon') {
+          const hasOpponentMonster = province?.figures.some(f => f.type === 'monster' && f.owner !== figure.owner) || false;
+          const force = hasOpponentMonster ? 4 : 1;
+          return isLuna ? Math.max(force, 2) : force;
+        }
+        if (figure.monsterCardId === 'au-sacred-warrior') {
+          const virtueOwner = gameState.players.find(p => p.id === figure.owner);
+          const virtueCount = virtueOwner ? countVirtueCards(virtueOwner) : 0;
+          const force = 1 + virtueCount;
+          return isLuna ? Math.max(force, 2) : force;
         }
         const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
         const card = allCards.find(c => c.id === figure.monsterCardId);
         if (card && card.force !== undefined) {
-          const isLuna = ownerClanId === 'luna';
           return isLuna ? Math.max(card.force, 2) : card.force;
         }
       }
-      return 1;
+      return ownerClanId === 'luna' ? 2 : 1;
     default:
       return 0;
   }
@@ -208,6 +229,9 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
     daikaijuPlacementActive,
     daikaijuPlacementPlayerId,
     currentSeason: _currentSeason,
+    warStartActions,
+    warStartActionIndex,
+    warStartSelection,
   } = useGameStore(useShallow(s => ({
     players: s.gameState?.players,
     currentPlayerIndex: s.gameState?.currentPlayerIndex ?? 0,
@@ -228,6 +252,9 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
     daikaijuPlacementActive: s.gameState?.daikaijuPlacementActive ?? false,
     daikaijuPlacementPlayerId: s.gameState?.daikaijuPlacementPlayerId ?? null,
     currentSeason: s.gameState?.currentSeason,
+    warStartActions: s.gameState?.warStartActions ?? [],
+    warStartActionIndex: s.gameState?.warStartActionIndex ?? 0,
+    warStartSelection: s.gameState?.warStartSelection ?? null,
   })));
   const selectedRegion = useGameStore(s => s.selectedRegion);
   const moveMode = useGameStore(s => s.moveMode);
@@ -241,6 +268,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   const monsterPlacementMode = useGameStore(s => s.monsterPlacementMode);
   const monsterPlacementPlayerId = useGameStore(s => s.monsterPlacementPlayerId);
   const jinmenjuSummonActive = useGameStore(s => s.jinmenjuSummonActive);
+  const daikaijuPlacementMode = useGameStore(s => s.daikaijuPlacementMode);
   const t = useT();
   if (!province || !players) return null;
 
@@ -257,19 +285,32 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
     : null;
   const movePlayerId = isFujinMove ? fujinPlayerId : apid;
   const isLibelula = activePlayer?.clanId === 'libelula';
+  const warStartAction = warStartActions[warStartActionIndex];
+  const isWarStartOwner = !!warStartAction && (mode === 'hotseat' || localPlayerId === warStartAction.playerId);
 
-  // Move target logic: for Libelula during marshal, all provinces except moveFrom are valid
-  // For Fujin movement, use the fujin player's clan for Libelula check
-  const movePlayerClan = isFujinMove
-    ? players.find(p => p.id === fujinPlayerId)?.clanId
-    : activePlayer?.clanId;
-  const isMovePlayerLibelula = movePlayerClan === 'libelula';
+  let isWarStartTarget = false;
+  if (isWarStartOwner && warStartAction?.type === 'naginata' && warStartSelection?.figureId) {
+    isWarStartTarget = regionId !== 'ocean' && regionId !== warStartSelection.sourceProvinceId;
+  } else if (isWarStartOwner && warStartAction?.type === 'ashigaru') {
+    const owner = players.find(player => player.id === warStartAction.playerId);
+    const ownFigures = province.figures.filter(figure => figure.owner === warStartAction.playerId && (figure.type !== 'fortress' || owner?.clanId === 'tortuga'));
+    isWarStartTarget = regionId !== 'ocean' && ownFigures.length === 1 && (owner?.bushi || 0) > 0;
+  } else if (isWarStartOwner && warStartAction?.type === 'sunakake') {
+    isWarStartTarget = province.figures.some(figure => figure.owner === warStartAction.playerId && figure.monsterCardId === 'su-sunakake-baba')
+      && province.figures.some(figure => figure.owner !== warStartAction.playerId && (figure.type === 'bushi' || figure.type === 'shinto'));
+  }
+
+  // Move target logic: Fujin validates both movement-point cost and distance.
   let isMoveTarget = false;
   if (moveMode && moveFrom && moveFrom !== regionId && selectedFigures.length > 0) {
     if (isMarshalMove && isLibelula) {
       isMoveTarget = true;
-    } else if (isFujinMove && isMovePlayerLibelula) {
-      isMoveTarget = true;
+    } else if (isFujinMove) {
+      const currentGameState = useGameStore.getState().gameState;
+      const movementCost = currentGameState && fujinPlayerId
+        ? getFujinMovementCost(currentGameState, fujinPlayerId, moveFrom, regionId, selectedFigures.length)
+        : null;
+      isMoveTarget = movementCost !== null && movementCost <= fujinMovesRemaining;
     } else {
       const moveFromData = PROVINCES_DATA.find(p => p.id === moveFrom);
       const moveFromAdjacents = moveFromData ? [...moveFromData.adjacentProvinces, ...moveFromData.seaRoutes] : [];
@@ -351,9 +392,13 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   }
 
   const handleClick = () => {
-    const { selectRegion, doMoveForces, setMoveFrom, setSelectedFigures, doBuildFortress, doBuildFukurokuju, doRecruitPlaceFigure, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, doJinmenjuPlace, doDaikaijuPlaceProvince } = useGameStore.getState();
+    const { selectRegion, doMoveForces, setMoveFrom, setSelectedFigures, doBuildFortress, doBuildFukurokuju, doRecruitPlaceFigure, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, doJinmenjuPlace, doDaikaijuPlaceProvince, doWarStartSelectProvince } = useGameStore.getState();
+    if (isWarStartOwner && isWarStartTarget && (warStartAction?.type === 'naginata' || warStartAction?.type === 'ashigaru')) {
+      doWarStartSelectProvince(regionId);
+      return;
+    }
     // Daikaiju placement: click province to place Daikaiju
-    if (daikaijuPlacementActive && regionId !== 'ocean') {
+    if (daikaijuPlacementActive && daikaijuPlacementMode && regionId !== 'ocean') {
       const isOwner = mode === 'hotseat' || localPlayerId === daikaijuPlacementPlayerId;
       if (isOwner) {
         doDaikaijuPlaceProvince(regionId);
@@ -422,7 +467,12 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   };
 
   const handleFigureClick = (figureId: string, e: React.MouseEvent) => {
-    const { doBetraySelectFigure, setSelectedFigures } = useGameStore.getState();
+    const { doBetraySelectFigure, setSelectedFigures, doWarStartSelectFigure } = useGameStore.getState();
+    if (isWarStartOwner && (warStartAction?.type === 'naginata' || warStartAction?.type === 'keiri' || warStartAction?.type === 'sunakake')) {
+      e.stopPropagation();
+      doWarStartSelectFigure(regionId, figureId);
+      return;
+    }
     if (betrayMode) {
       e.stopPropagation();
       doBetraySelectFigure(figureId, regionId);
@@ -452,6 +502,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
       if (selectedFigures.includes(figureId)) {
         setSelectedFigures(selectedFigures.filter(id => id !== figureId));
       } else {
+        if (isFujinMove && selectedFigures.length >= fujinMovesRemaining) return;
         setSelectedFigures([...selectedFigures, figureId]);
       }
     }
@@ -524,11 +575,11 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   }
 
   // Daikaiju placement target (any province except ocean)
-  const isDaikaijuTarget = daikaijuPlacementActive && regionId !== 'ocean' && (mode === 'hotseat' || localPlayerId === daikaijuPlacementPlayerId);
+  const isDaikaijuTarget = daikaijuPlacementActive && daikaijuPlacementMode && regionId !== 'ocean' && (mode === 'hotseat' || localPlayerId === daikaijuPlacementPlayerId);
 
   return (
     <div
-      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${isMonsterDimmed ? 'recruit-dimmed' : ''} ${isZorroTarget ? 'recruit-target' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''} ${isMarshalDimmed ? 'recruit-dimmed' : ''} ${isDaikaijuTarget ? 'monster-target' : ''}`}
+      className={`region-card ${isSelected ? 'selected' : ''} ${isMoveTarget ? 'move-target' : ''} ${moveMode && moveFrom === regionId ? 'move-source' : ''} ${isMonsterTarget ? 'monster-target' : ''} ${isRecruitTarget ? 'recruit-target' : ''} ${isRecruitDimmed ? 'recruit-dimmed' : ''} ${isMonsterDimmed ? 'recruit-dimmed' : ''} ${isZorroTarget ? 'recruit-target' : ''} ${isWarStartTarget ? 'recruit-target' : ''} ${hasTroopsForGlow ? 'marshal-has-troops' : ''} ${isMarshalDimmed ? 'recruit-dimmed' : ''} ${isDaikaijuTarget ? 'monster-target' : ''}`}
       style={{ ...style, ...(hasTroopsForGlow ? { '--marshal-glow-color': marshalGlowColor } as React.CSSProperties : {}) }}
       onClick={handleClick}
     >
@@ -547,6 +598,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
                 const unselectable = isFigureUnselectable(fig);
                 const isSelectedFigure = selectedFigures.includes(fig.id);
                 const isMarshalClickable = isMarshalMove && moveFrom === regionId && !unselectable;
+                const isWarStartSelected = warStartSelection?.figureId === fig.id || warStartSelection?.targetFigureIds?.includes(fig.id);
                 return (
                   <span
                     key={fig.id}
@@ -555,7 +607,7 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
                       ...(isEnemy ? { cursor: 'pointer', opacity: 1 } : undefined),
                       ...(dimmed ? { opacity: 0.3 } : undefined),
                       ...(isMarshalClickable ? { cursor: 'pointer' } : undefined),
-                      ...(isSelectedFigure ? { outline: '2px solid #fff', borderRadius: '3px' } : undefined),
+                      ...((isSelectedFigure || isWarStartSelected) ? { outline: '2px solid #fff', borderRadius: '3px' } : undefined),
                     }}
                     className={`${isEnemy ? 'betray-target' : ''} ${isSelectedFigure ? 'marshal-selected' : ''}`}
                   >

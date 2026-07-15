@@ -307,6 +307,9 @@
 .trade-modal-columns{display:flex;gap:1.5rem;margin-bottom:1rem}
 .trade-modal-column{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.8rem}
 .trade-modal-icon{display:flex;align-items:center;justify-content:center;padding:0.5rem}
+.trade-message-field{display:flex;flex-direction:column;gap:6px;margin:0 0 1rem;color:#c8a951;font-weight:700;font-size:.9rem}
+.trade-message-field textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:72px;background:#101426;border:1px solid rgba(200,169,81,.55);color:#fff;padding:10px;border-radius:6px;font:inherit;font-weight:400}
+.trade-message-field small{align-self:flex-end;color:#888;font-weight:400}
 .trade-slider-group{width:100%}
 .trade-slider-label{display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;color:#ccc;margin-bottom:0.3rem}
 .trade-slider-value{font-weight:bold;font-size:1rem}
@@ -327,6 +330,7 @@
 .trade-offer-from{display:flex;align-items:center;gap:8px;margin-bottom:0.6rem}
 .trade-offer-from-label{color:#888;font-size:0.85rem}
 .trade-offer-details{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.5rem}
+.trade-offer-message{margin:.55rem 0;padding:.55rem .65rem;background:rgba(0,0,0,.24);border-left:3px solid #c8a951;color:#eee;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.9rem}
 .trade-offer-section{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .trade-offer-section-label{color:#aaa;font-size:0.85rem;min-width:50px}
 .trade-offer-resource{display:inline-flex;align-items:center;gap:4px}
@@ -334,6 +338,13 @@
 .trade-offer-actions{display:flex;gap:0.6rem;justify-content:center}
 .trade-offer-accept{flex:1;padding:0.5rem}
 .trade-offer-reject{flex:1;padding:0.5rem}
+.rule-event-inline-clan{display:inline-flex;align-items:center;gap:5px;vertical-align:middle}
+.rule-event-card-reward{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;line-height:1.55}
+.rule-event-affected{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;margin:.4rem 0;font-size:.9rem}
+.battle-card-target-list{display:flex;flex-direction:column;gap:8px;width:100%;margin:10px 0}
+.battle-card-target-list button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px}
+.betray-worshipping-targets{display:flex;flex-direction:column;gap:7px;margin:10px 0;padding:10px;border:1px solid rgba(230,57,70,.45);background:rgba(230,57,70,.08);border-radius:6px}
+.betray-worshipping-targets button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:38px}
 
 /* Trade button in politics panel */
 .trade-btn{border-radius:8px;transition:all 0.2s}
@@ -394,7 +405,10 @@
 .games-lobby-card-body{display:flex;align-items:center;justify-content:space-between;gap:1rem}
 .games-lobby-card-clans{display:flex;align-items:center;gap:0.5rem;flex-wrap:nowrap;overflow:hidden}
 .games-lobby-card-clan-entry{display:flex;align-items:center;gap:0.2rem;font-size:0.8rem;font-weight:600;white-space:nowrap;transition:all 0.3s}
-.games-lobby-card-clan-entry-active{font-size:0.88rem;transform:scale(1.1);text-shadow:0 0 8px currentColor,0 0 16px currentColor;filter:brightness(1.3)}
+.games-lobby-card-slot-waiting{color:#8b8f99}
+.games-lobby-card-slot-waiting .clan-shield{filter:grayscale(1);opacity:0.55}
+.games-lobby-card-slot-open{opacity:0.82}
+.games-lobby-card-clan-entry-active{font-size:0.88rem;transform:scale(1.1);text-shadow:0 0 8px currentColor,0 0 16px currentColor;filter:brightness(1.3);padding-left:7px}
 .games-lobby-card-info{display:flex;align-items:center;gap:0.75rem}
 .games-lobby-card-progress{font-size:0.8rem;color:var(--accent-cream);font-weight:bold;white-space:nowrap;letter-spacing:0.05em}
 .games-lobby-card-turn{display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;font-weight:700;white-space:nowrap;letter-spacing:0.03em}
@@ -535,6 +549,11 @@
 .friends-btn-add{margin-left:1.5rem}
 .friends-btn-list{margin-left:0.5rem}
 .friends-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:3000}
+
+/* Shrine figures can extend their hover details beyond the illustrated shrine tile. */
+.kami-slot.filled{overflow:visible}
+.kami-slot.filled:hover{z-index:30}
+.kami-slot.filled .figure-tooltip{z-index:31}
 .friends-modal{position:relative;background:linear-gradient(145deg,rgba(15,15,25,0.98),rgba(22,33,62,0.98));border:1.5px solid var(--accent-gold);border-radius:12px;padding:1.5rem 1.75rem;min-width:320px;max-width:420px;box-shadow:0 12px 40px rgba(0,0,0,0.7)}
 .friends-modal-close{position:absolute;top:0.5rem;right:0.75rem;background:none;border:none;color:var(--accent-gold);font-size:1.5rem;cursor:pointer;line-height:1}
 .friends-modal-title{color:var(--accent-gold);margin:0 0 1rem 0;font-size:1.1rem}
@@ -551,6 +570,9 @@
 .games-lobby-card-turn-seal{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;margin:0}
 .games-lobby-card-turn-seal-label{font-size:0.6rem;color:var(--text-secondary);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.1rem}
 .games-lobby-card-turn-seal-name{font-size:0.72rem;font-weight:bold;margin-top:0.1rem}
+.games-lobby-card-war-seal{min-width:58px;gap:0.08rem}
+.games-lobby-card-war-seal .war-seal{display:block;color:#ff405d;filter:drop-shadow(0 0 4px rgba(227,48,79,0.32))}
+.games-lobby-card-war-seal-name{font-size:0.72rem;font-weight:800;color:#ff405d;margin-top:0.08rem}
 .games-lobby-card-clans-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0.2rem 0.5rem}
 .games-lobby-card-gameid{font-size:0.72rem;color:var(--text-secondary);font-weight:normal;margin-left:0.3rem}
 
@@ -561,3 +583,83 @@
 /* Invited/waiting game card: pulsing highlight to draw the invitee's attention */
 .games-lobby-card-invited{border-color:var(--accent-gold)!important;animation:invited-blink 1.3s ease-in-out infinite}
 @keyframes invited-blink{0%,100%{box-shadow:0 0 4px rgba(200,169,81,0.35)}50%{box-shadow:0 0 16px rgba(200,169,81,0.9)}}
+.daikaiju-ocean-marker{position:absolute;top:1rem;right:1rem;z-index:1100;display:flex;align-items:center;gap:0.45rem;padding:0.55rem 0.75rem;background:rgba(15,52,96,0.97);border:1px solid var(--border-gold);border-radius:6px;color:var(--text-primary);font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,0.35)}.daikaiju-ocean-marker:hover{background:rgba(22,72,126,0.98);filter:brightness(1.08)}
+.daikaiju-placement-popup{display:flex;flex-direction:column;align-items:center;gap:0.85rem;max-width:430px;min-width:320px;text-align:center}.daikaiju-placement-title{display:flex;align-items:center;justify-content:center;gap:0.65rem;margin:0;font-size:1.45rem}.daikaiju-placement-owner{display:flex;align-items:center;justify-content:center;gap:0.5rem;font-size:1rem}.daikaiju-placement-owner span{font-size:0.78rem;font-weight:800;text-transform:uppercase}.daikaiju-placement-popup p{margin:0;line-height:1.5}.daikaiju-placement-popup .btn-primary{min-width:150px}.daikaiju-placement-actions{display:flex;align-items:center;justify-content:center;gap:0.75rem}.daikaiju-placement-actions .btn-secondary{min-width:120px}
+.bidding-player-vp{display:flex;align-items:center;justify-content:center;gap:0.4rem;margin-top:0.35rem;color:#f1c40f;font-size:1.2rem;font-weight:800}.bidding-player-vp strong{font-size:1.25rem}
+.daikaiju-arrival-popup{display:flex;flex-direction:column;align-items:center;gap:0.65rem;max-width:560px;min-width:360px}.daikaiju-arrival-figure{height:min(36vh,260px);max-width:90%;object-fit:contain;margin-top:-0.25rem;filter:drop-shadow(0 8px 12px rgba(0,0,0,0.55))}.daikaiju-arrival-title{display:flex;align-items:center;justify-content:center;gap:0.4rem;flex-wrap:wrap;margin:0;color:#ff304f;font-size:1.4rem;text-align:center}.daikaiju-arrival-clan{display:inline-flex;align-items:center;gap:0.35rem}.daikaiju-arrival-province{margin:0;font-size:1.05rem;text-align:center}.daikaiju-arrival-province strong{font-size:1.16rem}.daikaiju-destruction-list{display:flex;flex-direction:column;align-items:stretch;gap:0.45rem;width:min(100%,440px)}.daikaiju-destruction-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.35rem 0.55rem;background:rgba(0,0,0,0.2);border-radius:4px}.daikaiju-destruction-owner,.daikaiju-destruction-count{display:inline-flex;align-items:center;gap:0.4rem}.daikaiju-destruction-count{white-space:nowrap}.daikaiju-destruction-count strong{font-size:1.12rem}.daikaiju-no-destruction{margin:0 0 0.35rem;text-align:center;font-size:0.9rem;opacity:0.7;font-style:italic}
+.rule-event-popup{display:flex;flex-direction:column;align-items:center;gap:0.8rem;max-width:460px;text-align:center}.rule-event-monster{height:150px;max-width:180px;object-fit:contain}.rule-event-players{display:flex;align-items:center;justify-content:center;gap:0.5rem}.rule-event-popup .popup-actions{display:flex;justify-content:center;gap:0.75rem;margin-top:0.5rem}
+.rule-event-transfer{display:flex;align-items:center;justify-content:center;gap:0.8rem;width:100%}.rule-event-transfer>span,.rule-event-totals>span{display:inline-flex;align-items:center;gap:0.4rem}.rule-event-totals{display:flex;justify-content:center;gap:1.25rem}.rule-event-totals>span{font-weight:800}.rule-event-personal{font-weight:700;color:var(--accent-gold)}.rule-event-waiting{color:var(--text-secondary);font-style:italic}
+.rule-event-ebisu-message{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0.45rem;margin:0;line-height:1.55;font-weight:700}.rule-event-ebisu-player,.rule-event-ebisu-reward{display:inline-flex;align-items:center;gap:0.35rem}.rule-event-ebisu-reward strong{font-size:1.15rem}
+.battle-uncontested-province{margin:0 0 0.5rem;font-size:1rem;font-weight:800;line-height:1.35;text-align:center}
+.battle-uncontested-participant{display:flex;align-items:center;justify-content:center;gap:0.5rem;margin:0.55rem auto;font-size:1rem;font-weight:700;line-height:1.3}
+.battle-uncontested-award{display:flex;align-items:center;justify-content:center;gap:0.55rem;width:min(100%,340px);margin:0.85rem auto 1rem;font-size:0.95rem;font-weight:800;line-height:1.35;text-align:left}
+.battle-uncontested-award span{max-width:270px}
+.battle-card-decision {
+  width: min(520px, calc(100vw - 24px));
+}
+
+.battle-card-decision-owner,
+.battle-card-decision-player,
+.battle-card-decision-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.battle-card-decision-mercy {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+
+.benevolence-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.benevolence-player-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  border: 1px solid #4c536c;
+  background: #11182d;
+  color: #fff;
+}
+
+.benevolence-player-badge.selected {
+  box-shadow: 0 0 10px currentColor;
+}
+
+.battle-card-decision-groups {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.battle-card-decision-group {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(130px, 1fr) minmax(130px, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(200, 169, 81, 0.3);
+  border-radius: 6px;
+  background: rgba(7, 13, 31, 0.42);
+}
+
+.battle-card-decision-group select {
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 620px) {
+  .battle-card-decision-group {
+    grid-template-columns: 1fr;
+  }
+}

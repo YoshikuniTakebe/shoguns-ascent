@@ -67,6 +67,25 @@ export interface Hostage {
   fromClanId: string;
   figureType: string;
   figureName?: string;
+  monsterCardId?: string;
+}
+
+export type WarStartActionType = 'zorro' | 'naginata' | 'ashigaru' | 'keiri' | 'sunakake';
+
+export interface WarStartAction {
+  id: string;
+  type: WarStartActionType;
+  playerId: string;
+  cardId?: string;
+}
+
+export interface WarStartSelection {
+  sourceProvinceId?: string;
+  destinationProvinceId?: string;
+  figureId?: string;
+  provinceId?: string;
+  targetFigureIds?: string[];
+  mercyProvinceIds?: string[];
 }
 
 export interface Player {
@@ -118,6 +137,11 @@ export interface BattleResolutionData {
   phoenixDiedInSeppuku: boolean;
   phoenixDiedInBattle: boolean;
   capturedHostage: { captorId: string; fromClanId: string; figureType: string; figureName: string; monsterCardId?: string } | null;
+  capturedHostages?: Array<{ captorId: string; fromClanId: string; figureType: string; figureName: string; monsterCardId?: string }>;
+  hostagesTaken?: number;
+  hostageLimit?: number;
+  hostageVPGained?: number;
+  sincerityApplied?: boolean;
   roninForce: number;
   battleDeathCount: number;
   imperialPoetsVP: number;
@@ -136,6 +160,26 @@ export interface Battle {
   logStartIndex?: number;
   killedFigures?: { owner: string; figureType: string; count: number; monsterNames?: string[] }[];
   resolutionData?: BattleResolutionData;
+  jorogumoEffectApplied?: boolean;
+  jorogumoCaptured?: { figureId: string; originalOwner: string } | null;
+  fireDragonEffectApplied?: boolean;
+  earthDragonEffectApplied?: boolean;
+  mercyChoice?: boolean;
+}
+
+export interface PendingBattleCardDecision {
+  type: 'earth-dragon' | 'fire-dragon' | 'jorogumo';
+  ownerId: string;
+  provinceId: string;
+  sourceFigureId: string;
+}
+
+export interface PendingMonsterEnterDecision {
+  type: 'benten' | 'oni-hate';
+  ownerId: string;
+  provinceId: string;
+  sourceFigureId: string;
+  resume?: 'advance-kami' | 'advance-train' | 'continue-fujin' | null;
 }
 
 export interface AllianceProposal {
@@ -144,6 +188,51 @@ export interface AllianceProposal {
   accepted?: boolean;
   bribeAmount?: number;
   requestAmount?: number;
+}
+
+export interface RuleEventNotice {
+  id: string;
+  type: 'serpent' | 'hotei' | 'ebisu' | 'jurojin' | 'benevolence' | 'jikininki' | 'koneko' | 'patience';
+  actorId: string;
+  targetId: string;
+  requiredPlayerIds: string[];
+  acknowledgedPlayerIds: string[];
+  actorCoins?: number;
+  targetCoins?: number;
+  rewardAmount?: number;
+  copyNumber?: number;
+  honorLost?: number;
+  actorRonin?: number;
+  provinceId?: string;
+  fromProvinceId?: string;
+  toProvinceId?: string;
+  affectedPlayers?: Array<{ playerId: string; coins: number; ronin: number }>;
+  templeKami?: KamiType;
+  resume?: 'advance-kami' | 'advance-train' | 'advance-marshal' | 'advance-war-start' | 'continue-benevolence' | null;
+}
+
+export interface PendingSerpentCrossing {
+  moverId: string;
+  fromProvinceId: string;
+  toProvinceId: string;
+}
+
+export interface PendingSerpentCharge {
+  ownerId: string;
+  moverId: string;
+  fromProvinceId: string;
+  toProvinceId: string;
+  resume: RuleEventNotice['resume'];
+}
+
+export interface PendingMonkeyDecision {
+  ownerId: string;
+  remainingCopies: number;
+  copyNumber: number;
+}
+
+export interface PendingSnakeDecision {
+  ownerId: string;
 }
 
 export interface WarProvinceSlot {
@@ -181,6 +270,7 @@ export interface TradeOffer {
   offerRonin: number;
   requestCoins: number;
   requestRonin: number;
+  message?: string;
   status: 'pending' | 'accepted' | 'rejected';
 }
 
@@ -217,6 +307,10 @@ export interface GameState {
   trainResolutionOrder: string[];
   trainResolutionIndex: number;
   trainMandateIssuerId: string | null;
+  // Online monster purchases pause Train until the buyer places the monster. Persisting this
+  // makes the placement UI recoverable after a disconnect, refresh, or server restart.
+  pendingMonsterPlacementCardId?: string | null;
+  pendingMonsterPlacementPlayerId?: string | null;
   marshalMandateActive: boolean;
   marshalResolutionOrder: string[];
   marshalResolutionIndex: number;
@@ -228,6 +322,7 @@ export interface GameState {
   recruitResolutionIndex: number;
   recruitMandateIssuerId: string | null;
   recruitPlacementsRemaining: number;
+  recruitPlacementsTotal?: number;
   recruitUsedFortressProvinces: string[];
   // Whether the Path of the Warlord "1 coin per summon" bonus has already been awarded for
   // the current player's recruit turn (a whole recruit turn counts as a single summon).
@@ -239,6 +334,10 @@ export interface GameState {
   betraySelectedOwners: string[];
   betrayReplacements: { figureType: string; targetClanId: string; targetPlayerName: string; provinceId: string; provinceName: string; replacementMonsterName?: string; replacementMonsterCardId?: string; targetMonsterName?: string; targetMonsterCardId?: string }[];
   betrayMandateIssuerId: string | null;
+  betrayTriggeredBySnake?: boolean;
+  pendingSnakeDecision?: PendingSnakeDecision | null;
+  pendingSnakeOwnerQueue?: string[];
+  snakeResumePlayerIndex?: number | null;
   harvestMandateActive: boolean;
   harvestResolutionOrder: string[];
   harvestResolutionIndex: number;
@@ -247,6 +346,7 @@ export interface GameState {
   harvestCurrentPlayerId?: string | null;
   harvestAllPlayersOrder: string[];
   harvestCoinAcknowledged: boolean;
+  harvestLoyaltyAwardedPlayers?: string[];
   kamiResolutionActive: boolean;
   kamiResolutionTemples: KamiResolutionTemple[];
   kamiResolutionIndex: number;
@@ -260,6 +360,10 @@ export interface GameState {
   zorroPlacementActive: boolean;
   zorroPlacementPlayerId: string | null;
   zorroPlacementsRemaining: number;
+  warStartActions?: WarStartAction[];
+  warStartActionIndex?: number;
+  warStartActionsComplete?: boolean;
+  warStartSelection?: WarStartSelection | null;
   lotoChoicePhase?: boolean;
   lotoDiscardedMandate?: MandateType | null;
   lastMandateIssuerId: string | null;
@@ -273,6 +377,11 @@ export interface GameState {
   teaReadyPlayers: string[];
   teaOptedOut: string[];
   tradeOffers: TradeOffer[];
+  generosityPending?: {
+    fromPlayerId: string;
+    toPlayerId: string | null;
+    stage: 'choose-recipient' | 'awaiting-response';
+  } | null;
   coinDistributionPending?: {
     battleProvinceId: string;
     winnerId: string;
@@ -282,6 +391,7 @@ export interface GameState {
     sharePerLoser: number;
   } | null;
   warPhaseReadyPlayers: string[];
+  warPhaseStartAcknowledged?: boolean;
   battlePopupReadyPlayers: string[];
   warSummaryVisible: boolean;
   warSummaryReadyPlayers: string[];
@@ -295,9 +405,62 @@ export interface GameState {
   cleanupTeaCeremonyReadyPlayers: string[];
   daikaijuPlacementActive: boolean;
   daikaijuPlacementPlayerId: string | null;
+  daikaijuPlacementProvinceId?: string | null;
   daikaijuSummaryVisible: boolean;
   daikaijuSummaryReadyPlayers: string[];
   daikaijuSummaryData: { provinceId: string; provinceName: string; destroyedFortresses: { playerId: string; playerName: string; count: number }[] } | null;
+  pendingNureOnnaDecision?: {
+    ownerId: string;
+    figureId: string;
+    fromProvinceId: string;
+    battleProvinceId: string;
+  } | null;
+  pendingBattleCardDecision?: PendingBattleCardDecision | null;
+  pendingMonsterEnterDecision?: PendingMonsterEnterDecision | null;
+  pendingFujinContinuation?: {
+    playerId: string;
+    figureId: string;
+    fromProvinceId: string;
+    toProvinceId: string;
+  } | null;
+  pendingBattleMercyDecision?: {
+    ownerId: string;
+    provinceId: string;
+  } | null;
+  pendingNinjaDecision?: {
+    ownerId: string;
+  } | null;
+  pendingMonkeyDecision?: PendingMonkeyDecision | null;
+  pendingBenevolence?: {
+    ownerId: string;
+    remainingTriggers: number;
+    totalTriggers: number;
+    currentCopy: number;
+    resume: 'advance-kami' | 'advance-train' | 'advance-marshal' | null;
+  } | null;
+  pendingSpringPlacement?: {
+    type: 'kannushi' | 'kenin' | 'light' | 'samurai';
+    ownerId: string;
+    copyNumber: number;
+  } | null;
+  pendingSpringPlacementQueue?: Array<{
+    type: 'kannushi' | 'kenin' | 'light' | 'samurai';
+    ownerId: string;
+    copyNumber: number;
+  }>;
+  marshalKannushiUsedBy?: string[];
+  pendingVassalDecision?: {
+    ownerId: string;
+    templeIndex: number;
+    copyNumber: number;
+    remainingCopies: number;
+  } | null;
+  kamiVassalResolvedTempleIndexes?: number[];
+  nureOnnaCheckedBattles?: Record<string, string[]>;
+  pendingRuleNotices?: RuleEventNotice[];
+  pendingSerpentCrossings?: PendingSerpentCrossing[];
+  pendingSerpentCharge?: PendingSerpentCharge | null;
+  pendingSerpentChargeQueue?: PendingSerpentCharge[];
   log: string[];
   logHistory: { [season: string]: string[] };
   hostId?: string;

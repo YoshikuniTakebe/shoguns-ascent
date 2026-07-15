@@ -253,7 +253,7 @@ Cards are organized by season (Spring/Summer/Autumn) and type:
 |------|----|------|---------|--------|
 | Justice | su-justice | 1 | Killing figures of a player with less Honor | +3 VP per affected player |
 | Loyalty | su-loyalty | 1 | Whenever gaining VP (if has ally) | +1 extra VP |
-| Mercy | su-mercy | 1 | Winning battle where kills would happen | +2 VP, enemy figures survive (automatic) |
+| Mercy | su-mercy | 1 | When opponent figures could be killed | Owner chooses whether to leave the affected group alive and gain 2 VP |
 | Patience | su-patience | 1 | End of Kami turn | +1 VP if not leading in VP |
 | Respect | su-respect | 0 | Taking hostages in battle | +1 additional hostage |
 | Sincerity | su-sincerity | 1 | Taking a hostage | +Honor, +1 extra VP |
@@ -269,7 +269,7 @@ Cards are organized by season (Spring/Summer/Autumn) and type:
 - **hasCard** helper function exported from gameLogic.ts for checking if a player owns a specific card
 - **applyLoyaltyBonus** helper applies +1 VP when gaining VP with an ally (avoids infinite recursion)
 - **applyRighteousnessVP** helper for tracking kills and awarding VP
-- **Mercy** completely prevents killing when active: wraps all kill logic, death triggers (Koneko/Ebisu/Jikininki), figure removal, and Phoenix revival
+- **Mercy** is an explicit owner choice in normal battle casualties, Fire Dragon, Oni of Hate, Way of the Keiri, and Path of the Ninja. It prevents death triggers and Justice for the spared group.
 - **Righteousness** triggers in 5 locations: battle casualties, seppuku, Fire Dragon, Oni of Hate, and betray figure replacement
 - **Loyalty** bonus applied at major VP gain points (battle wins, hostage taking, seppuku, kitsune, imperial poets)
 - **Generosity/Benevolence** auto-select the poorest player as coin recipient
@@ -388,7 +388,7 @@ npm run lint
 - `detectWarTransition` blocks battle start when `daikaijuPlacementActive` or `daikaijuSummaryVisible` is true
 - `gainHonor()` is void/mutative - use directly without reassigning state
 - Loyalty virtue must not trigger on itself to avoid infinite recursion
-- Mercy completely prevents ALL kill-related logic when active (including death triggers for Koneko, Ebisu, Jikininki, and Phoenix revival)
+- Mercy only prevents kill-related logic for the group the owner explicitly spares; Keiri can choose independently per province.
 
 
 
@@ -533,3 +533,415 @@ server restart — no longer loses the game.
 - **Verified**: `scripts/test-lobby-persistence.mjs` (WebSocket integration test) — a lobby survives
   a host disconnect and can be rejoined; a fresh server start rehydrates persisted lobbies into
   `/api/lobbies/visible`. `npx tsc -b` and `npm run build` pass. (`data/` is gitignored.)
+
+
+## Changelog - 2026-07-11 (upgrade cards pass + lobby padding)
+
+- Removed unused local asset `src/img/map-bn.png` (black-and-white map, untracked and no longer used).
+- `App.css`: added `padding-left: 7px` to `.games-lobby-card-clan-entry-active`.
+- Ignored obsolete GitHub PR #2; `main` remains the source of truth.
+
+### Upgrade cards implemented / wired
+
+- Added shared upgrade helpers in `gameLogic.ts` for card ownership, supply coin gains, VP gains,
+  summon-triggered upgrades, and automatic fallback targeting for optional effects.
+- **After Summon** upgrades now run from the same paths already used by recruit, Raijin, and monster
+  placement:
+  - `sp-path-of-the-warlord`: +1 coin after summon.
+  - `sp-path-of-the-patron`: +2 coins after summon if higher honor than at least two players.
+  - `su-path-of-the-monkey`: takes 1 coin from the richest opponent and loses honor.
+  - `au-path-of-the-spirit`: +2 coins and +2 VP after summon if highest honor.
+  - `sp-path-of-the-ninja`: kills the first valid enemy Bushi on the map and loses honor.
+  - `sp-path-of-the-kenin`: places an extra Bushi in the first valid owned-fortress province.
+- **End of Recruit**:
+  - `sp-path-of-the-light`: places an extra Shinto at the first shrine with space.
+  - `su-path-of-the-samurai`: places an extra Bushi in the first valid province.
+- **Marshal**:
+  - `sp-path-of-the-builder`: automatically builds a fortress at the first valid province if the
+    owner can pay the fortress cost.
+  - `sp-path-of-the-kannushi`: automatically moves one worshipping Shinto to another shrine with
+    space.
+  - `su-path-of-the-serpent`: charges 1 coin to players crossing sea routes; multiple Serpent owners
+    can charge while the mover has coins.
+- **Season start**:
+  - `sp-path-of-the-pacifist`: at start of Summer/Autumn, +4 VP if not tied for/holding the most war
+    province tokens.
+  - `sp-path-of-the-salamander`: at start of Summer/Autumn, +3 coins and loses honor.
+- **Kami**:
+  - `sp-path-of-the-vassal`: after a Kami reward resolves, automatically pays 2 coins for +2 VP if
+    affordable.
+  - `au-way-of-the-snake`: after a Kami turn, starts a Betray mandate for the first owner. Server
+    summary handling now preserves this Betray turn instead of restoring the normal next player.
+- **Betray / Harvest / economy**:
+  - `su-path-of-the-shadow`: +3 coins after playing Betray.
+  - `au-path-of-the-unrighteous`: Betray gets 3 replacements instead of 2 and can target the same
+    owner more than once.
+  - `su-path-of-sengoku`: at end of Harvest, gains the Daimyo province reward if not already gained.
+  - `su-way-of-the-merchant`: hooked into supply coin gains for seasonal income, Harvest rewards,
+    Tsukuyomi, Sengoku, Shadow, Warlord/Patron/Spirit/Salamander, and war-upgrade coin income.
+
+### Notes / follow-up
+
+- The new optional upgrade effects are intentionally auto-resolved with deterministic fallback
+  targets to keep the game flowing without adding many new popups in this pass. Follow-up UI can add
+  explicit choices for Builder, Kannushi, Kenin, Light, Ninja, Monkey, Samurai, Snake and Vassal.
+- `au-path-of-the-unrighteous` is wired for extra province replacements; replacing worshipping
+  Shinto directly from temple UI still needs a dedicated selection flow if exact board-game fidelity
+  is required.
+
+## Changelog - 2026-07-13 (online Train reconnect + lobby turn indicator)
+
+- Fixed an online Train deadlock after reconnecting: monster purchases now persist the pending card
+  and buyer in `GameState` until `MONSTER_PLACED` completes. The buyer's placement UI is rebuilt
+  automatically from server state after a disconnect, refresh, or server restart.
+- Added backward-compatible recovery for snapshots created before the pending-placement fields
+  existed. This recovers the affected Luna/Daikokuten game from its latest purchase log without
+  editing the database.
+- Invalid or duplicate online card purchases are no longer advanced silently by the server.
+- Fixed the games-lobby current-turn marker. Saved `players_json` uses lobby order while GameState
+  uses honor order; `formatGame` now resolves the active player (including Train/Marshal/Recruit,
+  Harvest and Kami resolution) and maps that identity back to the returned lobby player array.
+- Verified against the affected saved game: the recovered pending card is `sp-daikokuten`, the
+  expected player is Luna/Yoshikuni, and the lobby now marks Luna/Yoshikuni as current player.
+- Shrine monster tooltips are no longer clipped by the shrine tile: filled Kami slots allow visible
+  overflow and rise above neighboring slots while hovered.
+- Runtime note from the follow-up test: the process listening on port 3001 was still the pre-fix
+  backend and returned the old raw index (`2`, Sol/Skyrunner). The corrected server returns mapped
+  index `0` (Luna/Yoshikuni), so the backend must be restarted before validating these fixes.
+- The old server allowed Luna to buy Jurojin after Daikokuten. The saved game now has Jurojin placed
+  in Oshu and Daikokuten still owned but undeployed (effectively in reserve); no card was lost.
+- Verified: `npx.cmd tsc -b`, `npm.cmd run lint` (same 3 existing warnings), and `npm.cmd run build`
+  pass. Build inside sandbox still hits Vite `EPERM` on `node_modules/.vite-temp`, but succeeds when
+  allowed outside the sandbox.
+
+## Changelog - 2026-07-14 (battle result presentation)
+
+- `BattlePanel.tsx`: the province name inside the war-token reward sentence is now always bold and
+  uses `PROVINCE_COLORS`, while the rest of the translated sentence keeps the normal text color.
+- Battle casualties now show the correct troop icon for Bushi, Shinto, Daimyo, or Monster. The icon
+  and numeric count use the defeated clan's color.
+- Monster casualty groups append every killed monster name in parentheses beside the numeric count.
+  The existing `Battle.killedFigures.monsterNames` data is reused; battle resolution is unchanged.
+
+## Changelog - 2026-07-14 (Generosity, trades, Recruit monsters, Kami flow)
+
+- Generosity is no longer automatic. Its owner chooses a recipient or declines; the recipient then
+  accepts/rejects in real time. The coin and Honor are awarded only after acceptance.
+- Trades are server-authoritative online, broadcast immediately, and use the local player rather
+  than the current-turn player. They can be offered outside War; entering War cancels every pending
+  offer and sending or accepting trades remains disabled throughout War and its battles.
+- Recruit now displays remaining/total placements. The monster picker uses the Monster icon and
+  renders effect tokens such as Daikokuten's Force icon and bold value.
+- Recruit monster availability is derived from owned cards actually in reserve, not the obsolete
+  `player.monsters` counter. Komainu/Hotei now ask whether to enter the map or pray and consume the
+  selected Recruit placement in either case.
+- Untagged temple figures are always normal Shinto; the removed legacy heuristic can no longer turn
+  a newly placed Shinto into Komainu. The Recruit Shinto control also counts only normal Shinto.
+- Fixed online Ryujin monster placement: the client now sends placement to the server before any
+  Kami advancement. Ryujin persists the pending monster so reconnecting restores placement instead
+  of allowing another card purchase.
+- Hotei only replaces an enemy temple figure. Replaced normal Shinto returns to reserve; replaced
+  Komainu/Hotei returns as an available monster card. Temple placement logs include the Kami name.
+- Amaterasu now always writes a resolution log, including when its winner already leads Honor.
+- Verified with `npx.cmd tsc -b`, `npm.cmd run lint` (same 3 existing warnings), a focused rules
+  smoke test, and `npm.cmd run build`.
+- Runtime note: restart the backend process on port 3001 before online testing; it was started before
+  these server changes and cannot hot-reload them.
+
+## Changelog - 2026-07-14 (pending lobby slots)
+
+- Pending online games now expose their complete slot list instead of only already joined players.
+- Invited/disconnected players show their username and clan shield in gray with `(Esperando)`.
+- Unreserved slots show their clan shield with `Libre/Únete` (`Free/Join` in English).
+- Open-slot counts now reflect currently unoccupied capacity and a full lobby no longer remains
+  advertised as open.
+- Random lobbies assign invited friends a stable random clan at creation, so the waiting-room seal
+  matches the clan they receive when joining.
+- Verified with `npx.cmd tsc -b`, `npm.cmd run lint` (same 3 existing warnings), and
+  `git diff --check`.
+
+## Changelog - 2026-07-14 (live log and War flow polish)
+
+- The live season log no longer truncates to the latest 20 entries. It also combines any setup
+  entries already archived for the current season, preserving the complete season from its start.
+- Battle bidding opponent badges now include a compact Ronin icon/count; the local player's Ronin
+  remains only in the resource header.
+- The final battle bidding title adds `(Última Batalla)` / `(Last Battle)`.
+- Coin distribution no longer interrupts the battle flow. Normal shares and remainder coins are
+  assigned automatically, then the battle result opens immediately. Legacy snapshots with a
+  pending distribution also skip the retired popup.
+- War summary rows use stable grid columns so province names form a centered column with their text
+  aligned left.
+- Verified with `npx.cmd tsc -b`, `npm.cmd run lint` (same 3 existing warnings),
+  `git diff --check`, and a focused three-player battle smoke test covering automatic remainder
+  distribution and preservation of the season-log prefix.
+
+## Changelog - 2026-07-14 (variable force, Recruit undo, Shinto reserve, Jorogumo)
+
+- Map and province tooltips now calculate every variable-force monster consistently: Oni of Skulls,
+  Oni of Blood, Daikokuten, Bishamon and Sacred Warrior, including Luna's minimum Force 2.
+- Shinto reserve totals no longer double-count Komainu/Hotei while deployed or praying. The normal
+  three-piece supply is capped to repair older snapshots inflated by cleanup; owned Shinto monsters
+  still add to the effective total and only add to reserve while actually undeployed.
+- Cleanup returns only normal, untagged temple Shinto to the physical reserve. Recruit placement
+  and its controls use the same corrected available-normal-Shinto count.
+- Online Recruit now records its undo snapshot before placing Komainu/Hotei at a shrine, so Undo
+  restores the whole Recruit turn instead of being overwritten by the unchanged server state.
+- Jorogumo now takes control at the actual start of battle, before War Tactics. Its temporary target
+  is persisted through interactive Seppuku/Hostage steps and reverted at battle end if it survives.
+  This fixes the recorded Edo battle where Take Hostage removed the only target before Jorogumo ran.
+- Focused checks: Bishamon 4, Oni of Blood 4, Oni of Skulls 3, Sacred Warrior 3, Daikokuten 8;
+  Komainu praying + Yurei owned reports Shinto 3/4 and Monsters 1/2; the saved Edo state now logs
+  Jorogumo taking Yoshikuni's Bushi before hostage selection.
+
+## Changelog - 2026-07-15 (Nure-Onna, ocean Daikaiju, blocking rule notices, Recruit dual types)
+
+- **Nure-Onna** no longer moves automatically at War start. Before each battle, reachable
+  Nure-Onna owners are asked in Honor order whether to cross the Sea Route. Accepting moves the
+  real figure, adds its owner to battle participants and recalculates contested/uncontested status;
+  declining is logged and is remembered for that battle. The decision is server-authoritative and
+  survives reconnects. Uncontested battle rewards are now deferred until these decisions finish.
+- **Daikaiju in the Ocean**: online monster placement logs the actual monster name instead of the
+  generic `Monstruo`. While Daikaiju remains in Ocean, a fixed top-right map button opens a figure
+  zoom with its image, owner/clan, Force and translated card effect, matching province diorama data.
+- **Path of the Serpent** now appends both post-transfer clan/coin totals to the log. Every charge
+  creates a persisted real-time notice: payer and recipient must each acknowledge their tailored
+  gain/loss popup; everyone else sees the same transfer details in a waiting state. Multiple
+  Serpent charges queue safely.
+- **Hotei** logs whether it replaced a normal Shinto or named Shinto-monster and whose figure it
+  replaced. A replacement creates a persisted notice for the affected owner; Train/Ryujin flow is
+  paused until acknowledgement, while the other players see the event and wait. Recruit placement
+  is likewise blocked by the overlay without prematurely ending the Recruit turn.
+- The game log recognizes all monster card names and renders them with the Monster icon. New
+  `{clanCoins:clanId:amount}` tokens render clan shield + coin icon + colored total.
+- Recruit action buttons now keep dual-type cards under **Monster** only. Effective dual-type totals
+  remain unchanged in the sidebar reserve. Yurei/Fukurokuju are selected from the Monster popup,
+  the Daimyo button counts only the clan Daimyo, and Yurei's `{force}` token renders correctly.
+- Verified with focused Nure-Onna accept/reject and Sea Route/Serpent simulations, `npx.cmd tsc -b`,
+  `npm.cmd run lint` (only the 2 pre-existing UI warnings), `git diff --check`, and a production
+  build. The in-app browser connection failed at its runtime setup; the local Vite server itself is
+  running successfully at `http://127.0.0.1:5173` for manual visual testing.
+
+## Changelog - 2026-07-15 (Fujin movement combinations and deferred Serpent charges)
+
+- Fujin's two movement points can now be spent in all supported combinations: two selected figures
+  can move together to one adjacent province; one figure can move across a valid two-connection
+  route; or the player can perform two separate one-step moves, including moving the same figure
+  twice. Selection and server validation both enforce the remaining movement-point cost.
+- Sea Route crossings made during Fujin are recorded but do not transfer coins or open Path of the
+  Serpent notices while movement is still provisional. Pressing Finish resolves every crossing on
+  the server, broadcasts the same notices to all clients, and pauses Kami resolution until both the
+  Serpent owner and payer have acknowledged each transfer. The final notice resumes Kami.
+- Fujin movement explicitly takes precedence over a stale `marshalMandateActive` flag retained by
+  restored/in-progress states. Without this guard, `moveForces` entered Marshal's immediate Sea
+  Route charge branch and displayed the Serpent popup before Fujin confirmation.
+- Marshal Sea Route crossings are now provisional too. Online clients only buffer the crossing;
+  `SKIP_MARSHAL_TURN` replays the confirmed moves server-side, resolves Serpent transfers, and
+  broadcasts the shared notices. The next Marshal player/mandate turn is not selected until payer
+  and card owner acknowledge every transfer. Hotseat follows the same confirmation boundary.
+- Province-diorama figure scales were adjusted to River Dragon 1.30, Jikininki 0.90, Oni of Hate
+  1.20 and Bishamon 1.23.
+- Verified with focused simulations for two-figure movement, two-connection movement, deferred
+  payment and post-confirmation notices; TypeScript, lint (only the 2 pre-existing UI warnings),
+  `git diff --check`, and the production build all pass.
+
+## Changelog - 2026-07-15 (Daikaiju placement confirmation)
+
+- Daikaiju placement now has three synchronized stages: owner prompt, map selection and confirmation.
+  The owner presses `Colocar en el mapa` to dismiss only their popup and enable province targets;
+  other players continue seeing the clan-themed waiting popup.
+- Selecting a province moves Daikaiju there server-side and persists the pending province, but does
+  not destroy fortresses or start the summary. The owner receives a confirmation popup while the
+  other players wait. Only `Confirmar` resolves fortress destruction and opens the shared summary.
+- Both owner and waiting popups use the owner's clan border/color, a large Monster icon plus the
+  Daikaiju title, and a clan identity row with shield, player name and clan name.
+- Hotseat and online share the same selection/confirmation rules. Reconnecting after selection
+  restores the confirmation step instead of repeating or prematurely resolving the effect.
+- The confirmation popup now includes `Deshacer`. It returns Daikaiju to Ocean without touching
+  any fortress, reopens map selection for the owner, and returns the other clients to the waiting
+  state. A different province can then be selected and confirmed normally.
+- Verified with a focused provisional-selection/confirmation simulation, TypeScript, lint (only
+  the 2 pre-existing UI warnings), `git diff --check`, and a production build.
+
+## Changelog - 2026-07-15 (Way of Bushido reward)
+
+- Way of Bushido now awards both resources per Virtue: `2 Coins × Virtues` and `2 VP × Virtues`.
+  Previously Coins were hard-coded to 2 while only VP used the Virtue count. A player with no
+  Virtues now correctly receives 0 Coins and 0 VP; one Virtue grants 2 Coins and 2 VP.
+- The War-start upgrade summary uses the same calculation, so its Coin and VP rows match the actual
+  reward. Focused checks cover both zero and one Virtue.
+
+## Changelog - 2026-07-15 (Daikaiju arrival and battle bidding presentation)
+
+- The Daikaiju arrival summary now shows the full figure above a red arrival title containing the
+  owner's clan shield and clan-colored name. The destination province is bold, larger and rendered
+  in its province color.
+- Destroyed fortresses are shown as compact rows with the affected player's clan shield and colored
+  name, followed by a clan-colored Fortress icon, bold destroyed count and a correctly pluralized
+  `fue destruida!` / `fueron destruidas!` message.
+- In online games the arrival summary is broadcast to every player and blocks battle progression
+  until everyone accepts. Players who already accepted see `{ready}/{total} listos` plus the waiting
+  message while the server collects the remaining acknowledgements.
+- The battle bidding header now centers only the local player's VP with a larger icon and number.
+  Ronin moved into every combatant badge, including the local player; Koi's displayed value updates
+  with the coins still unassigned.
+- TypeScript, lint (only the 2 pre-existing UI warnings), and the production build pass.
+
+## Changelog - 2026-07-15 (Ebisu force and Seppuku death trigger)
+
+- Ebisu and every other Monster without a printed Force now respect Luna's minimum Force 2 in both
+  the map tooltip and province figure zoom. The province total already used the correct calculation.
+- Ebisu's death effect now triggers immediately when sacrificed through Seppuku and grants its owner
+  8 Coins before the battle flow advances. Online, hotseat and automatic battle resolution all use
+  the same reward, and the resulting Coin total is added to the game log.
+- Every Ebisu death now opens a clan-themed synchronized notice for all players. It shows the
+  owner's shield/name and the 8-Coin reward in clan color, blocks the underlying battle UI, and only
+  closes after every player accepts; accepted clients see the shared `{ready}/{total}` counter.
+
+## Changelog - 2026-07-15 (War resume and Nure-Onna map preview)
+
+- War start acknowledgement is now persisted in game state. Rejoining a saved game after battles
+  have started no longer reopens the War Phase start/upgrade popup; legacy snapshots infer this from
+  resolved battles, submitted bids, interactive resolution data and other active War steps.
+- Nure-Onna's movement decision now includes the same `Ver Mapa` control used by War bidding. It
+  temporarily hides the decision without resolving it and provides a `Volver a Nure-Onna` button
+  over the map so the owner can inspect routes and forces before accepting or rejecting.
+
+## Changelog - 2026-07-15 (War lobby marker and uncontested battle polish)
+
+- Lobby games currently resolving War now replace the potentially misleading current-player marker
+  with a dedicated crimson-and-gold samurai-helmet seal labelled `Guerra`.
+- Nure-Onna's source and destination province names use their province colors in both the owner's
+  decision and the other players' waiting message.
+- Uncontested battle popups consistently render province names in province color. Allied and solo
+  winner summaries now align the clan shield and award text as a centered unit with slightly smaller
+  typography and balanced spacing above the accept control.
+
+## Changelog - 2026-07-15 (Autumn hostage cleanup)
+
+- The end of Autumn War now skips the hostage-return interaction entirely because Coins have no
+  remaining use before final scoring. Figures return without awarding Coins and the game moves
+  directly from cleanup to Winter scoring.
+- Summer cleanup keeps the existing interactive hostage return and Coin reward. Hotseat, online and
+  legacy saved-game paths now follow the same season-specific rule.
+
+## Changelog - 2026-07-15 (Hostages, Jurojin, Oni of Souls and War-start effects)
+
+- Taking a hostage now transfers up to 1 VP from the victim to the captor and records both final VP
+  totals. The captured miniature remains unavailable instead of returning immediately to reserve;
+  it returns to its owner during cleanup, including the streamlined Autumn and legacy Winter paths.
+- Sincerity and Loyalty now apply to the interactive Take Hostage path. A complete Take Hostage
+  advantage, including extra rewards, is treated as one Loyalty event.
+- Jurojin counts simultaneously as Monster and Virtue in all shared counts, winter scoring and
+  Sacred Warrior force. Acquiring any Virtue, including Jurojin itself, grants its owner 3 Coins and
+  opens a synchronized notice that every player must accept before Train or Ryujin continues.
+- Oni of Souls now grants 2 VP per owned Oni card when its owner wins the contested battle and the
+  Oni of Souls remains alive in that province. It counts itself; other Oni only need to be owned.
+- Zorro, Way of Naginata, Way of the Ashigaru and Way of the Keiri now use one persistent start-of-War
+  queue ordered by the Honor track. The active player's provisional selections are synchronized,
+  can be reset or skipped, and only change the map after confirmation.
+- Naginata moves one Bushi to any province and respects Luna and Oni of Plagues restrictions.
+  Confirmed Sea Route crossings feed the existing Path of the Serpent acknowledgement flow.
+- Ashigaru validates exactly one owned figure in the province (Fortresses count only for Tortuga),
+  summons up to 2 available Bushi and runs the shared post-Summon upgrade hooks.
+- Keiri permits up to 2 enemy Bushi/Shinto targets in every province containing the player's Daimyo,
+  Yurei or Fukurokuju, and grants 3 VP per confirmed execution.
+- Form of the Fox, Kitsune, Phoenix and Tanuki, Path of the Favored, Way of Bushido and Sacred Warrior
+  were aligned with the confirmed rules. Nure-Onna now respects Oni of Plagues.
+- `CARD_AUDIT.md` contains the current 85-effect audit and identifies the remaining optional-choice
+  flows and cross-card interactions that are still partial.
+
+## Changelog - 2026-07-15 (confirmed card-choice flows)
+
+- Earth Dragon, Fire Dragon and Jorogumo pause before War Tactics and let their owners choose valid
+  targets; Earth Dragon may be skipped and all card effects exclude Daimyo-equivalent monsters.
+- Benten and Oni of Hate now pause after summon or movement with synchronized owner/waiting UI.
+  Benten chooses the rival monster and legal destination; Oni of Hate chooses one valid target per
+  higher-Honor rival.
+- Sunakake-Baba joins the Honor-ordered start-of-War queue and lets its owner choose or skip its
+  hostage target.
+- Mercy is no longer automatic. It is offered in normal battle casualties, Fire Dragon, Oni of Hate,
+  Way of the Keiri and Path of the Ninja. Keiri allows a separate decision in each province.
+- Justice now checks actual deaths and lower Honor in normal battles, Fire Dragon, Keiri and Path of
+  the Ninja. Path of the Ninja also has explicit target/skip controls.
+
+## Changelog - 2026-07-15 (Spring card flows and corrected Dignity/Loyalty rules)
+
+- Dignity remains the Spring Virtue that grants 2 VP per copy when a Monster is actually summoned.
+  Loyalty is the separate Summer Virtue that grants 1 extra VP per copy and valid VP-gain event
+  while allied. Duplicate Loyalty triggers and duplicate Righteousness rewards are now counted.
+- Benevolence now triggers only after Coins are actually spent on a Season card (Train/Ryujin) or
+  Fortress (Marshal). Its owner chooses a recipient or declines, spent Coins cap duplicate triggers,
+  and every successful transfer has an all-player acknowledgement before another copy can resolve.
+- Courage and Piety use the same War-token reward path for contested battles, uncontested provinces
+  and allied provinces awarded by Force. Piety recognizes normal Shinto, Komainu and Hotei and
+  applies every owned copy independently.
+- Path of the Builder uses the normal paid Fortress-building controls during any Marshal. Path of
+  the Kannushi, Kenin and Light now pause for an explicit source/destination choice or allow their
+  owner to decline instead of selecting the first legal target automatically.
+- Path of the Vassal now asks after every won Kami shrine whether to pay 2 Coins for 2 VP, supports
+  duplicate copies and synchronizes the waiting state online.
+- Phoenix awards its own VP and Loyalty as separate events in Seppuku, normal battle and card-effect
+  deaths; a captured Phoenix remains unavailable. Righteousness now rewards every own figure death,
+  including interactive Seppuku, once per owned copy.
+- Jinmenju is confirmed as OK. `CARD_AUDIT.md` now reports 68 complete effects and 17 partial effects.
+- TypeScript, the production build and focused card-flow checks pass. Lint retains only the two
+  pre-existing UI warnings in FriendsModal and PoliticsTrack.
+
+## Changelog - 2026-07-15 (Summer death effects and synchronized choices)
+
+- Dignity remains unchanged at 2 VP per Monster summon. Loyalty is the separate allied bonus and
+  now covers every valid non-Winter VP event without recursively triggering itself; Harvest and a
+  complete Take Hostage advantage each remain one reward event.
+- Jikininki now observes every effective death in its province from Seppuku, battle casualties and
+  card/Monster effects. A simultaneous death still observes every other casualty but not itself;
+  Seppuku Honor resolves first, each Jikininki VP can trigger Loyalty, and all players acknowledge
+  a notice showing the VP and actual Honor lost.
+- Koneko now triggers from the same shared death pipeline, including interactive Seppuku. Its owner
+  gains 2 Coins and 2 Ronin, every other clan present loses up to 2 of each, and play is covered by
+  an all-player acknowledgement notice.
+- Path of the Samurai now queues an explicit province choice after Recruit instead of placing its
+  Bushi automatically. Path of the Serpent now asks each owner whether to charge only after the
+  movement is confirmed, announces the colored route and final Coin totals, and waits for everyone.
+- Patience requires the owner to be strictly below the highest VP total, so a tie at the maximum
+  does not qualify. Its reward triggers Loyalty and uses the shared acknowledgement flow.
+- Respect supports each additional hostage interactively in hotseat and online play, allows the
+  owner to stop after the first capture and applies Loyalty once to the complete Take Hostage event.
+- Way of Naginata is complete, including confirm/undo and the optional Serpent decision. Way of the
+  Merchant now observes common-supply Coin gains from income, Harvest, Kami and card rewards,
+  including Koneko and Ebisu, while ignoring transfers and deals.
+- Trade proposals can include an optional message of at most 250 characters, synchronized online.
+- `CARD_AUDIT.md` reflects the completed Summer flows and the remaining genuine partial effects.
+- TypeScript and the production build pass. Lint retains only the two pre-existing warnings in
+  FriendsModal and PoliticsTrack. No development or game server was started.
+
+## Changelog - 2026-07-15 (complete card audit: 85/85)
+
+- Path of the Monkey now pauses after Summon, allows its owner to decline, and offers every opponent
+  tied for the greatest Coin total. Duplicate copies resolve independently. This also completes the
+  post-Summon flow for Way of the Ashigaru.
+- Kitsune rewards the winner of a War Province token in contested, uncontested and allied provinces,
+  but only after casualties have resolved and only while Kitsune remains alive in that Province.
+- Benten, Oni of Hate and Oni of Spite now trigger when they enter through a Betray replacement as
+  well as Summon and movement. A two-step Fujin move evaluates the intermediate and final Province
+  separately, pausing the continuation when an interactive entry effect must be resolved.
+- Path of the Unrighteous preserves the normal different-owner restriction for the first two Betray
+  replacements. Every owned copy adds one unrestricted replacement and can replace an opponent's
+  worshipping Shinto in the same shrine; the displaced normal or dual Monster/Shinto returns to its
+  proper reserve. Online Betray now transmits the chosen replacement Monster and cannot duplicate a
+  Monster that is currently worshipping.
+- Way of the Snake asks every owner, in Honor order, whether to perform Betray after the Kami Turn.
+  Multiple owners resolve sequentially, declining is valid, other players wait, and the original
+  next-player index plus Kami summary are restored after the final decision.
+- `CARD_AUDIT.md` now reports 85 of 85 unique effects as `OK`, with no remaining `PARCIAL`, `FALTA`
+  or `DUDA` rows. Focused checks cover Monkey ties, worshipping Shinto replacement, multiple Snake
+  owners, living/dead Kitsune and Oni of Spite on both Fujin steps.
+- TypeScript, focused card-flow checks and the production build pass. Lint retains only the two
+  pre-existing warnings in FriendsModal and PoliticsTrack. No server was started.
+
+## Changelog - 2026-07-15 (Jurojin self-trigger correction)
+
+- Jurojin still counts simultaneously as a Monster and a Virtue for scoring, force and card counts,
+  but acquiring Jurojin itself no longer grants its 3-Coin reward or opens its acknowledgement.
+- Only acquiring another Virtue triggers Jurojin, matching the card text. Focused Train and Ryujin
+  checks confirm that self-purchase does nothing while a subsequent Virtue grants exactly 3 Coins.

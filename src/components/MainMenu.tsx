@@ -703,6 +703,10 @@ export const MainMenu = () => {
                 } else {
                   // Random mode: pick a random host clan from the random list
                   const randomHostClan = randomClans[Math.floor(Math.random() * randomClans.length)];
+                  const randomInviteClans = randomClans.filter(clanId => clanId !== randomHostClan);
+                  const invitedClans = Object.fromEntries(
+                    inviteFriendIds.map((friendId, index) => [friendId, randomInviteClans[index]])
+                  );
                   connectWebSocket(getServerWsUrl(), (ws) => {
                     ws.send(JSON.stringify({
                       type: 'CREATE_LOBBY',
@@ -715,7 +719,7 @@ export const MainMenu = () => {
                       selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
                       autoAssignClan: true,
                       invitedUserIds: inviteFriendIds,
-                      invitedClans: {},
+                      invitedClans,
                     }));
                   });
                 }

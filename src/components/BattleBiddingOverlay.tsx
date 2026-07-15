@@ -11,6 +11,7 @@ export interface BattleCombatant {
   playerName: string;
   clanId: string;
   force: number;
+  ronin: number;
 }
 
 interface BattleBiddingOverlayProps {
@@ -23,6 +24,8 @@ interface BattleBiddingOverlayProps {
   provinceName: string;
   provinceColor?: string;
   battleNumber: number;
+  isLastBattle?: boolean;
+  currentPlayerId?: string;
   onConfirm: (bids: Record<string, number>) => void;
   combatants?: BattleCombatant[];
   playerBattleIndex?: number;
@@ -57,6 +60,8 @@ export const BattleBiddingOverlay = ({
   provinceName,
   provinceColor,
   battleNumber,
+  isLastBattle,
+  currentPlayerId,
   onConfirm,
   combatants,
   playerBattleIndex,
@@ -260,6 +265,7 @@ export const BattleBiddingOverlay = ({
         <div className="bidding-overlay-header">
           <h2 className="bidding-overlay-title">
             {t('battle.battleNumber', { number: battleNumber })}: <span style={{ color: provinceColor }}>{provinceName}</span>
+            {isLastBattle && <span> {t('battle.lastBattle')}</span>}
           </h2>
           <p className="bidding-overlay-player">
             {playerClanId && <ClanShield clanId={playerClanId} size={22} />}
@@ -271,18 +277,10 @@ export const BattleBiddingOverlay = ({
               {t('battle.battleCount', { current: playerBattleIndex, total: playerTotalBattles })}
             </p>
           )}
-          {(playerRonin !== undefined || playerVP !== undefined) && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '4px', fontSize: '0.9rem' }}>
-              {playerRonin !== undefined && (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#e74c3c' }}>
-                  <RoninIcon size={18} color="#e74c3c" /> {playerClanId === 'koi' ? Math.max(0, maxCoins - totalAssigned) : playerRonin}
-                </span>
-              )}
-              {playerVP !== undefined && (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: '#f1c40f' }}>
-                  <VPIcon size={18} color="#f1c40f" /> {playerVP}
-                </span>
-              )}
+          {playerVP !== undefined && (
+            <div className="bidding-player-vp">
+              <VPIcon size={26} color="#f1c40f" />
+              <strong>{playerVP}</strong>
             </div>
           )}
           {onPeekMap && (
@@ -312,6 +310,14 @@ export const BattleBiddingOverlay = ({
                   <span className="bidding-combatant-force" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                     <FistIcon size={16} color={clan?.color || '#fff'} />
                     <span style={{ fontWeight: 'bold', color: clan?.color || '#fff' }}>{c.force}</span>
+                  </span>
+                  <span className="bidding-combatant-force" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <RoninIcon size={15} color="#e74c3c" />
+                    <span style={{ fontWeight: 'bold', color: '#e74c3c' }}>
+                      {c.playerId === currentPlayerId && c.clanId === 'koi'
+                        ? Math.max(0, maxCoins - totalAssigned)
+                        : c.playerId === currentPlayerId && playerRonin !== undefined ? playerRonin : c.ronin}
+                    </span>
                   </span>
                 </div>
               );

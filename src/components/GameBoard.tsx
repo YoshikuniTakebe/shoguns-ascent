@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, type ReactNode, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, PROVINCES_DATA, type DeckName } from '../types/game';
+import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, type DeckName } from '../types/game';
 import { RegionCard } from './RegionCard';
 import { PlayerPanel } from './PlayerPanel';
 import { ActionPanel } from './ActionPanel';
@@ -19,8 +19,23 @@ import { KamiResolutionPopup } from './KamiResolutionPopup';
 import { KamiSummaryPopup } from './KamiSummaryPopup';
 import { TradeModal } from './TradeModal';
 import { TradeOfferPopup } from './TradeOfferPopup';
+import { GenerosityPopup } from './GenerosityPopup';
+import { DaikaijuOceanMarker } from './DaikaijuOceanMarker';
+import { NureOnnaPopup } from './NureOnnaPopup';
+import { RuleEventNoticePopup } from './RuleEventNoticePopup';
+import { BattleCardDecisionPopup } from './BattleCardDecisionPopup';
+import { BattleMercyDecisionPopup } from './BattleMercyDecisionPopup';
+import { NinjaDecisionPopup } from './NinjaDecisionPopup';
+import { MonkeyDecisionPopup } from './MonkeyDecisionPopup';
+import { SnakeDecisionPopup } from './SnakeDecisionPopup';
+import { BenevolencePopup } from './BenevolencePopup';
+import { SpringPlacementPopup } from './SpringPlacementPopup';
+import { VassalDecisionPopup } from './VassalDecisionPopup';
+import { SerpentChargePopup } from './SerpentChargePopup';
+import { MonsterEnterDecisionPopup } from './MonsterEnterDecisionPopup';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, UndoIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
+import { getMonsterFigureImage, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import popupBgImg from '../img/popup_bg.png';
@@ -107,7 +122,7 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted, rejoinWaitingVisible, rejoinPlayerStatuses, doDaikaijuSummaryReady } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, doWarStartReset, doWarStartToggleMercy, doWarStartConfirm, doWarStartSkip, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted, rejoinWaitingVisible, rejoinPlayerStatuses, daikaijuPlacementMode, startDaikaijuPlacement, doDaikaijuUndoPlacement, doDaikaijuConfirmPlacement, doDaikaijuSummaryReady } = useGameStore();
   const t = useT();
 
   const [isDragging, setIsDragging] = useState(false);
@@ -263,17 +278,18 @@ export const GameBoard = () => {
                 </span>
               );
             }
-            if (gameState.zorroPlacementActive && gameState.zorroPlacementPlayerId) {
-              const zorroPlayer = gameState.players.find(p => p.id === gameState.zorroPlacementPlayerId);
-              const zorroClan = zorroPlayer ? CLANS.find(c => c.id === zorroPlayer.clanId) : null;
-              const isZorroPlayer = gameState.mode === 'hotseat' || localPlayerId === gameState.zorroPlacementPlayerId;
+            if (gameState.warStartActionsComplete === false) {
+              const action = gameState.warStartActions?.[gameState.warStartActionIndex || 0];
+              const actionPlayer = gameState.players.find(p => p.id === action?.playerId);
+              const actionClan = actionPlayer ? CLANS.find(c => c.id === actionPlayer.clanId) : null;
+              const isActionPlayer = gameState.mode === 'hotseat' || localPlayerId === action?.playerId;
               return (
                 <>
-                  <ClanShield clanId={zorroClan?.id || ''} size={28} />
-                  <span className="current-player-name" style={{ color: zorroClan?.color }}>
-                    {t('game.turn', { name: zorroPlayer?.name || '' })}
+                  <ClanShield clanId={actionClan?.id || ''} size={28} />
+                  <span className="current-player-name" style={{ color: actionClan?.color }}>
+                    {t('game.turn', { name: actionPlayer?.name || '' })}
                   </span>
-                  {!isZorroPlayer && gameState.mode === 'online' && <span className="waiting-label">[ESPERANDO]</span>}
+                  {!isActionPlayer && gameState.mode === 'online' && <span className="waiting-label">[ESPERANDO]</span>}
                 </>
               );
             }
@@ -470,6 +486,86 @@ export const GameBoard = () => {
             }
           })()}
 
+          {!gameState.zorroPlacementActive && gameState.warStartActionsComplete === false && (() => {
+            const action = gameState.warStartActions?.[gameState.warStartActionIndex || 0];
+            if (!action) return null;
+            const player = gameState.players.find(candidate => candidate.id === action.playerId);
+            const isOwner = gameState.mode === 'hotseat' || localPlayerId === action.playerId;
+            const labels = {
+              naginata: 'Way of Naginata',
+              ashigaru: 'Way of the Ashigaru',
+              keiri: 'Way of the Keiri',
+              sunakake: 'Sunakake-Baba',
+              zorro: 'Zorro',
+            } as const;
+            const selection = gameState.warStartSelection;
+            const hasMercy = !!player?.seasonCards.some(card => card.id === 'su-mercy' || card.id === 'su-mercy-2');
+            const keiriSelectedProvinces = action.type === 'keiri'
+              ? Object.entries(gameState.provinces).filter(([, province]) => province.figures.some(figure => selection?.targetFigureIds?.includes(figure.id)))
+              : [];
+            const hasNaginataBushi = gameState.players.some(candidate => candidate.id === action.playerId && Object.values(gameState.provinces).some(province => province.figures.some(figure => figure.owner === candidate.id && figure.type === 'bushi')));
+            const hasAshigaruProvince = !!player && player.bushi > 0 && Object.entries(gameState.provinces).some(([provinceId, province]) => {
+              if (provinceId === 'ocean') return false;
+              return province.figures.filter(figure => figure.owner === player.id && (figure.type !== 'fortress' || player.clanId === 'tortuga')).length === 1;
+            });
+            const hasSunakakeTarget = Object.values(gameState.provinces).some(province =>
+              province.figures.some(figure => figure.owner === action.playerId && figure.monsterCardId === 'su-sunakake-baba')
+              && province.figures.some(figure => figure.owner !== action.playerId && (figure.type === 'bushi' || figure.type === 'shinto')));
+            const unavailableMessage = action.type === 'naginata' && !hasNaginataBushi
+              ? 'No tienes ningun Bushi en el mapa que puedas mover.'
+              : action.type === 'ashigaru' && player?.bushi === 0
+                ? 'No te quedan Bushi en la reserva.'
+                : action.type === 'ashigaru' && !hasAshigaruProvince
+                  ? 'No tienes ninguna provincia con exactamente 1 figura.'
+                  : action.type === 'sunakake' && !hasSunakakeTarget
+                    ? 'No hay ningun Bushi o Shinto rival en la provincia de Sunakake-Baba.'
+                  : null;
+            const canConfirm = action.type === 'keiri'
+              || (action.type === 'naginata' && !!selection?.figureId && !!selection.destinationProvinceId)
+              || (action.type === 'ashigaru' && !!selection?.provinceId)
+              || (action.type === 'sunakake' && !!selection?.targetFigureIds?.[0]);
+            const instruction = action.type === 'naginata'
+              ? 'Selecciona un Bushi y después cualquier provincia de destino.'
+              : action.type === 'ashigaru'
+                ? 'Selecciona una provincia donde tengas exactamente 1 figura.'
+                : action.type === 'sunakake'
+                  ? 'Selecciona un Bushi o Shinto rival en la provincia de Sunakake-Baba.'
+                  : 'Selecciona hasta 2 Bushi o Shinto enemigos por cada provincia con uno de tus Daimyo.';
+            return (
+              <div className="kami-action-overlay">
+                {isOwner ? (
+                  <>
+                    <span><strong>{labels[action.type]}</strong>: {unavailableMessage || instruction}</span>
+                    {action.type === 'keiri' && hasMercy && keiriSelectedProvinces.map(([provinceId, province]) => {
+                      const spared = selection?.mercyProvinceIds?.includes(provinceId);
+                      return (
+                        <button
+                          key={provinceId}
+                          className={spared ? 'btn-primary' : 'btn-secondary'}
+                          onClick={() => doWarStartToggleMercy(provinceId)}
+                          style={{ marginLeft: '6px', fontSize: '0.78rem', padding: '4px 9px' }}
+                        >
+                          {province.name}: {spared ? 'Misericordia' : 'Ejecutar'}
+                        </button>
+                      );
+                    })}
+                    {unavailableMessage ? (
+                      <button className="btn-primary" onClick={doWarStartSkip} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>Aceptar</button>
+                    ) : (
+                      <>
+                        <button className="btn-secondary" onClick={doWarStartReset} disabled={!selection} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>Deshacer</button>
+                        <button className="btn-secondary" onClick={doWarStartSkip} style={{ marginLeft: '6px', fontSize: '0.85rem', padding: '4px 12px' }}>Omitir</button>
+                        <button className="btn-primary" onClick={doWarStartConfirm} disabled={!canConfirm} style={{ marginLeft: '6px', fontSize: '0.85rem', padding: '4px 12px' }}>Confirmar</button>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <span>Esperando a que {player?.name || 'el jugador'} resuelva {labels[action.type]}...</span>
+                )}
+              </div>
+            );
+          })()}
+
           <div
             className={`map-container${isDragging ? ' dragging' : ''}`}
             ref={containerRef}
@@ -478,6 +574,7 @@ export const GameBoard = () => {
             onPointerUp={handlePointerUp}
           >
             <HonorTrack />
+            <DaikaijuOceanMarker />
             <AllianceDisplay />
             {ruleViolationMessage && (
               <div className="rule-violation-toast">
@@ -656,7 +753,7 @@ export const GameBoard = () => {
             <path d="M19 12H5" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          {t('battle.returnToBids')}
+          {gameState.pendingNureOnnaDecision ? t('nureOnna.returnToDecision') : t('battle.returnToBids')}
         </button>
       )}
 
@@ -943,68 +1040,140 @@ export const GameBoard = () => {
 
       {/* Daikaiju Placement Popup */}
       {gameState && gameState.daikaijuPlacementActive && !warPhasePopupVisible && !gameState.daikaijuSummaryVisible && (
-        <div className="harvest-popup-backdrop">
-          <div className="harvest-popup" style={{ borderColor: '#4A0E8F', maxWidth: '400px', minWidth: '300px' }}>
-            <h3 style={{ color: '#4A0E8F', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.3rem' }}>
-              {t('daikaiju.placement.title')}
-            </h3>
-            {(() => {
-              const isOwner = gameState.mode === 'hotseat' || localPlayerId === gameState.daikaijuPlacementPlayerId;
-              const ownerPlayer = gameState.players.find(p => p.id === gameState.daikaijuPlacementPlayerId);
-              if (isOwner) {
-                return (
-                  <p style={{ textAlign: 'center', fontSize: '0.95rem', opacity: 0.9 }}>
-                    {t('daikaiju.placement.choose')}
-                  </p>
-                );
-              } else {
-                return (
-                  <p style={{ textAlign: 'center', fontSize: '0.95rem', opacity: 0.9 }}>
-                    {t('daikaiju.placement.waiting', { player: ownerPlayer?.name || '' })}
-                  </p>
-                );
-              }
-            })()}
-          </div>
-        </div>
+        (() => {
+          const isOwner = gameState.mode === 'hotseat' || localPlayerId === gameState.daikaijuPlacementPlayerId;
+          const ownerPlayer = gameState.players.find(player => player.id === gameState.daikaijuPlacementPlayerId);
+          const ownerClan = ownerPlayer ? CLANS.find(clan => clan.id === ownerPlayer.clanId) : null;
+          const color = ownerClan?.color || 'var(--accent-gold)';
+          const selectedProvince = gameState.daikaijuPlacementProvinceId
+            ? gameState.provinces[gameState.daikaijuPlacementProvinceId]
+            : null;
+          if (isOwner && daikaijuPlacementMode && !selectedProvince) return null;
+
+          return (
+            <div className="harvest-popup-backdrop">
+              <div className="harvest-popup daikaiju-placement-popup" style={{ borderColor: color }}>
+                <h3 className="daikaiju-placement-title" style={{ color }}>
+                  <MonsterIcon size={36} color={color} />
+                  <span>{t('daikaiju.placement.title')}</span>
+                </h3>
+                {ownerPlayer && ownerClan && (
+                  <div className="daikaiju-placement-owner" style={{ color }}>
+                    <ClanShield clanId={ownerClan.id} size={30} />
+                    <strong>{ownerPlayer.name}</strong>
+                    <span>{ownerClan.name}</span>
+                  </div>
+                )}
+                {isOwner ? (
+                  selectedProvince ? (
+                    <>
+                      <p>{t('daikaiju.placement.selected', { province: selectedProvince.name })}</p>
+                      <div className="daikaiju-placement-actions">
+                        <button className="btn-secondary" style={{ borderColor: color }} onClick={doDaikaijuUndoPlacement}>
+                          {t('daikaiju.placement.undo')}
+                        </button>
+                        <button className="btn-primary" style={{ borderColor: color }} onClick={doDaikaijuConfirmPlacement}>
+                          {t('daikaiju.placement.confirm')}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p>{t('daikaiju.placement.choose')}</p>
+                      <button className="btn-primary" style={{ borderColor: color }} onClick={startDaikaijuPlacement}>
+                        {t('daikaiju.placement.place')}
+                      </button>
+                    </>
+                  )
+                ) : (
+                  <p>{selectedProvince
+                    ? t('daikaiju.placement.waitingConfirm', { player: ownerPlayer?.name || '' })
+                    : t('daikaiju.placement.waiting', { player: ownerPlayer?.name || '' })}</p>
+                )}
+              </div>
+            </div>
+          );
+        })()
       )}
 
       {/* Daikaiju Summary Popup */}
       {gameState && gameState.daikaijuSummaryVisible && gameState.daikaijuSummaryData && (
-        <div className="harvest-popup-backdrop">
-          <div className="harvest-popup" style={{ borderColor: '#4A0E8F', maxWidth: '420px', minWidth: '300px' }}>
-            <h3 style={{ color: '#4A0E8F', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.3rem' }}>
-              {t('daikaiju.summary.title')}
-            </h3>
-            <p style={{ textAlign: 'center', fontSize: '0.95rem', marginBottom: '8px' }}>
-              {t('daikaiju.summary.province', { province: gameState.daikaijuSummaryData.provinceName })}
-            </p>
-            {gameState.daikaijuSummaryData.destroyedFortresses.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
-                {gameState.daikaijuSummaryData.destroyedFortresses.map((df, idx) => (
-                  <p key={idx} style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.9 }}>
-                    {t('daikaiju.summary.owner', { player: df.playerName, count: String(df.count) })}
-                  </p>
-                ))}
-              </div>
-            ) : (
-              <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.7, fontStyle: 'italic', marginBottom: '12px' }}>
-                {t('daikaiju.summary.fortresses', { count: '0' })}
-              </p>
-            )}
-            <div style={{ textAlign: 'center' }}>
-              {gameState.mode === 'online' && localPlayerId && gameState.daikaijuSummaryReadyPlayers.includes(localPlayerId) ? (
-                <p style={{ color: '#4A0E8F', fontSize: '1rem', fontWeight: 'bold' }}>
-                  {t('kami.summary.waiting', { count: String(gameState.daikaijuSummaryReadyPlayers.length), total: String(gameState.players.length) })}
+        (() => {
+          const summary = gameState.daikaijuSummaryData;
+          const province = gameState.provinces[summary.provinceId];
+          const daikaiju = province?.figures.find(
+            figure => figure.type === 'monster' && figure.monsterCardId === 'au-daikaiju',
+          );
+          const owner = gameState.players.find(player => player.id === daikaiju?.owner);
+          const ownerClan = owner ? CLANS.find(clan => clan.id === owner.clanId) : undefined;
+          const ownerColor = ownerClan?.color || 'var(--accent-gold)';
+          const provinceColor = PROVINCE_COLORS[summary.provinceId] || 'var(--text-primary)';
+          const daikaijuImage = getMonsterFigureImage('au-daikaiju') || TEMPLATE_FIGURE_IMG;
+
+          return (
+            <div className="harvest-popup-backdrop">
+              <div className="harvest-popup daikaiju-arrival-popup" style={{ borderColor: ownerColor }}>
+                <img className="daikaiju-arrival-figure" src={daikaijuImage} alt="Daikaiju" />
+                <h3 className="daikaiju-arrival-title">
+                  <span>{t('daikaiju.summary.arrivalPrefix')}</span>
+                  {ownerClan && (
+                    <span className="daikaiju-arrival-clan" style={{ color: ownerColor }}>
+                      <ClanShield clanId={ownerClan.id} size={28} />
+                      <strong>{ownerClan.name}</strong>
+                    </span>
+                  )}
+                  <span>{t('daikaiju.summary.arrivalSuffix')}</span>
+                </h3>
+                <p className="daikaiju-arrival-province">
+                  {t('daikaiju.summary.placedIn')}{' '}
+                  <strong style={{ color: provinceColor }}>{summary.provinceName}</strong>
                 </p>
-              ) : (
-                <button className="btn-primary harvest-popup-btn" onClick={doDaikaijuSummaryReady} style={{ borderColor: '#4A0E8F' }}>
-                  {t('daikaiju.summary.accept')}
-                </button>
-              )}
+                {summary.destroyedFortresses.length > 0 ? (
+                  <div className="daikaiju-destruction-list">
+                    {summary.destroyedFortresses.map(df => {
+                      const victim = gameState.players.find(player => player.id === df.playerId);
+                      const victimClan = victim ? CLANS.find(clan => clan.id === victim.clanId) : undefined;
+                      const victimColor = victimClan?.color || 'var(--text-primary)';
+
+                      return (
+                        <div key={df.playerId} className="daikaiju-destruction-row">
+                          <span className="daikaiju-destruction-owner" style={{ color: victimColor }}>
+                            {victimClan && <ClanShield clanId={victimClan.id} size={24} />}
+                            <strong>{victim?.name || df.playerName}</strong>
+                          </span>
+                          <span className="daikaiju-destruction-count" style={{ color: victimColor }}>
+                            <FortressIcon size={22} color={victimColor} />
+                            <strong>{df.count}</strong>
+                            <span>
+                              {df.count === 1
+                                ? t('daikaiju.summary.destroyedSingular')
+                                : t('daikaiju.summary.destroyedPlural')}
+                            </span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="daikaiju-no-destruction">
+                    {t('daikaiju.summary.fortresses', { count: '0' })}
+                  </p>
+                )}
+                <div style={{ textAlign: 'center' }}>
+                  {gameState.mode === 'online' && localPlayerId && gameState.daikaijuSummaryReadyPlayers.includes(localPlayerId) ? (
+                    <p style={{ color: ownerColor, fontSize: '1rem', fontWeight: 'bold' }}>
+                      {t('daikaiju.summary.waiting', { count: String(gameState.daikaijuSummaryReadyPlayers.length), total: String(gameState.players.length) })}
+                    </p>
+                  ) : (
+                    <button className="btn-primary harvest-popup-btn" onClick={doDaikaijuSummaryReady} style={{ borderColor: ownerColor }}>
+                      {t('daikaiju.summary.accept')}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })()
       )}
 
       {/* Hostage Return Popup (interactive cleanup) */}
@@ -1086,16 +1255,16 @@ export const GameBoard = () => {
                 const winner = battle.winner ? gameState.players.find(p => p.id === battle.winner) : null;
                 const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
                 return (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', borderRadius: '6px', background: winner ? `${winnerClan?.color || '#666'}15` : 'rgba(255,255,255,0.05)', border: `1px solid ${winnerClan?.color || '#444'}33` }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '0.8rem', opacity: 0.6, minWidth: '30px', textAlign: 'right', marginRight: '4px' }}>#{idx + 1}</span>
-                    <span style={{ flex: 1, fontSize: '0.9rem' }}>{province?.name || battle.provinceId}</span>
+                  <div key={idx} style={{ display: 'grid', gridTemplateColumns: '42px minmax(100px, 1fr) minmax(120px, 1fr)', alignItems: 'center', gap: '8px', padding: '6px 10px', borderRadius: '6px', background: winner ? `${winnerClan?.color || '#666'}15` : 'rgba(255,255,255,0.05)', border: `1px solid ${winnerClan?.color || '#444'}33` }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '0.8rem', opacity: 0.6, textAlign: 'right', marginRight: '4px' }}>#{idx + 1}</span>
+                    <span style={{ fontSize: '0.9rem', textAlign: 'left' }}>{province?.name || battle.provinceId}</span>
                     {winner ? (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', justifySelf: 'end', gap: '4px' }}>
                         <ClanShield clanId={winner.clanId} size={18} />
                         <span style={{ color: winnerClan?.color, fontWeight: 'bold', fontSize: '0.85rem' }}>{winner.name}</span>
                       </span>
                     ) : (
-                      <span style={{ fontSize: '0.8rem', opacity: 0.5, fontStyle: 'italic' }}>{t('war.summary.discarded')}</span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.5, fontStyle: 'italic', justifySelf: 'end' }}>{t('war.summary.discarded')}</span>
                     )}
                   </div>
                 );
@@ -1169,6 +1338,20 @@ export const GameBoard = () => {
 
       {/* Trade Offer Popup */}
       <TradeOfferPopup />
+
+      <GenerosityPopup />
+      <NureOnnaPopup />
+      <RuleEventNoticePopup />
+      <BattleCardDecisionPopup />
+      <BattleMercyDecisionPopup />
+      <NinjaDecisionPopup />
+      <MonkeyDecisionPopup />
+      <SnakeDecisionPopup />
+      <BenevolencePopup />
+      <SpringPlacementPopup />
+      <VassalDecisionPopup />
+      <SerpentChargePopup />
+      <MonsterEnterDecisionPopup />
 
     </div>
   );

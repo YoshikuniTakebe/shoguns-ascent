@@ -25,6 +25,7 @@ import {
   buildFortress,
   buildFukurokuju,
   betraySelectFigure,
+  betrayReplaceWorshippingShinto,
   skipBetrayTurn,
   shouldEndTeaPhase,
   recruitPlaceFigure,
@@ -38,18 +39,53 @@ import {
   advanceKamiResolution,
   ryujinBuyCard as ryujinBuyCardFn,
   resolveUncontestedBattles,
-  calculateForce,
+  prepareNureOnnaDecision,
+  resolveNureOnnaDecision,
   startInteractiveCleanup,
   processHostageReturn,
   finalizeCleanupAndAdvance,
   determineTacticWinners,
-  applyFireDragonEffect,
+  prepareBattleCardDecision,
+  resolveBattleCardDecision,
+  resolveBattleMercyDecision,
+  resolveNinjaDecision,
+  resolveMonkeyDecision,
+  resolveSnakeDecision,
+  resolveBenevolenceDecision,
+  resolveSpringPlacementDecision,
+  resolveVassalDecision,
+  applyRighteousnessVP,
+  applyDignityMonsterSummon,
+  prepareMonsterEnterDecision,
+  resolveMonsterEnterDecision,
   hasCard,
   grantWarlordSummonCoin,
   grantRecruitWarlordCoinOnce,
+  chooseGenerosityRecipient,
+  respondToGenerosity,
+  getFujinMovementCost,
+  resolvePendingSerpentCrossings,
+  resolveSerpentChargeDecision,
+  selectDaikaijuProvince,
+  confirmDaikaijuPlacement,
+  undoDaikaijuProvinceSelection,
+  applyEbisuDeathEffect,
+  applyProvinceDeathCardEffects,
+  applyLoyaltyBonus,
+  gainHonor,
+  advanceWarStartAction,
+  selectWarStartFigure,
+  selectWarStartProvince,
+  resetWarStartSelection,
+  toggleWarStartMercy,
+  confirmWarStartAction,
+  skipWarStartAction,
 } from '../utils/gameLogic';
-import type { GameState } from '../types/game';
+import type { GameState, RuleEventNotice } from '../types/game';
 import { SEASON_CARDS_DATA } from '../types/game';
+import { getAvailableNormalShintoReserve } from '../utils/reserveUtils';
+
+const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 import {
   initDatabase,
   saveGame,
@@ -137,16 +173,58 @@ interface Lobby {
   createdAt: string;
 }
 
-/** Number of unreserved (open-to-anyone) slots in a lobby. */
+/** Number of currently unreserved and unoccupied slots in a lobby. */
 function openSlotCount(l: Lobby): number {
-  if (!l.invitedUserIds || l.invitedUserIds.length === 0) return 0;
-  const reserved = 1 /* host */ + l.invitedUserIds.length;
-  return Math.max(0, l.maxPlayers - reserved);
+  const joinedIds = new Set(l.players.map(p => p.id));
+  const invitedStillWaiting = (l.invitedUserIds || []).filter(id => !joinedIds.has(id)).length;
+  return Math.max(0, l.maxPlayers - l.players.length - invitedStillWaiting);
 }
 
 /** Whether a lobby is an "open game" (visible to everyone with a Join button). */
 function isOpenLobby(l: Lobby): boolean {
   return openSlotCount(l) > 0;
+}
+
+function getWaitingLobbySlots(l: Lobby) {
+  const slots: { userId: string | null; name: string | null; clanId: string; status: 'joined' | 'waiting' | 'open' }[] = [];
+  const usedClans = new Set<string>();
+
+  for (const player of l.players) {
+    if (player.clanId) usedClans.add(player.clanId);
+    slots.push({
+      userId: player.id,
+      name: player.name,
+      clanId: player.clanId,
+      status: player.ws?.readyState === WebSocket.OPEN ? 'joined' : 'waiting',
+    });
+  }
+
+  const joinedIds = new Set(l.players.map(player => player.id));
+  const pendingInvites = (l.invitedUserIds || []).filter(id => !joinedIds.has(id));
+  const availableClans = (l.config?.availableClans || []).filter(clanId => !usedClans.has(clanId));
+
+  for (const invitedId of pendingInvites) {
+    const preferredClan = l.invitedClans[invitedId];
+    const clanId = preferredClan && !usedClans.has(preferredClan)
+      ? preferredClan
+      : availableClans.find(id => !usedClans.has(id)) || '';
+    if (clanId) usedClans.add(clanId);
+    slots.push({
+      userId: invitedId,
+      name: getUserById(invitedId)?.username || 'Jugador invitado',
+      clanId,
+      status: 'waiting',
+    });
+  }
+
+  const freeSlots = openSlotCount(l);
+  const freeClans = (l.config?.availableClans || []).filter(clanId => !usedClans.has(clanId));
+  for (let index = 0; index < freeSlots; index++) {
+    slots.push({ userId: null, name: null, clanId: freeClans[index] || '', status: 'open' });
+  }
+
+  const clanOrder = new Map((l.config?.availableClans || []).map((clanId, index) => [clanId, index]));
+  return slots.sort((a, b) => (clanOrder.get(a.clanId) ?? 999) - (clanOrder.get(b.clanId) ?? 999));
 }
 
 /** Safely send a JSON message to a (possibly null/closed) player socket. */
@@ -365,6 +443,7 @@ app.get('/api/lobbies/visible', (req, res) => {
         isParticipant,
         createdAt: l.createdAt,
         players: l.players.map((p) => ({ name: p.name, clanId: p.clanId, userId: p.id })),
+        slots: getWaitingLobbySlots(l),
       };
     });
   res.json(result);
@@ -661,6 +740,8 @@ function formatGame(game: { id: string; name: string; players_json: string; stat
   let kamiResolutionIndex: number | null = null;
   let battleCount: number | null = null;
   let currentPlayerIndex: number | null = null;
+  let currentPlayerId: string | null = null;
+  let currentPlayerClanId: string | null = null;
   if (latest) {
     try {
       const state = JSON.parse(latest.state_json);
@@ -669,7 +750,20 @@ function formatGame(game: { id: string; name: string; players_json: string; stat
       politicsMandateCount = state.politicsMandateCount ?? null;
       kamiResolutionIndex = state.kamiResolutionIndex ?? null;
       battleCount = Array.isArray(state.activeBattles) ? state.activeBattles.length : null;
-      currentPlayerIndex = state.currentPlayerIndex ?? null;
+      const resolutionPlayerId = state.trainMandateActive
+        ? state.trainResolutionOrder?.[state.trainResolutionIndex]
+        : state.marshalMandateActive
+          ? state.marshalResolutionOrder?.[state.marshalResolutionIndex]
+          : state.recruitMandateActive
+            ? state.recruitResolutionOrder?.[state.recruitResolutionIndex]
+            : state.harvestMandateActive && state.harvestCurrentPlayerId
+              ? state.harvestCurrentPlayerId
+              : state.kamiResolutionActive && state.kamiResolutionCurrentPlayerId
+                ? state.kamiResolutionCurrentPlayerId
+                : state.players?.[state.currentPlayerIndex]?.id;
+      const currentPlayer = state.players?.find((p: { id: string }) => p.id === resolutionPlayerId);
+      currentPlayerId = currentPlayer?.id ?? null;
+      currentPlayerClanId = currentPlayer?.clanId ?? null;
     } catch {
       lastSeason = latest.season;
       lastPhase = latest.phase;
@@ -683,6 +777,16 @@ function formatGame(game: { id: string; name: string; players_json: string; stat
     const gp = gamePlayers.find((gp) => gp.clan_id === p.clanId);
     return { name: p.name, clanId: p.clanId, userId: gp?.user_id || null };
   });
+
+  // GameState players are honor-sorted, while players_json keeps lobby order. Translate the
+  // active player's identity back to the array returned to the lobby before exposing an index.
+  if (currentPlayerId || currentPlayerClanId) {
+    const mappedIndex = enrichedPlayers.findIndex((p) =>
+      (currentPlayerId && p.userId === currentPlayerId) ||
+      (currentPlayerClanId && p.clanId === currentPlayerClanId)
+    );
+    currentPlayerIndex = mappedIndex >= 0 ? mappedIndex : null;
+  }
 
   return {
     id: game.id,
@@ -763,6 +867,35 @@ function startLobbyGame(l: Lobby): void {
   }
 
   l.players.forEach((p) => safeSend(p.ws, { type: 'GAME_START', state: l.gameState }));
+}
+
+function restorePendingMonsterPlacement(state: GameState): GameState {
+  if (state.pendingMonsterPlacementCardId && state.pendingMonsterPlacementPlayerId) return state;
+  if (!state.trainMandateActive) return state;
+
+  const expectedPlayerId = state.trainResolutionOrder[state.trainResolutionIndex];
+  const player = state.players.find((p) => p.id === expectedPlayerId);
+  if (!player) return state;
+
+  // Backward compatibility for games saved before pending placement became persistent. A Train
+  // snapshot waiting immediately after a monster purchase has the purchase as its latest action.
+  const lastAction = [...state.log].reverse().find((entry) =>
+    entry.includes(' compra ') || entry.includes('no compra carta') ||
+    entry.includes('colocado en ') || entry.includes('enviado a reserva') ||
+    entry.includes('se queda en reserva')
+  );
+  if (!lastAction?.startsWith(`${player.name} compra `)) return state;
+
+  const monster = player.seasonCards.find((card) =>
+    card.cardType === 'monster' && lastAction.includes(`compra ${card.name} `)
+  );
+  if (!monster) return state;
+
+  return {
+    ...state,
+    pendingMonsterPlacementCardId: monster.id,
+    pendingMonsterPlacementPlayerId: player.id,
+  };
 }
 
 wss.on('connection', (ws: WebSocket, req) => {
@@ -886,10 +1019,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             const isHost = playerId === l.host;
             if (!isInvited && !isHost) {
               // Only allowed to take an OPEN slot, and only if open slots remain.
-              const nonReservedJoiners = l.players.filter(
-                p => p.id !== l.host && !l.invitedUserIds.includes(p.id)
-              ).length;
-              if (openSlotCount(l) - nonReservedJoiners <= 0) {
+              if (openSlotCount(l) <= 0) {
                 ws.send(JSON.stringify({ type: 'ERROR', message: 'This game is private or full' }));
                 return;
               }
@@ -998,6 +1128,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'DRAW_MANDATE_TILES': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (l.gameState.generosityPending) return;
           if (l.gameState.currentPhase !== 'politics') {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Cannot draw mandate tiles outside of politics phase' }));
             return;
@@ -1009,6 +1140,83 @@ wss.on('connection', (ws: WebSocket, req) => {
             return;
           }
           l.gameState = drawMandateTiles(l.gameState);
+          broadcastState(l);
+          break;
+        }
+
+        case 'GENEROSITY_CHOOSE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = chooseGenerosityRecipient(l.gameState, playerId, data.payload?.toPlayerId ?? null);
+          broadcastState(l);
+          break;
+        }
+
+        case 'GENEROSITY_RESPOND': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = respondToGenerosity(l.gameState, playerId, data.payload?.accept === true);
+          broadcastState(l);
+          break;
+        }
+
+        case 'TRADE_SEND': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (l.gameState.currentPhase === 'war') return;
+          const { toPlayerId, offerCoins, offerRonin, requestCoins, requestRonin } = data.payload || {};
+          const message = typeof data.payload?.message === 'string' ? data.payload.message.trim().slice(0, 250) : '';
+          const values = [offerCoins, offerRonin, requestCoins, requestRonin];
+          if (!toPlayerId || toPlayerId === playerId || !values.every(v => Number.isInteger(v) && v >= 0)) return;
+          if (values.every(v => v === 0)) return;
+          const sender = l.gameState.players.find(p => p.id === playerId);
+          const recipient = l.gameState.players.find(p => p.id === toPlayerId);
+          if (!sender || !recipient || sender.coins < offerCoins || sender.ronin < offerRonin) return;
+          l.gameState = {
+            ...l.gameState,
+            tradeOffers: [...l.gameState.tradeOffers, {
+              id: uuidv4(), fromPlayerId: playerId, toPlayerId,
+              offerCoins, offerRonin, requestCoins, requestRonin, message, status: 'pending' as const,
+            }],
+          };
+          broadcastState(l);
+          break;
+        }
+
+        case 'TRADE_ACCEPT': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (l.gameState.currentPhase === 'war') return;
+          const offer = l.gameState.tradeOffers.find(o => o.id === data.payload?.offerId && o.status === 'pending');
+          if (!offer || offer.toPlayerId !== playerId) return;
+          const sender = l.gameState.players.find(p => p.id === offer.fromPlayerId);
+          const recipient = l.gameState.players.find(p => p.id === offer.toPlayerId);
+          if (!sender || !recipient || sender.coins < offer.offerCoins || sender.ronin < offer.offerRonin || recipient.coins < offer.requestCoins || recipient.ronin < offer.requestRonin) {
+            l.gameState = { ...l.gameState, tradeOffers: l.gameState.tradeOffers.filter(o => o.id !== offer.id) };
+            broadcastState(l);
+            return;
+          }
+          l.gameState = {
+            ...l.gameState,
+            players: l.gameState.players.map(p => p.id === sender.id
+              ? { ...p, coins: p.coins - offer.offerCoins + offer.requestCoins, ronin: p.ronin - offer.offerRonin + offer.requestRonin }
+              : p.id === recipient.id
+                ? { ...p, coins: p.coins + offer.offerCoins - offer.requestCoins, ronin: p.ronin + offer.offerRonin - offer.requestRonin }
+                : p),
+            tradeOffers: l.gameState.tradeOffers.filter(o => o.id !== offer.id),
+            log: [...l.gameState.log, `${sender.name} y ${recipient.name} completan un Trato`],
+          };
+          broadcastState(l);
+          break;
+        }
+
+        case 'TRADE_REJECT': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          if (l.gameState.currentPhase === 'war') return;
+          const offer = l.gameState.tradeOffers.find(o => o.id === data.payload?.offerId);
+          if (!offer || offer.toPlayerId !== playerId) return;
+          l.gameState = { ...l.gameState, tradeOffers: l.gameState.tradeOffers.filter(o => o.id !== offer.id) };
           broadcastState(l);
           break;
         }
@@ -1055,8 +1263,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           l.gameState = submitWarTacticBids(l.gameState, provinceId, data.playerId, tacticBids);
           // Only resolve once all participants have submitted their bids
           if (allBidsSubmitted(l.gameState, provinceId)) {
-            // Apply Fire Dragon pre-battle effect before determining tactic winners
-            l.gameState = applyFireDragonEffect(l.gameState, provinceId);
+            l.gameState = prepareBattleCardDecision(l.gameState, provinceId);
+            if (l.gameState.pendingBattleCardDecision) {
+              broadcastState(l);
+              break;
+            }
             const battle = l.gameState.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
             if (battle) {
               const resData = determineTacticWinners(l.gameState, battle);
@@ -1075,6 +1286,187 @@ wss.on('connection', (ws: WebSocket, req) => {
               }
             }
           }
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_BATTLE_CARD_DECISION': {
+          const l = lobbies.get(currentLobbyId || '');
+          const pending = l?.gameState?.pendingBattleCardDecision;
+          if (!l?.gameState || !pending) return;
+          const { useEffect, selectedByPlayer, destinationsByFigure, useMercy } = data.payload || {};
+          const nextState = resolveBattleCardDecision(
+            l.gameState,
+            data.playerId,
+            !!useEffect,
+            selectedByPlayer || {},
+            destinationsByFigure || {},
+            !!useMercy,
+          );
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
+          if (!l.gameState.pendingBattleCardDecision) {
+            const battle = l.gameState.activeBattles.find(candidate => candidate.provinceId === pending.provinceId && !candidate.resolved);
+            if (battle) {
+              const resolutionData = determineTacticWinners(l.gameState, battle);
+              if (resolutionData.seppukuWinnerId || resolutionData.hostageWinnerId || resolutionData.roninWinnerId) {
+                l.gameState = {
+                  ...l.gameState,
+                  activeBattles: l.gameState.activeBattles.map(candidate => candidate.provinceId === pending.provinceId && !candidate.resolved
+                    ? { ...candidate, resolutionData }
+                    : candidate),
+                };
+              } else {
+                l.gameState = resolveNextBattle(l.gameState);
+              }
+            }
+          }
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_BATTLE_MERCY_DECISION': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState?.pendingBattleMercyDecision) return;
+          const nextState = resolveBattleMercyDecision(l.gameState, data.playerId, !!data.payload?.useMercy);
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_NINJA_DECISION': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState?.pendingNinjaDecision) return;
+          const nextState = resolveNinjaDecision(
+            l.gameState,
+            data.playerId,
+            !!data.payload?.useEffect,
+            data.payload?.targetFigureId,
+            !!data.payload?.useMercy,
+          );
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_MONKEY_DECISION': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState?.pendingMonkeyDecision) return;
+          const nextState = resolveMonkeyDecision(
+            l.gameState,
+            data.playerId,
+            !!data.payload?.useEffect,
+            data.payload?.targetPlayerId,
+          );
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_BENEVOLENCE': {
+          const l = lobbies.get(currentLobbyId || '');
+          const pending = l?.gameState?.pendingBenevolence;
+          if (!l?.gameState || !pending) return;
+          let nextState = resolveBenevolenceDecision(l.gameState, data.playerId, data.payload?.recipientId);
+          if (nextState === l.gameState) return;
+          if (!nextState.pendingBenevolence && !(nextState.pendingRuleNotices?.length || 0)) {
+            if (pending.resume === 'advance-train') {
+              nextState = { ...nextState, trainResolutionIndex: nextState.trainResolutionIndex + 1 };
+              nextState = advanceTrainResolution(nextState);
+              if (!nextState.trainMandateActive) {
+                const previousPhase = nextState.currentPhase;
+                nextState = advancePlayer(nextState);
+                if (nextState.currentPhase === 'cleanup' && previousPhase !== 'cleanup') nextState = startInteractiveCleanup(nextState);
+              }
+            } else if (pending.resume === 'advance-kami') {
+              nextState = advanceKamiResolution(nextState);
+            } else if (pending.resume === 'advance-marshal') {
+              nextState = skipMarshalTurn(nextState);
+              if (!nextState.marshalMandateActive) {
+                const previousPhase = nextState.currentPhase;
+                nextState = advancePlayer(nextState);
+                if (nextState.currentPhase === 'cleanup' && previousPhase !== 'cleanup') nextState = startInteractiveCleanup(nextState);
+              }
+            }
+          }
+          l.gameState = nextState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_SPRING_PLACEMENT': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState?.pendingSpringPlacement) return;
+          const nextState = resolveSpringPlacementDecision(
+            l.gameState,
+            data.playerId,
+            !!data.payload?.useEffect,
+            data.payload?.provinceId,
+            data.payload?.templeId,
+            data.payload?.figureId,
+          );
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_VASSAL_DECISION': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState?.pendingVassalDecision) return;
+          const nextState = resolveVassalDecision(l.gameState, data.playerId, !!data.payload?.accept);
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_SERPENT_CHARGE': {
+          const l = lobbies.get(currentLobbyId || '');
+          const pending = l?.gameState?.pendingSerpentCharge;
+          if (!l?.gameState || !pending) return;
+          let nextState = resolveSerpentChargeDecision(l.gameState, data.playerId, !!data.payload?.chargeCoin);
+          if (nextState === l.gameState) return;
+          if (!nextState.pendingSerpentCharge && !(nextState.pendingRuleNotices?.length || 0)) {
+            if (pending.resume === 'advance-kami') nextState = advanceKamiResolution(nextState);
+            else if (pending.resume === 'advance-marshal') {
+              nextState = skipMarshalTurn(nextState);
+              if (!nextState.marshalMandateActive) {
+                const previousPhase = nextState.currentPhase;
+                nextState = advancePlayer(nextState);
+                if (nextState.currentPhase === 'cleanup' && previousPhase !== 'cleanup') nextState = startInteractiveCleanup(nextState);
+              }
+            } else if (pending.resume === 'advance-war-start') nextState = advanceWarStartAction(nextState);
+          }
+          l.gameState = nextState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_MONSTER_ENTER_DECISION': {
+          const l = lobbies.get(currentLobbyId || '');
+          const pending = l?.gameState?.pendingMonsterEnterDecision;
+          if (!l?.gameState || !pending) return;
+          const { useEffect, selectedByPlayer, destinationId, useMercy } = data.payload || {};
+          let nextState = resolveMonsterEnterDecision(l.gameState, data.playerId, !!useEffect, selectedByPlayer || {}, destinationId, !!useMercy);
+          if (nextState === l.gameState) return;
+          if (!nextState.pendingMonsterEnterDecision) {
+            if (pending.resume === 'advance-kami') {
+              nextState = advanceKamiResolution(nextState);
+            } else if (pending.resume === 'advance-train') {
+              nextState = { ...nextState, trainResolutionIndex: nextState.trainResolutionIndex + 1 };
+              nextState = advanceTrainResolution(nextState);
+              if (!nextState.trainMandateActive) {
+                const previousPhase = nextState.currentPhase;
+                nextState = advancePlayer(nextState);
+                if (nextState.currentPhase === 'cleanup' && previousPhase !== 'cleanup') nextState = startInteractiveCleanup(nextState);
+              }
+            }
+          }
+          l.gameState = nextState;
           broadcastState(l);
           break;
         }
@@ -1106,14 +1498,23 @@ wss.on('connection', (ws: WebSocket, req) => {
                 if (fig.monsterCardId === 'sp-phoenix') phoenixDied = true;
               }
             }
+            for (const fig of ownFigures) {
+              if (fig.type === 'monster' && fig.monsterCardId === 'au-ebisu') {
+                applyEbisuDeathEffect(l.gameState, playerId);
+              }
+            }
             const killedIds = ownFigures.map(f => f.id);
             let newFigures = province.figures.filter(f => !killedIds.includes(f.id));
             // Phoenix revival
             if (phoenixDied) {
+              seppukuPlayer.victoryPoints += 1;
+              applyLoyaltyBonus(l.gameState, playerId, 'Phoenix');
               const figureId = Math.random().toString(36).substring(2, 10);
               newFigures = [...newFigures, { type: 'monster' as const, owner: playerId, id: figureId, monsterCardId: 'sp-phoenix' }];
               seppukuPlayer.monsters -= 1;
             }
+            applyRighteousnessVP(l.gameState, playerId, killCount);
+            if (killCount > 0) applyLoyaltyBonus(l.gameState, playerId, 'seppuku');
             l.gameState.provinces[unresolvedBattle.provinceId] = { ...province, figures: newFigures };
             // Gain honor for each kill
             for (let i = 0; i < killCount; i++) {
@@ -1127,6 +1528,7 @@ wss.on('connection', (ws: WebSocket, req) => {
               const p = l.gameState!.players.find(pl => pl.id === pid);
               if (p) p.honor = i + 1;
             });
+            applyProvinceDeathCardEffects(l.gameState, unresolvedBattle.provinceId, ownFigures, province.figures);
             // Update resolutionData
             const updatedResData = { ...resData, seppukuAccepted: true, seppukuKillCount: killCount, phoenixDiedInSeppuku: phoenixDied };
             const updatedBattles = l.gameState.activeBattles.map(b => {
@@ -1206,34 +1608,72 @@ wss.on('connection', (ws: WebSocket, req) => {
             const hostageMonsterName = targetFigure.type === 'monster' && targetFigure.monsterCardId
               ? (SEASON_CARDS_DATA.find((c: { id: string; name: string }) => c.id === targetFigure.monsterCardId)?.name || targetFigure.type)
               : targetFigure.type;
-            const hostage = { fromClanId: targetFigure.owner, figureType: targetFigure.type, figureName: hostageMonsterName };
+            const hostage = { fromClanId: targetFigure.owner, figureType: targetFigure.type, figureName: hostageMonsterName, monsterCardId: targetFigure.monsterCardId };
             hostageWinner.hostages.push(hostage);
-            hostageWinner.victoryPoints += 1;
             l.gameState.provinces[unresolvedBattle2.provinceId] = {
               ...province2,
               figures: province2.figures.filter(f => f.id !== targetFigure.id),
             };
             const victim = l.gameState.players.find(p => p.id === targetFigure.owner);
+            const stolenVP = victim ? Math.min(1, victim.victoryPoints) : 0;
+            let hostageEventVP = (resData2.hostageVPGained || 0) + stolenVP;
             if (victim) {
-              if (targetFigure.type === 'bushi') victim.bushi += 1;
-              else if (targetFigure.type === 'shinto') victim.shinto += 1;
-              else if (targetFigure.type === 'monster') victim.monsters += 1;
+              victim.victoryPoints -= stolenVP;
+              hostageWinner.victoryPoints += stolenVP;
+            }
+            const hostageWinnerCards = new Set(hostageWinner.seasonCards.map(card => card.id));
+            if (!resData2.sincerityApplied && hasCard(hostageWinnerCards, 'su-sincerity')) {
+              gainHonor(l.gameState, hostageWinner.id);
+              const updatedWinner = l.gameState.players.find(player => player.id === hostageWinner.id);
+              if (updatedWinner) {
+                updatedWinner.victoryPoints += 1;
+                hostageEventVP += 1;
+                l.gameState.log = [...l.gameState.log, `${updatedWinner.name} gana Honor y 1 PV por tomar un rehen (Sinceridad). Total ${updatedWinner.victoryPoints} PV`];
+              }
             }
             const capturedHostageData = {
               captorId: playerId,
               fromClanId: targetFigure.owner,
               figureType: targetFigure.type,
-              figureName: targetFigure.type,
+              figureName: hostageMonsterName,
               monsterCardId: targetFigure.monsterCardId,
             };
-            const updatedResData2 = { ...resData2, capturedHostage: capturedHostageData };
+            const hostagesTaken = (resData2.hostagesTaken || 0) + 1;
+            const hostageLimit = resData2.hostageLimit || (1 + hostageWinner.seasonCards.filter(card => card.id === 'su-respect' || card.id === 'su-respect-2').length);
+            const updatedResData2 = {
+              ...resData2,
+              capturedHostage: capturedHostageData,
+              capturedHostages: [...(resData2.capturedHostages || []), capturedHostageData],
+              hostagesTaken,
+              hostageLimit,
+              hostageVPGained: hostageEventVP,
+              sincerityApplied: resData2.sincerityApplied || hasCard(hostageWinnerCards, 'su-sincerity'),
+            };
             const updatedBattles2 = l.gameState.activeBattles.map(b => {
               if (b.provinceId === unresolvedBattle2.provinceId && !b.resolved) {
                 return { ...b, resolutionData: updatedResData2 };
               }
               return b;
             });
-            l.gameState = { ...l.gameState, activeBattles: updatedBattles2, log: [...l.gameState.log, `${hostageWinner.name} toma un rehen de ${victim?.name}`] };
+            const finalWinner = l.gameState.players.find(player => player.id === hostageWinner.id);
+            const finalVictim = l.gameState.players.find(player => player.id === targetFigure.owner);
+            l.gameState = { ...l.gameState, activeBattles: updatedBattles2, log: [...l.gameState.log, `${finalWinner?.name} toma un rehen de ${finalVictim?.name} y roba ${stolenVP} PV. Total ${finalWinner?.name}: ${finalWinner?.victoryPoints} PV; ${finalVictim?.name}: ${finalVictim?.victoryPoints} PV`] };
+
+            const remainingCapturable = l.gameState.provinces[unresolvedBattle2.provinceId].figures.some(figure =>
+              figure.owner !== hostageWinner.id
+              && !hostageWinner.allies.includes(figure.owner)
+              && unresolvedBattle2.participants.includes(figure.owner)
+              && figure.type !== 'fortress'
+              && figure.type !== 'daimyo'
+              && !(figure.type === 'monster' && ['su-yurei', 'sp-fukurokuju'].includes(figure.monsterCardId || ''))
+            );
+            if (hostagesTaken < hostageLimit && remainingCapturable) {
+              broadcastState(l);
+              break;
+            }
+            if (hostageEventVP > 0) applyLoyaltyBonus(l.gameState, hostageWinner.id, 'tomar rehen');
+          } else if ((resData2.hostagesTaken || 0) > 0 && (resData2.hostageVPGained || 0) > 0) {
+            applyLoyaltyBonus(l.gameState, hostageWinner.id, 'tomar rehen');
           }
 
           // After hostage is taken (or skipped), resolve the battle
@@ -1417,7 +1857,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             const nextIdx = l.gameState.kamiResolutionNextPlayerIndex;
             const playerCount = l.gameState.players.length;
             // Defensively apply kamiResolutionNextPlayerIndex if valid and politics is still active
-            const correctedIndex = (nextIdx >= 0 && nextIdx < playerCount && l.gameState.politicsMandateCount < l.gameState.maxMandates)
+            const correctedIndex = (!l.gameState.betrayMandateActive && nextIdx >= 0 && nextIdx < playerCount && l.gameState.politicsMandateCount < l.gameState.maxMandates)
               ? nextIdx
               : l.gameState.currentPlayerIndex;
             l.gameState = { ...l.gameState, kamiSummaryVisible: false, kamiSummaryData: [], kamiSummaryReadyPlayers: [], currentPlayerIndex: correctedIndex };
@@ -1488,32 +1928,7 @@ wss.on('connection', (ws: WebSocket, req) => {
 
           // Auto-end Zorro placement when remaining reaches 0
           if (newRemaining === 0) {
-            const zorroId = l.gameState.zorroPlacementPlayerId;
-            l.gameState = {
-              ...l.gameState,
-              zorroPlacementActive: false,
-              zorroPlacementPlayerId: null,
-              zorroPlacementsRemaining: 0,
-            };
-            // Update battle participants to include Zorro in provinces where they now have figures
-            if (zorroId) {
-              l.gameState = {
-                ...l.gameState,
-                activeBattles: l.gameState.activeBattles.map(b => {
-                  const prov = l.gameState!.provinces[b.provinceId];
-                  const hasFigures = prov?.figures.some(f => f.owner === zorroId);
-                  if (hasFigures && !b.participants.includes(zorroId)) {
-                    const participants = [...b.participants, zorroId].sort((a, bb) => {
-                      const aIdx = l.gameState!.turnOrder.indexOf(a);
-                      const bIdx = l.gameState!.turnOrder.indexOf(bb);
-                      return aIdx - bIdx;
-                    });
-                    return { ...b, participants, uncontested: false, winner: undefined };
-                  }
-                  return b;
-                }),
-              };
-            }
+            l.gameState = advanceWarStartAction(l.gameState);
           }
 
           broadcastState(l);
@@ -1526,34 +1941,55 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l.gameState.zorroPlacementActive) return;
           if (data.playerId !== l.gameState.zorroPlacementPlayerId) return;
 
-          const zorroId = l.gameState.zorroPlacementPlayerId;
-          let zpState: GameState = {
-            ...l.gameState,
-            zorroPlacementActive: false,
-            zorroPlacementPlayerId: null,
-            zorroPlacementsRemaining: 0,
-          };
+          l.gameState = advanceWarStartAction(l.gameState);
+          broadcastState(l);
+          break;
+        }
 
-          // Update battle participants to include Zorro in provinces where they now have figures
-          if (zorroId) {
-            zpState = {
-              ...zpState,
-              activeBattles: zpState.activeBattles.map(b => {
-                const prov = zpState.provinces[b.provinceId];
-                const hasFigures = prov?.figures.some(f => f.owner === zorroId);
-                if (hasFigures && !b.participants.includes(zorroId)) {
-                  const participants = [...b.participants, zorroId].sort((a, bb) => {
-                    const aIdx = zpState.turnOrder.indexOf(a);
-                    const bIdx = zpState.turnOrder.indexOf(bb);
-                    return aIdx - bIdx;
-                  });
-                  return { ...b, participants, uncontested: false, winner: undefined };
-                }
-                return b;
-              }),
-            };
-          }
-          l.gameState = zpState;
+        case 'WAR_START_SELECT_PROVINCE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || !data.payload?.provinceId) return;
+          l.gameState = selectWarStartProvince(l.gameState, data.playerId, data.payload.provinceId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'WAR_START_SELECT_FIGURE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || !data.payload?.provinceId || !data.payload?.figureId) return;
+          l.gameState = selectWarStartFigure(l.gameState, data.playerId, data.payload.provinceId, data.payload.figureId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'WAR_START_RESET': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = resetWarStartSelection(l.gameState, data.playerId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'WAR_START_TOGGLE_MERCY': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || !data.payload?.provinceId) return;
+          l.gameState = toggleWarStartMercy(l.gameState, data.playerId, data.payload.provinceId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'WAR_START_CONFIRM': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = confirmWarStartAction(l.gameState, data.playerId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'WAR_START_SKIP': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          l.gameState = skipWarStartAction(l.gameState, data.playerId);
           broadcastState(l);
           break;
         }
@@ -1569,11 +2005,12 @@ wss.on('connection', (ws: WebSocket, req) => {
             // All players accepted war summary
             if (l.gameState.daikaijuPlacementActive) {
               // Daikaiju placement pending - don't resolve battles yet, just clear ready players
-              l.gameState = { ...l.gameState, warPhaseReadyPlayers: [] };
+              l.gameState = { ...l.gameState, warPhaseReadyPlayers: [], warPhaseStartAcknowledged: true };
             } else {
               // No Daikaiju - resolve uncontested battles and proceed
+              l.gameState = prepareNureOnnaDecision(l.gameState);
               l.gameState = resolveUncontestedBattles(l.gameState);
-              l.gameState = { ...l.gameState, warPhaseReadyPlayers: [] };
+              l.gameState = { ...l.gameState, warPhaseReadyPlayers: [], warPhaseStartAcknowledged: true };
             }
           }
           broadcastState(l);
@@ -1588,64 +2025,29 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (playerId !== l.gameState.daikaijuPlacementPlayerId) return;
           const { provinceId: daikaijuTargetId } = data.payload || {};
           if (!daikaijuTargetId || daikaijuTargetId === 'ocean') return;
-          const targetProv = l.gameState.provinces[daikaijuTargetId];
-          if (!targetProv) return;
+          const selected = selectDaikaijuProvince(l.gameState, playerId, daikaijuTargetId);
+          if (selected === l.gameState) return;
+          l.gameState = selected;
+          broadcastState(l);
+          break;
+        }
 
-          const oceanProv = l.gameState.provinces['ocean'];
-          if (!oceanProv) return;
-          const daikaijuFig = oceanProv.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-daikaiju');
-          if (!daikaijuFig) return;
+        case 'DAIKAIJU_CONFIRM_PLACEMENT': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || !playerId) return;
+          const confirmed = confirmDaikaijuPlacement(l.gameState, playerId);
+          if (confirmed === l.gameState) return;
+          l.gameState = confirmed;
+          broadcastState(l);
+          break;
+        }
 
-          // Move Daikaiju from ocean to target province
-          let dkState: GameState = {
-            ...l.gameState,
-            provinces: {
-              ...l.gameState.provinces,
-              ocean: { ...oceanProv, figures: oceanProv.figures.filter(f => f.id !== daikaijuFig.id) },
-              [daikaijuTargetId]: { ...targetProv, figures: [...targetProv.figures, daikaijuFig] },
-            },
-          };
-
-          // Destroy ALL fortresses in target province (including own and Tortuga's)
-          const allForts = dkState.provinces[daikaijuTargetId].figures.filter(f => f.type === 'fortress');
-          const destroyedMap: { [pid: string]: number } = {};
-          for (const fort of allForts) {
-            destroyedMap[fort.owner] = (destroyedMap[fort.owner] || 0) + 1;
-          }
-
-          dkState = {
-            ...dkState,
-            provinces: {
-              ...dkState.provinces,
-              [daikaijuTargetId]: {
-                ...dkState.provinces[daikaijuTargetId],
-                figures: dkState.provinces[daikaijuTargetId].figures.filter(f => f.type !== 'fortress'),
-              },
-            },
-            players: dkState.players.map(p => {
-              const returned = destroyedMap[p.id] || 0;
-              if (returned > 0) return { ...p, fortresses: p.fortresses + returned };
-              return p;
-            }),
-          };
-
-          // Build summary data
-          const destroyedFortresses = Object.entries(destroyedMap).map(([pId, count]) => {
-            const player = dkState.players.find(p => p.id === pId);
-            return { playerId: pId, playerName: player?.name || 'jugador', count };
-          });
-
-          const dkOwner = dkState.players.find(p => p.id === playerId);
-          dkState = {
-            ...dkState,
-            daikaijuPlacementActive: false,
-            daikaijuSummaryVisible: true,
-            daikaijuSummaryReadyPlayers: [],
-            daikaijuSummaryData: { provinceId: daikaijuTargetId, provinceName: targetProv.name, destroyedFortresses },
-            log: [...dkState.log, `🦕 Daikaiju de ${dkOwner?.name || 'jugador'} aparece en ${targetProv.name} y destruye ${allForts.length} fortaleza(s)`],
-          };
-
-          l.gameState = dkState;
+        case 'DAIKAIJU_UNDO_PLACEMENT': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || !playerId) return;
+          const reverted = undoDaikaijuProvinceSelection(l.gameState, playerId);
+          if (reverted === l.gameState) return;
+          l.gameState = reverted;
           broadcastState(l);
           break;
         }
@@ -1666,6 +2068,7 @@ wss.on('connection', (ws: WebSocket, req) => {
               daikaijuSummaryReadyPlayers: [],
               daikaijuSummaryData: null,
             };
+            l.gameState = prepareNureOnnaDecision(l.gameState);
             l.gameState = resolveUncontestedBattles(l.gameState);
           }
           broadcastState(l);
@@ -1696,6 +2099,9 @@ wss.on('connection', (ws: WebSocket, req) => {
             const allBattlesResolved = l.gameState.activeBattles.length > 0 && l.gameState.activeBattles.every(b => b.resolved || b.uncontested);
             if (allBattlesResolved) {
               l.gameState = { ...l.gameState, warSummaryVisible: true };
+            } else {
+              l.gameState = prepareNureOnnaDecision(l.gameState);
+              l.gameState = resolveUncontestedBattles(l.gameState);
             }
           }
           broadcastState(l);
@@ -1782,15 +2188,36 @@ wss.on('connection', (ws: WebSocket, req) => {
             const expectedPlayer = l.gameState.trainResolutionOrder[l.gameState.trainResolutionIndex];
             if (data.playerId !== expectedPlayer) return;
           }
+          if (l.gameState.pendingMonsterPlacementCardId) return;
+          const purchasedCard = l.gameState.seasonCardsDeck.find((card) => card.id === cardId);
           let s = buySeasonCard(l.gameState, data.playerId, cardId);
+          if (s === l.gameState || !purchasedCard) {
+            safeSend(ws, { type: 'ERROR', message: 'Card purchase is no longer valid' });
+            return;
+          }
+          const jurojinNoticeAdded = (s.pendingRuleNotices?.length || 0) > (l.gameState.pendingRuleNotices?.length || 0);
           // Check if the bought card is a monster
-          const boughtCard = s.players.find(p => p.id === data.playerId)?.seasonCards.find(c => c.id === cardId);
+          const boughtCard = purchasedCard;
           if (boughtCard && boughtCard.cardType === 'monster') {
             // Monster cards: broadcast state for client to handle placement UI
             // The train resolution will advance after monster placement completes
-            l.gameState = s;
+            l.gameState = {
+              ...s,
+              pendingMonsterPlacementCardId: boughtCard.id,
+              pendingMonsterPlacementPlayerId: data.playerId,
+            };
             broadcastState(l);
           } else {
+            if (s.pendingBenevolence) {
+              l.gameState = s;
+              broadcastState(l);
+              break;
+            }
+            if (jurojinNoticeAdded) {
+              l.gameState = s;
+              broadcastState(l);
+              break;
+            }
             // Non-monster card: advance train resolution
             s = { ...s, trainResolutionIndex: s.trainResolutionIndex + 1 };
             s = advanceTrainResolution(s);
@@ -1821,7 +2248,12 @@ wss.on('connection', (ws: WebSocket, req) => {
           }
           const { cardId, provinceId, templeId, replaceFigureId, reserve } = data.payload || {};
           if (!cardId) return;
+          if (l.gameState.pendingMonsterPlacementCardId && (
+            l.gameState.pendingMonsterPlacementCardId !== cardId ||
+            l.gameState.pendingMonsterPlacementPlayerId !== data.playerId
+          )) return;
           let s = l.gameState;
+          let placementRuleNoticeAdded = false;
 
           if (templeId) {
             // Komainu/Hotei placed at temple as shinto
@@ -1832,17 +2264,40 @@ wss.on('connection', (ws: WebSocket, req) => {
 
             let updatedFigures = [...temple.figures];
             let updatedPlayers = s.players;
+            const placingPlayer = s.players.find(p => p.id === data.playerId);
+            let placementLog = `${placingPlayer?.name || 'Jugador'} coloca a ${cardId === 'su-hotei' ? 'Hotei' : 'Komainu'} como shinto en santuario de ${capitalize(temple.kamiType)}`;
 
             // Hotei replacement logic
             if (replaceFigureId) {
               const replacedFigure = temple.figures.find(f => f.figureId === replaceFigureId && f.playerId !== data.playerId);
               if (replacedFigure) {
+                const victim = s.players.find(p => p.id === replacedFigure.playerId);
+                const replacedName = replacedFigure.monsterCardId
+                  ? (SEASON_CARDS_DATA.find(card => card.id === replacedFigure.monsterCardId)?.name || 'monstruo')
+                  : 'shinto';
                 updatedFigures = updatedFigures.filter(f => f.figureId !== replaceFigureId);
                 updatedPlayers = s.players.map(p => {
                   if (p.id !== replacedFigure.playerId) return p;
-                  return { ...p, shinto: p.shinto + 1 };
+                  return replacedFigure.monsterCardId ? p : { ...p, shinto: p.shinto + 1 };
                 });
+                placementLog = `${placingPlayer?.name || 'Jugador'} coloca a Hotei, que sustituye ${replacedName} de ${victim?.name || 'jugador'} en santuario de ${capitalize(temple.kamiType)}`;
+                s = {
+                  ...s,
+                  pendingRuleNotices: [...(s.pendingRuleNotices || []), {
+                    id: uuidv4(),
+                    type: 'hotei',
+                    actorId: data.playerId,
+                    targetId: replacedFigure.playerId,
+                    requiredPlayerIds: [replacedFigure.playerId],
+                    acknowledgedPlayerIds: [],
+                    templeKami: temple.kamiType,
+                    resume: s.kamiResolutionActive && !s.trainMandateActive ? 'advance-kami' : 'advance-train',
+                  }],
+                };
+                placementRuleNoticeAdded = true;
               }
+            } else if (cardId === 'su-hotei') {
+              placementLog = `${placingPlayer?.name || 'Jugador'} coloca a Hotei en santuario de ${capitalize(temple.kamiType)} sin sustituir ninguna figura`;
             }
 
             updatedFigures = [...updatedFigures, { playerId: data.playerId, figureId, monsterCardId: cardId }];
@@ -1853,14 +2308,16 @@ wss.on('connection', (ws: WebSocket, req) => {
               ...s,
               players: updatedPlayers,
               temples: updatedTemples,
-              log: [...s.log, `Komainu/Hotei colocado como shinto en santuario`],
+              log: [...s.log, placementLog],
             };
+            applyDignityMonsterSummon(s, data.playerId);
             // Upgrade: Path of the Warlord - placing a purchased monster (Komainu/Hotei) is a summon.
             s = grantWarlordSummonCoin(s, data.playerId);
           } else if (provinceId) {
             // Monster placed in province
             const province = s.provinces[provinceId];
             if (!province) return;
+            const monsterName = SEASON_CARDS_DATA.find(card => card.id === cardId)?.name || 'Monstruo';
             const figureId = Math.random().toString(36).substring(2, 10);
             const newFigure = { type: 'monster' as const, owner: data.playerId, id: figureId, monsterCardId: cardId };
             s = {
@@ -1872,31 +2329,37 @@ wss.on('connection', (ws: WebSocket, req) => {
                   figures: [...province.figures, newFigure],
                 },
               },
-              log: [...s.log, `Monstruo colocado en ${province.name}`],
+              log: [...s.log, `${monsterName} colocado en ${province.name}`],
             };
-            // Virtue: Dignity (sp-dignity) - Gain 2 VP when summoning a monster.
-            // Summoning into the Ocean (e.g. Daikaiju) is still a summon, so it counts too.
-            {
-              const dignityPlayer = s.players.find(p => p.id === data.playerId);
-              if (dignityPlayer) {
-                const dignityCardIds = new Set(dignityPlayer.seasonCards.map(c => c.id));
-                if (hasCard(dignityCardIds, 'sp-dignity')) {
-                  dignityPlayer.victoryPoints += 2;
-                  s = { ...s, log: [...s.log, `🐉 ${dignityPlayer.name} gana 2 PV (Dignidad - invocar monstruo)`] };
-                }
-              }
-            }
+            applyDignityMonsterSummon(s, data.playerId);
             // Upgrade: Path of the Warlord - placing a purchased monster on the board is a summon.
             s = grantWarlordSummonCoin(s, data.playerId);
+            s = prepareMonsterEnterDecision(s, provinceId, figureId, s.kamiResolutionActive && !s.trainMandateActive ? 'advance-kami' : 'advance-train');
           } else if (reserve) {
             // Monster goes to reserve (Luna no valid province or cancel)
+            const monsterName = SEASON_CARDS_DATA.find(card => card.id === cardId)?.name || 'Monstruo';
             s = {
               ...s,
-              log: [...s.log, `Monstruo enviado a reserva`],
+              log: [...s.log, `${monsterName} enviado a reserva`],
             };
           }
 
           // Advance resolution depending on context
+          s = {
+            ...s,
+            pendingMonsterPlacementCardId: null,
+            pendingMonsterPlacementPlayerId: null,
+          };
+          if (placementRuleNoticeAdded) {
+            l.gameState = s;
+            broadcastState(l);
+            break;
+          }
+          if (s.pendingMonsterEnterDecision) {
+            l.gameState = s;
+            broadcastState(l);
+            break;
+          }
           if (s.kamiResolutionActive && !s.trainMandateActive) {
             // Monster placed during kami resolution (e.g., Ryujin purchase)
             s = advanceKamiResolution(s);
@@ -1948,6 +2411,21 @@ wss.on('connection', (ws: WebSocket, req) => {
             }
           }
 
+          if (s.pendingBenevolence) {
+            s = { ...s, pendingBenevolence: { ...s.pendingBenevolence, resume: 'advance-marshal' } };
+            l.gameState = s;
+            broadcastState(l);
+            break;
+          }
+
+          const beforeNoticeCount = s.pendingRuleNotices?.length || 0;
+          s = resolvePendingSerpentCrossings(s, 'advance-marshal');
+          if (s.pendingSerpentCharge || (s.pendingRuleNotices?.length || 0) > beforeNoticeCount) {
+            l.gameState = s;
+            broadcastState(l);
+            break;
+          }
+
           s = skipMarshalTurn(s);
           if (!s.marshalMandateActive) {
             const prevPhaseSM = s.currentPhase;
@@ -1984,13 +2462,13 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'BETRAY_SELECT_FIGURE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
-          const { figureId, provinceId } = data.payload || {};
+          const { figureId, provinceId, selectedMonsterCardId } = data.payload || {};
           if (!figureId || !provinceId) return;
           // Save undo snapshot on first betray selection
           if (!l.betrayUndoSnapshot) {
             l.betrayUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
           }
-          let s = betraySelectFigure(l.gameState, data.playerId, figureId, provinceId);
+          let s = betraySelectFigure(l.gameState, data.playerId, figureId, provinceId, selectedMonsterCardId);
           if (!s.betrayMandateActive) {
             s = advancePlayer(s);
             l.betrayUndoSnapshot = null;
@@ -2007,9 +2485,10 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l.gameState.betrayMandateActive) return;
           const currentPlayer = l.gameState.players[l.gameState.currentPlayerIndex];
           if (!currentPlayer || currentPlayer.id !== data.playerId) return;
+          const triggeredBySnake = l.gameState.betrayTriggeredBySnake === true;
           let s = skipBetrayTurn(l.gameState);
           const prevPhaseSB = s.currentPhase;
-          s = advancePlayer(s);
+          if (!triggeredBySnake) s = advancePlayer(s);
           if (s.currentPhase === 'cleanup' && prevPhaseSB !== 'cleanup') {
             s = startInteractiveCleanup(s);
           }
@@ -2047,12 +2526,15 @@ wss.on('connection', (ws: WebSocket, req) => {
             l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
           }
           const player = l.gameState.players.find(p => p.id === data.playerId);
-          if (!player || player.monsters <= 0) return;
+          if (!player) return;
           if (!l.gameState.recruitMandateActive || l.gameState.recruitPlacementsRemaining <= 0) return;
           const province = l.gameState.provinces[monsterProvinceId];
           if (!province) return;
           const monsterCard = player.seasonCards.find(c => c.id === monsterCardId && c.cardType === 'monster');
           if (!monsterCard) return;
+          const alreadyPlaced = Object.values(l.gameState.provinces).some(p => p.figures.some(f => f.owner === data.playerId && f.monsterCardId === monsterCardId))
+            || l.gameState.temples.some(t => t.figures.some(f => f.playerId === data.playerId && f.monsterCardId === monsterCardId));
+          if (alreadyPlaced) return;
           // Validate province
           const isDragonflyRPM = player.clanId === 'libelula';
           if (!isDragonflyRPM) {
@@ -2085,14 +2567,146 @@ wss.on('connection', (ws: WebSocket, req) => {
                 figures: [...province.figures, newFigure],
               },
             },
-            players: l.gameState.players.map(p => {
-              if (p.id === data.playerId) return { ...p, monsters: p.monsters - 1 };
-              return p;
-            }),
             recruitPlacementsRemaining: l.gameState.recruitPlacementsRemaining - 1,
             recruitUsedFortressProvinces: [...l.gameState.recruitUsedFortressProvinces, monsterProvinceId],
             log: [...l.gameState.log, `${player.name} invoca a ${monsterCard.name} en ${province.name}`],
           };
+          applyDignityMonsterSummon(l.gameState, data.playerId);
+          l.gameState = prepareMonsterEnterDecision(l.gameState, monsterProvinceId, figureId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'RESOLVE_SNAKE_DECISION': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState?.pendingSnakeDecision) return;
+          const nextState = resolveSnakeDecision(l.gameState, data.playerId, !!data.payload?.useEffect);
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'BETRAY_REPLACE_TEMPLE_SHINTO': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const { templeId, figureId } = data.payload || {};
+          if (!templeId || !figureId) return;
+          if (!l.betrayUndoSnapshot) l.betrayUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+          const nextState = betrayReplaceWorshippingShinto(l.gameState, data.playerId, templeId, figureId);
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'NURE_ONNA_DECISION': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || !playerId) return;
+          l.gameState = resolveNureOnnaDecision(l.gameState, playerId, !!data.payload?.move);
+          broadcastState(l);
+          break;
+        }
+
+        case 'ACKNOWLEDGE_RULE_NOTICE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || !playerId) return;
+          const notices = l.gameState.pendingRuleNotices || [];
+          const notice = notices[0];
+          if (!notice || !notice.requiredPlayerIds.includes(playerId)) return;
+          if (notice.acknowledgedPlayerIds.includes(playerId)) return;
+          const acknowledgedPlayerIds = [...notice.acknowledgedPlayerIds, playerId];
+          if (!notice.requiredPlayerIds.every(id => acknowledgedPlayerIds.includes(id))) {
+            l.gameState = { ...l.gameState, pendingRuleNotices: [{ ...notice, acknowledgedPlayerIds }, ...notices.slice(1)] };
+            broadcastState(l);
+            break;
+          }
+
+          let s: GameState = { ...l.gameState, pendingRuleNotices: notices.slice(1) };
+          if (notice.resume === 'advance-kami') {
+            s = advanceKamiResolution(s);
+          } else if (notice.resume === 'advance-train') {
+            s = { ...s, trainResolutionIndex: s.trainResolutionIndex + 1 };
+            s = advanceTrainResolution(s);
+            if (!s.trainMandateActive) {
+              const previousPhase = s.currentPhase;
+              s = advancePlayer(s);
+              if (s.currentPhase === 'cleanup' && previousPhase !== 'cleanup') s = startInteractiveCleanup(s);
+            }
+          } else if (notice.resume === 'advance-marshal') {
+            s = skipMarshalTurn(s);
+            if (!s.marshalMandateActive) {
+              const previousPhase = s.currentPhase;
+              s = advancePlayer(s);
+              if (s.currentPhase === 'cleanup' && previousPhase !== 'cleanup') s = startInteractiveCleanup(s);
+            }
+          } else if (notice.resume === 'advance-war-start') {
+            s = advanceWarStartAction(s);
+          }
+          l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'RECRUIT_PLACE_MONSTER_TEMPLE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const currentRecruitPlayerId = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
+          if (playerId !== currentRecruitPlayerId || !l.gameState.recruitMandateActive || l.gameState.recruitPlacementsRemaining <= 0) return;
+          const { cardId, templeId, replaceFigureId, provinceId } = data.payload || {};
+          if (!cardId || !templeId || !provinceId || !['sp-komainu', 'su-hotei'].includes(cardId)) return;
+          const player = l.gameState.players.find(p => p.id === playerId);
+          const card = player?.seasonCards.find(c => c.id === cardId && c.cardType === 'monster');
+          const templeIndex = l.gameState.temples.findIndex(t => t.id === templeId);
+          const province = l.gameState.provinces[provinceId];
+          if (!player || !card || templeIndex < 0 || !province) return;
+          const alreadyPlaced = Object.values(l.gameState.provinces).some(p => p.figures.some(f => f.owner === playerId && f.monsterCardId === cardId))
+            || l.gameState.temples.some(t => t.figures.some(f => f.playerId === playerId && f.monsterCardId === cardId));
+          if (alreadyPlaced) return;
+          const hasFortress = player.clanId === 'libelula' || province.figures.some(f => f.owner === playerId && (f.type === 'fortress' || f.monsterCardId === 'sp-fukurokuju'));
+          if (!hasFortress) return;
+          const used = l.gameState.recruitUsedFortressProvinces.filter(id => id === provinceId).length;
+          const canUseBonus = l.gameState.recruitMandateIssuerId === playerId || player.allies.includes(l.gameState.recruitMandateIssuerId || '');
+          if (used > 0 && (!canUseBonus || l.gameState.recruitUsedFortressProvinces.length - new Set(l.gameState.recruitUsedFortressProvinces).size >= 1)) return;
+          const temple = l.gameState.temples[templeIndex];
+          if (player.clanId === 'luna' && temple.figures.filter(f => f.playerId === playerId).length >= 2) return;
+          if (!l.recruitUndoSnapshot) {
+            l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+          }
+          let figures = [...temple.figures];
+          let players = l.gameState.players;
+          let replacementNotice: RuleEventNotice | null = null;
+          let placementLog = `${player.name} coloca a ${card.name} a rezar en el santuario de ${capitalize(temple.kamiType)}`;
+          if (cardId === 'su-hotei' && replaceFigureId) {
+            const replaced = figures.find(f => f.figureId === replaceFigureId && f.playerId !== playerId);
+            if (!replaced) return;
+            const victim = l.gameState.players.find(p => p.id === replaced.playerId);
+            const replacedName = replaced.monsterCardId
+              ? (SEASON_CARDS_DATA.find(monster => monster.id === replaced.monsterCardId)?.name || 'monstruo')
+              : 'shinto';
+            figures = figures.filter(f => f.figureId !== replaceFigureId);
+            if (!replaced.monsterCardId) players = players.map(p => p.id === replaced.playerId ? { ...p, shinto: p.shinto + 1 } : p);
+            placementLog = `${player.name} coloca a Hotei, que sustituye ${replacedName} de ${victim?.name || 'jugador'} en santuario de ${capitalize(temple.kamiType)}`;
+            replacementNotice = {
+              id: uuidv4(), type: 'hotei', actorId: playerId, targetId: replaced.playerId,
+              requiredPlayerIds: [replaced.playerId], acknowledgedPlayerIds: [], templeKami: temple.kamiType, resume: null,
+            };
+          } else if (cardId === 'su-hotei') {
+            placementLog = `${player.name} coloca a Hotei en santuario de ${capitalize(temple.kamiType)} sin sustituir ninguna figura`;
+          }
+          figures.push({ playerId, figureId: uuidv4(), monsterCardId: cardId });
+          const temples = [...l.gameState.temples];
+          temples[templeIndex] = { ...temple, figures };
+          l.gameState = grantRecruitWarlordCoinOnce({
+            ...l.gameState,
+            players,
+            temples,
+            recruitPlacementsRemaining: l.gameState.recruitPlacementsRemaining - 1,
+            recruitUsedFortressProvinces: [...l.gameState.recruitUsedFortressProvinces, provinceId],
+            pendingRuleNotices: replacementNotice ? [...(l.gameState.pendingRuleNotices || []), replacementNotice] : l.gameState.pendingRuleNotices,
+            log: [...l.gameState.log, placementLog],
+          }, playerId);
+          applyDignityMonsterSummon(l.gameState, playerId);
           broadcastState(l);
           break;
         }
@@ -2130,7 +2744,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l.gameState.recruitMandateActive) return;
           if (l.gameState.recruitPlacementsRemaining <= 0) return;
           const recruitPlayer = l.gameState.players.find(p => p.id === data.playerId);
-          if (!recruitPlayer || recruitPlayer.shinto <= 0) return;
+          if (!recruitPlayer || getAvailableNormalShintoReserve(recruitPlayer, l.gameState) <= 0) return;
           const templeIndex = l.gameState.temples.findIndex(t => t.id === templeId);
           if (templeIndex === -1) return;
           const temple = l.gameState.temples[templeIndex];
@@ -2154,7 +2768,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             temples: updatedTemples,
             players: updatedPlayers,
             recruitPlacementsRemaining: l.gameState.recruitPlacementsRemaining - 1,
-            log: [...l.gameState.log, `${recruitPlayer.name} coloca un shinto en santuario`],
+            log: [...l.gameState.log, `${recruitPlayer.name} coloca un shinto en santuario de ${capitalize(temple.kamiType)}`],
           };
           // Path of the Warlord: recruit counts as a single summon; award at most once per turn
           // (covers players who recruit only into temples). Undo snapshot was saved above.
@@ -2318,10 +2932,12 @@ wss.on('connection', (ws: WebSocket, req) => {
           const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
           if (!currentTemple || !currentTemple.winnerId) return;
 
+          const movementCost = getFujinMovementCost(l.gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds.length);
+          if (movementCost === null || movementCost > l.gameState.fujinMovesRemaining) return;
           const moved = moveForces(l.gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds);
           if (moved === l.gameState) return; // validation failed
 
-          const remaining = moved.fujinMovesRemaining - 1;
+          const remaining = moved.fujinMovesRemaining - movementCost;
           l.gameState = { ...moved, fujinMovesRemaining: remaining };
           broadcastState(l);
           break;
@@ -2333,8 +2949,9 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l.gameState.kamiResolutionActive) return;
           if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
-          const ns = { ...l.gameState, fujinMovesRemaining: 0 };
-          const s = advanceKamiResolution(ns);
+          const ns = resolvePendingSerpentCrossings({ ...l.gameState, fujinMovesRemaining: 0 });
+          const hasPendingSerpent = !!ns.pendingSerpentCharge || (ns.pendingRuleNotices?.length || 0) > (l.gameState.pendingRuleNotices?.length || 0);
+          const s = hasPendingSerpent ? ns : advanceKamiResolution(ns);
           l.gameState = s;
           broadcastState(l);
           break;
@@ -2463,14 +3080,29 @@ wss.on('connection', (ws: WebSocket, req) => {
 
           let s = ryujinBuyCardFn(l.gameState, currentTemple.winnerId, cardId);
           s = { ...s, ryujinBuyActive: false };
+          const jurojinNoticeAdded = (s.pendingRuleNotices?.length || 0) > (l.gameState.pendingRuleNotices?.length || 0);
 
           // Check if the bought card is a monster - if so, wait for MONSTER_PLACED
           const boughtCard = s.players.find(p => p.id === currentTemple.winnerId)?.seasonCards.find(c => c.id === cardId);
           if (boughtCard && boughtCard.cardType === 'monster') {
             // Monster: don't advance kami resolution, wait for MONSTER_PLACED message
-            l.gameState = s;
+            l.gameState = {
+              ...s,
+              pendingMonsterPlacementCardId: boughtCard.id,
+              pendingMonsterPlacementPlayerId: currentTemple.winnerId,
+            };
             broadcastState(l);
           } else {
+            if (s.pendingBenevolence) {
+              l.gameState = s;
+              broadcastState(l);
+              break;
+            }
+            if (jurojinNoticeAdded) {
+              l.gameState = s;
+              broadcastState(l);
+              break;
+            }
             // Non-monster: advance kami resolution immediately
             s = advanceKamiResolution(s);
             l.gameState = s;
@@ -2606,6 +3238,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           let l: Lobby;
           if (existingLobby) {
             l = existingLobby;
+            if (l.gameState) l.gameState = restorePendingMonsterPlacement(l.gameState);
           } else {
             // Create a new lobby from the saved game state
             const snapshot = getLatestSnapshot(gameId);
@@ -2614,9 +3247,10 @@ wss.on('connection', (ws: WebSocket, req) => {
               return;
             }
             const gameRecord = getGameById(gameId);
-            const gameState: GameState = typeof snapshot.state_json === 'string'
+            let gameState: GameState = typeof snapshot.state_json === 'string'
               ? JSON.parse(snapshot.state_json)
               : snapshot.state_json;
+            gameState = restorePendingMonsterPlacement(gameState);
             const lobbyId = uuidv4();
             l = {
               id: lobbyId,

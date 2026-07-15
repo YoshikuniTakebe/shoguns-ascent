@@ -6,7 +6,7 @@ import { useT, t as tStandalone } from '../i18n';
 import { FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { getMonsterFigureImage, getCastleImage, getDaimyoImage, getBushiImage, getShintoImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
-import { calculateForce, getPlayerSeasonCardEffects } from '../utils/gameLogic';
+import { calculateForce, countVirtueCards, getPlayerSeasonCardEffects } from '../utils/gameLogic';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
 
@@ -45,6 +45,10 @@ const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'shinto-tortuga': 0.88,
   'su-sunakake-baba': 0.94,
   'au-oni-of-spite': 1.15,
+  'au-river-dragon': 1.30,
+  'su-jikininki': 0.90,
+  'au-oni-of-hate': 1.20,
+  'su-bishamon': 1.23,
 };
 
 /** Get the size scale override for a figure. Returns 1.0 if no override is defined. */
@@ -172,10 +176,22 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
       return ownerClanId === 'tortuga' ? 1 : 0;
     case 'monster':
       if (figure.monsterCardId) {
+        const isLuna = ownerClanId === 'luna';
         if (figure.monsterCardId === 'sp-daikokuten') {
-          const isLuna = ownerClanId === 'luna';
           const base = (gameState.currentPhase === 'politics' && gameState.harvestMandateActive) ? 8 : 1;
           return isLuna ? Math.max(base, 2) : base;
+        }
+        if (figure.monsterCardId === 'su-bishamon') {
+          const province = gameState.provinces[regionId];
+          const hasOpponentMonster = province?.figures.some(f => f.type === 'monster' && f.owner !== figure.owner) || false;
+          const force = hasOpponentMonster ? 4 : 1;
+          return isLuna ? Math.max(force, 2) : force;
+        }
+        if (figure.monsterCardId === 'au-sacred-warrior') {
+          const virtueOwner = gameState.players.find(p => p.id === figure.owner);
+          const virtueCount = virtueOwner ? countVirtueCards(virtueOwner) : 0;
+          const force = 1 + virtueCount;
+          return isLuna ? Math.max(force, 2) : force;
         }
         const info = getMonsterInfo(figure.monsterCardId);
         if (info && info.force !== undefined) {
@@ -191,16 +207,18 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
                 return idx <= ownerHonorIndex;
               });
               if (figure.monsterCardId === 'sp-oni-of-skulls') {
-                return hasLowestHonor ? 3 : 1;
+                const force = hasLowestHonor ? 3 : 1;
+                return isLuna ? Math.max(force, 2) : force;
               } else {
-                return hasLowestHonor ? 4 : 2;
+                const force = hasLowestHonor ? 4 : 2;
+                return isLuna ? Math.max(force, 2) : force;
               }
             }
           }
-          return info.force;
+          return isLuna ? Math.max(info.force, 2) : info.force;
         }
       }
-      return 1;
+      return ownerClanId === 'luna' ? 2 : 1;
     default:
       return 0;
   }

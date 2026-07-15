@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, PROVINCE_COLORS } from '../types/game';
+import { CLANS, PROVINCE_COLORS, SEASON_CARDS_DATA } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, ShintoIcon, DaimyoIcon, FortressIcon, MonsterIcon } from './Icons';
+import { ClanShield } from './ClanShields';
 
 const MANDATE_COLORS: Record<string, string> = {
   train: '#8B4513',
@@ -184,6 +185,30 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
   ));
 
   // 7. Replace {coin} token followed by a number with CoinIcon + number (bold gold)
+  const clanCoinTotalPattern = /\{clanCoins:([^:}]+):(\d+)\}/g;
+  segments = applyPattern(segments, clanCoinTotalPattern, (m, key) => {
+    const match = /\{clanCoins:([^:}]+):(\d+)\}/.exec(m);
+    const clan = CLANS.find(item => item.id === match?.[1]);
+    return (
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: clan?.color || '#DAA520', fontWeight: 'bold' }}>
+        <ClanShield clanId={match?.[1] || ''} size={16} /><CoinIcon size={14} color={clan?.color || '#DAA520'} />{match?.[2] || '0'}
+      </span>
+    );
+  });
+
+  const knownMonsterNames = SEASON_CARDS_DATA.filter(card => card.cardType === 'monster')
+    .map(card => card.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .sort((a, b) => b.length - a.length);
+  if (knownMonsterNames.length > 0) {
+    const knownMonsterPattern = new RegExp(`(?<!\\w)(${knownMonsterNames.join('|')})(?!\\w)`, 'gi');
+    segments = applyPattern(segments, knownMonsterPattern, (m, key) => (
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: troopIconColor, fontWeight: 'bold' }}>
+        <MonsterIcon size={14} color={troopIconColor} />{m}
+      </span>
+    ));
+  }
+
+  // 7. Replace {coin} token followed by a number with CoinIcon + number (bold gold)
   const coinTokenPattern = /\{coin\}\s*(\d+)/g;
   segments = applyPattern(segments, coinTokenPattern, (m, key) => {
     const numberMatch = m.match(/\d+/);
@@ -263,7 +288,7 @@ export const GameLog = () => {
   const activeTab = selectedSeason ?? currentSeason;
   const displayLog =
     activeTab === currentSeason
-      ? gameState.log
+      ? [...(logHistory[currentSeason] ?? []), ...gameState.log]
       : logHistory[activeTab] ?? [];
 
   const players = gameState.players;
@@ -299,8 +324,8 @@ export const GameLog = () => {
       )}
       <div className="log-entries" ref={ref}>
         {(() => {
-          const entries = activeTab === currentSeason ? displayLog.slice(-20) : displayLog;
-          const startIndex = activeTab === currentSeason ? Math.max(0, displayLog.length - 20) : 0;
+          const entries = displayLog;
+          const startIndex = 0;
           return entries.map((e, i) => (
             <div key={`${startIndex + i}-${e.slice(0, 30)}`} className="log-entry">{renderLogEntry(e, players)}</div>
           ));

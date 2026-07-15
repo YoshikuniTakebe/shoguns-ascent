@@ -34,18 +34,52 @@ import {
   recruitPlaceDaimyo,
   skipRecruitTurn,
   betraySelectFigure,
+  betrayReplaceWorshippingShinto,
   skipBetrayTurn,
   advanceHarvestResolution,
   loseHonor,
   gainHonor,
   resolveUncontestedBattles,
+  prepareNureOnnaDecision,
+  resolveNureOnnaDecision,
   processHostageReturn,
   finalizeCleanupAndAdvance,
   determineTacticWinners,
-  applyFireDragonEffect,
+  prepareBattleCardDecision,
+  resolveBattleCardDecision,
+  resolveBattleMercyDecision,
+  resolveNinjaDecision,
+  resolveMonkeyDecision,
+  resolveSnakeDecision,
+  resolveBenevolenceDecision,
+  resolveSpringPlacementDecision,
+  resolveVassalDecision,
+  applyRighteousnessVP,
+  applyDignityMonsterSummon,
+  prepareMonsterEnterDecision,
+  resolveMonsterEnterDecision,
   hasCard,
   grantWarlordSummonCoin,
   grantRecruitWarlordCoinOnce,
+  chooseGenerosityRecipient,
+  respondToGenerosity,
+  getFujinMovementCost,
+  resolvePendingSerpentCrossings,
+  resolveSerpentChargeDecision,
+  selectDaikaijuProvince,
+  confirmDaikaijuPlacement,
+  undoDaikaijuProvinceSelection,
+  applyEbisuDeathEffect,
+  applyProvinceDeathCardEffects,
+  countDifferentVirtues,
+  applyLoyaltyBonus,
+  advanceWarStartAction,
+  selectWarStartFigure,
+  selectWarStartProvince,
+  resetWarStartSelection,
+  toggleWarStartMercy,
+  confirmWarStartAction,
+  skipWarStartAction,
 } from '../utils/gameLogic';
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -68,10 +102,24 @@ function lunaHasValidProvince(gameState: GameState, playerId: string): boolean {
  * Returns partial store state to set battleStepPhase if war is active, empty object otherwise.
  */
 function detectWarTransition(state: GameState): Partial<{ battleStepPhase: 'popup' | 'bidding' | 'seppuku-decision' | 'seppuku-result' | 'hostage-selection' | 'ronin-result' | 'result' | null; battleCurrentBiddingIndex: number }> {
-  if (state.currentPhase === 'war' && state.activeBattles.some(b => !b.resolved) && !state.zorroPlacementActive && !state.daikaijuPlacementActive && !state.daikaijuSummaryVisible) {
+  if (state.currentPhase === 'war' && state.activeBattles.some(b => !b.resolved) && state.warStartActionsComplete !== false && !state.zorroPlacementActive && !state.daikaijuPlacementActive && !state.daikaijuSummaryVisible && !state.pendingNureOnnaDecision) {
     return { battleStepPhase: 'popup' as const, battleCurrentBiddingIndex: 0 };
   }
   return {};
+}
+
+function hasAcknowledgedWarPhaseStart(state: GameState): boolean {
+  if (state.warPhaseStartAcknowledged !== undefined) return state.warPhaseStartAcknowledged;
+
+  // Compatibility for snapshots created before this flag existed.
+  return state.activeBattles.some(battle =>
+    battle.resolved
+    || !!battle.resolutionData
+    || Object.keys(battle.warTacticBids || {}).length > 0
+  ) || state.battleResultReadyPlayers.length > 0
+    || state.warSummaryVisible
+    || !!state.pendingNureOnnaDecision
+    || state.daikaijuSummaryVisible;
 }
 
 /**
@@ -110,8 +158,8 @@ function computeWarUpgradeSummary(state: GameState): { playerName: string; clanI
           break;
         }
         case 'su-way-of-bushido': {
-          const virtueCount = player.seasonCards.filter((c) => c.cardType === 'virtue').length;
-          bonuses.push({ cardName: 'Way of Bushido', resource: 'coins', amount: 2 });
+          const virtueCount = countDifferentVirtues(player);
+          bonuses.push({ cardName: 'Way of Bushido', resource: 'coins', amount: 2 * virtueCount });
           bonuses.push({ cardName: 'Way of Bushido', resource: 'vp', amount: 2 * virtueCount });
           break;
         }
@@ -157,7 +205,7 @@ function computeWarUpgradeSummary(state: GameState): { playerName: string; clanI
  */
 function detectWarTransitionWithPopup(state: GameState): Record<string, unknown> {
   // Guard: don't show war popup while kami summary is still visible
-  if (state.kamiSummaryVisible) return {};
+  if (state.kamiSummaryVisible || hasAcknowledgedWarPhaseStart(state)) return {};
   const warTransition = detectWarTransition(state);
   if (Object.keys(warTransition).length > 0) {
     const summary = computeWarUpgradeSummary(state);
@@ -187,6 +235,16 @@ function attachResolutionData(state: GameState, resData: BattleResolutionData): 
     return b;
   });
   return { ...state, activeBattles: updatedBattles };
+}
+
+function continueBattleAfterCardDecisions(state: GameState, provinceId: string): { state: GameState; phase: 'seppuku-decision' | 'hostage-selection' | 'ronin-result' | 'result'; resolutionData: BattleResolutionData | null } {
+  const battle = state.activeBattles.find(candidate => candidate.provinceId === provinceId && !candidate.resolved);
+  if (!battle) return { state, phase: 'result', resolutionData: null };
+  const resolutionData = determineTacticWinners(state, battle);
+  if (resolutionData.seppukuWinnerId) return { state: attachResolutionData(state, resolutionData), phase: 'seppuku-decision', resolutionData };
+  if (resolutionData.hostageWinnerId) return { state: attachResolutionData(state, resolutionData), phase: 'hostage-selection', resolutionData };
+  if (resolutionData.roninWinnerId) return { state: attachResolutionData(state, resolutionData), phase: 'ronin-result', resolutionData };
+  return { state: resolveNextBattle(state), phase: 'result', resolutionData: null };
 }
 
 interface GameStore {
@@ -289,6 +347,7 @@ interface GameStore {
   betrayMode: boolean;
   toggleBetrayMode: () => void;
   doBetraySelectFigure: (figureId: string, provinceId: string) => void;
+  doBetrayReplaceTempleShinto: (templeId: string, figureId: string) => void;
   doSkipBetrayTurn: () => void;
   betrayMonsterSelectionVisible: boolean;
   betrayMonsterSelectionProvinceId: string | null;
@@ -308,6 +367,7 @@ interface GameStore {
   komainuPrayMode: boolean;
   komainuPrayPlayerId: string | null;
   komainuPrayCardId: string | null;
+  monsterPlacementContext: 'purchase' | 'recruit' | null;
   confirmMonsterPlacement: () => void;
   doPlaceMonster: (provinceId: string) => void;
   doKomainuChoosePray: () => void;
@@ -338,8 +398,26 @@ interface GameStore {
   doInitiateWar: () => void;
   doZorroPlaceBushi: (provinceId: string) => void;
   doZorroSkipPlacement: () => void;
+  doWarStartSelectProvince: (provinceId: string) => void;
+  doWarStartSelectFigure: (provinceId: string, figureId: string) => void;
+  doWarStartReset: () => void;
+  doWarStartToggleMercy: (provinceId: string) => void;
+  doWarStartConfirm: () => void;
+  doWarStartSkip: () => void;
+  doResolveBattleCardDecision: (useEffect: boolean, selectedByPlayer: Record<string, string>, destinationsByFigure?: Record<string, string>, useMercy?: boolean) => void;
+  doResolveMonsterEnterDecision: (useEffect: boolean, selectedByPlayer: Record<string, string>, destinationId?: string, useMercy?: boolean) => void;
+  doResolveBattleMercyDecision: (useMercy: boolean) => void;
+  doResolveNinjaDecision: (useEffect: boolean, targetFigureId?: string, useMercy?: boolean) => void;
+  doResolveMonkeyDecision: (useEffect: boolean, targetPlayerId?: string) => void;
+  doResolveSnakeDecision: (useEffect: boolean) => void;
+  doResolveBenevolence: (recipientId?: string) => void;
+  doResolveSpringPlacement: (useEffect: boolean, provinceId?: string, templeId?: string, figureId?: string) => void;
+  doResolveVassal: (accept: boolean) => void;
+  doResolveSerpentCharge: (chargeCoin: boolean) => void;
   doSubmitWarTacticBids: (provinceId: string, tacticBids: { [tacticId: string]: number }) => void;
   doResolveNextBattle: () => void;
+  doNureOnnaDecision: (move: boolean) => void;
+  doAcknowledgeRuleNotice: () => void;
   doAcceptBattlePopup: () => void;
   doSeppukuDecision: (accept: boolean) => void;
   doSeppukuResultAccept: () => void;
@@ -382,7 +460,11 @@ interface GameStore {
   dismissWarPhasePopup: () => void;
 
   // Daikaiju Placement
+  daikaijuPlacementMode: boolean;
+  startDaikaijuPlacement: () => void;
   doDaikaijuPlaceProvince: (provinceId: string) => void;
+  doDaikaijuUndoPlacement: () => void;
+  doDaikaijuConfirmPlacement: () => void;
   doDaikaijuSummaryReady: () => void;
 
   // War Summary Popup (end of war phase)
@@ -422,9 +504,11 @@ interface GameStore {
   // Trade
   tradeModalOpen: boolean;
   setTradeModalOpen: (open: boolean) => void;
-  doSendTrade: (toPlayerId: string, offerCoins: number, offerRonin: number, requestCoins: number, requestRonin: number) => void;
+  doSendTrade: (toPlayerId: string, offerCoins: number, offerRonin: number, requestCoins: number, requestRonin: number, message?: string) => void;
   doAcceptTrade: (offerId: string) => void;
   doRejectTrade: (offerId: string) => void;
+  doChooseGenerosityRecipient: (toPlayerId: string | null) => void;
+  doRespondToGenerosity: (accept: boolean) => void;
 
   // Finished game viewing
   viewingFinishedGame: boolean;
@@ -507,6 +591,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   komainuPrayMode: false,
   komainuPrayPlayerId: null,
   komainuPrayCardId: null,
+  monsterPlacementContext: null,
   turnPopupPlayer: null,
   turnPopupDismissedForIndex: null,
   jinmenjuSummonActive: false,
@@ -641,16 +726,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- Trade System ---
   setTradeModalOpen: (open) => set({ tradeModalOpen: open }),
-  doSendTrade: (toPlayerId, offerCoins, offerRonin, requestCoins, requestRonin) => {
-    const { gameState } = get();
+  doSendTrade: (toPlayerId, offerCoins, offerRonin, requestCoins, requestRonin, message = '') => {
+    const { gameState, localPlayerId, ws } = get();
     if (!gameState) return;
-    if (gameState.currentPhase !== 'politics') return;
-    const cp = gameState.players[gameState.currentPlayerIndex];
+    if (gameState.currentPhase === 'war') return;
+    const cp = gameState.mode === 'online'
+      ? gameState.players.find(p => p.id === localPlayerId)
+      : gameState.players[gameState.currentPlayerIndex];
     if (!cp) return;
     // Validate sender has enough resources
     if (cp.coins < offerCoins || cp.ronin < offerRonin) return;
     // At least something must be offered or requested
     if (offerCoins === 0 && offerRonin === 0 && requestCoins === 0 && requestRonin === 0) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'TRADE_SEND', payload: { toPlayerId, offerCoins, offerRonin, requestCoins, requestRonin, message: message.trim().slice(0, 250) } });
+      set({ tradeModalOpen: false });
+      return;
+    }
     const tradeOffer = {
       id: Math.random().toString(36).substring(2, 10),
       fromPlayerId: cp.id,
@@ -659,15 +751,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
       offerRonin,
       requestCoins,
       requestRonin,
+      message: message.trim().slice(0, 250),
       status: 'pending' as const,
     };
     const ns = { ...gameState, tradeOffers: [...gameState.tradeOffers, tradeOffer] };
     set({ gameState: ns, tradeModalOpen: false });
   },
   doAcceptTrade: (offerId) => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState) return;
-    if (gameState.currentPhase !== 'politics') return;
+    if (gameState.currentPhase === 'war') return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'TRADE_ACCEPT', payload: { offerId } });
+      return;
+    }
     const offer = gameState.tradeOffers.find(o => o.id === offerId);
     if (!offer || offer.status !== 'pending') return;
     const sender = gameState.players.find(p => p.id === offer.fromPlayerId);
@@ -700,10 +797,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameState: ns });
   },
   doRejectTrade: (offerId) => {
-    const { gameState } = get();
+    const { gameState, ws } = get();
     if (!gameState) return;
+    if (gameState.currentPhase === 'war') return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'TRADE_REJECT', payload: { offerId } });
+      return;
+    }
     const ns = { ...gameState, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
     set({ gameState: ns });
+  },
+  doChooseGenerosityRecipient: (toPlayerId) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState) return;
+    const actorId = gameState.mode === 'online' ? localPlayerId : gameState.generosityPending?.fromPlayerId;
+    if (!actorId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'GENEROSITY_CHOOSE', payload: { toPlayerId } });
+      return;
+    }
+    set({ gameState: chooseGenerosityRecipient(gameState, actorId, toPlayerId) });
+  },
+  doRespondToGenerosity: (accept) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState) return;
+    const actorId = gameState.mode === 'online' ? localPlayerId : gameState.generosityPending?.toPlayerId;
+    if (!actorId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'GENEROSITY_RESPOND', payload: { accept } });
+      return;
+    }
+    set({ gameState: respondToGenerosity(gameState, actorId, accept) });
   },
 
   // --- Persistence ---
@@ -927,6 +1051,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   kamiPendingTemples: null,
   warPhasePopupVisible: false,
   warPhaseUpgradeSummary: [],
+  daikaijuPlacementMode: false,
   warSummaryVisible: false,
   biddingMapPeek: false,
   setBiddingMapPeek: (peek) => set({ biddingMapPeek: peek }),
@@ -1355,6 +1480,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
+    if ((ns.pendingRuleNotices?.length || 0) > (gameState.pendingRuleNotices?.length || 0)) {
+      set({ gameState: ns, showTrainModal: false });
+      return;
+    }
+
+    if (ns.pendingBenevolence) {
+      set({ gameState: ns, showTrainModal: false });
+      return;
+    }
+
     // Non-monster card: advance normally
     ns = {
       ...ns,
@@ -1404,7 +1539,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ marshalPendingMoves: [], marshalPendingFortresses: [], undoMandateState: null, moveMode: false, moveFrom: null, selectedFigures: [], buildFortressMode: false, buildFukurokujuMode: false });
       return;
     }
-    let ns = skipMarshalTurn(gameState);
+    let ns = resolvePendingSerpentCrossings(gameState, 'advance-marshal');
+    const hasPendingSerpent = !!ns.pendingSerpentCharge || (ns.pendingRuleNotices?.length || 0) > (gameState.pendingRuleNotices?.length || 0);
+    if (hasPendingSerpent) {
+      set({
+        gameState: ns,
+        buildFortressMode: false,
+        buildFukurokujuMode: false,
+        moveMode: false,
+        moveFrom: null,
+        selectedFigures: [],
+      });
+      return;
+    }
+    ns = skipMarshalTurn(ns);
     if (!ns.marshalMandateActive) {
       ns = advancePlayer(ns);
     }
@@ -1432,7 +1580,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // During marshal mandate, apply fortress locally instead of sending to server
       if (gameState.marshalMandateActive) {
         const ns = buildFortress(gameState, apid, provinceId);
-        set({ gameState: ns, buildFortressMode: false, marshalPendingFortresses: [...get().marshalPendingFortresses, { provinceId }] });
+        set({ gameState: { ...ns, pendingBenevolence: gameState.pendingBenevolence }, buildFortressMode: false, marshalPendingFortresses: [...get().marshalPendingFortresses, { provinceId }] });
         return;
       }
       get().sendAction({ type: 'BUILD_FORTRESS', playerId: apid, payload: { provinceId } });
@@ -1454,7 +1602,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // During marshal mandate, apply Fukurokuju locally instead of sending to server
       if (gameState.marshalMandateActive) {
         const ns = buildFukurokuju(gameState, apid, provinceId);
-        set({ gameState: ns, buildFukurokujuMode: false, marshalPendingFortresses: [...get().marshalPendingFortresses, { provinceId, fukurokuju: true }] });
+        set({ gameState: { ...ns, pendingBenevolence: gameState.pendingBenevolence }, buildFukurokujuMode: false, marshalPendingFortresses: [...get().marshalPendingFortresses, { provinceId, fukurokuju: true }] });
         return;
       }
       get().sendAction({ type: 'BUILD_FUKUROKUJU', playerId: apid, payload: { provinceId } });
@@ -1538,6 +1686,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
             }
           });
         });
+        gameState.temples.forEach(temple => temple.figures.forEach(templeFigure => {
+          if (templeFigure.playerId === apid && templeFigure.monsterCardId) deployedMonsterCardIds.add(templeFigure.monsterCardId);
+        }));
         const daimyoMonstersInReserve = player.seasonCards.filter(
           (card) => card.cardType === 'monster' && DAIMYO_MONSTER_IDS.includes(card.id) && !deployedMonsterCardIds.has(card.id)
         );
@@ -1772,24 +1923,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { recruitPendingProvinceId } = get();
     if (!recruitPendingProvinceId) return;
 
-    if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'RECRUIT_PLACE_MONSTER', playerId: apid, payload: { provinceId: recruitPendingProvinceId, monsterCardId } });
-      set({ recruitMonsterSelectionVisible: false, recruitPendingProvinceId: null });
+    const player = gameState.players.find(p => p.id === apid);
+    const monsterCard = player?.seasonCards.find(c => c.id === monsterCardId && c.cardType === 'monster');
+    if (!player || !monsterCard) return;
+    const alreadyPlaced = Object.values(gameState.provinces).some(province =>
+      province.figures.some(f => f.owner === apid && f.monsterCardId === monsterCardId)
+    ) || gameState.temples.some(temple =>
+      temple.figures.some(f => f.playerId === apid && f.monsterCardId === monsterCardId)
+    );
+    if (alreadyPlaced) return;
+
+    if ((monsterCardId === 'sp-komainu' || monsterCardId === 'su-hotei') && get().monsterPlacementContext !== 'recruit') {
+      set({
+        recruitMonsterSelectionVisible: false,
+        monsterPlacementCard: monsterCard,
+        monsterPlacementPlayerId: apid,
+        monsterPlacementContext: 'recruit',
+        komainuChoiceVisible: true,
+      });
       return;
     }
 
-    const player = gameState.players.find(p => p.id === apid);
-    if (!player) return;
-    if (player.monsters <= 0) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RECRUIT_PLACE_MONSTER', playerId: apid, payload: { provinceId: recruitPendingProvinceId, monsterCardId } });
+      set({
+        recruitMonsterSelectionVisible: false, recruitPendingProvinceId: null,
+        monsterPlacementContext: null, monsterPlacementCard: null,
+        monsterPlacementPlayerId: null, komainuChoiceVisible: false,
+      });
+      return;
+    }
+
     if (!gameState.recruitMandateActive || gameState.recruitPlacementsRemaining <= 0) return;
 
     const province = gameState.provinces[recruitPendingProvinceId];
     if (!province) return;
 
     // Find the monster card to get its name
-    const monsterCard = player.seasonCards.find(c => c.id === monsterCardId);
-    if (!monsterCard) return;
-
     // Verify the monster card is not already deployed on the map (prevents double-placement race)
     const deployedMonsterCardIds = new Set<string>();
     Object.values(gameState.provinces).forEach((prov) => {
@@ -1810,21 +1980,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       figures: [...province.figures, newFigure],
     };
 
-    const updatedPlayers = gameState.players.map(p => {
-      if (p.id === apid) return { ...p, monsters: p.monsters - 1 };
-      return p;
-    });
-
-    const ns: GameState = {
+    let ns: GameState = {
       ...gameState,
       provinces: updatedProvinces,
-      players: updatedPlayers,
       recruitPlacementsRemaining: gameState.recruitPlacementsRemaining - 1,
       recruitUsedFortressProvinces: [...gameState.recruitUsedFortressProvinces, recruitPendingProvinceId],
       log: [...gameState.log, `${player.name} invoca a ${monsterCard.name} en ${province.name}`],
     };
+    applyDignityMonsterSummon(ns, apid);
+    ns = prepareMonsterEnterDecision(ns, recruitPendingProvinceId, figureId);
 
-    set({ gameState: ns, recruitMonsterSelectionVisible: false, recruitPendingProvinceId: null });
+    set({ gameState: ns, recruitMonsterSelectionVisible: false, recruitPendingProvinceId: null, monsterPlacementContext: null, monsterPlacementCard: null, monsterPlacementPlayerId: null });
   },
   doRecruitConfirmDaimyo: (daimyoType: string) => {
     const { gameState, localPlayerId, ws } = get();
@@ -1860,10 +2026,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const cp = getCurrentPlayer(gameState);
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
-    if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'BETRAY_SELECT_FIGURE', playerId: apid, payload: { figureId, provinceId } });
-      return;
-    }
     // Check if the target is a monster and the issuer has multiple in reserve
     const province = gameState.provinces[provinceId];
     const figure = province?.figures.find(f => f.id === figureId);
@@ -1878,6 +2040,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
             }
           });
         });
+        gameState.temples.forEach(temple => temple.figures.forEach(templeFigure => {
+          if (templeFigure.playerId === apid && templeFigure.monsterCardId) deployedMonsterCardIds.add(templeFigure.monsterCardId);
+        }));
         const reserveMonsters = issuer.seasonCards.filter(
           (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
         );
@@ -1888,6 +2053,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
         // Single monster - use it directly
         if (reserveMonsters.length === 1) {
+          if (ws && gameState.mode === 'online') {
+            get().sendAction({ type: 'BETRAY_SELECT_FIGURE', playerId: apid, payload: { figureId, provinceId, selectedMonsterCardId: reserveMonsters[0].id } });
+            return;
+          }
           const ns = betraySelectFigure(gameState, apid, figureId, provinceId, reserveMonsters[0].id);
           if (!ns.betrayMandateActive) {
             const advanced = advancePlayer(ns);
@@ -1898,6 +2067,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
           return;
         }
       }
+    }
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'BETRAY_SELECT_FIGURE', playerId: apid, payload: { figureId, provinceId } });
+      return;
     }
     const ns = betraySelectFigure(gameState, apid, figureId, provinceId);
     if (!ns.betrayMandateActive) {
@@ -1912,13 +2085,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   betrayMonsterSelectionProvinceId: null,
   betrayMonsterSelectionFigureId: null,
   doBetrayConfirmMonster: (monsterCardId: string) => {
-    const { gameState, localPlayerId } = get();
+    const { gameState, localPlayerId, ws } = get();
     if (!gameState || !localPlayerId) return;
     const cp = getCurrentPlayer(gameState);
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
     if (!apid) return;
     const { betrayMonsterSelectionProvinceId, betrayMonsterSelectionFigureId } = get();
     if (!betrayMonsterSelectionProvinceId || !betrayMonsterSelectionFigureId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({
+        type: 'BETRAY_SELECT_FIGURE',
+        playerId: apid,
+        payload: { figureId: betrayMonsterSelectionFigureId, provinceId: betrayMonsterSelectionProvinceId, selectedMonsterCardId: monsterCardId },
+      });
+      set({ betrayMonsterSelectionVisible: false, betrayMonsterSelectionProvinceId: null, betrayMonsterSelectionFigureId: null });
+      return;
+    }
     const ns = betraySelectFigure(gameState, apid, betrayMonsterSelectionFigureId, betrayMonsterSelectionProvinceId, monsterCardId);
     if (!ns.betrayMandateActive) {
       const advanced = advancePlayer(ns);
@@ -1937,8 +2119,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'SKIP_BETRAY_TURN', playerId: get().localPlayerId });
       return;
     }
+    const triggeredBySnake = gameState.betrayTriggeredBySnake === true;
     let ns = skipBetrayTurn(gameState);
-    ns = advancePlayer(ns);
+    if (!triggeredBySnake) ns = advancePlayer(ns);
     // Detect war phase transition and set up battle step phase for hotseat
     set({ gameState: ns, betrayMode: false, undoMandateState: null, ...detectWarTransitionWithPopup(ns), ...detectKamiPopupPending(ns) });
   },
@@ -2027,6 +2210,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     }
 
+    const { ws } = get();
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'MONSTER_PLACED', playerId: monsterPlacementPlayerId, payload: { cardId: monsterPlacementCard.id, provinceId } });
+      set({
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+      return;
+    }
+
     // Place a monster figure in the province
     const figureId = Math.random().toString(36).substring(2, 10);
     const newFigure = { type: 'monster' as const, owner: monsterPlacementPlayerId, id: figureId, monsterCardId: monsterPlacementCard.id };
@@ -2044,22 +2240,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
       log: [...gameState.log, `${monsterPlacementCard.name} colocado en ${province.name}`],
     };
 
-    // Virtue: Dignity (sp-dignity) - Gain 2 VP when summoning a monster.
-    // Summoning into the Ocean (e.g. Daikaiju) is still a summon, so it counts too.
-    {
-      const dignityPlayer = ns.players.find(p => p.id === monsterPlacementPlayerId);
-      if (dignityPlayer) {
-        const dignityCardIds = new Set(dignityPlayer.seasonCards.map(c => c.id));
-        if (hasCard(dignityCardIds, 'sp-dignity')) {
-          dignityPlayer.victoryPoints += 2;
-          ns.log = [...ns.log, `🐉 ${dignityPlayer.name} gana 2 PV (Dignidad - invocar monstruo)`];
-        }
-      }
-    }
+    applyDignityMonsterSummon(ns, monsterPlacementPlayerId);
 
     // Upgrade: Path of the Warlord - buying/placing a monster on the board is a summon.
     // This path only runs when the monster was actually placed (not sent to reserve).
     ns = grantWarlordSummonCoin(ns, monsterPlacementPlayerId);
+    ns = prepareMonsterEnterDecision(ns, provinceId, figureId, ns.kamiResolutionActive ? 'advance-kami' : 'advance-train');
+    if (ns.pendingMonsterEnterDecision) {
+      set({
+        gameState: ns,
+        monsterPlacementMode: false,
+        monsterPlacementCard: null,
+        monsterPlacementPlayerId: null,
+        monsterPlacementPopupVisible: false,
+        komainuChoiceVisible: false,
+      });
+      return;
+    }
 
     // If placing during Ryujin kami resolution, advance kami resolution instead of train
     if (ns.kamiResolutionActive) {
@@ -2077,21 +2274,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       } else {
         set({ ...clearState, ...detectWarTransitionWithPopup(ns) });
       }
-      return;
-    }
-
-    // Online mode: send MONSTER_PLACED to server and reset UI (server handles train advancement)
-    const { ws } = get();
-    if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'MONSTER_PLACED', playerId: monsterPlacementPlayerId, payload: { cardId: monsterPlacementCard.id, provinceId } });
-      set({
-        gameState: ns,
-        monsterPlacementMode: false,
-        monsterPlacementCard: null,
-        monsterPlacementPlayerId: null,
-        monsterPlacementPopupVisible: false,
-        komainuChoiceVisible: false,
-      });
       return;
     }
 
@@ -2157,12 +2339,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doKomainuChooseMap: () => {
+    const { monsterPlacementContext, monsterPlacementCard } = get();
+    if (monsterPlacementContext === 'recruit' && monsterPlacementCard) {
+      set({ komainuChoiceVisible: false });
+      get().doRecruitConfirmMonster(monsterPlacementCard.id);
+      return;
+    }
     // Transition from komainu choice to normal placement popup
     set({ komainuChoiceVisible: false, monsterPlacementPopupVisible: true });
   },
 
   doKomainuPlaceAtTemple: (templeId: string, replaceFigureId?: string) => {
-    const { gameState, komainuPrayPlayerId, komainuPrayCardId } = get();
+    const { gameState, komainuPrayPlayerId, komainuPrayCardId, monsterPlacementContext, recruitPendingProvinceId } = get();
     if (!gameState || !komainuPrayPlayerId) return;
 
     const isHotei = komainuPrayCardId === 'su-hotei';
@@ -2184,12 +2372,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     }
 
+    const { ws } = get();
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({
+        type: monsterPlacementContext === 'recruit' ? 'RECRUIT_PLACE_MONSTER_TEMPLE' : 'MONSTER_PLACED',
+        playerId: komainuPrayPlayerId,
+        payload: monsterPlacementContext === 'recruit'
+          ? { cardId: komainuPrayCardId, templeId, replaceFigureId, provinceId: recruitPendingProvinceId }
+          : { cardId: komainuPrayCardId, templeId, replaceFigureId },
+      });
+      set({
+        komainuPrayMode: false, komainuPrayPlayerId: null, komainuPrayCardId: null,
+        monsterPlacementPlayerId: null, monsterPlacementCard: null, monsterPlacementContext: null,
+        recruitPendingProvinceId: null,
+      });
+      return;
+    }
+
     const figureId = Math.random().toString(36).substring(2, 10);
 
     // Hotei replacement logic: if replaceFigureId is provided, remove that figure and return shinto to owner
     let updatedPlayers = gameState.players;
     let updatedFigures = [...temple.figures];
     let logMessage: string;
+    let replacementNotice: NonNullable<GameState['pendingRuleNotices']>[number] | null = null;
 
     if (isHotei && replaceFigureId) {
       const replacedFigure = temple.figures.find(f => f.figureId === replaceFigureId && f.playerId !== komainuPrayPlayerId);
@@ -2202,12 +2408,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const replacedOwner = gameState.players.find(p => p.id === replacedFigure.playerId);
       updatedPlayers = gameState.players.map(p => {
         if (p.id !== replacedFigure.playerId) return p;
-        return { ...p, shinto: p.shinto + 1 };
+        return replacedFigure.monsterCardId ? p : { ...p, shinto: p.shinto + 1 };
       });
 
-      logMessage = `Hotei reemplaza shinto de ${replacedOwner?.name || 'jugador'} en santuario de ${capitalize(temple.kamiType)}`;
+      const replacedName = replacedFigure.monsterCardId
+        ? (gameState.players.flatMap(p => p.seasonCards).find(card => card.id === replacedFigure.monsterCardId)?.name || 'monstruo')
+        : 'shinto';
+      logMessage = `${komainuPlayer?.name || 'Jugador'} coloca a Hotei, que sustituye ${replacedName} de ${replacedOwner?.name || 'jugador'} en santuario de ${capitalize(temple.kamiType)}`;
+      replacementNotice = {
+        id: Math.random().toString(36).substring(2, 12),
+        type: 'hotei',
+        actorId: komainuPrayPlayerId,
+        targetId: replacedFigure.playerId,
+        requiredPlayerIds: [replacedFigure.playerId],
+        acknowledgedPlayerIds: [],
+        templeKami: temple.kamiType,
+        resume: gameState.kamiResolutionActive ? 'advance-kami' : monsterPlacementContext === 'recruit' ? null : 'advance-train',
+      };
     } else if (isHotei) {
-      logMessage = `Hotei colocado como shinto en santuario de ${capitalize(temple.kamiType)}`;
+      logMessage = `${komainuPlayer?.name || 'Jugador'} coloca a Hotei en santuario de ${capitalize(temple.kamiType)} sin sustituir ninguna figura`;
     } else {
       logMessage = `Komainu colocado como shinto en santuario de ${capitalize(temple.kamiType)}`;
     }
@@ -2226,17 +2445,47 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...gameState,
       players: updatedPlayers,
       temples: updatedTemples,
+      pendingRuleNotices: replacementNotice ? [...(gameState.pendingRuleNotices || []), replacementNotice] : gameState.pendingRuleNotices,
       log: [...gameState.log, logMessage],
     };
 
     // Path of the Warlord (hotseat): placing a purchased monster (Komainu/Hotei) is a summon.
     // In online mode the server awards this coin when it processes the MONSTER_PLACED action.
     if (gameState.mode === 'hotseat') {
+      applyDignityMonsterSummon(ns, komainuPrayPlayerId);
       ns = grantWarlordSummonCoin(ns, komainuPrayPlayerId);
+    }
+
+    if (monsterPlacementContext === 'recruit') {
+      ns = {
+        ...ns,
+        recruitPlacementsRemaining: ns.recruitPlacementsRemaining - 1,
+        recruitUsedFortressProvinces: recruitPendingProvinceId
+          ? [...ns.recruitUsedFortressProvinces, recruitPendingProvinceId]
+          : ns.recruitUsedFortressProvinces,
+      };
+      set({
+        gameState: ns, komainuPrayMode: false, komainuPrayPlayerId: null,
+        komainuPrayCardId: null, monsterPlacementPlayerId: null,
+        monsterPlacementCard: null, monsterPlacementContext: null, recruitPendingProvinceId: null,
+      });
+      return;
     }
 
     // If placing during Ryujin kami resolution, advance kami resolution instead of train
     if (ns.kamiResolutionActive) {
+      if (replacementNotice) {
+        set({
+          gameState: ns,
+          komainuPrayMode: false,
+          komainuPrayPlayerId: null,
+          komainuPrayCardId: null,
+          monsterPlacementPlayerId: null,
+          monsterPlacementCard: null,
+          monsterPlacementContext: null,
+        });
+        return;
+      }
       ns = advanceKamiResolution(ns);
       const clearState = {
         gameState: ns,
@@ -2254,18 +2503,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     // Online mode: send MONSTER_PLACED to server and reset UI (server handles train advancement)
-    const { ws } = get();
-    if (ws && gameState.mode === 'online') {
-      get().sendAction({ type: 'MONSTER_PLACED', playerId: komainuPrayPlayerId, payload: { cardId: komainuPrayCardId, templeId, replaceFigureId } });
+    if (replacementNotice) {
       set({
+        gameState: ns,
         komainuPrayMode: false,
         komainuPrayPlayerId: null,
-        komainuPrayCardId: null as string | null,
+        komainuPrayCardId: null,
         monsterPlacementPlayerId: null,
+        monsterPlacementCard: null,
+        monsterPlacementContext: null,
       });
       return;
     }
-
     ns = {
       ...ns,
       trainResolutionIndex: gameState.trainResolutionIndex + 1,
@@ -2522,6 +2771,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Save pre-move state for undo
     const preMoveSnapshot = JSON.parse(JSON.stringify(gameState));
 
+    const movementCost = getFujinMovementCost(gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds.length);
+    if (movementCost === null || movementCost > gameState.fujinMovesRemaining) return;
     const ns = moveForces(gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds);
     // If moveForces returned the same state (validation failed), show feedback
     if (ns === gameState) {
@@ -2530,7 +2781,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
-    const remaining = ns.fujinMovesRemaining - 1;
+    const remaining = ns.fujinMovesRemaining - movementCost;
     const updated: GameState = { ...ns, fujinMovesRemaining: remaining };
 
     if (remaining <= 0) {
@@ -2562,8 +2813,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
-    const ns: GameState = { ...gameState, fujinMovesRemaining: 0 };
-    const advanced = advanceKamiResolution(ns);
+    const ns = resolvePendingSerpentCrossings({ ...gameState, fujinMovesRemaining: 0 });
+    const hasPendingSerpent = !!ns.pendingSerpentCharge || (ns.pendingRuleNotices?.length || 0) > (gameState.pendingRuleNotices?.length || 0);
+    const advanced = hasPendingSerpent ? ns : advanceKamiResolution(ns);
 
     if (!advanced.kamiResolutionActive && advanced.currentPhase === 'politics' && gameState.mode === 'hotseat') {
       set({ gameState: advanced, moveMode: false, moveFrom: null, selectedFigures: [], fujinPreMoveState: null, turnPopupPlayer: advanced.players[advanced.currentPlayerIndex]?.id || null });
@@ -2760,6 +3012,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
+    if ((ns.pendingRuleNotices?.length || 0) > (gameState.pendingRuleNotices?.length || 0)) {
+      set({ gameState: { ...ns, ryujinBuyActive: false } });
+      return;
+    }
+
+    if (ns.pendingBenevolence) {
+      set({ gameState: { ...ns, ryujinBuyActive: false } });
+      return;
+    }
+
     // Non-monster card: advance normally
     let updated: GameState = {
       ...ns,
@@ -2810,9 +3072,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     const nsRaw = initiateWarPhase(gameState);
     // Clear pending trade offers when leaving politics phase
-    const ns = { ...nsRaw, tradeOffers: [] as typeof nsRaw.tradeOffers };
-    if (ns.zorroPlacementActive) {
-      // Zorro needs to place first, don't start battles yet
+    const ns = nsRaw;
+    if (ns.warStartActionsComplete === false) {
       set({ gameState: ns, battleCurrentBiddingIndex: 0 });
     } else {
       // Show war phase popup before starting battles
@@ -2892,35 +3153,105 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     const zorroId = gameState.zorroPlacementPlayerId;
-    let ns: GameState = {
-      ...gameState,
-      zorroPlacementActive: false,
-      zorroPlacementPlayerId: null,
-      zorroPlacementsRemaining: 0,
-    };
-
-    // Update battle participants to include Zorro in provinces where they now have figures
-    if (zorroId) {
-      ns = {
-        ...ns,
-        activeBattles: ns.activeBattles.map(b => {
-          const prov = ns.provinces[b.provinceId];
-          const hasFigures = prov?.figures.some(f => f.owner === zorroId);
-          if (hasFigures && !b.participants.includes(zorroId)) {
-            const participants = [...b.participants, zorroId].sort((a, bb) => {
-              const aIdx = ns.turnOrder.indexOf(a);
-              const bIdx = ns.turnOrder.indexOf(bb);
-              return aIdx - bIdx;
-            });
-            return { ...b, participants, uncontested: false, winner: undefined };
-          }
-          return b;
-        }),
-      };
+    const ns = zorroId ? advanceWarStartAction(gameState) : gameState;
+    if (ns.warStartActionsComplete) {
+      const summary3 = computeWarUpgradeSummary(ns);
+      set({ gameState: ns, warPhasePopupVisible: true, warPhaseUpgradeSummary: summary3, battleCurrentBiddingIndex: 0 });
+    } else {
+      set({ gameState: ns });
     }
-
-    const summary3 = computeWarUpgradeSummary(ns);
-    set({ gameState: ns, warPhasePopupVisible: true, warPhaseUpgradeSummary: summary3, battleCurrentBiddingIndex: 0 });
+  },
+  doBetrayReplaceTempleShinto: (templeId, figureId) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState || !localPlayerId) return;
+    const currentPlayer = getCurrentPlayer(gameState);
+    const playerId = gameState.mode === 'hotseat' ? currentPlayer?.id : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'BETRAY_REPLACE_TEMPLE_SHINTO', playerId, payload: { templeId, figureId } });
+      return;
+    }
+    const nextState = betrayReplaceWorshippingShinto(gameState, playerId, templeId, figureId);
+    if (nextState !== gameState) set({ gameState: nextState });
+  },
+  doWarStartSelectProvince: (provinceId: string) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState) return;
+    const action = gameState.warStartActions?.[gameState.warStartActionIndex || 0];
+    const playerId = gameState.mode === 'hotseat' ? action?.playerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'WAR_START_SELECT_PROVINCE', playerId, payload: { provinceId } });
+      return;
+    }
+    set({ gameState: selectWarStartProvince(gameState, playerId, provinceId) });
+  },
+  doWarStartSelectFigure: (provinceId: string, figureId: string) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState) return;
+    const action = gameState.warStartActions?.[gameState.warStartActionIndex || 0];
+    const playerId = gameState.mode === 'hotseat' ? action?.playerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'WAR_START_SELECT_FIGURE', playerId, payload: { provinceId, figureId } });
+      return;
+    }
+    set({ gameState: selectWarStartFigure(gameState, playerId, provinceId, figureId) });
+  },
+  doWarStartReset: () => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState) return;
+    const action = gameState.warStartActions?.[gameState.warStartActionIndex || 0];
+    const playerId = gameState.mode === 'hotseat' ? action?.playerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'WAR_START_RESET', playerId });
+      return;
+    }
+    set({ gameState: resetWarStartSelection(gameState, playerId) });
+  },
+  doWarStartToggleMercy: (provinceId: string) => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState) return;
+    const action = gameState.warStartActions?.[gameState.warStartActionIndex || 0];
+    const playerId = gameState.mode === 'hotseat' ? action?.playerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'WAR_START_TOGGLE_MERCY', playerId, payload: { provinceId } });
+      return;
+    }
+    set({ gameState: toggleWarStartMercy(gameState, playerId, provinceId) });
+  },
+  doWarStartConfirm: () => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState) return;
+    const action = gameState.warStartActions?.[gameState.warStartActionIndex || 0];
+    const playerId = gameState.mode === 'hotseat' ? action?.playerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'WAR_START_CONFIRM', playerId });
+      return;
+    }
+    const ns = confirmWarStartAction(gameState, playerId);
+    if (ns === gameState) return;
+    if (ns.warStartActionsComplete) {
+      set({ gameState: ns, warPhasePopupVisible: true, warPhaseUpgradeSummary: computeWarUpgradeSummary(ns), battleCurrentBiddingIndex: 0 });
+    } else set({ gameState: ns });
+  },
+  doWarStartSkip: () => {
+    const { gameState, localPlayerId, ws } = get();
+    if (!gameState) return;
+    const action = gameState.warStartActions?.[gameState.warStartActionIndex || 0];
+    const playerId = gameState.mode === 'hotseat' ? action?.playerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'WAR_START_SKIP', playerId });
+      return;
+    }
+    const ns = skipWarStartAction(gameState, playerId);
+    if (ns.warStartActionsComplete) {
+      set({ gameState: ns, warPhasePopupVisible: true, warPhaseUpgradeSummary: computeWarUpgradeSummary(ns), battleCurrentBiddingIndex: 0 });
+    } else set({ gameState: ns });
   },
   doSubmitWarTacticBids: (provinceId, tacticBids) => {
     const { gameState, localPlayerId, ws } = get();
@@ -2951,8 +3282,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
         // Instead of resolving immediately, enter step-by-step resolution
         const battle = ns.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
         if (!battle) return;
-        // Apply Fire Dragon pre-battle effect before determining tactic winners
-        ns = applyFireDragonEffect(ns, provinceId);
+        ns = prepareBattleCardDecision(ns, provinceId);
+        if (ns.pendingBattleCardDecision) {
+          set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: null, battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null });
+          return;
+        }
         const resData = determineTacticWinners(ns, battle);
         // Enter first phase: seppuku decision if winner exists
         if (resData.seppukuWinnerId) {
@@ -2976,8 +3310,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (allBidsSubmitted(ns, provinceId)) {
         const battle = ns.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
         if (!battle) return;
-        // Apply Fire Dragon pre-battle effect before determining tactic winners
-        ns = applyFireDragonEffect(ns, provinceId);
+        ns = prepareBattleCardDecision(ns, provinceId);
+        if (ns.pendingBattleCardDecision) {
+          set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: null, battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null });
+          return;
+        }
         const resData = determineTacticWinners(ns, battle);
         if (resData.seppukuWinnerId) {
           set({ gameState: ns, warTacticBidsSubmitted: false, battleStepPhase: 'seppuku-decision', battleCurrentBiddingIndex: 0, battleResolutionData: resData, selectedHostageTarget: null });
@@ -2994,6 +3331,181 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     }
   },
+  doResolveBattleCardDecision: (useEffect, selectedByPlayer, destinationsByFigure = {}, useMercy = false) => {
+    const { gameState, localPlayerId, ws } = get();
+    const pending = gameState?.pendingBattleCardDecision;
+    if (!gameState || !pending) return;
+    const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_BATTLE_CARD_DECISION', playerId, payload: { useEffect, selectedByPlayer, destinationsByFigure, useMercy } });
+      return;
+    }
+    const nextState = resolveBattleCardDecision(gameState, playerId, useEffect, selectedByPlayer, destinationsByFigure, useMercy);
+    if (nextState === gameState) return;
+    if (nextState.pendingBattleCardDecision) {
+      set({ gameState: nextState, battleStepPhase: null });
+      return;
+    }
+    const continued = continueBattleAfterCardDecisions(nextState, pending.provinceId);
+    set({
+      gameState: continued.state,
+      warTacticBidsSubmitted: false,
+      battleStepPhase: continued.phase,
+      battleCurrentBiddingIndex: 0,
+      battleResolutionData: continued.resolutionData,
+      selectedHostageTarget: null,
+    });
+  },
+  doResolveMonsterEnterDecision: (useEffect, selectedByPlayer, destinationId, useMercy = false) => {
+    const { gameState, localPlayerId, ws } = get();
+    const pending = gameState?.pendingMonsterEnterDecision;
+    if (!gameState || !pending) return;
+    const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_MONSTER_ENTER_DECISION', playerId, payload: { useEffect, selectedByPlayer, destinationId, useMercy } });
+      return;
+    }
+    let nextState = resolveMonsterEnterDecision(gameState, playerId, useEffect, selectedByPlayer, destinationId, useMercy);
+    if (nextState === gameState) return;
+    if (!nextState.pendingMonsterEnterDecision) {
+      if (pending.resume === 'advance-kami') {
+        nextState = advanceKamiResolution(nextState);
+      } else if (pending.resume === 'advance-train') {
+        nextState = { ...nextState, trainResolutionIndex: nextState.trainResolutionIndex + 1 };
+        nextState = advanceTrainResolution(nextState);
+        if (!nextState.trainMandateActive) nextState = advancePlayer(nextState);
+      }
+    }
+    set({ gameState: nextState, ...detectWarTransitionWithPopup(nextState), ...detectKamiPopupPending(nextState) });
+  },
+  doResolveBattleMercyDecision: (useMercy) => {
+    const { gameState, localPlayerId, ws } = get();
+    const pending = gameState?.pendingBattleMercyDecision;
+    if (!gameState || !pending) return;
+    const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_BATTLE_MERCY_DECISION', playerId, payload: { useMercy } });
+      return;
+    }
+    const nextState = resolveBattleMercyDecision(gameState, playerId, useMercy);
+    if (nextState === gameState) return;
+    set({ gameState: nextState, battleStepPhase: 'result', battleResolutionData: null, warTacticBidsSubmitted: false });
+  },
+  doResolveNinjaDecision: (useEffect, targetFigureId, useMercy = false) => {
+    const { gameState, localPlayerId, ws } = get();
+    const pending = gameState?.pendingNinjaDecision;
+    if (!gameState || !pending) return;
+    const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_NINJA_DECISION', playerId, payload: { useEffect, targetFigureId, useMercy } });
+      return;
+    }
+    const nextState = resolveNinjaDecision(gameState, playerId, useEffect, targetFigureId, useMercy);
+    if (nextState !== gameState) set({ gameState: nextState });
+  },
+  doResolveMonkeyDecision: (useEffect, targetPlayerId) => {
+    const { gameState, localPlayerId, ws } = get();
+    const pending = gameState?.pendingMonkeyDecision;
+    if (!gameState || !pending) return;
+    const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_MONKEY_DECISION', playerId, payload: { useEffect, targetPlayerId } });
+      return;
+    }
+    const nextState = resolveMonkeyDecision(gameState, playerId, useEffect, targetPlayerId);
+    if (nextState !== gameState) set({ gameState: nextState });
+  },
+  doResolveSnakeDecision: (useEffect) => {
+    const { gameState, localPlayerId, ws } = get();
+    const pending = gameState?.pendingSnakeDecision;
+    if (!gameState || !pending) return;
+    const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_SNAKE_DECISION', playerId, payload: { useEffect } });
+      return;
+    }
+    const nextState = resolveSnakeDecision(gameState, playerId, useEffect);
+    if (nextState !== gameState) set({ gameState: nextState, betrayMode: nextState.betrayMandateActive });
+  },
+  doResolveBenevolence: (recipientId) => {
+    const { gameState, localPlayerId, ws } = get();
+    const pending = gameState?.pendingBenevolence;
+    if (!gameState || !pending) return;
+    const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_BENEVOLENCE', playerId, payload: { recipientId } });
+      return;
+    }
+    let nextState = resolveBenevolenceDecision(gameState, playerId, recipientId);
+    if (nextState === gameState) return;
+    if (!nextState.pendingBenevolence && !(nextState.pendingRuleNotices?.length || 0)) {
+      if (pending.resume === 'advance-train') {
+        nextState = { ...nextState, trainResolutionIndex: nextState.trainResolutionIndex + 1 };
+        nextState = advanceTrainResolution(nextState);
+        if (!nextState.trainMandateActive) nextState = advancePlayer(nextState);
+      } else if (pending.resume === 'advance-kami') {
+        nextState = advanceKamiResolution(nextState);
+      } else if (pending.resume === 'advance-marshal') {
+        nextState = skipMarshalTurn(nextState);
+        if (!nextState.marshalMandateActive) nextState = advancePlayer(nextState);
+      }
+    }
+    set({ gameState: nextState, showTrainModal: false, ...detectWarTransitionWithPopup(nextState), ...detectKamiPopupPending(nextState) });
+  },
+  doResolveSpringPlacement: (useEffect, provinceId, templeId, figureId) => {
+    const { gameState, localPlayerId, ws } = get();
+    const pending = gameState?.pendingSpringPlacement;
+    if (!gameState || !pending) return;
+    const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_SPRING_PLACEMENT', playerId, payload: { useEffect, provinceId, templeId, figureId } });
+      return;
+    }
+    const nextState = resolveSpringPlacementDecision(gameState, playerId, useEffect, provinceId, templeId, figureId);
+    if (nextState !== gameState) set({ gameState: nextState });
+  },
+  doResolveVassal: (accept) => {
+    const { gameState, localPlayerId, ws } = get();
+    const pending = gameState?.pendingVassalDecision;
+    if (!gameState || !pending) return;
+    const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_VASSAL_DECISION', playerId, payload: { accept } });
+      return;
+    }
+    const nextState = resolveVassalDecision(gameState, playerId, accept);
+    if (nextState !== gameState) set({ gameState: nextState, ...detectKamiPopupPending(nextState) });
+  },
+  doResolveSerpentCharge: (chargeCoin) => {
+    const { gameState, localPlayerId, ws } = get();
+    const pending = gameState?.pendingSerpentCharge;
+    if (!gameState || !pending) return;
+    const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
+    if (!playerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'RESOLVE_SERPENT_CHARGE', playerId, payload: { chargeCoin } });
+      return;
+    }
+    let nextState = resolveSerpentChargeDecision(gameState, playerId, chargeCoin);
+    if (nextState === gameState) return;
+    if (!nextState.pendingSerpentCharge && !(nextState.pendingRuleNotices?.length || 0)) {
+      if (pending.resume === 'advance-kami') nextState = advanceKamiResolution(nextState);
+      else if (pending.resume === 'advance-marshal') {
+        nextState = skipMarshalTurn(nextState);
+        if (!nextState.marshalMandateActive) nextState = advancePlayer(nextState);
+      } else if (pending.resume === 'advance-war-start') nextState = advanceWarStartAction(nextState);
+    }
+    set({ gameState: nextState, ...detectWarTransitionWithPopup(nextState), ...detectKamiPopupPending(nextState) });
+  },
   doResolveNextBattle: () => {
     const { gameState, ws } = get();
     if (!gameState) return;
@@ -3003,6 +3515,47 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     set({ gameState: resolveNextBattle(gameState), warTacticBidsSubmitted: false, battleStepPhase: 'result', battleCurrentBiddingIndex: 0, battleResolutionData: null });
     get().saveSnapshot();
+  },
+  doNureOnnaDecision: (move) => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState?.pendingNureOnnaDecision || !localPlayerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'NURE_ONNA_DECISION', playerId: localPlayerId, payload: { move } });
+      return;
+    }
+    const state = resolveNureOnnaDecision(gameState, gameState.pendingNureOnnaDecision.ownerId, move);
+    set({ gameState: state, ...detectWarTransition(state) });
+  },
+  doAcknowledgeRuleNotice: () => {
+    const { gameState, ws, localPlayerId } = get();
+    const notices = gameState?.pendingRuleNotices || [];
+    const notice = notices[0];
+    if (!gameState || !notice) return;
+    if (ws && gameState.mode === 'online') {
+      if (localPlayerId) get().sendAction({ type: 'ACKNOWLEDGE_RULE_NOTICE', playerId: localPlayerId });
+      return;
+    }
+    const acknowledgingId = notice.requiredPlayerIds.find(id => !notice.acknowledgedPlayerIds.includes(id));
+    if (!acknowledgingId) return;
+    const acknowledgedPlayerIds = [...notice.acknowledgedPlayerIds, acknowledgingId];
+    if (!notice.requiredPlayerIds.every(id => acknowledgedPlayerIds.includes(id))) {
+      set({ gameState: { ...gameState, pendingRuleNotices: [{ ...notice, acknowledgedPlayerIds }, ...notices.slice(1)] } });
+      return;
+    }
+    let state: GameState = { ...gameState, pendingRuleNotices: notices.slice(1) };
+    if (notice.resume === 'advance-kami') {
+      state = advanceKamiResolution(state);
+    } else if (notice.resume === 'advance-train') {
+      state = { ...state, trainResolutionIndex: state.trainResolutionIndex + 1 };
+      state = advanceTrainResolution(state);
+      if (!state.trainMandateActive) state = advancePlayer(state);
+    } else if (notice.resume === 'advance-marshal') {
+      state = skipMarshalTurn(state);
+      if (!state.marshalMandateActive) state = advancePlayer(state);
+    } else if (notice.resume === 'advance-war-start') {
+      state = advanceWarStartAction(state);
+    }
+    set({ gameState: state, ...detectWarTransitionWithPopup(state), ...detectKamiPopupPending(state) });
   },
   doSeppukuDecision: (accept: boolean) => {
     const { gameState, battleResolutionData, ws } = get();
@@ -3071,6 +3624,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     }
 
+    for (const fig of ownFigures) {
+      if (fig.type === 'monster' && fig.monsterCardId === 'au-ebisu') {
+        applyEbisuDeathEffect(newState, seppukuPlayerId);
+      }
+    }
+
     // Remove killed figures from province
     const killedIds = new Set(ownFigures.map(f => f.id));
     newState.provinces[battle.provinceId] = {
@@ -3080,6 +3639,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Phoenix revival: if Phoenix died, immediately place it back
     if (phoenixDied) {
+      bidder.victoryPoints += 1;
+      applyLoyaltyBonus(newState, seppukuPlayerId, 'Phoenix');
       const figureId = Math.random().toString(36).substring(2, 10);
       const phoenixFigure = { type: 'monster' as const, owner: seppukuPlayerId, id: figureId, monsterCardId: 'sp-phoenix' };
       newState.provinces[battle.provinceId] = {
@@ -3096,6 +3657,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     newState.log = [...newState.log, `${bidder.name} comete Seppuku: elimina ${killCount} figuras por ${killCount} PV y ${killCount} Honor`];
+    applyProvinceDeathCardEffects(newState, battle.provinceId, ownFigures, province.figures);
+    applyRighteousnessVP(newState, seppukuPlayerId, killCount);
+    if (killCount > 0) applyLoyaltyBonus(newState, seppukuPlayerId, 'seppuku');
 
     // Compute figure type breakdown for the seppuku result popup
     const figureTypeCounts: Record<string, number> = {};
@@ -3194,29 +3758,57 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const capturedFig = province.figures.find(f => f.id === selectedHostageTarget.figureId);
     if (!capturedFig) return;
 
-    const hostage: Hostage = { fromClanId: capturedFig.owner, figureType: selectedHostageTarget.figureType, figureName: selectedHostageTarget.figureName };
+    const hostage: Hostage = { fromClanId: capturedFig.owner, figureType: selectedHostageTarget.figureType, figureName: selectedHostageTarget.figureName, monsterCardId: capturedFig.monsterCardId };
     captor.hostages.push(hostage);
-    captor.victoryPoints += 1;
 
     newState.provinces[battle.provinceId] = {
       ...province,
       figures: province.figures.filter(f => f.id !== selectedHostageTarget.figureId),
     };
 
-    // Return figure to victim's reserve
     const victim = newState.players.find(p => p.id === capturedFig.owner);
+    const stolenVP = victim ? Math.min(1, victim.victoryPoints) : 0;
+    let hostageEventVP = (battleResolutionData.hostageVPGained || 0) + stolenVP;
     if (victim) {
-      if (capturedFig.type === 'bushi') victim.bushi += 1;
-      else if (capturedFig.type === 'shinto') victim.shinto += 1;
-      else if (capturedFig.type === 'monster') victim.monsters += 1;
+      victim.victoryPoints -= stolenVP;
+      captor.victoryPoints += stolenVP;
     }
+    const captorCards = new Set(captor.seasonCards.map(card => card.id));
+    if (!battleResolutionData.sincerityApplied && hasCard(captorCards, 'su-sincerity')) {
+      gainHonor(newState, captor.id);
+      captor.victoryPoints += 1;
+      hostageEventVP += 1;
+      newState.log = [...newState.log, `${captor.name} gana Honor y 1 PV por tomar un rehen (Sinceridad). Total ${captor.victoryPoints} PV`];
+    }
+    newState.log = [...newState.log, `${captor.name} captura un rehen (${selectedHostageTarget.figureName}) de ${victim?.name} y roba ${stolenVP} PV. Total ${captor.name}: ${captor.victoryPoints} PV; ${victim?.name}: ${victim?.victoryPoints} PV`];
 
-    newState.log = [...newState.log, `${captor.name} captura un rehen (${selectedHostageTarget.figureName}) de ${victim?.name}`];
-
+    const capturedHostageData = { captorId: hostageWinnerId, fromClanId: capturedFig.owner, figureType: capturedFig.type, figureName: selectedHostageTarget.figureName, monsterCardId: capturedFig.monsterCardId };
+    const hostagesTaken = (battleResolutionData.hostagesTaken || 0) + 1;
+    const hostageLimit = battleResolutionData.hostageLimit || (1 + captor.seasonCards.filter(card => card.id === 'su-respect' || card.id === 'su-respect-2').length);
     const updatedResData: BattleResolutionData = {
       ...battleResolutionData,
-      capturedHostage: { captorId: hostageWinnerId, fromClanId: capturedFig.owner, figureType: capturedFig.type, figureName: selectedHostageTarget.figureName, monsterCardId: capturedFig.monsterCardId },
+      capturedHostage: capturedHostageData,
+      capturedHostages: [...(battleResolutionData.capturedHostages || []), capturedHostageData],
+      hostagesTaken,
+      hostageLimit,
+      hostageVPGained: hostageEventVP,
+      sincerityApplied: battleResolutionData.sincerityApplied || hasCard(captorCards, 'su-sincerity'),
     };
+
+    const remainingCapturable = newState.provinces[battle.provinceId].figures.some(figure =>
+      figure.owner !== captor.id
+      && !captor.allies.includes(figure.owner)
+      && battle.participants.includes(figure.owner)
+      && figure.type !== 'fortress'
+      && figure.type !== 'daimyo'
+      && !(figure.type === 'monster' && ['su-yurei', 'sp-fukurokuju'].includes(figure.monsterCardId || ''))
+    );
+    if (hostagesTaken < hostageLimit && remainingCapturable) {
+      set({ gameState: newState, battleStepPhase: 'hostage-selection', battleResolutionData: updatedResData, selectedHostageTarget: null });
+      return;
+    }
+
+    if (hostageEventVP > 0) applyLoyaltyBonus(newState, captor.id, 'tomar rehen');
 
     // Move to next phase
     if (updatedResData.roninWinnerId) {
@@ -3238,11 +3830,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
-    // No capturable figures - advance to next phase
+    let nextState = gameState;
+    if ((battleResolutionData.hostagesTaken || 0) > 0 && (battleResolutionData.hostageVPGained || 0) > 0 && battleResolutionData.hostageWinnerId) {
+      nextState = {
+        ...gameState,
+        players: gameState.players.map(player => ({ ...player })),
+        log: [...gameState.log],
+      };
+      applyLoyaltyBonus(nextState, battleResolutionData.hostageWinnerId, 'tomar rehen');
+    }
+    // No capturable figures, or the optional Respect capture was declined.
     if (battleResolutionData.roninWinnerId) {
-      set({ battleStepPhase: 'ronin-result', selectedHostageTarget: null });
+      set({ gameState: nextState, battleStepPhase: 'ronin-result', selectedHostageTarget: null });
     } else {
-      const withResData = attachResolutionData(gameState, battleResolutionData);
+      const withResData = attachResolutionData(nextState, battleResolutionData);
       const ns = resolveNextBattle(withResData);
       set({ gameState: ns, battleStepPhase: 'result', battleResolutionData: battleResolutionData, selectedHostageTarget: null });
     }
@@ -3281,7 +3882,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         set({ battleStepPhase: null, battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null, warSummaryVisible: true });
         return;
       }
-      set({ battleStepPhase: 'popup', battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null });
+      let nextState = prepareNureOnnaDecision(gameState);
+      nextState = resolveUncontestedBattles(nextState);
+      set({ gameState: nextState, battleStepPhase: nextState.pendingNureOnnaDecision ? null : 'popup', battleCurrentBiddingIndex: 0, battleResolutionData: null, selectedHostageTarget: null });
       return;
     }
 
@@ -3324,9 +3927,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
         });
         return;
       }
+      let nextState: GameState = { ...gameState, activeBattles: updatedBattles, log: newLog };
+      nextState = prepareNureOnnaDecision(nextState);
+      nextState = resolveUncontestedBattles(nextState);
       set({
-        gameState: { ...gameState, activeBattles: updatedBattles, log: newLog },
-        battleStepPhase: 'popup',
+        gameState: nextState,
+        battleStepPhase: nextState.pendingNureOnnaDecision ? null : 'popup',
         battleCurrentBiddingIndex: 0,
       });
       return;
@@ -3550,15 +4156,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Hotseat: if Daikaiju placement is active, don't resolve battles yet
     if (gameState.daikaijuPlacementActive) {
-      set({ warPhasePopupVisible: false, warPhaseUpgradeSummary: [] });
+      set({
+        gameState: { ...gameState, warPhaseStartAcknowledged: true },
+        warPhasePopupVisible: false,
+        warPhaseUpgradeSummary: [],
+      });
       return;
     }
 
-    const updatedState = resolveUncontestedBattles(gameState);
-    set({ gameState: updatedState, warPhasePopupVisible: false, warPhaseUpgradeSummary: [], battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    let updatedState = prepareNureOnnaDecision({ ...gameState, warPhaseStartAcknowledged: true });
+    updatedState = resolveUncontestedBattles(updatedState);
+    set({ gameState: updatedState, warPhasePopupVisible: false, warPhaseUpgradeSummary: [], battleStepPhase: updatedState.pendingNureOnnaDecision ? null : 'popup', battleCurrentBiddingIndex: 0 });
   },
 
   // --- Daikaiju Placement Actions ---
+  startDaikaijuPlacement: () => {
+    const { gameState, localPlayerId } = get();
+    if (!gameState?.daikaijuPlacementActive || gameState.daikaijuPlacementProvinceId) return;
+    if (gameState.mode === 'online' && localPlayerId !== gameState.daikaijuPlacementPlayerId) return;
+    set({ daikaijuPlacementMode: true });
+  },
+
   doDaikaijuPlaceProvince: (provinceId: string) => {
     const { gameState, ws } = get();
     if (!gameState) return;
@@ -3570,67 +4188,32 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
-    // Hotseat: do the logic locally
-    const targetProvince = gameState.provinces[provinceId];
-    if (!targetProvince || provinceId === 'ocean') return;
+    const selected = selectDaikaijuProvince(gameState, gameState.daikaijuPlacementPlayerId, provinceId);
+    if (selected !== gameState) set({ gameState: selected, daikaijuPlacementMode: false });
 
-    const daikaijuPlayerId = gameState.daikaijuPlacementPlayerId;
-    const oceanProv = gameState.provinces['ocean'];
-    if (!oceanProv) return;
-    const daikaijuFigure = oceanProv.figures.find(f => f.type === 'monster' && f.monsterCardId === 'au-daikaiju');
-    if (!daikaijuFigure) return;
+  },
 
-    // Move Daikaiju from ocean to target province
-    let ns: GameState = {
-      ...gameState,
-      provinces: {
-        ...gameState.provinces,
-        ocean: { ...oceanProv, figures: oceanProv.figures.filter(f => f.id !== daikaijuFigure.id) },
-        [provinceId]: { ...targetProvince, figures: [...targetProvince.figures, daikaijuFigure] },
-      },
-    };
-
-    // Destroy ALL fortresses in target province (including own and Tortuga's)
-    const allFortresses = ns.provinces[provinceId].figures.filter(f => f.type === 'fortress');
-    const destroyedFortressMap: { [playerId: string]: number } = {};
-    for (const fort of allFortresses) {
-      destroyedFortressMap[fort.owner] = (destroyedFortressMap[fort.owner] || 0) + 1;
+  doDaikaijuConfirmPlacement: () => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState?.daikaijuPlacementProvinceId || !gameState.daikaijuPlacementPlayerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'DAIKAIJU_CONFIRM_PLACEMENT', playerId: localPlayerId });
+      return;
     }
+    const confirmed = confirmDaikaijuPlacement(gameState, gameState.daikaijuPlacementPlayerId);
+    if (confirmed !== gameState) set({ gameState: confirmed, daikaijuPlacementMode: false });
+  },
 
-    // Remove fortresses from province and return to owners
-    ns = {
-      ...ns,
-      provinces: {
-        ...ns.provinces,
-        [provinceId]: {
-          ...ns.provinces[provinceId],
-          figures: ns.provinces[provinceId].figures.filter(f => f.type !== 'fortress'),
-        },
-      },
-      players: ns.players.map(p => {
-        const returned = destroyedFortressMap[p.id] || 0;
-        if (returned > 0) return { ...p, fortresses: p.fortresses + returned };
-        return p;
-      }),
-    };
-
-    // Build summary data
-    const destroyedFortresses = Object.entries(destroyedFortressMap).map(([pId, count]) => {
-      const player = ns.players.find(p => p.id === pId);
-      return { playerId: pId, playerName: player?.name || 'jugador', count };
-    });
-
-    const daikaijuOwner = ns.players.find(p => p.id === daikaijuPlayerId);
-    ns = {
-      ...ns,
-      daikaijuPlacementActive: false,
-      daikaijuSummaryVisible: true,
-      daikaijuSummaryReadyPlayers: [],
-      daikaijuSummaryData: { provinceId, provinceName: targetProvince.name, destroyedFortresses },
-      log: [...ns.log, `🦕 Daikaiju de ${daikaijuOwner?.name || 'jugador'} aparece en ${targetProvince.name} y destruye ${allFortresses.length} fortaleza(s)`],
-    };
-
-    set({ gameState: ns });
+  doDaikaijuUndoPlacement: () => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState?.daikaijuPlacementProvinceId || !gameState.daikaijuPlacementPlayerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'DAIKAIJU_UNDO_PLACEMENT', playerId: localPlayerId });
+      set({ daikaijuPlacementMode: true });
+      return;
+    }
+    const reverted = undoDaikaijuProvinceSelection(gameState, gameState.daikaijuPlacementPlayerId);
+    if (reverted !== gameState) set({ gameState: reverted, daikaijuPlacementMode: true });
   },
 
   doDaikaijuSummaryReady: () => {
@@ -3650,8 +4233,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       daikaijuSummaryReadyPlayers: [],
       daikaijuSummaryData: null,
     };
-    const updatedState = resolveUncontestedBattles(ns);
-    set({ gameState: updatedState, battleStepPhase: 'popup', battleCurrentBiddingIndex: 0 });
+    let updatedState = prepareNureOnnaDecision(ns);
+    updatedState = resolveUncontestedBattles(updatedState);
+    set({ gameState: updatedState, battleStepPhase: updatedState.pendingNureOnnaDecision ? null : 'popup', battleCurrentBiddingIndex: 0 });
   },
 
   // --- War Summary Popup (end of all battles) ---
@@ -3763,6 +4347,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
           // Build UI state resets for online mode: clean up client-local flags when mandates are no longer active
           const uiResets: Record<string, unknown> = {};
           if (state.mode === 'online') {
+            if (!state.daikaijuPlacementActive || state.daikaijuPlacementProvinceId) {
+              uiResets.daikaijuPlacementMode = false;
+            }
             if (!state.recruitMandateActive) {
               uiResets.recruitMode = false;
               if (!state.marshalMandateActive && !state.betrayMandateActive) {
@@ -3899,35 +4486,42 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
           // --- Online War Phase detection ---
           if (state.mode === 'online' && state.currentPhase === 'war') {
-            // When war phase just started and no Zorro placement, show war phase popup directly
+            const warPhaseStartAcknowledged = hasAcknowledgedWarPhaseStart(state);
+            if (warPhaseStartAcknowledged) {
+              uiResets.warPhasePopupVisible = false;
+              uiResets.warPhaseUpgradeSummary = [];
+            }
+            if (prevGameState?.pendingNureOnnaDecision && !state.pendingNureOnnaDecision) {
+              uiResets.battleStepPhase = 'popup';
+              uiResets.battleCurrentBiddingIndex = 0;
+            }
+            // Show the summary only after every honor-ordered start-of-war effect is resolved.
             const prevPhase = prevGameState?.currentPhase;
-            if (prevPhase !== 'war' && !state.zorroPlacementActive && !state.kamiSummaryVisible) {
+            if (prevPhase !== 'war' && state.warStartActionsComplete !== false && !state.kamiSummaryVisible && !warPhaseStartAcknowledged) {
               uiResets.warPhasePopupVisible = true;
               uiResets.warPhaseUpgradeSummary = computeWarUpgradeSummary(state);
             }
 
-            // When Zorro placement ends (zorroPlacementActive becomes false), show war phase popup
-            const prevZorroActive = prevGameState?.zorroPlacementActive;
-            if (prevZorroActive && !state.zorroPlacementActive && !state.kamiSummaryVisible) {
+            if (prevGameState?.warStartActionsComplete === false && state.warStartActionsComplete && !state.kamiSummaryVisible && !warPhaseStartAcknowledged) {
               uiResets.warPhasePopupVisible = true;
               uiResets.warPhaseUpgradeSummary = computeWarUpgradeSummary(state);
             }
 
             // When warPhaseReadyPlayers clears (all accepted war summary), start battle flow
             const prevWarPhaseReady = prevGameState?.warPhaseReadyPlayers?.length || 0;
-            if (prevWarPhaseReady > 0 && (state.warPhaseReadyPlayers?.length || 0) === 0 && !state.zorroPlacementActive) {
+            if (prevWarPhaseReady > 0 && (state.warPhaseReadyPlayers?.length || 0) === 0 && state.warStartActionsComplete !== false) {
               // War phase popup accepted by all - hide popup
               uiResets.warPhasePopupVisible = false;
               uiResets.warPhaseUpgradeSummary = [];
               // Only start battles if Daikaiju placement is not active
-              if (!state.daikaijuPlacementActive) {
+              if (!state.daikaijuPlacementActive && !state.pendingNureOnnaDecision) {
                 uiResets.battleStepPhase = 'popup';
                 uiResets.battleCurrentBiddingIndex = 0;
               }
             }
 
             // When daikaijuSummaryVisible goes from true to false (all players accepted), start battles
-            if (prevGameState?.daikaijuSummaryVisible && !state.daikaijuSummaryVisible) {
+            if (prevGameState?.daikaijuSummaryVisible && !state.daikaijuSummaryVisible && !state.pendingNureOnnaDecision) {
               uiResets.battleStepPhase = 'popup';
               uiResets.battleCurrentBiddingIndex = 0;
             }
@@ -3989,7 +4583,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
               uiResets.selectedHostageTarget = null;
               if (rd.seppukuWinnerId) {
                 uiResets.battleStepPhase = 'seppuku-decision';
-              } else if (rd.hostageWinnerId && !rd.capturedHostage) {
+              } else if (rd.hostageWinnerId && (rd.hostagesTaken || 0) < (rd.hostageLimit || 1)) {
                 uiResets.battleStepPhase = 'hostage-selection';
               } else {
                 uiResets.battleStepPhase = 'ronin-result';
@@ -4005,7 +4599,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
               } else if (rd.seppukuPhaseComplete && !prevRd.seppukuPhaseComplete) {
                 // Seppuku result was accepted by winner - transition to next phase
                 uiResets.battleResolutionData = rd;
-                if (rd.hostageWinnerId && !rd.capturedHostage) {
+                if (rd.hostageWinnerId && (rd.hostagesTaken || 0) < (rd.hostageLimit || 1)) {
                   uiResets.battleStepPhase = 'hostage-selection';
                   uiResets.selectedHostageTarget = null;
                 } else if (rd.roninWinnerId) {
@@ -4014,12 +4608,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
               } else if (prevRd.seppukuWinnerId && !rd.seppukuWinnerId) {
                 // Seppuku was declined (seppukuWinnerId cleared)
                 uiResets.battleResolutionData = rd;
-                if (rd.hostageWinnerId && !rd.capturedHostage) {
+                if (rd.hostageWinnerId && (rd.hostagesTaken || 0) < (rd.hostageLimit || 1)) {
                   uiResets.battleStepPhase = 'hostage-selection';
                   uiResets.selectedHostageTarget = null;
                 } else if (rd.roninWinnerId) {
                   uiResets.battleStepPhase = 'ronin-result';
                 }
+              } else if ((rd.hostagesTaken || 0) > (prevRd.hostagesTaken || 0) && (rd.hostagesTaken || 0) < (rd.hostageLimit || 1)) {
+                uiResets.battleResolutionData = rd;
+                uiResets.battleStepPhase = 'hostage-selection';
+                uiResets.selectedHostageTarget = null;
               }
             }
           }
@@ -4030,9 +4628,36 @@ export const useGameStore = create<GameStore>((set, get) => ({
             uiResets.battleStepPhase = null;
           }
 
+          // Monster placement is server state in online games. Rebuild the buyer's local UI after
+          // reconnects, refreshes, or any state broadcast that arrives while Train is paused.
+          const pendingMonsterPlayerId = state.pendingMonsterPlacementPlayerId;
+          const pendingMonsterCardId = state.pendingMonsterPlacementCardId;
+          if (pendingMonsterPlayerId && pendingMonsterCardId && pendingMonsterPlayerId === lpId) {
+            const pendingPlayer = state.players.find((p: { id: string }) => p.id === pendingMonsterPlayerId);
+            const pendingCard = pendingPlayer?.seasonCards.find((card: SeasonCard) => card.id === pendingMonsterCardId);
+            const placementAlreadyVisible = !!(
+              get().monsterPlacementCard || get().monsterPlacementMode || get().komainuPrayMode ||
+              get().monsterPlacementPopupVisible || get().komainuChoiceVisible || get().monsterNoPlacementPopupVisible
+            );
+            if (pendingCard && !placementAlreadyVisible) {
+              uiResets.monsterPlacementCard = pendingCard;
+              uiResets.monsterPlacementPlayerId = pendingMonsterPlayerId;
+              uiResets.showTrainModal = false;
+              if (pendingCard.id === 'sp-komainu' || pendingCard.id === 'su-hotei') {
+                uiResets.komainuChoiceVisible = true;
+                uiResets.monsterPlacementPopupVisible = false;
+              } else if (pendingPlayer?.clanId === 'luna' && !lunaHasValidProvince(state, pendingMonsterPlayerId)) {
+                uiResets.monsterNoPlacementPopupVisible = true;
+                uiResets.monsterPlacementPopupVisible = false;
+              } else {
+                uiResets.monsterPlacementPopupVisible = true;
+              }
+            }
+          }
+
           // If monster placement is in progress, suppress turn popup to avoid interference
           const { monsterPlacementCard: currentMonsterCard, monsterPlacementMode: currentMonsterMode, komainuPrayMode: currentKomainuPray, monsterPlacementPopupVisible: currentMonsterPopup, komainuChoiceVisible: currentKomainuChoice, monsterNoPlacementPopupVisible: currentNoPlacementPopup } = get();
-          const monsterPlacementInProgress = !!(currentMonsterCard || currentMonsterMode || currentKomainuPray || currentMonsterPopup || currentKomainuChoice || currentNoPlacementPopup);
+          const monsterPlacementInProgress = !!(pendingMonsterCardId || currentMonsterCard || currentMonsterMode || currentKomainuPray || currentMonsterPopup || currentKomainuChoice || currentNoPlacementPopup);
           const finalTurnPopup = monsterPlacementInProgress ? null : newTurnPopup;
 
           // During online marshal, if local player has pending moves/fortresses, don't overwrite local state with server state

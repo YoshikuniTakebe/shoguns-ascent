@@ -4,7 +4,7 @@ import { API_BASE, getServerWsUrl } from '../config';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { CLANS } from '../types/game';
-import { ClanShield } from './ClanShields';
+import { ClanShield, WarSeal } from './ClanShields';
 import { ConfigModal } from './ConfigModal';
 import { AddFriendModal, FriendsListModal } from './FriendsModal';
 import titleImg from '../img/NoboruTaiyo.png';
@@ -38,6 +38,7 @@ interface WaitingLobby {
   isParticipant: boolean;
   createdAt: string;
   players: { name: string; clanId: string; userId: string }[];
+  slots: { userId: string | null; name: string | null; clanId: string; status: 'joined' | 'waiting' | 'open' }[];
 }
 
 export const GamesLobby = () => {
@@ -358,6 +359,7 @@ export const GamesLobby = () => {
     );
 
     const currentPlayer = type !== 'finished' && game.currentPlayerIndex != null ? game.players[game.currentPlayerIndex] : null;
+    const isWarPhase = type !== 'finished' && game.lastPhase === 'war';
 
     return (
       <div
@@ -393,14 +395,19 @@ export const GamesLobby = () => {
           </span>
         </div>
 
-        {/* Center: current-turn player seal (compact) */}
-        {currentPlayer && (
+        {/* Center: War marker or current-turn player seal (compact) */}
+        {isWarPhase ? (
+          <div className="games-lobby-card-turn-seal games-lobby-card-war-seal">
+            <WarSeal size={42} />
+            <span className="games-lobby-card-war-seal-name">{t('lobby.war')}</span>
+          </div>
+        ) : currentPlayer ? (
           <div className="games-lobby-card-turn-seal">
             <span className="games-lobby-card-turn-seal-label">{t('lobby.turnOf')}</span>
             <ClanShield clanId={currentPlayer.clanId} size={38} />
             <span className="games-lobby-card-turn-seal-name" style={{ color: getClanColor(currentPlayer.clanId) }}>{currentPlayer.name}</span>
           </div>
-        )}
+        ) : null}
 
         {/* Right: mode + date + progress + actions */}
         <div className="games-lobby-card-right">
@@ -557,10 +564,19 @@ export const GamesLobby = () => {
                       <span className="games-lobby-card-created-inline">· {t('lobby.createdOn', { date: formatDate(l.createdAt) })}</span>
                     </div>
                     <span className="games-lobby-card-clans games-lobby-card-clans-grid">
-                      {l.players.map((p, i) => (
-                        <span key={i} className="games-lobby-card-clan-entry">
-                          {p.clanId ? <ClanShield clanId={p.clanId} size={16} /> : null}
-                          <span style={{ color: getClanColor(p.clanId) }}>{p.name}</span>
+                      {(l.slots || l.players.map(p => ({ ...p, status: 'joined' as const }))).map((slot, i) => (
+                        <span
+                          key={slot.userId || `open-${slot.clanId}-${i}`}
+                          className={`games-lobby-card-clan-entry games-lobby-card-slot-${slot.status}`}
+                        >
+                          {slot.clanId ? <ClanShield clanId={slot.clanId} size={16} /> : null}
+                          {slot.status === 'open' ? (
+                            <span style={{ color: getClanColor(slot.clanId) }}>{t('lobby.freeJoin')}</span>
+                          ) : (
+                            <span style={{ color: slot.status === 'waiting' ? undefined : getClanColor(slot.clanId) }}>
+                              {slot.name}{slot.status === 'waiting' ? ` (${t('lobby.waiting')})` : ''}
+                            </span>
+                          )}
                         </span>
                       ))}
                     </span>

@@ -5,13 +5,14 @@ import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 
 export const TradeOfferPopup = () => {
-  const { gameState, doAcceptTrade, doRejectTrade } = useGameStore();
+  const { gameState, localPlayerId, doAcceptTrade, doRejectTrade } = useGameStore();
   const t = useT();
 
   if (!gameState) return null;
-  if (gameState.currentPhase !== 'politics') return null;
-
-  const cp = gameState.players[gameState.currentPlayerIndex];
+  if (gameState.currentPhase === 'war') return null;
+  const cp = gameState.mode === 'online'
+    ? gameState.players.find(p => p.id === localPlayerId)
+    : gameState.players[gameState.currentPlayerIndex];
   if (!cp) return null;
 
   const pendingOffers = gameState.tradeOffers.filter(
@@ -70,6 +71,7 @@ export const TradeOfferPopup = () => {
                   </div>
                 )}
               </div>
+              {offer.message && <p className="trade-offer-message">“{offer.message}”</p>}
               <p className="trade-offer-nonbinding">{t('trade.nonBinding')}</p>
               <div className="trade-offer-actions">
                 <button className="btn-primary trade-offer-accept" onClick={() => doAcceptTrade(offer.id)}>

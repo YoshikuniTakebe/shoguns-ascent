@@ -6,7 +6,7 @@ import { ClanShield } from './ClanShields';
 import { useT } from '../i18n';
 
 export const TradeModal = () => {
-  const { gameState, tradeModalOpen, setTradeModalOpen, doSendTrade } = useGameStore();
+  const { gameState, localPlayerId, tradeModalOpen, setTradeModalOpen, doSendTrade } = useGameStore();
   const t = useT();
 
   const [offerCoins, setOfferCoins] = useState(0);
@@ -14,10 +14,13 @@ export const TradeModal = () => {
   const [requestCoins, setRequestCoins] = useState(0);
   const [requestRonin, setRequestRonin] = useState(0);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
 
-  if (!tradeModalOpen || !gameState) return null;
+  if (!tradeModalOpen || !gameState || gameState.currentPhase === 'war') return null;
 
-  const cp = gameState.players[gameState.currentPlayerIndex];
+  const cp = gameState.mode === 'online'
+    ? gameState.players.find(p => p.id === localPlayerId)
+    : gameState.players[gameState.currentPlayerIndex];
   if (!cp) return null;
 
   const otherPlayers = gameState.players.filter(p => p.id !== cp.id);
@@ -28,12 +31,13 @@ export const TradeModal = () => {
   const handleSend = () => {
     if (!selectedPlayer) return;
     if (offerCoins === 0 && offerRonin === 0 && requestCoins === 0 && requestRonin === 0) return;
-    doSendTrade(selectedPlayer, offerCoins, offerRonin, requestCoins, requestRonin);
+    doSendTrade(selectedPlayer, offerCoins, offerRonin, requestCoins, requestRonin, message);
     setOfferCoins(0);
     setOfferRonin(0);
     setRequestCoins(0);
     setRequestRonin(0);
     setSelectedPlayer(null);
+    setMessage('');
   };
 
   const handleClose = () => {
@@ -43,6 +47,7 @@ export const TradeModal = () => {
     setRequestCoins(0);
     setRequestRonin(0);
     setSelectedPlayer(null);
+    setMessage('');
   };
 
   return (
@@ -123,6 +128,18 @@ export const TradeModal = () => {
             </div>
           </div>
         </div>
+
+        <label className="trade-message-field">
+          <span>{t('trade.message')}</span>
+          <textarea
+            value={message}
+            maxLength={250}
+            rows={3}
+            placeholder={t('trade.messagePlaceholder')}
+            onChange={event => setMessage(event.target.value)}
+          />
+          <small>{message.length}/250</small>
+        </label>
 
         {/* Player selector */}
         <div className="trade-player-selector">

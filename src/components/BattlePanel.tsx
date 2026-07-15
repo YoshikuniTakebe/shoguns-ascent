@@ -11,6 +11,9 @@ import { calculateForce } from '../utils/gameLogic';
 import { BattleBiddingOverlay } from './BattleBiddingOverlay';
 import type { BattleCombatant } from './BattleBiddingOverlay';
 
+// Kept only so older snapshots containing coinDistributionPending can continue directly to results.
+const SHOW_COIN_DISTRIBUTION_POPUP = false;
+
 /**
  * Extract log entries for a resolved battle using its logStartIndex
  * to avoid pulling entries from other battles.
@@ -196,14 +199,17 @@ function renderBattleLogEntry(entry: string, players: { id: string; name: string
 /**
  * Render icon for a figure type in the battle result display.
  */
-function FigureTypeIcon({ figureType, size = 16 }: { figureType: string; size?: number }) {
+function FigureTypeIcon({ figureType, color = '#fff', size = 16 }: { figureType: string; color?: string; size?: number }) {
   switch (figureType) {
     case 'bushi':
-      return <BushiIcon size={size} color="#fff" />;
+      return <BushiIcon size={size} color={color} />;
     case 'shinto':
-      return <ShintoIcon size={size} color="#fff" />;
+      return <ShintoIcon size={size} color={color} />;
+    case 'daimyo':
+      return <DaimyoIcon size={size} color={color} />;
+    case 'monster':
     default:
-      return <MonsterIcon size={size} color="#fff" />;
+      return <MonsterIcon size={size} color={color} />;
   }
 }
 
@@ -233,6 +239,10 @@ function BattleResultPopup({
   const winner = battle.winner ? gameState.players.find(p => p.id === battle.winner) : null;
   const winnerClan = winner ? CLANS.find(c => c.id === winner.clanId) : null;
   const battleLogs = extractBattleLogs(gameState.log, battle);
+  const provinceName = resProvince?.name || battle.provinceId;
+  const provinceColor = PROVINCE_COLORS[battle.provinceId] || '#fff';
+  const warTokenMarker = '__PROVINCE__';
+  const [warTokenPrefix, warTokenSuffix = ''] = t('battle.resultWarToken', { province: warTokenMarker }).split(warTokenMarker);
 
   // Use resolution data from battle or prop
   const resData = battle.resolutionData || resolutionData;
@@ -321,8 +331,10 @@ function BattleResultPopup({
           </div>
         )}
         {winner && (
-          <p style={{ color: winnerClan?.color, margin: '0.25rem 0' }}>
-            {t('battle.resultWarToken', { province: resProvince?.name || battle.provinceId })}
+          <p style={{ margin: '0.25rem 0' }}>
+            {warTokenPrefix}
+            <span style={{ color: provinceColor, fontWeight: 'bold' }}>{provinceName}</span>
+            {warTokenSuffix}
           </p>
         )}
         {/* Seppuku section */}
@@ -377,12 +389,16 @@ function BattleResultPopup({
               {battle.killedFigures.map((kf, i) => {
                 const owner = gameState.players.find(p => p.id === kf.owner);
                 const ownerClan = owner ? CLANS.find(c => c.id === owner.clanId) : null;
+                const casualtyColor = ownerClan?.color || '#fff';
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85em' }}>
                     <ClanShield clanId={owner?.clanId || ''} size={16} />
-                    <span style={{ color: ownerClan?.color, fontWeight: 'bold' }}>{owner?.name}</span>
-                    <FigureTypeIcon figureType={kf.figureType} size={14} />
-                    <span style={{ fontWeight: 'bold' }}>{kf.count}{kf.figureType === 'monster' && kf.monsterNames && kf.monsterNames.length > 0 ? ` (${kf.monsterNames.join(', ')})` : ''}</span>
+                    <span style={{ color: casualtyColor, fontWeight: 'bold' }}>{owner?.name}</span>
+                    <FigureTypeIcon figureType={kf.figureType} color={casualtyColor} size={16} />
+                    <span style={{ color: casualtyColor, fontWeight: 'bold' }}>{kf.count}</span>
+                    {kf.figureType === 'monster' && kf.monsterNames && kf.monsterNames.length > 0 && (
+                      <span style={{ color: casualtyColor, fontWeight: 600 }}>({kf.monsterNames.join(', ')})</span>
+                    )}
                   </div>
                 );
               })}
@@ -513,12 +529,13 @@ export const BattlePanel = () => {
 
   // --- DAIKAIJU: suppress battle popups while Daikaiju placement/summary is active ---
   if (gameState.daikaijuPlacementActive || gameState.daikaijuSummaryVisible) return null;
+  if (gameState.pendingNureOnnaDecision || gameState.pendingBattleCardDecision || gameState.pendingMonsterEnterDecision || gameState.pendingBattleMercyDecision || gameState.pendingNinjaDecision || (gameState.pendingRuleNotices?.length || 0) > 0) return null;
 
   // --- WAR SUMMARY POPUP: suppress battle popups while war summary is visible ---
   if (warSummaryVisible) return null;
 
   // --- COIN DISTRIBUTION POPUP: show when winner must allocate remainder coins ---
-  if (gameState.coinDistributionPending) {
+  if (SHOW_COIN_DISTRIBUTION_POPUP && gameState.coinDistributionPending) {
     // If map peek is active, hide the popup so the map is visible
     if (biddingMapPeek) return null;
 
@@ -852,6 +869,7 @@ export const BattlePanel = () => {
     const DAIMYO_MONSTER_IDS = ['su-yurei', 'sp-fukurokuju'];
     const capturableFigures = province ? province.figures.filter(f => {
       if (f.owner === battleResolutionData.hostageWinnerId) return false;
+      if (hostagePlayer?.allies.includes(f.owner)) return false;
       // Only allow capturing figures from battle participants
       if (unresolvedBattle && !unresolvedBattle.participants.includes(f.owner)) return false;
       if (f.type === 'daimyo') return false;
@@ -894,7 +912,7 @@ export const BattlePanel = () => {
             </span>
           </div>
           <p style={{ fontSize: '1em', margin: '0.5rem 0 0.75rem', textAlign: 'center' }}>
-            Elige a quien capturar
+            Elige a quien capturar ({(battleResolutionData.hostagesTaken || 0) + 1}/{battleResolutionData.hostageLimit || 1})
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.75rem' }}>
             {capturableFigures.map(fig => {
@@ -936,6 +954,11 @@ export const BattlePanel = () => {
           >
             Capturar
           </button>
+          {(battleResolutionData.hostagesTaken || 0) > 0 && (
+            <button className="btn-secondary battle-popup-accept" onClick={doHostageSkip}>
+              Terminar
+            </button>
+          )}
         </div>
       </div>,
       document.body
@@ -1038,7 +1061,7 @@ export const BattlePanel = () => {
         <div className="battle-popup-overlay">
           <div className="battle-popup-card">
             <h3 className="battle-popup-title">{t('battle.battleNumber', { number: battleNumber })}</h3>
-            <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
+            <p className="battle-uncontested-province" style={{ color: PROVINCE_COLORS[battle.provinceId] || '#fff' }}>
               {province?.name || battle.provinceId}
             </p>
             <p className="battle-popup-message" style={{ opacity: 0.8 }}>
@@ -1072,7 +1095,7 @@ export const BattlePanel = () => {
         <div className="battle-popup-overlay">
           <div className="battle-popup-card">
             <h3 className="battle-popup-title">{t('battle.battleNumber', { number: battleNumber })}</h3>
-            <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
+            <p className="battle-uncontested-province" style={{ color: PROVINCE_COLORS[battle.provinceId] || '#fff' }}>
               {province?.name || battle.provinceId}
             </p>
             <p style={{ fontSize: '0.9em', opacity: 0.8, marginBottom: '0.75rem' }}>
@@ -1103,9 +1126,9 @@ export const BattlePanel = () => {
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <div className="battle-uncontested-award" style={{ color: winnerClan?.color }}>
               <ClanShield clanId={winner.clanId} size={28} />
-              <span style={{ color: winnerClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+              <span>
                 {t('battle.winsProvinceToken', { name: winner.name })}
               </span>
             </div>
@@ -1130,18 +1153,19 @@ export const BattlePanel = () => {
         <div className="battle-popup-overlay">
           <div className="battle-popup-card">
             <h3 className="battle-popup-title">{t('battle.battleNumber', { number: battleNumber })}</h3>
-            <p className="battle-popup-message" style={{ fontSize: '1.1em', marginBottom: '0.5rem' }}>
+            <p className="battle-uncontested-province" style={{ color: PROVINCE_COLORS[battle.provinceId] || '#fff' }}>
               {province?.name || battle.provinceId}
             </p>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <div className="battle-uncontested-participant">
               <ClanShield clanId={winner.clanId} size={36} />
-              <span style={{ color: winnerClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
+              <span style={{ color: winnerClan?.color }}>
                 {t('battle.uncontestedNoOpposition', { name: winner.name })}
               </span>
             </div>
-            <p style={{ color: winnerClan?.color, margin: '0.25rem 0' }}>
-              {t('battle.winsProvinceToken', { name: winner.name })}
-            </p>
+            <div className="battle-uncontested-award" style={{ color: winnerClan?.color }}>
+              <ClanShield clanId={winner.clanId} size={28} />
+              <span>{t('battle.winsProvinceToken', { name: winner.name })}</span>
+            </div>
             {gameState.mode === 'online' && localPlayerId && (gameState.battleResultReadyPlayers || []).includes(localPlayerId) ? (
               <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
                 Listo {(gameState.battleResultReadyPlayers || []).length}/{gameState.players.length}
@@ -1253,7 +1277,13 @@ export const BattlePanel = () => {
     const combatants: BattleCombatant[] = battle.participants.map(pid => {
       const p = gameState.players.find(x => x.id === pid)!;
       const force = province ? calculateForce(province, pid, gameState) : 0;
-      return { playerId: pid, playerName: p.name, clanId: p.clanId, force };
+      return {
+        playerId: pid,
+        playerName: p.name,
+        clanId: p.clanId,
+        force,
+        ronin: p.clanId === 'koi' ? p.coins : p.ronin,
+      };
     });
 
     const handleOverlayConfirm = (bidValues: Record<string, number>) => {
@@ -1272,6 +1302,8 @@ export const BattlePanel = () => {
         provinceName={province?.name || battle.provinceId}
         provinceColor={PROVINCE_COLORS[battle.provinceId]}
         battleNumber={battleNumber}
+        isLastBattle={battleNumber === allBattles.length}
+        currentPlayerId={currentParticipant}
         onConfirm={handleOverlayConfirm}
         combatants={combatants}
         playerBattleIndex={playerBattleIndex}
@@ -1350,10 +1382,18 @@ export const BattlePanel = () => {
           combatants={battle.participants.map(pid => {
             const p = gameState.players.find(x => x.id === pid)!;
             const force = province ? calculateForce(province, pid, gameState) : 0;
-            return { playerId: pid, playerName: p.name, clanId: p.clanId, force };
+            return {
+              playerId: pid,
+              playerName: p.name,
+              clanId: p.clanId,
+              force,
+              ronin: p.clanId === 'koi' ? p.coins : p.ronin,
+            };
           })}
           playerBattleIndex={(() => { const pb = allBattles.filter(b => b.participants.includes(apid!)); return pb.findIndex(b => b.provinceId === battle.provinceId) + 1; })()}
           playerTotalBattles={allBattles.filter(b => b.participants.includes(apid!)).length}
+          isLastBattle={battleNumber === allBattles.length}
+          currentPlayerId={apid || undefined}
           onPeekMap={() => setBiddingMapPeek(true)}
         />,
         document.body
