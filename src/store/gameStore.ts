@@ -259,6 +259,8 @@ interface GameStore {
   moveFrom: string | null;
   selectedFigures: string[];
   ws: WebSocket | null;
+  serverError: string | null;
+  serverErrorVersion: number;
   screen: 'menu' | 'lobby' | 'game' | 'games-lobby' | 'replay' | 'auth';
   authInitialMode: 'login' | 'register';
   setAuthInitialMode: (mode: 'login' | 'register') => void;
@@ -315,7 +317,7 @@ interface GameStore {
   doLotoChooseActualMandate: (mandate: MandateType) => void;
 
   // Buy Season Card (Train mandate)
-  doBuySeasonCard: (cardId: string) => void;
+  doBuySeasonCard: (cardId: string) => boolean;
 
   // Skip Train card purchase
   doSkipTrainPurchase: () => void;
@@ -563,6 +565,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   moveFrom: null,
   selectedFigures: [],
   ws: null,
+  serverError: null,
+  serverErrorVersion: 0,
   screen: 'menu',
   authInitialMode: 'login',
   menuMode: null,
@@ -1362,15 +1366,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // --- Buy Season Card (Train mandate) ---
   doBuySeasonCard: (cardId) => {
     const { gameState, localPlayerId, ws } = get();
-    if (!gameState || !localPlayerId) return;
+    if (!gameState || !localPlayerId) return false;
     const cp = getCurrentPlayer(gameState);
     const apid = gameState.mode === 'hotseat' ? cp?.id : localPlayerId;
-    if (!apid) return;
-    if (ws && gameState.mode === 'online') {
+    if (!apid) return false;
+    if (gameState.mode === 'online') {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+      // Validate against the same rules before locking the purchase UI. The
+      // authoritative mutation still happens exclusively on the server.
+      const nsOnline = buySeasonCard(gameState, apid, cardId);
+      if (nsOnline === gameState) return false;
       // Send BUY_CARD to server so the purchase is recorded
       get().sendAction({ type: 'BUY_CARD', playerId: apid, payload: { cardId } });
       // Apply buySeasonCard locally to check if it's a monster
-      const nsOnline = buySeasonCard(gameState, apid, cardId);
       const boughtCardOnline = nsOnline.players.find(p => p.id === apid)?.seasonCards.find(c => c.id === cardId);
       if (boughtCardOnline && boughtCardOnline.cardType === 'monster') {
         // Monster card: run the placement UI locally (server will wait for MONSTER_PLACED)
@@ -1407,7 +1415,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
                 monsterPlacementMode: false,
                 komainuChoiceVisible: false,
               });
-              return;
+              return true;
             }
           }
           // Show popup asking where to place the monster
@@ -1420,12 +1428,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
             komainuChoiceVisible: false,
           });
         }
-        return;
+        return true;
       }
       // Non-monster card in online mode: server handles advancement, just return
-      return;
+      return true;
     }
     let ns = buySeasonCard(gameState, apid, cardId);
+    if (ns === gameState) return false;
 
     // Check if the bought card is a monster - if so, enter monster placement flow
     const boughtCard = ns.players.find(p => p.id === apid)?.seasonCards.find(c => c.id === cardId);
@@ -1464,7 +1473,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
               monsterPlacementMode: false,
               komainuChoiceVisible: false,
             });
-            return;
+            return true;
           }
         }
         // Show popup asking where to place the monster
@@ -1477,17 +1486,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
           komainuChoiceVisible: false,
         });
       }
-      return;
+      return true;
     }
 
     if ((ns.pendingRuleNotices?.length || 0) > (gameState.pendingRuleNotices?.length || 0)) {
       set({ gameState: ns, showTrainModal: false });
-      return;
+      return true;
     }
 
     if (ns.pendingBenevolence) {
       set({ gameState: ns, showTrainModal: false });
-      return;
+      return true;
     }
 
     // Non-monster card: advance normally
@@ -1504,6 +1513,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else {
       set({ gameState: ns });
     }
+    return true;
   },
 
   // --- Skip Train Purchase ---
@@ -4705,6 +4715,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
           break;
         case 'ERROR':
           console.error('[WS] Server error:', d.message);
+          set({
+            serverError: typeof d.message === 'string' ? d.message : 'La accion fue rechazada por el servidor',
+            serverErrorVersion: get().serverErrorVersion + 1,
+          });
           break;
       }
     };

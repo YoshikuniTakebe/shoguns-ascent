@@ -2182,15 +2182,24 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           const { cardId } = data.payload || {};
-          if (!cardId) return;
+          if (!cardId) {
+            safeSend(ws, { type: 'ERROR', message: 'La carta seleccionada no es valida' });
+            return;
+          }
           // Validate that the player is the current train resolution player
           if (l.gameState.trainMandateActive) {
             const expectedPlayer = l.gameState.trainResolutionOrder[l.gameState.trainResolutionIndex];
-            if (data.playerId !== expectedPlayer) return;
+            if (playerId !== expectedPlayer) {
+              safeSend(ws, { type: 'ERROR', message: 'Ya no es tu turno para comprar una carta' });
+              return;
+            }
           }
-          if (l.gameState.pendingMonsterPlacementCardId) return;
+          if (l.gameState.pendingMonsterPlacementCardId) {
+            safeSend(ws, { type: 'ERROR', message: 'Hay una colocacion de monstruo pendiente' });
+            return;
+          }
           const purchasedCard = l.gameState.seasonCardsDeck.find((card) => card.id === cardId);
-          let s = buySeasonCard(l.gameState, data.playerId, cardId);
+          let s = buySeasonCard(l.gameState, playerId, cardId);
           if (s === l.gameState || !purchasedCard) {
             safeSend(ws, { type: 'ERROR', message: 'Card purchase is no longer valid' });
             return;
@@ -2204,7 +2213,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             l.gameState = {
               ...s,
               pendingMonsterPlacementCardId: boughtCard.id,
-              pendingMonsterPlacementPlayerId: data.playerId,
+              pendingMonsterPlacementPlayerId: playerId,
             };
             broadcastState(l);
           } else {

@@ -945,3 +945,16 @@ server restart — no longer loses the game.
   but acquiring Jurojin itself no longer grants its 3-Coin reward or opens its acknowledgement.
 - Only acquiring another Virtue triggers Jurojin, matching the card text. Focused Train and Ryujin
   checks confirm that self-purchase does nothing while a subsequent Virtue grants exactly 3 Coins.
+
+## Changelog - 2026-07-16 (online Train purchase recovery)
+
+- Fixed an online Train failure where confirming a purchase could permanently lock the Season-card
+  market if the WebSocket was no longer open or the server rejected the action without replying.
+- Online purchases are now locally validated before dispatch but remain server-authoritative. A
+  closed connection leaves the market interactive and shows a retry message instead of mutating the
+  online game locally.
+- The server now reports invalid card, wrong-player and pending-Monster purchase rejections. The
+  market also has a six-second recovery fallback, while successful purchases unlock immediately as
+  soon as the bought card disappears from the shared deck (including Benevolence follow-up flows).
+- The saved affected game still had Benevolence in the deck and Sol as the active Train buyer, so no
+  card, Coin or turn data was lost by the failed attempt. The production build passes.

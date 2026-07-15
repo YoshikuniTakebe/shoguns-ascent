@@ -45,7 +45,7 @@ interface SeasonCardsModalProps {
 }
 
 export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
-  const { gameState, doBuySeasonCard, doSkipTrainPurchase, doRyujinBuyCard, doRyujinSkip, localPlayerId } = useGameStore();
+  const { gameState, doBuySeasonCard, doSkipTrainPurchase, doRyujinBuyCard, doRyujinSkip, localPlayerId, serverError, serverErrorVersion } = useGameStore();
   const t = useT();
   const [confirmCard, setConfirmCard] = useState<SeasonCard | null>(null);
   const [zoomedCard, setZoomedCard] = useState<SeasonCard | null>(null);
@@ -53,6 +53,9 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   const [lightMode, setLightMode] = useState(false);
   const lastTrainIndexRef = useRef<number>(-1);
   const [purchasePending, setPurchasePending] = useState(false);
+  const [pendingCardId, setPendingCardId] = useState<string | null>(null);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const purchaseErrorVersionRef = useRef(serverErrorVersion);
   const prevTrainMandateActiveRef = useRef<boolean>(false);
 
   // Reset playerConfirmed and purchasePending when the train resolution index changes (new player's turn)
@@ -62,6 +65,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
       lastTrainIndexRef.current = trainResIdx;
       setPlayerConfirmed(false);
       setPurchasePending(false);
+      setPendingCardId(null);
+      setPurchaseError(null);
       setConfirmCard(null);
     }
   }, [trainResIdx]);
@@ -74,11 +79,44 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
       // New train mandate just started - reset all interaction state
       setPlayerConfirmed(false);
       setPurchasePending(false);
+      setPendingCardId(null);
+      setPurchaseError(null);
       setConfirmCard(null);
       lastTrainIndexRef.current = -1;
     }
     prevTrainMandateActiveRef.current = trainMandateActive;
   }, [trainMandateActive]);
+
+  useEffect(() => {
+    if (!purchasePending || !pendingCardId || !gameState) return;
+    if (!gameState.seasonCardsDeck.some(card => card.id === pendingCardId)) {
+      setPurchasePending(false);
+      setPendingCardId(null);
+      setPurchaseError(null);
+    }
+  }, [gameState, pendingCardId, purchasePending]);
+
+  useEffect(() => {
+    if (!purchasePending || serverErrorVersion <= purchaseErrorVersionRef.current) return;
+    setPurchasePending(false);
+    setPendingCardId(null);
+    setPlayerConfirmed(true);
+    setPurchaseError(serverError || 'La compra fue rechazada. Intentalo de nuevo.');
+  }, [purchasePending, serverError, serverErrorVersion]);
+
+  // A lost connection or a rejected server action must never leave the market
+  // permanently locked. A successful purchase changes the resolution index or
+  // opens its follow-up flow before this fallback expires.
+  useEffect(() => {
+    if (!purchasePending) return;
+    const timeout = window.setTimeout(() => {
+      setPurchasePending(false);
+      setPendingCardId(null);
+      setPlayerConfirmed(true);
+      setPurchaseError('No se pudo confirmar la compra. Comprueba la conexion e intentalo de nuevo.');
+    }, 6000);
+    return () => window.clearTimeout(timeout);
+  }, [purchasePending]);
 
   if (!open || !gameState) return null;
 
@@ -167,14 +205,25 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
 
   const handleConfirmBuy = () => {
     if (confirmCard) {
+      setPurchaseError(null);
+      purchaseErrorVersionRef.current = serverErrorVersion;
+      let dispatched = true;
       if (isRyujinMode) {
         doRyujinBuyCard(confirmCard.id);
       } else {
-        doBuySeasonCard(confirmCard.id);
+        dispatched = doBuySeasonCard(confirmCard.id);
       }
       setConfirmCard(null);
+      if (!dispatched) {
+        setPlayerConfirmed(true);
+        setPurchasePending(false);
+        setPendingCardId(null);
+        setPurchaseError('No se pudo enviar la compra. Comprueba la conexion e intentalo de nuevo.');
+        return;
+      }
       // Mark purchase as pending to prevent further interaction until server responds
       // playerConfirmed and purchasePending are reset when trainResolutionIndex changes
+      setPendingCardId(confirmCard.id);
       setPurchasePending(true);
     }
   };
@@ -354,6 +403,12 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
             );
           })}
         </div>
+
+        {purchaseError && (
+          <div role="alert" style={{ color: '#ff6b7a', textAlign: 'center', marginTop: '12px', fontWeight: 700 }}>
+            {purchaseError}
+          </div>
+        )}
 
         {/* Skip purchase button - visible in train mode when player has confirmed and it's their turn, or in ryujin mode */}
         {((isTrainMode && playerConfirmed && isLocalPlayerTrainTurn && !purchasePending) || isRyujinMode) && (
