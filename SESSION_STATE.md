@@ -998,3 +998,18 @@ server restart — no longer loses the game.
   The affected saved snapshot was tested directly: before confirmation Light remains pending and Kami
   inactive; after confirmation one Shinto is placed, Light clears and Kami becomes eligible to open.
 - Production build and lint pass; lint retains only the two pre-existing warnings.
+
+## Changelog - 2026-07-16 (refresh Kami shrines after Path of the Light)
+
+- Fixed Kami using the shrine queue computed before Path of the Light. An initially empty shrine
+  could be marked as skipped and remain absent even after the upgrade placed a Shinto there.
+- After the final Recruit-end placement resolves, the complete Kami queue is rebuilt from the final
+  shrine board in left-to-right order. Forces are recalculated, the first winner is refreshed and
+  any now-invalid `sin figuras, saltado` entry from the current Kami turn is removed.
+- `KAMI_PHASE_READY` performs the same refresh defensively, repairing intermediate saved snapshots
+  that already contain the Shinto but still carry the old queue.
+- Snapshot 41/42 regression checks now produce Fujin as shrine 1, Yoshikuni/Zorro as its winner with
+  Force 1, followed by Ryujin, Hachiman and Susanoo. Production build and lint pass.
+- The already completed Kami turn in the active test game is not retroactively replayed because its
+  later rewards have already been applied; doing so would resolve Fujin out of order or duplicate
+  Ryujin/Hachiman/Susanoo effects.

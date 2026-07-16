@@ -223,7 +223,7 @@ export function resolveSpringPlacementDecision(
   if (pending.type === 'kannushi' && !(nextState.pendingSpringPlacementQueue || []).some(entry => entry.type === 'kannushi' && entry.ownerId === playerId)) {
     nextState.marshalKannushiUsedBy = [...(nextState.marshalKannushiUsedBy || []), playerId];
   }
-  return advanceSpringPlacementQueue(nextState);
+  return refreshPendingKamiResolution(advanceSpringPlacementQueue(nextState));
 }
 
 export function resolveBenevolenceDecision(state: GameState, playerId: string, recipientId?: string): GameState {
@@ -2507,6 +2507,66 @@ function computeTempleWinner(
   });
 
   return { winnerId, forces };
+}
+
+/**
+ * Rebuild a prepared Kami turn after optional end-of-Recruit placements finish.
+ * Path of the Light may populate a shrine that was empty when advancePlayer first
+ * prepared the Kami queue, so the final board must be authoritative.
+ */
+export function refreshPendingKamiResolution(state: GameState): GameState {
+  if (!state.kamiPhasePopupPending || state.pendingSpringPlacement) return state;
+
+  const sortedTemples = [...state.temples].sort((a, b) => a.position - b.position);
+  const resolutionTemples: KamiResolutionTemple[] = [];
+  const occupiedSkipEntries = new Set<string>();
+
+  for (const temple of sortedTemples) {
+    const kamiData = KAMI_DATA.find(kami => kami.type === temple.kamiType);
+    const { forces } = computeTempleWinner(temple.figures, state.honorTrack, state.players);
+    if (forces.length === 0) continue;
+
+    occupiedSkipEntries.add(`Santuario ${temple.position} (${kamiData?.name || temple.kamiType}) - sin figuras, saltado`);
+    resolutionTemples.push({
+      templeIndex: state.temples.findIndex(candidate => candidate.id === temple.id),
+      kamiType: temple.kamiType,
+      winnerId: null,
+      reward: kamiData?.effect || '',
+      forces,
+    });
+  }
+
+  if (resolutionTemples.length === 0) return state;
+
+  const firstTemple = resolutionTemples[0];
+  const firstBoardTemple = state.temples[firstTemple.templeIndex];
+  const { winnerId: firstWinnerId } = computeTempleWinner(
+    firstBoardTemple.figures,
+    state.honorTrack,
+    state.players,
+  );
+  resolutionTemples[0] = { ...firstTemple, winnerId: firstWinnerId };
+
+  if (firstTemple.kamiType === 'susanoo' && firstWinnerId) {
+    const fortressCount = Object.values(state.provinces).reduce((total, province) =>
+      total + province.figures.filter(figure =>
+        figure.owner === firstWinnerId
+        && (figure.type === 'fortress' || (figure.type === 'monster' && figure.monsterCardId === 'sp-fukurokuju'))
+      ).length, 0);
+    resolutionTemples[0] = { ...resolutionTemples[0], susanooVPGained: fortressCount };
+  }
+
+  const currentKamiLogStart = state.log.lastIndexOf('--- Turno Kami ---');
+  return {
+    ...state,
+    kamiResolutionTemples: resolutionTemples,
+    kamiResolutionIndex: 0,
+    kamiResolutionStep: 'showing',
+    kamiResolutionCurrentPlayerId: firstWinnerId,
+    log: state.log.filter((entry, index) =>
+      index <= currentKamiLogStart || !occupiedSkipEntries.has(entry)
+    ),
+  };
 }
 
 export function resolveKamiTurn(state: GameState): GameState {

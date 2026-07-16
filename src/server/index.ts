@@ -53,6 +53,7 @@ import {
   resolveSnakeDecision,
   resolveBenevolenceDecision,
   resolveSpringPlacementDecision,
+  refreshPendingKamiResolution,
   resolveVassalDecision,
   applyRighteousnessVP,
   applyDignityMonsterSummon,
@@ -1859,6 +1860,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           if (!playerId) return;
           if (l.gameState.pendingSpringPlacement) return;
+          l.gameState = refreshPendingKamiResolution(l.gameState);
           if (!l.gameState.kamiReadyPlayers.includes(playerId)) {
             l.gameState = { ...l.gameState, kamiReadyPlayers: [...l.gameState.kamiReadyPlayers, playerId] };
           }
