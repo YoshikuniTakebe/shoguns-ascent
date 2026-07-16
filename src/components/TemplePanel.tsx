@@ -99,7 +99,7 @@ const KAMI_TILE_IMAGES: Record<KamiType, string> = {
 };
 
 export const TemplePanel = () => {
-  const { gameState, komainuPrayMode, komainuPrayCardId, komainuPrayPlayerId, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto, jinmenjuSummonActive, doJinmenjuPlaceTemple } = useGameStore();
+  const { gameState, localPlayerId, komainuPrayMode, komainuPrayCardId, komainuPrayPlayerId, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto, jinmenjuSummonActive, doJinmenjuPlaceTemple, springLightSelectionMode, springLightSelectedTempleId, selectSpringLightTemple } = useGameStore();
   const [selectedKami, setSelectedKami] = useState<KamiType | null>(null);
   const [hoteiReplacementTarget, setHoteiReplacementTarget] = useState<HoteiReplacementTarget | null>(null);
   const t = useT();
@@ -176,23 +176,43 @@ export const TemplePanel = () => {
           const kami = KAMI_DATA.find(k => k.type === temple.kamiType);
           const palette = KAMI_PALETTES[temple.kamiType];
           const isRecruitShintoTarget = recruitMode && recruitFigureType === 'shinto';
+          const pendingSpringLight = gameState.pendingSpringPlacement?.type === 'light'
+            ? gameState.pendingSpringPlacement
+            : null;
+          const isSpringLightOwner = !!pendingSpringLight
+            && springLightSelectionMode
+            && (gameState.mode === 'hotseat' || pendingSpringLight.ownerId === localPlayerId);
+          const isSpringLightTarget = isSpringLightOwner && temple.figures.length < gameState.players.length;
+          const isSpringLightSelected = isSpringLightOwner && springLightSelectedTempleId === temple.id;
+          const springLightOwner = pendingSpringLight
+            ? gameState.players.find(player => player.id === pendingSpringLight.ownerId)
+            : null;
+          const springLightClan = springLightOwner
+            ? CLANS.find(clan => clan.id === springLightOwner.clanId)
+            : null;
 
           return (
             <div
               key={temple.id}
-              className={`kami-slot filled${komainuPrayMode ? ' komainu-target' : ''}${isRecruitShintoTarget ? ' recruit-target' : ''}`}
+              className={`kami-slot filled${komainuPrayMode ? ' komainu-target' : ''}${isRecruitShintoTarget ? ' recruit-target' : ''}${isSpringLightTarget ? ' spring-light-target' : ''}${isSpringLightSelected ? ' spring-light-selected' : ''}`}
               style={{
                 borderColor: palette.primary,
                 backgroundImage: `url(${KAMI_TILE_IMAGES[temple.kamiType]})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                boxShadow: komainuPrayMode || isRecruitShintoTarget
+                boxShadow: isSpringLightSelected
+                  ? `0 0 10px ${springLightClan?.color || '#f6cd00'}, 0 0 24px ${springLightClan?.color || '#f6cd00'}, inset 0 0 18px rgba(255,255,255,0.2)`
+                  : komainuPrayMode || isRecruitShintoTarget || isSpringLightTarget
                   ? `rgba(246, 205, 0, 1.3) 0px 0px 8px, rgba(247, 214, 18, 1.15) 0px 0px 8px`
                   : `0 0 12px ${palette.glow}, inset 0 0 20px ${palette.glow}`,
-                cursor: komainuPrayMode || isRecruitShintoTarget ? 'pointer' : undefined,
+                cursor: komainuPrayMode || isRecruitShintoTarget || isSpringLightTarget ? 'pointer' : undefined,
               }}
               onClick={() => {
-                if (komainuPrayMode) {
+                if (isSpringLightTarget) {
+                  selectSpringLightTemple(temple.id);
+                } else if (isSpringLightOwner) {
+                  return;
+                } else if (komainuPrayMode) {
                   const isHotei = komainuPrayCardId === 'su-hotei';
                   if (isHotei) {
                     // Check if there are other players' shinto in this temple
@@ -232,7 +252,7 @@ export const TemplePanel = () => {
               <div className="kami-slot-effect">
                 {kami ? t(KAMI_SUMMARY_KEYS[kami.type]) : ''}
               </div>
-              {temple.figures.length > 0 && (
+              {(temple.figures.length > 0 || isSpringLightSelected) && (
                 <div style={{
                   position: 'absolute',
                   bottom: '54px',
@@ -278,6 +298,11 @@ export const TemplePanel = () => {
                       </span>
                     );
                   })}
+                  {isSpringLightSelected && (
+                    <span className="kami-figure-dot spring-light-provisional" title="Colocacion pendiente">
+                      <ShintoIcon size={24} color={springLightClan?.color || '#f6cd00'} />
+                    </span>
+                  )}
                 </div>
               )}
             </div>

@@ -658,6 +658,135 @@
   width: 100%;
 }
 
+.spring-light-popup-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  margin: -0.45rem auto 0.65rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: rgba(5, 10, 25, 0.52);
+  box-shadow: 0 0 18px color-mix(in srgb, currentColor 38%, transparent);
+}
+
+.spring-placement-title {
+  margin-bottom: 0.8rem;
+  font-size: 1.45rem;
+}
+
+.spring-placement-description {
+  max-width: 330px;
+  margin: 1rem auto 1.25rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.spring-placement-actions {
+  gap: 0.75rem;
+}
+
+.spring-placement-actions button {
+  min-width: 145px;
+}
+
+.spring-light-toolbar {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  z-index: 1250;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: min(430px, calc(100vw - 24px));
+  padding: 0.7rem 0.85rem;
+  transform: translateX(-50%);
+  border: 2px solid var(--accent-gold);
+  border-radius: 8px;
+  background: rgba(12, 20, 43, 0.97);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.72);
+}
+
+.spring-light-toolbar-status {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.spring-light-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.spring-light-toolbar .btn-primary {
+  min-width: 112px;
+  padding: 0.58rem 1rem;
+}
+
+.spring-light-undo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--accent-gold);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent-gold);
+  cursor: pointer;
+}
+
+.spring-light-undo:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.kami-slot.spring-light-target {
+  animation: spring-light-pulse 1.15s ease-in-out infinite;
+}
+
+.kami-slot.spring-light-selected {
+  animation: none;
+  transform: translateY(-3px);
+}
+
+.spring-light-provisional {
+  animation: spring-light-figure-pulse 1s ease-in-out infinite;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+@keyframes spring-light-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.28); }
+}
+
+@keyframes spring-light-figure-pulse {
+  0%, 100% { opacity: 0.72; transform: scale(0.94); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@media (max-width: 520px) {
+  .spring-placement-actions {
+    flex-direction: column;
+  }
+
+  .spring-placement-actions button {
+    width: 100%;
+  }
+
+  .spring-light-toolbar {
+    bottom: 10px;
+    gap: 0.6rem;
+  }
+}
+
 @media (max-width: 620px) {
   .battle-card-decision-group {
     grid-template-columns: 1fr;

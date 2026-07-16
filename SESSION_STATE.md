@@ -971,3 +971,16 @@ server restart — no longer loses the game.
   remains the current Sol buyer and can then purchase Benevolence normally.
 - The current snapshot was verified to contain no Jurojin figure on the map or in a shrine, with
   pending order index 2 and current Train index 3. The production build passes.
+
+## Changelog - 2026-07-16 (Path of the Light board-selection UI)
+
+- Path of the Light no longer uses a shrine `<select>`. Its owner receives a balanced informational
+  popup with the clan seal/name, Shinto icon, rule summary, and `Omitir` / `Elegir santuario` actions.
+- Choosing a shrine closes the popup and highlights every shrine with available capacity. Clicking
+  one renders a provisional clan-colored Shinto directly on that shrine without advancing the
+  synchronized game state.
+- A compact bottom toolbar shows the selected Kami shrine, an icon-only Undo action and Confirm.
+  Undo removes the provisional Shinto and allows another shrine; Confirm performs the authoritative
+  placement. Other online players retain the existing synchronized waiting popup throughout.
+- The server resolves the placement using the authenticated connection identity. Production build
+  and lint pass; lint retains only the two pre-existing FriendsModal and PoliticsTrack warnings.

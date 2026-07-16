@@ -1427,7 +1427,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState?.pendingSpringPlacement) return;
           const nextState = resolveSpringPlacementDecision(
             l.gameState,
-            data.playerId,
+            playerId,
             !!data.payload?.useEffect,
             data.payload?.provinceId,
             data.payload?.templeId,

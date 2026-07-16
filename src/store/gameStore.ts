@@ -414,6 +414,11 @@ interface GameStore {
   doResolveSnakeDecision: (useEffect: boolean) => void;
   doResolveBenevolence: (recipientId?: string) => void;
   doResolveSpringPlacement: (useEffect: boolean, provinceId?: string, templeId?: string, figureId?: string) => void;
+  springLightSelectionMode: boolean;
+  springLightSelectedTempleId: string | null;
+  beginSpringLightSelection: () => void;
+  selectSpringLightTemple: (templeId: string) => void;
+  undoSpringLightSelection: () => void;
   doResolveVassal: (accept: boolean) => void;
   doResolveSerpentCharge: (chargeCoin: boolean) => void;
   doSubmitWarTacticBids: (provinceId: string, tacticBids: { [tacticId: string]: number }) => void;
@@ -577,6 +582,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   battleCurrentBiddingIndex: 0,
   battleResolutionData: null,
   selectedHostageTarget: null,
+  springLightSelectionMode: false,
+  springLightSelectedTempleId: null,
   showTrainModal: false,
   buildFortressMode: false,
   buildFukurokujuMode: false,
@@ -3475,6 +3482,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!gameState || !pending) return;
     const playerId = gameState.mode === 'hotseat' ? pending.ownerId : localPlayerId;
     if (!playerId) return;
+    set({ springLightSelectionMode: false, springLightSelectedTempleId: null });
     if (ws && gameState.mode === 'online') {
       get().sendAction({ type: 'RESOLVE_SPRING_PLACEMENT', playerId, payload: { useEffect, provinceId, templeId, figureId } });
       return;
@@ -3482,6 +3490,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const nextState = resolveSpringPlacementDecision(gameState, playerId, useEffect, provinceId, templeId, figureId);
     if (nextState !== gameState) set({ gameState: nextState });
   },
+  beginSpringLightSelection: () => {
+    const { gameState, localPlayerId } = get();
+    const pending = gameState?.pendingSpringPlacement;
+    if (!gameState || pending?.type !== 'light') return;
+    if (gameState.mode === 'online' && pending.ownerId !== localPlayerId) return;
+    set({ springLightSelectionMode: true, springLightSelectedTempleId: null });
+  },
+  selectSpringLightTemple: (templeId) => {
+    const { gameState, localPlayerId, springLightSelectionMode } = get();
+    const pending = gameState?.pendingSpringPlacement;
+    if (!gameState || !springLightSelectionMode || pending?.type !== 'light') return;
+    if (gameState.mode === 'online' && pending.ownerId !== localPlayerId) return;
+    const temple = gameState.temples.find(candidate => candidate.id === templeId);
+    if (!temple || temple.figures.length >= gameState.players.length) return;
+    set({ springLightSelectedTempleId: templeId });
+  },
+  undoSpringLightSelection: () => set({ springLightSelectedTempleId: null }),
   doResolveVassal: (accept) => {
     const { gameState, localPlayerId, ws } = get();
     const pending = gameState?.pendingVassalDecision;
