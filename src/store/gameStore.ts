@@ -218,7 +218,7 @@ function detectWarTransitionWithPopup(state: GameState): Record<string, unknown>
  * After advancePlayer, detect if kamiPhasePopupPending is set and return popup state.
  */
 function detectKamiPopupPending(ns: GameState): Record<string, unknown> {
-  if (ns.kamiPhasePopupPending) {
+  if (ns.kamiPhasePopupPending && !ns.pendingSpringPlacement) {
     return { kamiPhasePopupVisible: true, kamiPendingTemples: ns.kamiResolutionTemples };
   }
   return {};
@@ -3488,14 +3488,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
     const nextState = resolveSpringPlacementDecision(gameState, playerId, useEffect, provinceId, templeId, figureId);
-    if (nextState !== gameState) set({ gameState: nextState });
+    if (nextState !== gameState) set({ gameState: nextState, ...detectKamiPopupPending(nextState) });
   },
   beginSpringLightSelection: () => {
     const { gameState, localPlayerId } = get();
     const pending = gameState?.pendingSpringPlacement;
     if (!gameState || pending?.type !== 'light') return;
     if (gameState.mode === 'online' && pending.ownerId !== localPlayerId) return;
-    set({ springLightSelectionMode: true, springLightSelectedTempleId: null });
+    set({
+      springLightSelectionMode: true,
+      springLightSelectedTempleId: null,
+      kamiPhasePopupVisible: false,
+      kamiPendingTemples: null,
+    });
   },
   selectSpringLightTemple: (templeId) => {
     const { gameState, localPlayerId, springLightSelectionMode } = get();
@@ -4126,7 +4131,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // --- Kami Phase Popup ---
   dismissKamiPhasePopup: () => {
     const { gameState, kamiPendingTemples } = get();
-    if (!gameState || !kamiPendingTemples) return;
+    if (!gameState || !kamiPendingTemples || gameState.pendingSpringPlacement) return;
     if (gameState.mode === 'online') {
       // Online: send ready signal and wait for all players
       get().sendAction({ type: 'KAMI_PHASE_READY', playerId: get().localPlayerId });
@@ -4486,7 +4491,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
           // Detect kami phase popup pending for online
           // Guard: only trigger if not already visible/dismissed locally (avoid re-trigger on subsequent broadcasts)
-          if (state.kamiPhasePopupPending && !state.kamiResolutionActive && !get().kamiPhasePopupVisible && !get().gameState?.kamiResolutionActive && !state.kamiSummaryVisible) {
+          if (state.pendingSpringPlacement && get().kamiPhasePopupVisible) {
+            uiResets.kamiPhasePopupVisible = false;
+            uiResets.kamiPendingTemples = null;
+          } else if (state.kamiPhasePopupPending && !state.pendingSpringPlacement && !state.kamiResolutionActive && !get().kamiPhasePopupVisible && !get().gameState?.kamiResolutionActive && !state.kamiSummaryVisible) {
             uiResets.kamiPhasePopupVisible = true;
             uiResets.kamiPendingTemples = state.kamiResolutionTemples;
           }

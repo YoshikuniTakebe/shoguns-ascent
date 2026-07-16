@@ -1858,6 +1858,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!playerId) return;
+          if (l.gameState.pendingSpringPlacement) return;
           if (!l.gameState.kamiReadyPlayers.includes(playerId)) {
             l.gameState = { ...l.gameState, kamiReadyPlayers: [...l.gameState.kamiReadyPlayers, playerId] };
           }

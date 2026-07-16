@@ -890,7 +890,7 @@ export const GameBoard = () => {
       <KamiSummaryPopup />
 
       {/* Kami Phase Start Popup */}
-      {kamiPhasePopupVisible && (
+      {kamiPhasePopupVisible && !gameState.pendingSpringPlacement && (
         <div className="harvest-popup-backdrop">
           <div className="harvest-popup" style={{ borderColor: '#9B59B6', maxWidth: '420px', minWidth: '320px', background: 'linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #1a0a2e 100%)', boxShadow: '0 0 20px rgba(155, 89, 182, 0.4), inset 0 0 30px rgba(155, 89, 182, 0.05)', borderWidth: '2px' }}>
             <h3 style={{ color: '#9B59B6', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>

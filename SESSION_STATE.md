@@ -984,3 +984,17 @@ server restart — no longer loses the game.
   placement. Other online players retain the existing synchronized waiting popup throughout.
 - The server resolves the placement using the authenticated connection identity. Production build
   and lint pass; lint retains only the two pre-existing FriendsModal and PoliticsTrack warnings.
+
+## Changelog - 2026-07-16 (pause Kami until Recruit-end placements finish)
+
+- Fixed the Kami phase-start popup appearing above Path of the Light while its shrine selection was
+  still pending. Kami may be precomputed at the end of Recruit, but its popup is now suppressed until
+  the complete `pendingSpringPlacement` queue has been resolved or skipped.
+- Entering Path of the Light shrine-selection mode also closes any stale Kami popup already visible.
+  Online state synchronization actively clears that overlap, and GameBoard has a final render guard.
+- The server rejects `KAMI_PHASE_READY` while a Recruit-end placement remains unresolved, preventing
+  clients from starting Kami early even if they send a stale ready action.
+- Hotseat resolution now invokes the same deferred Kami-popup detector after the final placement.
+  The affected saved snapshot was tested directly: before confirmation Light remains pending and Kami
+  inactive; after confirmation one Shinto is placed, Light clears and Kami becomes eligible to open.
+- Production build and lint pass; lint retains only the two pre-existing warnings.
