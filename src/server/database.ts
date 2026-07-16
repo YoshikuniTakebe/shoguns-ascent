@@ -52,7 +52,10 @@ export function initDatabase(): void {
       username TEXT UNIQUE,
       password_hash TEXT,
       created_at TEXT,
-      is_admin INTEGER DEFAULT 0
+      is_admin INTEGER DEFAULT 0,
+      language TEXT DEFAULT 'es',
+      cards_light_mode INTEGER DEFAULT 0,
+      show_figure_measurements INTEGER DEFAULT 0
     );
 
     CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
@@ -98,6 +101,15 @@ export function initDatabase(): void {
   const columns = db.pragma('table_info(users)') as { name: string }[];
   if (!columns.some((col) => col.name === 'is_admin')) {
     db.exec(`ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0`);
+  }
+  if (!columns.some((col) => col.name === 'language')) {
+    db.exec(`ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'es'`);
+  }
+  if (!columns.some((col) => col.name === 'cards_light_mode')) {
+    db.exec(`ALTER TABLE users ADD COLUMN cards_light_mode INTEGER DEFAULT 0`);
+  }
+  if (!columns.some((col) => col.name === 'show_figure_measurements')) {
+    db.exec(`ALTER TABLE users ADD COLUMN show_figure_measurements INTEGER DEFAULT 0`);
   }
 
   // Migration: add password_hash column to games table if it doesn't exist
@@ -267,6 +279,9 @@ export interface DbUser {
   password_hash: string;
   created_at: string;
   is_admin: number;
+  language: 'en' | 'es';
+  cards_light_mode: number;
+  show_figure_measurements: number;
 }
 
 export function createUser(email: string, username: string, passwordHash: string): DbUser {
@@ -283,7 +298,17 @@ export function createUser(email: string, username: string, passwordHash: string
     VALUES (?, ?, ?, ?, ?, ?)
   `);
   stmt.run(id, email, username, passwordHash, now, isAdmin);
-  return { id, email, username, password_hash: passwordHash, created_at: now, is_admin: isAdmin };
+  return {
+    id,
+    email,
+    username,
+    password_hash: passwordHash,
+    created_at: now,
+    is_admin: isAdmin,
+    language: 'es',
+    cards_light_mode: 0,
+    show_figure_measurements: 0,
+  };
 }
 
 export function getUserByUsername(username: string): DbUser | undefined {
@@ -299,6 +324,32 @@ export function getUserByEmail(email: string): DbUser | undefined {
 export function getUserById(id: string): DbUser | undefined {
   const stmt = db.prepare(`SELECT * FROM users WHERE id = ?`);
   return stmt.get(id) as DbUser | undefined;
+}
+
+export function updateUserPreferences(
+  id: string,
+  preferences: {
+    language?: 'en' | 'es';
+    cardsLightMode?: boolean;
+    showFigureMeasurements?: boolean;
+  }
+): DbUser | undefined {
+  const user = getUserById(id);
+  if (!user) return undefined;
+
+  const language = preferences.language ?? user.language ?? 'es';
+  const cardsLightMode = preferences.cardsLightMode ?? !!user.cards_light_mode;
+  const showFigureMeasurements = user.is_admin
+    ? (preferences.showFigureMeasurements ?? !!user.show_figure_measurements)
+    : false;
+
+  db.prepare(`
+    UPDATE users
+    SET language = ?, cards_light_mode = ?, show_figure_measurements = ?
+    WHERE id = ?
+  `).run(language, cardsLightMode ? 1 : 0, showFigureMeasurements ? 1 : 0, id);
+
+  return getUserById(id);
 }
 
 // --- Game Players functions ---

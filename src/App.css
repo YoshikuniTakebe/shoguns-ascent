@@ -542,6 +542,55 @@
 .config-modal-input{width:100%;box-sizing:border-box;padding:0.5rem 0.7rem;background:rgba(0,0,0,0.35);border:1px solid var(--border-gold);border-radius:6px;color:var(--accent-cream);font-size:0.9rem}
 .config-modal-hint{color:var(--text-secondary);font-size:0.72rem;margin:0.4rem 0 1rem 0;line-height:1.4}
 .config-modal-actions{display:flex;gap:0.6rem;justify-content:flex-end}
+.config-debug-section{margin:1rem 0;padding:0.9rem 0;border-top:1px solid rgba(200,169,81,0.25);border-bottom:1px solid rgba(200,169,81,0.25)}
+.config-debug-section h4{margin:0 0 0.75rem;color:var(--accent-cream);font-size:0.95rem}
+.config-checkbox-row{display:flex;align-items:center;gap:0.65rem;color:var(--text-primary);font-size:0.85rem;cursor:pointer}
+.config-checkbox-row input{width:17px;height:17px;accent-color:var(--accent-gold)}
+.config-diorama-btn{width:100%;margin-top:0.8rem}
+.admin-diorama-backdrop{position:fixed;inset:0;z-index:4200;background:rgba(0,0,0,0.86);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:2vh 2vw}
+.admin-diorama-modal{position:relative;width:96vw;height:94vh;max-width:1800px;background:#111827;border:2px solid var(--accent-gold);border-radius:8px;box-shadow:0 18px 60px rgba(0,0,0,0.8);display:flex;flex-direction:column;overflow:hidden}
+.admin-diorama-header{height:64px;flex:none;display:flex;align-items:baseline;gap:1rem;padding:0.9rem 4rem 0.8rem 1.25rem;border-bottom:1px solid rgba(200,169,81,0.35);background:#16213e}
+.admin-diorama-header h2{margin:0;color:var(--accent-gold);font-size:1.45rem}
+.admin-diorama-header span{color:var(--text-secondary);font-size:0.8rem}
+.admin-diorama-layout{display:grid;grid-template-columns:330px minmax(560px,1fr) 460px;min-height:0;flex:1}
+.admin-diorama-catalog,.admin-diorama-lines{min-height:0;overflow-y:auto;background:#11182d;padding:0.9rem;border-color:rgba(200,169,81,0.28)}
+.admin-diorama-catalog{border-right:1px solid rgba(200,169,81,0.28)}
+.admin-diorama-lines{border-left:1px solid rgba(200,169,81,0.28)}
+.admin-diorama-catalog h3{color:var(--accent-gold);font-size:0.9rem;margin:0 0 0.6rem}
+.admin-diorama-catalog h3:not(:first-child){margin-top:1rem}
+.admin-diorama-clan-list{display:flex;flex-direction:column;gap:0.5rem}
+.admin-diorama-clan-row{padding:0.45rem;background:#0c1224;border:1px solid rgba(255,255,255,0.08);border-radius:6px}
+.admin-diorama-clan-name{display:flex;align-items:center;gap:0.45rem;font-size:0.78rem;font-weight:700;margin-bottom:0.35rem}
+.admin-diorama-clan-figures{display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem}
+.admin-diorama-clan-figures button,.admin-diorama-monster-list button{min-width:0;border:1px solid rgba(200,169,81,0.28);background:#17213a;color:var(--text-primary);cursor:pointer;border-radius:4px;transition:border-color .15s,background .15s}
+.admin-diorama-clan-figures button:hover,.admin-diorama-monster-list button:hover{border-color:var(--accent-gold);background:#21304f}
+.admin-diorama-clan-figures button{height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:0.63rem}
+.admin-diorama-clan-figures img{width:36px;height:43px;object-fit:contain}
+.admin-diorama-monster-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.4rem}
+.admin-diorama-monster-list button{height:74px;display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:0.35rem;padding:0.25rem;text-align:left;font-size:0.67rem;line-height:1.15}
+.admin-diorama-monster-list img{width:48px;height:64px;object-fit:contain}
+.admin-diorama-stage{position:relative;min-width:0;overflow:hidden;background-size:cover;background-position:center}
+.admin-diorama-stage-shade{position:absolute;inset:0;background:rgba(0,0,0,0.18);pointer-events:none}
+.admin-diorama-stage-title{position:absolute;top:0.85rem;left:50%;transform:translateX(-50%);z-index:5;color:#fff;font-size:1.25rem;font-weight:800;text-shadow:0 2px 6px #000}
+.admin-diorama-figures{position:absolute;left:1rem;right:1rem;display:flex;align-items:flex-end;justify-content:space-evenly;gap:0.6rem;overflow:visible;transform-origin:center bottom}
+.admin-diorama-figures .region-diorama-figure{min-width:0}
+.admin-diorama-figures-back{bottom:42%;z-index:1;transform:scale(.6)}
+.admin-diorama-figures-mid{bottom:25%;z-index:2;transform:scale(.8)}
+.admin-diorama-figures-front{bottom:5%;z-index:3}
+.admin-diorama-line{padding:0.7rem;border:1px solid rgba(200,169,81,0.18);border-radius:6px;background:#0d1428;margin-bottom:0.8rem}
+.admin-diorama-line.active{border-color:var(--accent-gold);box-shadow:0 0 13px rgba(200,169,81,0.2)}
+.admin-diorama-line-switch{display:flex;align-items:center;gap:0.45rem;width:100%;background:none;border:0;color:var(--text-secondary);font-weight:700;font-size:0.85rem;cursor:pointer;text-align:left;margin-bottom:0.55rem}
+.admin-diorama-line.active .admin-diorama-line-switch{color:var(--accent-gold)}
+.admin-diorama-slots{display:grid;gap:0.3rem}
+.admin-diorama-slots-back{grid-template-columns:repeat(6,minmax(0,1fr))}
+.admin-diorama-slots-mid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.admin-diorama-slots-front{grid-template-columns:repeat(4,minmax(0,1fr))}
+.admin-diorama-slot{height:62px;padding:0.25rem;border:1px dashed rgba(200,169,81,0.28);border-radius:4px;background:rgba(0,0,0,0.18);color:#687089;font-size:0.61rem;line-height:1.08;overflow:hidden;overflow-wrap:anywhere}
+.admin-diorama-line.active .admin-diorama-slot{border-color:rgba(200,169,81,0.75);box-shadow:inset 0 0 8px rgba(200,169,81,0.09)}
+.admin-diorama-slot.filled{border-style:solid;color:var(--accent-cream);background:#182442;cursor:pointer}
+.admin-diorama-slot.filled:hover{border-color:var(--accent-red);color:#fff}
+.admin-diorama-clear{width:100%}
+@media(max-width:1350px){.admin-diorama-layout{grid-template-columns:280px minmax(440px,1fr) 390px}.admin-diorama-monster-list{grid-template-columns:1fr}.admin-diorama-slot{font-size:0.56rem}}
 
 /* Friends buttons + modals */
 .friends-btn{display:inline-flex;align-items:center;gap:0.3rem;background:rgba(200,169,81,0.12);border:1px solid var(--border-gold);border-radius:6px;color:var(--accent-cream);padding:0.35rem 0.6rem;cursor:pointer;font-size:0.8rem}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useGameStore } from '../store/gameStore';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import type { CardType, Player, SeasonCard } from '../types/game';
@@ -32,13 +33,13 @@ interface PlayerCardsModalProps {
 
 export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => {
   const t = useT();
+  const { cardsLightMode, setCardsLightMode } = useGameStore();
   const clan = CLANS.find(c => c.id === player.clanId);
   const [zoomedCard, setZoomedCard] = useState<SeasonCard | null>(null);
-  const [lightMode, setLightMode] = useState(false);
 
   return (
     <div className="season-cards-modal-backdrop" onClick={onClose}>
-      <div className={`season-cards-modal${lightMode ? ' light-theme' : ''}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`season-cards-modal${cardsLightMode ? ' light-theme' : ''}`} onClick={(e) => e.stopPropagation()}>
         <button className="season-cards-modal-close" onClick={onClose}>
           &times;
         </button>
@@ -62,10 +63,10 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
             <div className="legend-tooltip-row"><WinterIcon size={20} color="#A8C8E8" /><span style={{ color: '#A8C8E8' }}>{t('legend.winter')}</span></div>
           </div>
         </div>
-        <div className="season-cards-theme-toggle" onClick={() => setLightMode(!lightMode)}>
-          <div className={`theme-toggle-track${lightMode ? ' light' : ''}`} style={{ position: 'relative', left: '-0.5rem' }}>
+        <div className="season-cards-theme-toggle" onClick={() => setCardsLightMode(!cardsLightMode)}>
+          <div className={`theme-toggle-track${cardsLightMode ? ' light' : ''}`} style={{ position: 'relative', left: '-0.5rem' }}>
             <div className="theme-toggle-thumb">
-              {lightMode ? <SunIcon size={16} color="#f5a623" /> : <MoonIcon size={16} color="#c8d6e5" />}
+              {cardsLightMode ? <SunIcon size={16} color="#f5a623" /> : <MoonIcon size={16} color="#c8d6e5" />}
             </div>
           </div>
         </div>

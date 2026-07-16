@@ -11,12 +11,12 @@ import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
 
 /** Per-figure size overrides for diorama display. Keys are monsterCardId for monsters, or 'type-clanId' for clan figures. */
-const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
+export const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'sp-jorogumo': 0.85,
   'daimyo-tortuga': 1.22,
   'bushi-tortuga': 1.05,
-  'bushi-loto': 0.75,
-  'daimyo-loto': 0.80,
+  'bushi-loto': 0.7275,
+  'daimyo-loto': 0.768,
   'sp-oni-of-skulls': 1.404,
   'daimyo-koi': 1.00,
   'sp-earth-dragon': 1.30,
@@ -49,10 +49,11 @@ const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
   'su-jikininki': 0.90,
   'au-oni-of-hate': 1.20,
   'su-bishamon': 1.23,
+  'sp-jurojin': 0.95,
 };
 
 /** Get the size scale override for a figure. Returns 1.0 if no override is defined. */
-function getSizeOverride(figure: Figure, ownerClanId: string): number {
+export function getFigureSizeOverride(figure: Figure, ownerClanId: string): number {
   if (figure.type === 'monster' && figure.monsterCardId) {
     return FIGURE_SIZE_OVERRIDES[figure.monsterCardId] ?? 1.0;
   }
@@ -236,23 +237,27 @@ interface FigureEntry {
   ownerName: string;
 }
 
-interface DioramaFigureProps {
+export interface DioramaFigureProps {
   figure: Figure;
   ownerColor: string;
   ownerClanId: string;
   ownerName: string;
   iconSize: number;
   onClick: () => void;
+  showMeasurements?: boolean;
 }
 
-const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, onClick }: DioramaFigureProps) => {
-  const sizeOverride = getSizeOverride(figure, ownerClanId);
+export const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, onClick, showMeasurements = false }: DioramaFigureProps) => {
+  const sizeOverride = getFigureSizeOverride(figure, ownerClanId);
   const figureHeight = iconSize * 2.2 * sizeOverride;
   const imgRef = useRef<HTMLImageElement>(null);
   const [debugSize, setDebugSize] = useState<string>('');
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (!showMeasurements) {
+      setDebugSize('');
+      return;
+    }
     const img = imgRef.current;
     if (!img) return;
     const updateSize = () => {
@@ -268,9 +273,9 @@ const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, o
       img.removeEventListener('load', updateSize);
       clearTimeout(timer);
     };
-  }, [figureHeight]);
+  }, [figureHeight, showMeasurements]);
 
-  const debugOverlay = import.meta.env.DEV && debugSize ? (
+  const debugOverlay = showMeasurements && debugSize ? (
     <span style={{ position: 'absolute', top: '-16px', left: '50%', transform: 'translateX(-50%)', color: 'white', fontSize: '10px', whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 0 3px black, 0 0 3px black' }}>
       {debugSize}
     </span>
@@ -389,7 +394,7 @@ interface ZoomedFigureInfo {
 }
 
 export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps) => {
-  const { gameState } = useGameStore();
+  const { gameState, authUser, showFigureMeasurements } = useGameStore();
   const t = useT();
   const [zoomedFigure, setZoomedFigure] = useState<ZoomedFigureInfo | null>(null);
   const [showFront, setShowFront] = useState(true);
@@ -479,7 +484,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
 
     // Render the figure image/icon large
     const renderLargeFigure = () => {
-      const zoomScale = getSizeOverride(figure, ownerClanId);
+      const zoomScale = getFigureSizeOverride(figure, ownerClanId);
       const zoomStyle = { height: '60vh' as const, objectFit: 'contain' as const, transform: `scale(${zoomScale})` };
 
       if (figure.type === 'monster' && figure.monsterCardId) {
@@ -632,6 +637,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                         ownerClanId={ownerClanId}
                         ownerName={ownerName}
                         iconSize={100}
+                        showMeasurements={!!authUser?.isAdmin && showFigureMeasurements}
                         onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
                       />
                     </div>
@@ -654,6 +660,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                         ownerClanId={ownerClanId}
                         ownerName={ownerName}
                         iconSize={100}
+                        showMeasurements={!!authUser?.isAdmin && showFigureMeasurements}
                         onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
                       />
                     </div>
@@ -676,6 +683,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                         ownerClanId={ownerClanId}
                         ownerName={ownerName}
                         iconSize={100}
+                        showMeasurements={!!authUser?.isAdmin && showFigureMeasurements}
                         onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
                       />
                     </div>

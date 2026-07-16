@@ -274,6 +274,14 @@ export interface TradeOffer {
   status: 'pending' | 'accepted' | 'rejected';
 }
 
+export interface PrivateLogEntry {
+  id: string;
+  playerIds: string[];
+  season: Season;
+  logIndex: number;
+  text: string;
+}
+
 export interface GameState {
   id: string;
   gameName: string;
@@ -463,6 +471,7 @@ export interface GameState {
   pendingSerpentChargeQueue?: PendingSerpentCharge[];
   log: string[];
   logHistory: { [season: string]: string[] };
+  privateLogEntries?: PrivateLogEntry[];
   hostId?: string;
 }
 

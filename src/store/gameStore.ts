@@ -252,7 +252,15 @@ interface GameStore {
   localPlayerId: string | null;
   username: string;
   authToken: string | null;
-  authUser: { id: string; username: string; email: string; isAdmin?: boolean } | null;
+  authUser: {
+    id: string;
+    username: string;
+    email: string;
+    isAdmin?: boolean;
+    language?: 'en' | 'es';
+    cardsLightMode?: boolean;
+    showFigureMeasurements?: boolean;
+  } | null;
   isAuthenticated: boolean;
   selectedRegion: string | null;
   moveMode: boolean;
@@ -276,6 +284,10 @@ interface GameStore {
   buildFortressMode: boolean;
   language: 'en' | 'es';
   setLanguage: (lang: 'en' | 'es') => void;
+  cardsLightMode: boolean;
+  setCardsLightMode: (light: boolean) => void;
+  showFigureMeasurements: boolean;
+  setShowFigureMeasurements: (show: boolean) => void;
   setShowTrainModal: (show: boolean) => void;
 
   // UI actions
@@ -765,7 +777,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       message: message.trim().slice(0, 250),
       status: 'pending' as const,
     };
-    const ns = { ...gameState, tradeOffers: [...gameState.tradeOffers, tradeOffer] };
+    const recipient = gameState.players.find(player => player.id === toPlayerId);
+    const describeResources = (coins: number, ronin: number) =>
+      [coins > 0 ? `{coin} ${coins}` : '', ronin > 0 ? `${ronin} ronin` : ''].filter(Boolean).join(' y ') || 'nada';
+    const messageText = tradeOffer.message ? ` Mensaje: "${tradeOffer.message}"` : ' Sin mensaje.';
+    const ns = {
+      ...gameState,
+      tradeOffers: [...gameState.tradeOffers, tradeOffer],
+      privateLogEntries: recipient ? [
+        ...(gameState.privateLogEntries || []),
+        {
+          id: crypto.randomUUID(),
+          playerIds: [cp.id, recipient.id],
+          season: gameState.currentSeason,
+          logIndex: gameState.log.length,
+          text: `${cp.name} propone un Trato a ${recipient.name}: ofrece ${describeResources(offerCoins, offerRonin)} y solicita ${describeResources(requestCoins, requestRonin)}.${messageText}`,
+        },
+      ] : gameState.privateLogEntries,
+    };
     set({ gameState: ns, tradeModalOpen: false });
   },
   doAcceptTrade: (offerId) => {
@@ -784,13 +813,39 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Validate resources
     if (sender.coins < offer.offerCoins || sender.ronin < offer.offerRonin) {
       // Sender no longer has enough - remove the offer and notify
-      const ns = { ...gameState, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
+      const ns = {
+        ...gameState,
+        tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId),
+        privateLogEntries: [
+          ...(gameState.privateLogEntries || []),
+          {
+            id: crypto.randomUUID(),
+            playerIds: [sender.id, recipient.id],
+            season: gameState.currentSeason,
+            logIndex: gameState.log.length,
+            text: `El Trato entre ${sender.name} y ${recipient.name} no pudo completarse por falta de recursos.`,
+          },
+        ],
+      };
       set({ gameState: ns, ruleViolationMessage: `${sender.name} no longer has enough resources to fulfill this trade.` });
       return;
     }
     if (recipient.coins < offer.requestCoins || recipient.ronin < offer.requestRonin) {
       // Recipient does not have enough to fulfill request - remove the offer and notify
-      const ns = { ...gameState, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
+      const ns = {
+        ...gameState,
+        tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId),
+        privateLogEntries: [
+          ...(gameState.privateLogEntries || []),
+          {
+            id: crypto.randomUUID(),
+            playerIds: [sender.id, recipient.id],
+            season: gameState.currentSeason,
+            logIndex: gameState.log.length,
+            text: `El Trato entre ${sender.name} y ${recipient.name} no pudo completarse por falta de recursos.`,
+          },
+        ],
+      };
       set({ gameState: ns, ruleViolationMessage: `You do not have enough resources to accept this trade.` });
       return;
     }
@@ -804,7 +859,33 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
       return p;
     });
-    const ns = { ...gameState, players: updatedPlayers, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
+    const describeResources = (coins: number, ronin: number) =>
+      [coins > 0 ? `{coin} ${coins}` : '', ronin > 0 ? `${ronin} ronin` : ''].filter(Boolean).join(' y ') || 'nada';
+    const transfers = [
+      offer.offerCoins > 0 || offer.offerRonin > 0
+        ? `${recipient.name} recibe ${describeResources(offer.offerCoins, offer.offerRonin)} de ${sender.name}`
+        : '',
+      offer.requestCoins > 0 || offer.requestRonin > 0
+        ? `${sender.name} recibe ${describeResources(offer.requestCoins, offer.requestRonin)} de ${recipient.name}`
+        : '',
+    ].filter(Boolean).join('. ');
+    const newLog = [...gameState.log, `${sender.name} y ${recipient.name} completan un Trato. ${transfers}`];
+    const ns = {
+      ...gameState,
+      players: updatedPlayers,
+      tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId),
+      log: newLog,
+      privateLogEntries: [
+        ...(gameState.privateLogEntries || []),
+        {
+          id: crypto.randomUUID(),
+          playerIds: [sender.id, recipient.id],
+          season: gameState.currentSeason,
+          logIndex: newLog.length,
+          text: `${recipient.name} acepta el Trato propuesto por ${sender.name}.`,
+        },
+      ],
+    };
     set({ gameState: ns });
   },
   doRejectTrade: (offerId) => {
@@ -815,7 +896,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'TRADE_REJECT', payload: { offerId } });
       return;
     }
-    const ns = { ...gameState, tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId) };
+    const offer = gameState.tradeOffers.find(item => item.id === offerId);
+    const sender = offer ? gameState.players.find(player => player.id === offer.fromPlayerId) : null;
+    const recipient = offer ? gameState.players.find(player => player.id === offer.toPlayerId) : null;
+    const ns = {
+      ...gameState,
+      tradeOffers: gameState.tradeOffers.filter(o => o.id !== offerId),
+      privateLogEntries: sender && recipient ? [
+        ...(gameState.privateLogEntries || []),
+        {
+          id: crypto.randomUUID(),
+          playerIds: [sender.id, recipient.id],
+          season: gameState.currentSeason,
+          logIndex: gameState.log.length,
+          text: `${recipient.name} rechaza el Trato propuesto por ${sender.name}.`,
+        },
+      ] : gameState.privateLogEntries,
+    };
     set({ gameState: ns });
   },
   doChooseGenerosityRecipient: (toPlayerId) => {
@@ -1070,6 +1167,41 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setLanguage: (lang) => {
     localStorage.setItem('shoguns-ascent-language', lang);
     set({ language: lang });
+    const { authToken, authUser } = get();
+    if (authToken && authUser) {
+      fetch(`${API_BASE}/api/auth/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ language: lang }),
+      }).catch((error) => console.error('[preferences] language save failed:', error));
+    }
+  },
+  cardsLightMode: localStorage.getItem('shoguns-ascent-cards-light-mode') === 'true',
+  setCardsLightMode: (light) => {
+    localStorage.setItem('shoguns-ascent-cards-light-mode', String(light));
+    set({ cardsLightMode: light });
+    const { authToken, authUser } = get();
+    if (authToken && authUser) {
+      fetch(`${API_BASE}/api/auth/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ cardsLightMode: light }),
+      }).catch((error) => console.error('[preferences] cards theme save failed:', error));
+    }
+  },
+  showFigureMeasurements: localStorage.getItem('shoguns-ascent-show-figure-measurements') === 'true',
+  setShowFigureMeasurements: (show) => {
+    const allowed = !!get().authUser?.isAdmin && show;
+    localStorage.setItem('shoguns-ascent-show-figure-measurements', String(allowed));
+    set({ showFigureMeasurements: allowed });
+    const { authToken, authUser } = get();
+    if (authToken && authUser?.isAdmin) {
+      fetch(`${API_BASE}/api/auth/preferences`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ showFigureMeasurements: allowed }),
+      }).catch((error) => console.error('[preferences] measurement save failed:', error));
+    }
   },
   setShowTrainModal: (show) => set({ showTrainModal: show }),
 
@@ -1143,11 +1275,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     localStorage.setItem('shoguns-ascent-authToken', data.token);
     localStorage.setItem('shoguns-ascent-authUser', JSON.stringify(data.user));
     localStorage.setItem('shoguns-ascent-username', data.user.username);
+    localStorage.setItem('shoguns-ascent-language', data.user.language || 'es');
+    localStorage.setItem('shoguns-ascent-cards-light-mode', String(!!data.user.cardsLightMode));
+    localStorage.setItem('shoguns-ascent-show-figure-measurements', String(!!data.user.isAdmin && !!data.user.showFigureMeasurements));
     set({
       authToken: data.token,
       authUser: data.user,
       isAuthenticated: true,
       username: data.user.username,
+      language: data.user.language || 'es',
+      cardsLightMode: !!data.user.cardsLightMode,
+      showFigureMeasurements: !!data.user.isAdmin && !!data.user.showFigureMeasurements,
       screen: 'games-lobby',
     });
   },
@@ -1165,11 +1303,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     localStorage.setItem('shoguns-ascent-authToken', data.token);
     localStorage.setItem('shoguns-ascent-authUser', JSON.stringify(data.user));
     localStorage.setItem('shoguns-ascent-username', data.user.username);
+    localStorage.setItem('shoguns-ascent-language', data.user.language || 'es');
+    localStorage.setItem('shoguns-ascent-cards-light-mode', String(!!data.user.cardsLightMode));
+    localStorage.setItem('shoguns-ascent-show-figure-measurements', String(!!data.user.isAdmin && !!data.user.showFigureMeasurements));
     set({
       authToken: data.token,
       authUser: data.user,
       isAuthenticated: true,
       username: data.user.username,
+      language: data.user.language || 'es',
+      cardsLightMode: !!data.user.cardsLightMode,
+      showFigureMeasurements: !!data.user.isAdmin && !!data.user.showFigureMeasurements,
       screen: 'games-lobby',
     });
   },
@@ -1203,11 +1347,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
       const data = await res.json();
       localStorage.setItem('shoguns-ascent-authUser', JSON.stringify(data.user));
+      localStorage.setItem('shoguns-ascent-language', data.user.language || 'es');
+      localStorage.setItem('shoguns-ascent-cards-light-mode', String(!!data.user.cardsLightMode));
+      localStorage.setItem('shoguns-ascent-show-figure-measurements', String(!!data.user.isAdmin && !!data.user.showFigureMeasurements));
       set({
         authToken: token,
         authUser: data.user,
         isAuthenticated: true,
         username: data.user.username,
+        language: data.user.language || 'es',
+        cardsLightMode: !!data.user.cardsLightMode,
+        showFigureMeasurements: !!data.user.isAdmin && !!data.user.showFigureMeasurements,
       });
     } catch {
       set({ authToken: null, authUser: null, isAuthenticated: false });

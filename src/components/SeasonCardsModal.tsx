@@ -45,12 +45,22 @@ interface SeasonCardsModalProps {
 }
 
 export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
-  const { gameState, doBuySeasonCard, doSkipTrainPurchase, doRyujinBuyCard, doRyujinSkip, localPlayerId, serverError, serverErrorVersion } = useGameStore();
+  const {
+    gameState,
+    doBuySeasonCard,
+    doSkipTrainPurchase,
+    doRyujinBuyCard,
+    doRyujinSkip,
+    localPlayerId,
+    serverError,
+    serverErrorVersion,
+    cardsLightMode,
+    setCardsLightMode,
+  } = useGameStore();
   const t = useT();
   const [confirmCard, setConfirmCard] = useState<SeasonCard | null>(null);
   const [zoomedCard, setZoomedCard] = useState<SeasonCard | null>(null);
   const [playerConfirmed, setPlayerConfirmed] = useState(false);
-  const [lightMode, setLightMode] = useState(false);
   const lastTrainIndexRef = useRef<number>(-1);
   const [purchasePending, setPurchasePending] = useState(false);
   const [pendingCardId, setPendingCardId] = useState<string | null>(null);
@@ -272,7 +282,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
 
   return (
     <div className="season-cards-modal-backdrop" onClick={isRyujinMode ? undefined : onClose}>
-      <div className={`season-cards-modal${lightMode ? ' light-theme' : ''}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`season-cards-modal${cardsLightMode ? ' light-theme' : ''}`} onClick={(e) => e.stopPropagation()}>
         {!isRyujinMode && (
           <button className="season-cards-modal-close" onClick={onClose}>
             &times;
@@ -299,10 +309,10 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
           </div>
         </div>
         {/* Light/Dark toggle */}
-        <div className="season-cards-theme-toggle" onClick={() => setLightMode(!lightMode)}>
-          <div className={`theme-toggle-track${lightMode ? ' light' : ''}`}>
+        <div className="season-cards-theme-toggle" onClick={() => setCardsLightMode(!cardsLightMode)}>
+          <div className={`theme-toggle-track${cardsLightMode ? ' light' : ''}`}>
             <div className="theme-toggle-thumb">
-              {lightMode ? <SunIcon size={16} color="#f5a623" /> : <MoonIcon size={16} color="#c8d6e5" />}
+              {cardsLightMode ? <SunIcon size={16} color="#f5a623" /> : <MoonIcon size={16} color="#c8d6e5" />}
             </div>
           </div>
         </div>

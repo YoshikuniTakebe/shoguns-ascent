@@ -87,6 +87,24 @@ import { SEASON_CARDS_DATA } from '../types/game';
 import { getAvailableNormalShintoReserve } from '../utils/reserveUtils';
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+const describeTradeResources = (coins: number, ronin: number): string => {
+  const resources: string[] = [];
+  if (coins > 0) resources.push(`{coin} ${coins}`);
+  if (ronin > 0) resources.push(`${ronin} ronin`);
+  return resources.join(' y ') || 'nada';
+};
+const appendPrivateTradeLog = (
+  state: GameState,
+  playerIds: string[],
+  text: string,
+  logIndex = state.log.length
+): GameState => ({
+  ...state,
+  privateLogEntries: [
+    ...(state.privateLogEntries || []),
+    { id: uuidv4(), playerIds, season: state.currentSeason, logIndex, text },
+  ],
+});
 import {
   initDatabase,
   saveGame,
@@ -103,6 +121,7 @@ import {
   getUserByUsername,
   getUserByEmail,
   getUserById,
+  updateUserPreferences,
   addGamePlayer,
   getGamesByUserId,
   getGamePlayersByGameId,
@@ -130,7 +149,7 @@ app.use((req, res, next) => {
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   }
   if (req.method === 'OPTIONS') {
@@ -348,7 +367,15 @@ app.post('/api/auth/register', async (req, res) => {
 
   res.json({
     token,
-    user: { id: user.id, username: user.username, email: user.email, isAdmin: !!user.is_admin },
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      isAdmin: !!user.is_admin,
+      language: user.language || 'es',
+      cardsLightMode: !!user.cards_light_mode,
+      showFigureMeasurements: !!user.is_admin && !!user.show_figure_measurements,
+    },
   });
 });
 
@@ -376,7 +403,15 @@ app.post('/api/auth/login', async (req, res) => {
 
   res.json({
     token,
-    user: { id: user.id, username: user.username, email: user.email, isAdmin: !!user.is_admin },
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      isAdmin: !!user.is_admin,
+      language: user.language || 'es',
+      cardsLightMode: !!user.cards_light_mode,
+      showFigureMeasurements: !!user.is_admin && !!user.show_figure_measurements,
+    },
   });
 });
 
@@ -400,7 +435,54 @@ app.get('/api/auth/me', (req, res) => {
     return;
   }
 
-  res.json({ user: { id: user.id, username: user.username, email: user.email, isAdmin: !!user.is_admin } });
+  res.json({
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      isAdmin: !!user.is_admin,
+      language: user.language || 'es',
+      cardsLightMode: !!user.cards_light_mode,
+      showFigureMeasurements: !!user.is_admin && !!user.show_figure_measurements,
+    },
+  });
+});
+
+app.patch('/api/auth/preferences', (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+
+  const language = req.body?.language;
+  const cardsLightMode = req.body?.cardsLightMode;
+  const showFigureMeasurements = req.body?.showFigureMeasurements;
+  if (language !== undefined && language !== 'en' && language !== 'es') {
+    res.status(400).json({ error: 'Invalid language' });
+    return;
+  }
+  if (cardsLightMode !== undefined && typeof cardsLightMode !== 'boolean') {
+    res.status(400).json({ error: 'Invalid cardsLightMode' });
+    return;
+  }
+  if (showFigureMeasurements !== undefined && typeof showFigureMeasurements !== 'boolean') {
+    res.status(400).json({ error: 'Invalid showFigureMeasurements' });
+    return;
+  }
+
+  const user = updateUserPreferences(userId, { language, cardsLightMode, showFigureMeasurements });
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+  res.json({
+    preferences: {
+      language: user.language || 'es',
+      cardsLightMode: !!user.cards_light_mode,
+      showFigureMeasurements: !!user.is_admin && !!user.show_figure_measurements,
+    },
+  });
 });
 
 app.get('/api/lobbies', (_req, res) => {
@@ -1205,6 +1287,12 @@ wss.on('connection', (ws: WebSocket, req) => {
               offerCoins, offerRonin, requestCoins, requestRonin, message, status: 'pending' as const,
             }],
           };
+          const messageText = message ? ` Mensaje: "${message}"` : ' Sin mensaje.';
+          l.gameState = appendPrivateTradeLog(
+            l.gameState,
+            [sender.id, recipient.id],
+            `${sender.name} propone un Trato a ${recipient.name}: ofrece ${describeTradeResources(offerCoins, offerRonin)} y solicita ${describeTradeResources(requestCoins, requestRonin)}.${messageText}`
+          );
           broadcastState(l);
           break;
         }
@@ -1219,8 +1307,22 @@ wss.on('connection', (ws: WebSocket, req) => {
           const recipient = l.gameState.players.find(p => p.id === offer.toPlayerId);
           if (!sender || !recipient || sender.coins < offer.offerCoins || sender.ronin < offer.offerRonin || recipient.coins < offer.requestCoins || recipient.ronin < offer.requestRonin) {
             l.gameState = { ...l.gameState, tradeOffers: l.gameState.tradeOffers.filter(o => o.id !== offer.id) };
+            if (sender && recipient) {
+              l.gameState = appendPrivateTradeLog(
+                l.gameState,
+                [sender.id, recipient.id],
+                `El Trato entre ${sender.name} y ${recipient.name} no pudo completarse por falta de recursos.`
+              );
+            }
             broadcastState(l);
             return;
+          }
+          const publicTransfers: string[] = [];
+          if (offer.offerCoins > 0 || offer.offerRonin > 0) {
+            publicTransfers.push(`${recipient.name} recibe ${describeTradeResources(offer.offerCoins, offer.offerRonin)} de ${sender.name}`);
+          }
+          if (offer.requestCoins > 0 || offer.requestRonin > 0) {
+            publicTransfers.push(`${sender.name} recibe ${describeTradeResources(offer.requestCoins, offer.requestRonin)} de ${recipient.name}`);
           }
           l.gameState = {
             ...l.gameState,
@@ -1230,8 +1332,14 @@ wss.on('connection', (ws: WebSocket, req) => {
                 ? { ...p, coins: p.coins + offer.offerCoins - offer.requestCoins, ronin: p.ronin + offer.offerRonin - offer.requestRonin }
                 : p),
             tradeOffers: l.gameState.tradeOffers.filter(o => o.id !== offer.id),
-            log: [...l.gameState.log, `${sender.name} y ${recipient.name} completan un Trato`],
+            log: [...l.gameState.log, `${sender.name} y ${recipient.name} completan un Trato. ${publicTransfers.join('. ')}`],
           };
+          l.gameState = appendPrivateTradeLog(
+            l.gameState,
+            [sender.id, recipient.id],
+            `${recipient.name} acepta el Trato propuesto por ${sender.name}.`,
+            l.gameState.log.length
+          );
           broadcastState(l);
           break;
         }
@@ -1242,7 +1350,16 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (l.gameState.currentPhase === 'war') return;
           const offer = l.gameState.tradeOffers.find(o => o.id === data.payload?.offerId);
           if (!offer || offer.toPlayerId !== playerId) return;
+          const sender = l.gameState.players.find(p => p.id === offer.fromPlayerId);
+          const recipient = l.gameState.players.find(p => p.id === offer.toPlayerId);
           l.gameState = { ...l.gameState, tradeOffers: l.gameState.tradeOffers.filter(o => o.id !== offer.id) };
+          if (sender && recipient) {
+            l.gameState = appendPrivateTradeLog(
+              l.gameState,
+              [sender.id, recipient.id],
+              `${recipient.name} rechaza el Trato propuesto por ${sender.name}.`
+            );
+          }
           broadcastState(l);
           break;
         }

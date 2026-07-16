@@ -241,7 +241,7 @@ function renderLogEntry(entry: string, players: { name: string; clanId: string }
 }
 
 export const GameLog = () => {
-  const { gameState } = useGameStore();
+  const { gameState, localPlayerId } = useGameStore();
   const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const [selectedSeason, setSelectedSeason] = useState<string | null>(null);
@@ -286,10 +286,26 @@ export const GameLog = () => {
 
   // Determine which log to display
   const activeTab = selectedSeason ?? currentSeason;
-  const displayLog =
+  const publicDisplayLog =
     activeTab === currentSeason
       ? [...(logHistory[currentSeason] ?? []), ...gameState.log]
       : logHistory[activeTab] ?? [];
+  const historyPrefixLength = activeTab === currentSeason ? (logHistory[currentSeason]?.length ?? 0) : 0;
+  const privateEntries = (gameState.privateLogEntries || [])
+    .filter(entry => entry.season === activeTab && (
+      gameState.mode === 'hotseat' || (!!localPlayerId && entry.playerIds.includes(localPlayerId))
+    ))
+    .map(entry => ({
+      ...entry,
+      displayIndex: entry.logIndex + historyPrefixLength,
+    }));
+  const displayLog: string[] = [];
+  for (let index = 0; index <= publicDisplayLog.length; index++) {
+    privateEntries
+      .filter(entry => entry.displayIndex === index)
+      .forEach(entry => displayLog.push(entry.text));
+    if (index < publicDisplayLog.length) displayLog.push(publicDisplayLog[index]);
+  }
 
   const players = gameState.players;
 
