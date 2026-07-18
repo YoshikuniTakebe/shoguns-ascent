@@ -35,7 +35,10 @@ export const RuleEventNoticePopup = () => {
   return (
     <div className="harvest-popup-backdrop">
       <div className="harvest-popup rule-event-popup" style={{ borderColor: noticeColor }}>
-        <h3 className="harvest-popup-title" style={{ color: noticeColor }}>{title}</h3>
+        <h3 className={`harvest-popup-title${notice.type === 'benevolence' ? ' benevolence-notice-title' : ''}`} style={{ color: noticeColor }}>
+          {notice.type === 'benevolence' && <ClanShield clanId={actor?.clanId || ''} size={32} />}
+          <span>{title}</span>
+        </h3>
 
         {notice.type === 'hotei' && (
           <>
@@ -58,7 +61,19 @@ export const RuleEventNoticePopup = () => {
         )}
 
         {notice.type === 'benevolence' && (
-          <p><strong style={{ color: actorClan?.color }}>{actor?.name}</strong> ha entregado <CoinIcon size={18} color="#f1c40f" /> 1 a <strong style={{ color: targetClan?.color }}>{target?.name}</strong> y ha obtenido Honor y <strong style={{ color: actorClan?.color }}>2 PV</strong>.</p>
+          <p className="rule-event-card-reward">
+            <span className="rule-event-inline-clan">
+              <ClanShield clanId={actor?.clanId || ''} size={24} />
+              <strong style={{ color: actorClan?.color }}>{actor?.name}</strong>
+            </span>{' '}
+            ha entregado <CoinIcon size={18} color="#f1c40f" /> <strong>1</strong> a{' '}
+            <span className="rule-event-inline-clan">
+              <ClanShield clanId={target?.clanId || ''} size={22} />
+              <strong style={{ color: targetClan?.color }}>{target?.name}</strong>
+            </span>{' '}
+            y ha obtenido <HonorIcon size={20} color={actorClan?.color} /> y{' '}
+            <VPIcon size={20} color={actorClan?.color} /> <strong style={{ color: actorClan?.color }}>2</strong>.
+          </p>
         )}
 
         {notice.type === 'serpent' && (

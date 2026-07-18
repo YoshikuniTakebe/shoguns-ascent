@@ -670,6 +670,88 @@
   gap: 6px;
 }
 
+.benevolence-overlay .alliance-display {
+  z-index: 2;
+}
+
+.benevolence-title,
+.benevolence-notice-title,
+.benevolence-effect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.benevolence-notice-title {
+  gap: 9px;
+}
+
+.clan-power-trigger {
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.clan-power-tooltip-portal {
+  position: fixed;
+  z-index: 10000;
+  width: 290px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 0.8rem 0.9rem;
+  background: linear-gradient(145deg, rgba(15, 15, 25, 0.98), rgba(22, 33, 62, 0.98));
+  border: 1.5px solid;
+  border-radius: 8px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.72);
+  pointer-events: none;
+}
+
+.clan-power-tooltip-portal::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 8px solid transparent;
+  border-right-color: rgba(15, 15, 25, 0.98);
+}
+
+.clan-power-tooltip-title,
+.clan-power-tooltip-text {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.clan-power-tooltip-title {
+  font-size: 0.92rem;
+}
+
+.clan-power-tooltip-label {
+  color: var(--accent-gold);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.clan-power-tooltip-text {
+  flex-wrap: wrap;
+  color: var(--accent-cream);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.benevolence-effect {
+  flex-wrap: wrap;
+  margin: -4px 0 14px;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
 .benevolence-player-badge {
   display: flex;
   align-items: center;

@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS, PROVINCE_COLORS } from '../types/game';
+import { CLANS, SEASON_CARDS_DATA, PROVINCE_COLORS } from '../types/game';
 import type { Figure, GameState } from '../types/game';
 import { useT, t as tStandalone } from '../i18n';
 import { FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { getMonsterFigureImage, getCastleImage, getDaimyoImage, getBushiImage, getShintoImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
 import { calculateForce, countVirtueCards, getPlayerSeasonCardEffects } from '../utils/gameLogic';
-import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
+import { getBaseCardId, getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
 
 /** Per-figure size overrides for diorama display. Keys are monsterCardId for monsters, or 'type-clanId' for clan figures. */
@@ -94,8 +94,10 @@ const KamiIcon = ({ size = 28, color = 'currentColor' }: { size?: number; color?
 
 /** Get monster card info (name and effect) by monsterCardId */
 function getMonsterInfo(monsterCardId: string): { name: string; effect: string; force?: number } | null {
-  const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
-  const card = allCards.find(c => c.id === monsterCardId);
+  const baseId = getBaseCardId(monsterCardId);
+  const card = SEASON_CARDS_DATA.find(candidate =>
+    candidate.id === monsterCardId || candidate.id === baseId
+  );
   if (card) {
     return { name: tStandalone(getCardNameKey(card.id)), effect: tStandalone(getCardEffectKey(card.id)), force: card.force };
   }
