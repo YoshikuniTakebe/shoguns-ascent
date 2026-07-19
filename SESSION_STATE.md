@@ -1037,3 +1037,13 @@ server restart — no longer loses the game.
   corner radius as the in-game Province Diorama instead of expanding up to 96vw and 1800px.
 - Floating and collapsible calibration panels continue to render above the unchanged Nagato stage.
 - The production build passes.
+
+## Changelog - 2026-07-19 (screen-wide panels and province line offsets)
+
+- The admin figure catalogue and line editor now live directly on the full-screen Diorama backdrop
+  rather than inside the Nagato window, so they can be dragged anywhere on the global screen without
+  being clipped by the province frame.
+- Admin figures now use the Province Diorama's exact per-slot vertical offsets, the special
+  three-figure front-line spacing, the 27px middle-line gap and the fixed 345/255/160px line heights.
+- The redundant Nagato province title was removed from the admin calibration view.
+- TypeScript, lint and the production build pass. Lint retains only the two pre-existing warnings.

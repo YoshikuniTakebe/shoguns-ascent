@@ -107,6 +107,7 @@ function FloatingPanel({
     <aside
       className={`admin-diorama-floating-panel ${className}${collapsed ? ' collapsed' : ''} admin-diorama-panel-${initialSide}`}
       style={style}
+      onClick={event => event.stopPropagation()}
     >
       <div className="admin-diorama-panel-header" onPointerDown={startDrag}>
         <span className="admin-diorama-drag-grip" aria-hidden="true">⋮⋮</span>
@@ -255,20 +256,47 @@ export const AdminDioramaModal = ({ onClose }: { onClose: () => void }) => {
       figureSizeOverrides,
     );
 
-  const renderLine = (lineId: DioramaLine) =>
-    sortFigures(lines[lineId]).map(entry => (
-      <DioramaFigure
+  const renderLine = (lineId: DioramaLine) => {
+    const entries = sortFigures(lines[lineId]);
+    const offsets = lineId === 'back'
+      ? [30, 20, 0, 0, 20, 30]
+      : lineId === 'mid'
+        ? [0, 10, 15, 10, 0]
+        : entries.length === 3
+          ? [-10, 40, -10]
+          : [-10, 40, 40, -10];
+
+    return entries.map((entry, index) => (
+      <div
         key={entry.instanceId}
-        figure={entry.figure}
-        ownerColor={entry.color}
-        ownerClanId={entry.clanId}
-        ownerName={entry.clanName}
-        iconSize={100}
-        showMeasurements={showFigureMeasurements}
-        sizeOverrides={figureSizeOverrides}
-        onClick={() => undefined}
-      />
+        className="admin-diorama-figure-position"
+        style={{
+          top: `${offsets[index] || 0}px`,
+          ...(lineId === 'front' && entries.length === 3 && index === 0 ? { marginLeft: '135px' } : {}),
+          ...(lineId === 'front' && entries.length === 3 && index === entries.length - 1 ? { marginRight: '135px' } : {}),
+        }}
+      >
+        <DioramaFigure
+          figure={entry.figure}
+          ownerColor={entry.color}
+          ownerClanId={entry.clanId}
+          ownerName={entry.clanName}
+          iconSize={100}
+          showMeasurements={showFigureMeasurements}
+          sizeOverrides={figureSizeOverrides}
+          onClick={() => undefined}
+        />
+      </div>
     ));
+  };
+
+  const getLineStyle = (lineId: DioramaLine): CSSProperties | undefined => {
+    if (lineId === 'mid') return { gap: '27px' };
+    if (lineId === 'front' && lines.front.length === 3) {
+      return { justifyContent: 'space-between', paddingLeft: '10px', paddingRight: '10px' };
+    }
+    return undefined;
+  };
 
   return (
     <div className="admin-diorama-backdrop" onClick={onClose}>
@@ -285,12 +313,12 @@ export const AdminDioramaModal = ({ onClose }: { onClose: () => void }) => {
             style={{ backgroundImage: `url(${getRegionBackground('nagato') || ''})` }}
           >
             <div className="admin-diorama-stage-shade" />
-            <div className="admin-diorama-stage-title">Nagato</div>
-            <div className="admin-diorama-figures admin-diorama-figures-back">{renderLine('back')}</div>
-            <div className="admin-diorama-figures admin-diorama-figures-mid">{renderLine('mid')}</div>
-            <div className="admin-diorama-figures admin-diorama-figures-front">{renderLine('front')}</div>
+            <div className="admin-diorama-figures admin-diorama-figures-back" style={getLineStyle('back')}>{renderLine('back')}</div>
+            <div className="admin-diorama-figures admin-diorama-figures-mid" style={getLineStyle('mid')}>{renderLine('mid')}</div>
+            <div className="admin-diorama-figures admin-diorama-figures-front" style={getLineStyle('front')}>{renderLine('front')}</div>
           </main>
-
+        </div>
+      </div>
           <FloatingPanel
             title="Figuras"
             className="admin-diorama-catalog"
@@ -421,8 +449,6 @@ export const AdminDioramaModal = ({ onClose }: { onClose: () => void }) => {
               Vaciar diorama
             </button>
           </FloatingPanel>
-        </div>
-      </div>
     </div>
   );
 };
