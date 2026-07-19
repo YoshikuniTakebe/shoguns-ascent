@@ -1030,3 +1030,10 @@ server restart — no longer loses the game.
 - TypeScript, lint and the production build pass. Lint retains only the two pre-existing warnings in
   FriendsModal and PoliticsTrack. The integrated visual browser was unavailable due to an internal
   Codex browser-runtime path error; no development or game server remains running.
+
+## Changelog - 2026-07-19 (admin diorama viewport size)
+
+- The admin Diorama outer window now uses the same `1300 x 1024` dimensions, `90vh` height limit and
+  corner radius as the in-game Province Diorama instead of expanding up to 96vw and 1800px.
+- Floating and collapsible calibration panels continue to render above the unchanged Nagato stage.
+- The production build passes.
