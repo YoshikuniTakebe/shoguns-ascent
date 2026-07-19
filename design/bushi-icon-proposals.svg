@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560">
+  <defs>
+    <style>
+      .bg{fill:#11182d}.card{fill:#182442;stroke:#c8a951;stroke-width:1.5}
+      .title{fill:#f5e6ca;font:700 19px "Segoe UI",sans-serif}
+      .desc{fill:#b8a88a;font:14px "Segoe UI",sans-serif}
+      .label{fill:#c8a951;font:700 15px "Segoe UI",sans-serif}
+      .icon{fill:none;stroke:#e9b91e;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round}
+      .fill{fill:#e9b91e}.sample{fill:#0c1224;stroke:#394765}
+    </style>
+    <g id="a">
+      <path class="icon" d="M5 19Q10 12 18 3M19 19Q14 12 6 3"/>
+      <path class="icon" d="M6.7 15.8l3.3 2.4M17.3 15.8L14 18.2M4.8 20.5l2.4-2.4M19.2 20.5l-2.4-2.4"/>
+      <path class="icon" d="M5.3 19.9l.8.8M17.9 20.7l.8-.8"/>
+    </g>
+    <g id="b">
+      <path class="icon" d="M4 20Q10 13 19 3M20 19Q15 14 8 7"/>
+      <path class="icon" d="M6.1 16.5l3.4 2.6M17.3 15.6l-2.6 2.7M4 20l2.6-2.6M20 19l-2.8-2.8"/>
+      <circle class="fill" cx="8.1" cy="17.8" r="1"/><circle class="fill" cx="16.2" cy="17.2" r="1"/>
+    </g>
+    <g id="c">
+      <path class="fill" d="M8 8c.5-2.5 2-4 4-4s3.5 1.5 4 4l-1 1H9zM7 9h10l1.5 2h-13z"/>
+      <path class="icon" d="M8 20l1.5-8h5l1.5 8M8.5 14L5 18M15.5 14l3.5 4M5 12Q12 9 20 4M15.8 6.2l2.4 2"/>
+    </g>
+    <g id="d">
+      <circle class="icon" cx="12" cy="12" r="10"/>
+      <path class="icon" d="M5.5 17.5Q10 11 16.5 5M18.5 17.5Q14 11 7.5 5M7.2 14.7L10 17M16.8 14.7L14 17"/>
+      <circle class="fill" cx="8.7" cy="16" r="1"/><circle class="fill" cx="15.3" cy="16" r="1"/>
+    </g>
+  </defs>
+  <rect class="bg" width="960" height="560"/>
+  <text class="title" x="40" y="42">Propuestas de icono Bushi</text>
+  <text class="desc" x="40" y="68">Cada opción se muestra a 64, 32 y 20 px para comprobar su legibilidad real.</text>
+
+  <g transform="translate(40 96)">
+    <rect class="card" width="420" height="190" rx="8"/>
+    <text class="label" x="18" y="30">A. Katanas cruzadas</text>
+    <text class="desc" x="18" y="53">Dos hojas curvas, tsuba y empuñaduras visibles.</text>
+    <g transform="translate(28 73) scale(2.67)"><use href="#a"/></g>
+    <circle class="sample" cx="180" cy="114" r="25"/><g transform="translate(164 98) scale(1.33)"><use href="#a"/></g>
+    <circle class="sample" cx="246" cy="114" r="18"/><g transform="translate(236 104) scale(.83)"><use href="#a"/></g>
+    <text class="desc" x="285" y="108">La más cercana</text><text class="desc" x="285" y="128">a tu petición.</text>
+  </g>
+  <g transform="translate(500 96)">
+    <rect class="card" width="420" height="190" rx="8"/>
+    <text class="label" x="18" y="30">B. Daishō cruzado</text>
+    <text class="desc" x="18" y="53">Katana larga y wakizashi, con silueta asimétrica.</text>
+    <g transform="translate(28 73) scale(2.67)"><use href="#b"/></g>
+    <circle class="sample" cx="180" cy="114" r="25"/><g transform="translate(164 98) scale(1.33)"><use href="#b"/></g>
+    <circle class="sample" cx="246" cy="114" r="18"/><g transform="translate(236 104) scale(.83)"><use href="#b"/></g>
+    <text class="desc" x="285" y="108">Más histórica</text><text class="desc" x="285" y="128">y dinámica.</text>
+  </g>
+  <g transform="translate(40 322)">
+    <rect class="card" width="420" height="190" rx="8"/>
+    <text class="label" x="18" y="30">C. Bushi en guardia</text>
+    <text class="desc" x="18" y="53">Samurái compacto con katana en posición de ataque.</text>
+    <g transform="translate(28 73) scale(2.67)"><use href="#c"/></g>
+    <circle class="sample" cx="180" cy="114" r="25"/><g transform="translate(164 98) scale(1.33)"><use href="#c"/></g>
+    <circle class="sample" cx="246" cy="114" r="18"/><g transform="translate(236 104) scale(.83)"><use href="#c"/></g>
+    <text class="desc" x="285" y="108">Representa la</text><text class="desc" x="285" y="128">unidad, no el arma.</text>
+  </g>
+  <g transform="translate(500 322)">
+    <rect class="card" width="420" height="190" rx="8"/>
+    <text class="label" x="18" y="30">D. Mon de katanas</text>
+    <text class="desc" x="18" y="53">Katanas cruzadas dentro de un emblema circular.</text>
+    <g transform="translate(28 73) scale(2.67)"><use href="#d"/></g>
+    <circle class="sample" cx="180" cy="114" r="25"/><g transform="translate(164 98) scale(1.33)"><use href="#d"/></g>
+    <circle class="sample" cx="246" cy="114" r="18"/><g transform="translate(236 104) scale(.83)"><use href="#d"/></g>
+    <text class="desc" x="285" y="108">Muy legible como</text><text class="desc" x="285" y="128">ficha o contador.</text>
+  </g>
+</svg>

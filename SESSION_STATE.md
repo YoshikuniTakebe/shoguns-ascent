@@ -1047,3 +1047,14 @@ server restart — no longer loses the game.
   three-figure front-line spacing, the 27px middle-line gap and the fixed 345/255/160px line heights.
 - The redundant Nagato province title was removed from the admin calibration view.
 - TypeScript, lint and the production build pass. Lint retains only the two pre-existing warnings.
+
+## Changelog - 2026-07-20 (Sol tooltip and troop glow)
+
+- The Sol clan tooltip now presents its tie reward over three fixed lines with the real Honor, Coin
+  and VP icons, explicitly showing the winner's +1 Coin/+1 VP and the loser's -1 Coin/-1 VP.
+- The former animated golden Sol glow was restored to every Sol figure icon on Province cards while
+  preserving the common dark drop shadow used by all figures.
+- Four vector Bushi icon alternatives were prepared at 64px, 32px and 20px in
+  `design/bushi-icon-proposals.svg` and its rendered PNG. The current game icon remains unchanged
+  until one proposal is selected.
+- TypeScript, lint and the production build pass. Lint retains only the two pre-existing warnings.

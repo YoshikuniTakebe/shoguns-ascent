@@ -16,7 +16,19 @@ const ClanPowerContent = ({ clanId, color }: { clanId: string; color: string }) 
     case 'koi':
       return <>Puede usar <CoinIcon size={16} color={color} /> como <RoninIcon size={16} color={color} />. Al comenzar la Guerra cambia su Ronin por Monedas y, al Contratar Ronin, sus Monedas suman <FistIcon size={16} color={color} />.</>;
     case 'sol':
-      return <>Cuando gana un empate por <HonorIcon size={16} color={color} />, gana <CoinIcon size={16} color={color} /> 1 y <VPIcon size={16} color={color} /> 1; el perdedor pierde esas mismas cantidades.</>;
+      return (
+        <span className="clan-power-tooltip-lines">
+          <span className="clan-power-tooltip-line">
+            Cuando gana un empate <HonorIcon size={16} color={color} />
+          </span>
+          <span className="clan-power-tooltip-line">
+            gana <CoinIcon size={16} color={color} /> 1 y <VPIcon size={16} color={color} /> 1
+          </span>
+          <span className="clan-power-tooltip-line">
+            y el perdedor pierde <CoinIcon size={16} color={color} /> 1 y <VPIcon size={16} color={color} /> 1.
+          </span>
+        </span>
+      );
     case 'loto':
       return <>Puede elegir cualquier <strong>Mandato político</strong>, sin importar las fichas que haya robado.</>;
     case 'tortuga':
