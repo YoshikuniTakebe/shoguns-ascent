@@ -9,70 +9,7 @@ import { getMonsterFigureImage, getCastleImage, getDaimyoImage, getBushiImage, g
 import { calculateForce, countVirtueCards, getPlayerSeasonCardEffects } from '../utils/gameLogic';
 import { getBaseCardId, getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
-
-/** Per-figure size overrides for diorama display. Keys are monsterCardId for monsters, or 'type-clanId' for clan figures. */
-export const FIGURE_SIZE_OVERRIDES: Record<string, number> = {
-  'sp-jorogumo': 0.85,
-  'daimyo-tortuga': 1.22,
-  'bushi-tortuga': 1.0605,
-  'bushi-loto': 0.7275,
-  'daimyo-loto': 0.77568,
-  'sp-oni-of-skulls': 1.404,
-  'daimyo-koi': 1.00,
-  'sp-earth-dragon': 1.30,
-  'daimyo-luna': 1.25,
-  'bushi-luna': 0.8526,
-  'daimyo-libelula': 1.10,
-  'daimyo-sol': 1.01,
-  'sp-daikokuten': 0.7831296,
-  'sp-oni-of-souls': 1.25,
-  'sp-phoenix': 1.27,
-  'sp-komainu': 0.83,
-  'sp-jinmenju': 1.23,
-  'daimyo-bonsai': 0.97,
-  'bushi-zorro': 0.8316,
-  'daimyo-zorro': 0.94,
-  'bushi-koi': 0.931,
-  'bushi-libelula': 0.869652,
-  'bushi-sol': 0.91,
-  'bushi-bonsai': 0.833,
-  'su-hotei': 1.1385,
-  'su-yurei': 1.4076,
-  'su-oni-of-souls': 1.25,
-  'su-oni-of-blood': 1.20,
-  'sp-fukurokuju': 1.04,
-  'shinto-koi': 0.97,
-  'shinto-zorro': 0.7938,
-  'shinto-bonsai': 0.9504,
-  'shinto-tortuga': 0.95172,
-  'shinto-loto': 0.912,
-  'shinto-sol': 0.97,
-  'su-sunakake-baba': 0.94,
-  'au-benten': 0.9021,
-  'au-daikaiju': 1.5625,
-  'au-ebisu': 1.0815,
-  'su-fire-dragon': 1.25,
-  'au-kitsune': 0.9024,
-  'sp-kotahi': 0.9215,
-  'su-nure-onna': 1.01,
-  'su-koneko': 1.0914,
-  'au-oni-of-plagues': 1.265,
-  'au-oni-of-spite': 1.364475,
-  'au-river-dragon': 1.625,
-  'su-jikininki': 0.90,
-  'au-oni-of-hate': 1.41264,
-  'su-bishamon': 1.23,
-  'sp-jurojin': 0.95,
-};
-
-/** Get the size scale override for a figure. Returns 1.0 if no override is defined. */
-export function getFigureSizeOverride(figure: Figure, ownerClanId: string): number {
-  if (figure.type === 'monster' && figure.monsterCardId) {
-    return FIGURE_SIZE_OVERRIDES[figure.monsterCardId] ?? 1.0;
-  }
-  const key = `${figure.type}-${ownerClanId}`;
-  return FIGURE_SIZE_OVERRIDES[key] ?? 1.0;
-}
+import { getFigureSizeOverride } from '../utils/figureSizes';
 
 interface RegionDetailModalProps {
   regionId: string;
@@ -260,10 +197,11 @@ export interface DioramaFigureProps {
   iconSize: number;
   onClick: () => void;
   showMeasurements?: boolean;
+  sizeOverrides?: Record<string, number>;
 }
 
-export const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, onClick, showMeasurements = false }: DioramaFigureProps) => {
-  const sizeOverride = getFigureSizeOverride(figure, ownerClanId);
+export const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, iconSize, onClick, showMeasurements = false, sizeOverrides }: DioramaFigureProps) => {
+  const sizeOverride = getFigureSizeOverride(figure, ownerClanId, sizeOverrides);
   const figureHeight = iconSize * 2.2 * sizeOverride;
   const imgRef = useRef<HTMLImageElement>(null);
   const [debugSize, setDebugSize] = useState<string>('');
@@ -409,7 +347,7 @@ interface ZoomedFigureInfo {
 }
 
 export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps) => {
-  const { gameState, authUser, showFigureMeasurements } = useGameStore();
+  const { gameState, authUser, showFigureMeasurements, figureSizeOverrides } = useGameStore();
   const t = useT();
   const [zoomedFigure, setZoomedFigure] = useState<ZoomedFigureInfo | null>(null);
   const [showFront, setShowFront] = useState(true);
@@ -499,7 +437,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
 
     // Render the figure image/icon large
     const renderLargeFigure = () => {
-      const zoomScale = getFigureSizeOverride(figure, ownerClanId);
+      const zoomScale = getFigureSizeOverride(figure, ownerClanId, figureSizeOverrides);
       const zoomStyle = { height: '60vh' as const, objectFit: 'contain' as const, transform: `scale(${zoomScale})` };
 
       if (figure.type === 'monster' && figure.monsterCardId) {
@@ -653,6 +591,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                         ownerName={ownerName}
                         iconSize={100}
                         showMeasurements={!!authUser?.isAdmin && showFigureMeasurements}
+                        sizeOverrides={figureSizeOverrides}
                         onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
                       />
                     </div>
@@ -676,6 +615,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                         ownerName={ownerName}
                         iconSize={100}
                         showMeasurements={!!authUser?.isAdmin && showFigureMeasurements}
+                        sizeOverrides={figureSizeOverrides}
                         onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
                       />
                     </div>
@@ -699,6 +639,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
                         ownerName={ownerName}
                         iconSize={100}
                         showMeasurements={!!authUser?.isAdmin && showFigureMeasurements}
+                        sizeOverrides={figureSizeOverrides}
                         onClick={() => setZoomedFigure({ figure, ownerColor, ownerClanId, ownerName })}
                       />
                     </div>

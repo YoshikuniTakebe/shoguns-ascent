@@ -1013,3 +1013,20 @@ server restart — no longer loses the game.
 - The already completed Kami turn in the active test game is not retroactively replayed because its
   later rewards have already been applied; doing so would resolve Fujin out of order or duplicate
   Ryujin/Hachiman/Susanoo effects.
+
+## Changelog - 2026-07-19 (admin diorama figure calibration)
+
+- The admin Diorama now keeps the Nagato province composition full-size while its figure catalogue
+  and line editor float above it as independent draggable panels. Both panels can be collapsed and
+  retain their dragged position while the tool remains open.
+- Every catalogue entry displays its effective game scale. Occupied line slots show the same value
+  and accept signed percentage adjustments such as `+25` or `-25`; applying one updates every
+  instance of that figure in the Diorama immediately.
+- Figure scales were moved out of `RegionDetailModal` into a shared utility, so the province Diorama,
+  figure zoom and admin calibration tool all resolve the same values.
+- Custom scales are global application settings persisted in SQLite. All clients load them on app
+  start, while the write endpoint requires an authenticated administrator and validates scales
+  between 0.2 and 3.
+- TypeScript, lint and the production build pass. Lint retains only the two pre-existing warnings in
+  FriendsModal and PoliticsTrack. The integrated visual browser was unavailable due to an internal
+  Codex browser-runtime path error; no development or game server remains running.

@@ -552,10 +552,20 @@
 .admin-diorama-header{height:64px;flex:none;display:flex;align-items:baseline;gap:1rem;padding:0.9rem 4rem 0.8rem 1.25rem;border-bottom:1px solid rgba(200,169,81,0.35);background:#16213e}
 .admin-diorama-header h2{margin:0;color:var(--accent-gold);font-size:1.45rem}
 .admin-diorama-header span{color:var(--text-secondary);font-size:0.8rem}
-.admin-diorama-layout{display:grid;grid-template-columns:330px minmax(560px,1fr) 460px;min-height:0;flex:1}
-.admin-diorama-catalog,.admin-diorama-lines{min-height:0;overflow-y:auto;background:#11182d;padding:0.9rem;border-color:rgba(200,169,81,0.28)}
-.admin-diorama-catalog{border-right:1px solid rgba(200,169,81,0.28)}
-.admin-diorama-lines{border-left:1px solid rgba(200,169,81,0.28)}
+.admin-diorama-layout{position:relative;min-height:0;flex:1;overflow:hidden}
+.admin-diorama-floating-panel{position:absolute;top:16px;z-index:40;background:rgba(12,18,36,0.96);border:1px solid rgba(200,169,81,0.65);border-radius:6px;box-shadow:0 12px 32px rgba(0,0,0,0.72);transform:translate3d(var(--panel-x),var(--panel-y),0);max-height:calc(100% - 32px);display:flex;flex-direction:column;overflow:hidden}
+.admin-diorama-panel-left{left:16px}
+.admin-diorama-panel-right{right:16px}
+.admin-diorama-catalog{width:330px}
+.admin-diorama-lines{width:min(760px,calc(100% - 32px))}
+.admin-diorama-floating-panel.collapsed{width:auto;min-width:164px}
+.admin-diorama-panel-header{height:40px;flex:none;display:flex;align-items:center;gap:0.5rem;padding:0 0.45rem 0 0.65rem;color:var(--accent-gold);background:#182442;border-bottom:1px solid rgba(200,169,81,0.32);cursor:grab;user-select:none;touch-action:none}
+.admin-diorama-panel-header:active{cursor:grabbing}
+.admin-diorama-drag-grip{color:rgba(200,169,81,0.65);font-size:1rem;letter-spacing:-0.16em}
+.admin-diorama-panel-header strong{flex:1;font-size:0.82rem}
+.admin-diorama-collapse{width:28px;height:28px;padding:0;border:1px solid rgba(200,169,81,0.42);border-radius:4px;background:#0d1428;color:var(--accent-gold);font-size:1.15rem;line-height:1;cursor:pointer}
+.admin-diorama-collapse:hover{border-color:var(--accent-gold);background:#263555}
+.admin-diorama-panel-body{min-height:0;overflow:auto;padding:0.9rem}
 .admin-diorama-catalog h3{color:var(--accent-gold);font-size:0.9rem;margin:0 0 0.6rem}
 .admin-diorama-catalog h3:not(:first-child){margin-top:1rem}
 .admin-diorama-clan-list{display:flex;flex-direction:column;gap:0.5rem}
@@ -569,7 +579,7 @@
 .admin-diorama-monster-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.4rem}
 .admin-diorama-monster-list button{height:74px;display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:0.35rem;padding:0.25rem;text-align:left;font-size:0.67rem;line-height:1.15}
 .admin-diorama-monster-list img{width:48px;height:64px;object-fit:contain}
-.admin-diorama-stage{position:relative;min-width:0;overflow:hidden;background-size:cover;background-position:center}
+.admin-diorama-stage{position:absolute;inset:0;min-width:0;overflow:hidden;background-size:cover;background-position:center}
 .admin-diorama-stage-shade{position:absolute;inset:0;background:rgba(0,0,0,0.18);pointer-events:none}
 .admin-diorama-stage-title{position:absolute;top:0.85rem;left:50%;transform:translateX(-50%);z-index:5;color:#fff;font-size:1.25rem;font-weight:800;text-shadow:0 2px 6px #000}
 .admin-diorama-figures{position:absolute;left:1rem;right:1rem;display:flex;align-items:flex-end;justify-content:space-evenly;gap:0.6rem;overflow:visible;transform-origin:center bottom}
@@ -577,7 +587,7 @@
 .admin-diorama-figures-back{bottom:42%;z-index:1;transform:scale(.6)}
 .admin-diorama-figures-mid{bottom:25%;z-index:2;transform:scale(.8)}
 .admin-diorama-figures-front{bottom:5%;z-index:3}
-.admin-diorama-line{padding:0.7rem;border:1px solid rgba(200,169,81,0.18);border-radius:6px;background:#0d1428;margin-bottom:0.8rem}
+.admin-diorama-line{padding:0.65rem;border:1px solid rgba(200,169,81,0.18);border-radius:6px;background:#0d1428;margin-bottom:0.65rem}
 .admin-diorama-line.active{border-color:var(--accent-gold);box-shadow:0 0 13px rgba(200,169,81,0.2)}
 .admin-diorama-line-switch{display:flex;align-items:center;gap:0.45rem;width:100%;background:none;border:0;color:var(--text-secondary);font-weight:700;font-size:0.85rem;cursor:pointer;text-align:left;margin-bottom:0.55rem}
 .admin-diorama-line.active .admin-diorama-line-switch{color:var(--accent-gold)}
@@ -585,12 +595,22 @@
 .admin-diorama-slots-back{grid-template-columns:repeat(6,minmax(0,1fr))}
 .admin-diorama-slots-mid{grid-template-columns:repeat(5,minmax(0,1fr))}
 .admin-diorama-slots-front{grid-template-columns:repeat(4,minmax(0,1fr))}
-.admin-diorama-slot{height:62px;padding:0.25rem;border:1px dashed rgba(200,169,81,0.28);border-radius:4px;background:rgba(0,0,0,0.18);color:#687089;font-size:0.61rem;line-height:1.08;overflow:hidden;overflow-wrap:anywhere}
+.admin-diorama-slot{position:relative;min-width:0;height:145px;padding:0.38rem;border:1px dashed rgba(200,169,81,0.28);border-radius:4px;background:rgba(0,0,0,0.18);color:#687089;font-size:0.61rem;line-height:1.08;overflow:hidden;overflow-wrap:anywhere;display:flex;flex-direction:column;align-items:stretch;justify-content:center;text-align:center}
+.admin-diorama-slot.empty{font-size:0.75rem}
 .admin-diorama-line.active .admin-diorama-slot{border-color:rgba(200,169,81,0.75);box-shadow:inset 0 0 8px rgba(200,169,81,0.09)}
-.admin-diorama-slot.filled{border-style:solid;color:var(--accent-cream);background:#182442;cursor:pointer}
-.admin-diorama-slot.filled:hover{border-color:var(--accent-red);color:#fff}
+.admin-diorama-slot.filled{border-style:solid;color:var(--accent-cream);background:#182442}
+.admin-diorama-slot-remove{position:absolute;top:2px;right:3px;width:18px;height:18px;padding:0;border:0;background:transparent;color:#8f99b1;font-size:1rem;line-height:1;cursor:pointer}
+.admin-diorama-slot-remove:hover{color:var(--accent-red)}
+.admin-diorama-slot-name{min-height:27px;padding:0.1rem 0.75rem 0;font-size:0.62rem;font-weight:700;line-height:1.15;display:flex;align-items:center;justify-content:center}
+.admin-diorama-slot-scale{margin:0.18rem 0 0.38rem;color:var(--accent-gold);font-size:0.66rem;font-weight:700}
+.admin-diorama-slot input{width:100%;box-sizing:border-box;height:27px;padding:0.2rem 0.3rem;border:1px solid rgba(200,169,81,0.35);border-radius:4px;background:#0b1122;color:#fff;text-align:center;font-size:0.67rem}
+.admin-diorama-slot input:focus{outline:none;border-color:var(--accent-gold);box-shadow:0 0 0 1px rgba(200,169,81,0.25)}
+.admin-diorama-modify{height:27px;margin-top:0.32rem;padding:0.15rem 0.2rem;border:1px solid var(--accent-gold);border-radius:4px;background:#263555;color:var(--accent-cream);font-size:0.62rem;font-weight:700;cursor:pointer}
+.admin-diorama-modify:hover:not(:disabled){background:var(--accent-red);border-color:var(--accent-red);color:#fff}
+.admin-diorama-modify:disabled{opacity:0.38;cursor:not-allowed}
+.admin-diorama-save-error{margin:-0.15rem 0 0.55rem;color:#ff7a8f;font-size:0.72rem;text-align:center}
 .admin-diorama-clear{width:100%}
-@media(max-width:1350px){.admin-diorama-layout{grid-template-columns:280px minmax(440px,1fr) 390px}.admin-diorama-monster-list{grid-template-columns:1fr}.admin-diorama-slot{font-size:0.56rem}}
+@media(max-width:1100px){.admin-diorama-catalog{width:280px}.admin-diorama-monster-list{grid-template-columns:1fr}.admin-diorama-lines{width:min(680px,calc(100% - 32px))}.admin-diorama-slot-name{font-size:0.56rem}}
 
 /* Friends buttons + modals */
 .friends-btn{display:inline-flex;align-items:center;gap:0.3rem;background:rgba(200,169,81,0.12);border:1px solid var(--border-gold);border-radius:6px;color:var(--accent-cream);padding:0.35rem 0.6rem;cursor:pointer;font-size:0.8rem}

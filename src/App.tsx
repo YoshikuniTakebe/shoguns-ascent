@@ -125,11 +125,12 @@ const LobbyScreen = () => {
 };
 
 const App = () => {
-  const { screen, checkAuth } = useGameStore();
+  const { screen, checkAuth, loadFigureSizeOverrides } = useGameStore();
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+    loadFigureSizeOverrides();
+  }, [checkAuth, loadFigureSizeOverrides]);
 
   if (screen === 'auth') return <AuthScreen />;
   if (screen === 'lobby') return <LobbyScreen />;

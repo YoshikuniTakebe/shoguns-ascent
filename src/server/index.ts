@@ -136,6 +136,8 @@ import {
   getPendingLobby,
   getAllPendingLobbies,
   deletePendingLobby,
+  getAppSetting,
+  setAppSetting,
 } from './database';
 import type { DbPendingLobby } from './database';
 import { generateToken, verifyToken } from './auth';
@@ -760,6 +762,58 @@ app.put('/api/games/:id/snapshot', (req, res) => {
 });
 
 // --- Admin endpoints ---
+
+const FIGURE_SIZES_SETTING_KEY = 'figure_size_overrides';
+
+function readFigureSizeOverrides(): Record<string, number> {
+  const stored = getAppSetting(FIGURE_SIZES_SETTING_KEY);
+  if (!stored) return {};
+  try {
+    const parsed = JSON.parse(stored) as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([, value]) =>
+        typeof value === 'number' && Number.isFinite(value) && value >= 0.2 && value <= 3
+      )
+    ) as Record<string, number>;
+  } catch {
+    return {};
+  }
+}
+
+app.get('/api/settings/figure-sizes', (_req, res) => {
+  res.json({ overrides: readFigureSizeOverrides() });
+});
+
+app.patch('/api/admin/settings/figure-sizes', (req, res) => {
+  const userId = getAuthUserId(req);
+  const user = userId ? getUserById(userId) : undefined;
+  if (!userId) {
+    res.status(401).json({ error: 'Invalid or missing token' });
+    return;
+  }
+  if (!user?.is_admin) {
+    res.status(403).json({ error: 'Admin access required' });
+    return;
+  }
+
+  const { key, scale } = req.body as { key?: unknown; scale?: unknown };
+  if (
+    typeof key !== 'string'
+    || !/^[a-z0-9-]+$/.test(key)
+    || typeof scale !== 'number'
+    || !Number.isFinite(scale)
+    || scale < 0.2
+    || scale > 3
+  ) {
+    res.status(400).json({ error: 'Invalid figure scale' });
+    return;
+  }
+
+  const overrides = readFigureSizeOverrides();
+  overrides[key] = Number(scale.toFixed(6));
+  setAppSetting(FIGURE_SIZES_SETTING_KEY, JSON.stringify(overrides));
+  res.json({ success: true, overrides });
+});
 
 app.delete('/api/games/:id', (req, res) => {
   const authHeader = req.headers.authorization;

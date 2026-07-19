@@ -95,6 +95,12 @@ export function initDatabase(): void {
       created_at TEXT,
       updated_at TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS app_settings (
+      setting_key TEXT PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
   `);
 
   // Migration: add is_admin column if it doesn't exist (for existing databases)
@@ -508,6 +514,23 @@ export function getAllPendingLobbies(): DbPendingLobby[] {
 
 export function deletePendingLobby(id: string): void {
   db.prepare(`DELETE FROM pending_lobbies WHERE id = ?`).run(id);
+}
+
+export function getAppSetting(key: string): string | undefined {
+  const row = db.prepare(
+    `SELECT setting_value FROM app_settings WHERE setting_key = ?`
+  ).get(key) as { setting_value: string } | undefined;
+  return row?.setting_value;
+}
+
+export function setAppSetting(key: string, value: string): void {
+  db.prepare(`
+    INSERT INTO app_settings (setting_key, setting_value, updated_at)
+    VALUES (?, ?, ?)
+    ON CONFLICT(setting_key) DO UPDATE SET
+      setting_value = excluded.setting_value,
+      updated_at = excluded.updated_at
+  `).run(key, value, new Date().toISOString());
 }
 
 // --- Admin functions ---

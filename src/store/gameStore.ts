@@ -288,6 +288,9 @@ interface GameStore {
   setCardsLightMode: (light: boolean) => void;
   showFigureMeasurements: boolean;
   setShowFigureMeasurements: (show: boolean) => void;
+  figureSizeOverrides: Record<string, number>;
+  loadFigureSizeOverrides: () => Promise<void>;
+  setFigureSizeOverride: (key: string, scale: number) => Promise<void>;
   setShowTrainModal: (show: boolean) => void;
 
   // UI actions
@@ -1201,6 +1204,42 @@ export const useGameStore = create<GameStore>((set, get) => ({
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
         body: JSON.stringify({ showFigureMeasurements: allowed }),
       }).catch((error) => console.error('[preferences] measurement save failed:', error));
+    }
+  },
+  figureSizeOverrides: {},
+  loadFigureSizeOverrides: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/settings/figure-sizes`);
+      if (!res.ok) return;
+      const data = await res.json() as { overrides?: Record<string, number> };
+      set({ figureSizeOverrides: data.overrides || {} });
+    } catch (error) {
+      console.error('[figure sizes] load failed:', error);
+    }
+  },
+  setFigureSizeOverride: async (key, scale) => {
+    const { authToken, authUser, figureSizeOverrides } = get();
+    if (!authToken || !authUser?.isAdmin) return;
+
+    const roundedScale = Number(Math.min(3, Math.max(0.2, scale)).toFixed(6));
+    const previousOverrides = figureSizeOverrides;
+    set({ figureSizeOverrides: { ...figureSizeOverrides, [key]: roundedScale } });
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/settings/figure-sizes`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ key, scale: roundedScale }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as { overrides?: Record<string, number> };
+      if (data.overrides) set({ figureSizeOverrides: data.overrides });
+    } catch (error) {
+      set({ figureSizeOverrides: previousOverrides });
+      console.error('[figure sizes] save failed:', error);
+      throw error;
     }
   },
   setShowTrainModal: (show) => set({ showTrainModal: show }),
