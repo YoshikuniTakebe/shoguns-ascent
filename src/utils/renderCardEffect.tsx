@@ -19,10 +19,10 @@ const COLOR_MAP: Record<string, string> = {
   shinto: '#c8a951',
 };
 
-const TOKEN_REGEX = /\{(vp|coin|honor|bushi|shinto|force)\}([+]?\d*)/g;
+const TOKEN_REGEX = /([+]?\d+)?\{(vp|coin|honor|bushi|shinto|force)\}([+]?\d*)/g;
 
 /**
- * Parses a translated card effect string containing icon tokens like {vp}3, {coin}2, {honor}, {force}+1, etc.
+ * Parses translated card effects containing icon tokens such as {vp}3, 3{vp}, {honor} or {force}+1.
  * Returns an array of React nodes with inline SVG icons replacing the tokens.
  */
 export function renderCardEffect(text: string): ReactNode[] {
@@ -34,7 +34,7 @@ export function renderCardEffect(text: string): ReactNode[] {
   TOKEN_REGEX.lastIndex = 0;
 
   while ((match = TOKEN_REGEX.exec(text)) !== null) {
-    const [fullMatch, iconName, amount] = match;
+    const [fullMatch, amountBefore, iconName, amountAfter] = match;
     const matchStart = match.index;
 
     // Add text before this match
@@ -49,8 +49,9 @@ export function renderCardEffect(text: string): ReactNode[] {
       const iconSize = iconName === 'shinto' ? 17 : 14;
       result.push(
         <span key={`icon-${matchStart}`} style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', gap: '1px' }}>
+          {amountBefore && <span style={{ fontWeight: 'bold', color: iconColor }}>{amountBefore}</span>}
           <IconComponent size={iconSize} color={iconColor} />
-          {amount && <span style={{ fontWeight: 'bold', color: '#c8a951' }}>{amount}</span>}
+          {amountAfter && <span style={{ fontWeight: 'bold', color: '#c8a951' }}>{amountAfter}</span>}
         </span>
       );
     }

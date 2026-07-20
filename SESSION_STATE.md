@@ -1125,3 +1125,10 @@ server restart — no longer loses the game.
   maximum of two figures per Province or Shrine.
 - Loto's power now describes hiding a selected Political Mandate face down and declaring the Mandate
   resolved in its place. `Mandato Politico` is bold and rendered in the clan color.
+
+## Changelog - 2026-07-20 (Justice text and Benevolence honor log)
+
+- Justice now reads `Gana 3 [VP] cada vez que mates 1 o mas figuras de un jugador con menos
+  [Honor]`, with the bold amount placed before the VP icon.
+- Benevolence logs use Coin and Honor icon tokens and include the owner's final Honor Track position
+  immediately after the Honor gain.

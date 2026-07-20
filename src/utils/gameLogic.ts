@@ -254,7 +254,8 @@ export function resolveBenevolenceDecision(state: GameState, playerId: string, r
   nextRecipient.coins += 1;
   gainHonor(nextState, playerId);
   gainVictoryPoints(nextState, playerId, 2, 'Benevolence');
-  nextState.log.push(`${nextOwner.name} entrega 1 moneda de lo gastado a ${nextRecipient.name}, gana Honor y 2 PV (Benevolence${pending.currentCopy > 1 ? `, copia ${pending.currentCopy}` : ''})`);
+  const honorPosition = nextState.honorTrack.indexOf(playerId) + 1;
+  nextState.log.push(`${nextOwner.name} entrega {coin} 1 de lo gastado a ${nextRecipient.name}, gana {h} y 2 PV y asciende a la posición ${honorPosition} {h} (Benevolence${pending.currentCopy > 1 ? `, copia ${pending.currentCopy}` : ''})`);
   const notice: RuleEventNotice = {
     id: generateId(),
     type: 'benevolence',

@@ -581,7 +581,7 @@ export const es: Record<TranslationKey, string> = {
   'card.effect.su-fire-dragon': 'Al inicio de la Batalla, mata 1 figura local de cada jugador (incluyéndote).',
   'card.effect.su-hotei': 'Cuenta como {shinto}. Puede reemplazar cualquier {shinto} al enviarlo a Rezar.',
   'card.effect.su-jikininki': 'Cada vez que otra figura muere en esta Provincia, gana {vp}1 y pierde {honor}.',
-  'card.effect.su-justice': 'Gana {vp}3 cada vez que mates 1+ figuras de un jugador con menos Honor.',
+  'card.effect.su-justice': 'Gana 3{vp} cada vez que mates 1 o más figuras de un jugador con menos {honor}.',
   'card.effect.su-koneko': 'Si muere, gana {coin}2 y 2 Ronin. Los demás en la Provincia pierden {coin}2 y 2 Ronin.',
   'card.effect.su-loyalty': 'Si tienes un Aliado, cada vez que ganes 1+ {vp}, gana {vp}1 extra.',
   'card.effect.su-mercy': 'Cuando puedas matar 1+ figuras enemigas, puedes dejarlas todas con vida y ganar {vp}2.',
