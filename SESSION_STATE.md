@@ -1103,3 +1103,9 @@ server restart — no longer loses the game.
   config bundler was blocked by Windows from writing its temporary file under `node_modules`.
 - Focused logic checks cover Earth Dragon converting a contested battle to uncontested before bids
   and a five-coin reparation split reported as three and two coins.
+
+## Changelog - 2026-07-20 (clan tooltip wording)
+
+- The Sol clan power now reads `empate por [Honor]`, making the tiebreak condition explicit.
+- The Libelula clan power includes the Monster icon alongside Bushi, Shinto and Daimyo because its
+  Monsters can also be summoned and moved to any Province.

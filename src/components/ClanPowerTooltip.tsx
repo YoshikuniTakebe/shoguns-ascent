@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { CLANS } from '../types/game';
 import type { Player } from '../types/game';
 import { ClanShield } from './ClanShields';
-import { BushiIcon, CoinIcon, DaimyoIcon, FistIcon, FortressIcon, HonorIcon, RoninIcon, ShintoIcon, VPIcon } from './Icons';
+import { BushiIcon, CoinIcon, DaimyoIcon, FistIcon, FortressIcon, HonorIcon, MonsterIcon, RoninIcon, ShintoIcon, VPIcon } from './Icons';
 
 const ClanPowerContent = ({ clanId, color }: { clanId: string; color: string }) => {
   switch (clanId) {
@@ -12,7 +12,7 @@ const ClanPowerContent = ({ clanId, color }: { clanId: string; color: string }) 
     case 'sol':
       return (
         <span className="clan-power-tooltip-lines">
-          <span className="clan-power-tooltip-line">Cuando gana un empate <HonorIcon size={16} color={color} /></span>
+          <span className="clan-power-tooltip-line">Cuando gana un empate por <HonorIcon size={16} color={color} /></span>
           <span className="clan-power-tooltip-line">gana <CoinIcon size={16} color={color} /> 1 y <VPIcon size={16} color={color} /> 1</span>
           <span className="clan-power-tooltip-line">y el perdedor pierde <CoinIcon size={16} color={color} /> 1 y <VPIcon size={16} color={color} /> 1.</span>
         </span>
@@ -22,7 +22,7 @@ const ClanPowerContent = ({ clanId, color }: { clanId: string; color: string }) 
     case 'tortuga':
       return <>Sus <FortressIcon size={17} color={color} /> se mueven como figuras y cuentan como <FistIcon size={16} color={color} /> 1.</>;
     case 'libelula':
-      return <>Puede invocar y mover sus <BushiIcon size={16} color={color} /> <ShintoIcon size={17} color={color} /> <DaimyoIcon size={16} color={color} /> a cualquier Provincia.</>;
+      return <>Puede invocar y mover sus <BushiIcon size={16} color={color} /> <ShintoIcon size={17} color={color} /> <DaimyoIcon size={16} color={color} /> <MonsterIcon size={17} color={color} /> a cualquier Provincia.</>;
     case 'zorro':
       return <>Al inicio de la Guerra coloca <BushiIcon size={17} color={color} /> 1 gratis en cada Provincia donde no tenga figuras.</>;
     case 'bonsai':
