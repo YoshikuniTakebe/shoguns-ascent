@@ -571,7 +571,7 @@
 .admin-diorama-clan-list{display:flex;flex-direction:column;gap:0.5rem}
 .admin-diorama-clan-row{padding:0.45rem;background:#0c1224;border:1px solid rgba(255,255,255,0.08);border-radius:6px}
 .admin-diorama-clan-name{display:flex;align-items:center;gap:0.45rem;font-size:0.78rem;font-weight:700;margin-bottom:0.35rem}
-.admin-diorama-clan-figures{display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem}
+.admin-diorama-clan-figures{display:grid;grid-template-columns:repeat(4,1fr);gap:0.3rem}
 .admin-diorama-clan-figures button,.admin-diorama-monster-list button{min-width:0;border:1px solid rgba(200,169,81,0.28);background:#17213a;color:var(--text-primary);cursor:pointer;border-radius:4px;transition:border-color .15s,background .15s}
 .admin-diorama-clan-figures button:hover,.admin-diorama-monster-list button:hover{border-color:var(--accent-gold);background:#21304f}
 .admin-diorama-clan-figures button{height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:0.63rem}

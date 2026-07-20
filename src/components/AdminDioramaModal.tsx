@@ -7,6 +7,7 @@ import { ClanShield } from './ClanShields';
 import { DioramaFigure } from './RegionDetailModal';
 import {
   getBushiImage,
+  getCastleImage,
   getDaimyoImage,
   getMonsterFigureImage,
   getRegionBackground,
@@ -20,6 +21,7 @@ import {
 } from '../utils/figureSizes';
 
 type DioramaLine = 'back' | 'mid' | 'front';
+type ClanFigureType = 'bushi' | 'shinto' | 'daimyo' | 'fortress';
 
 interface DebugFigure {
   instanceId: string;
@@ -177,11 +179,17 @@ export const AdminDioramaModal = ({ onClose }: { onClose: () => void }) => {
     });
   };
 
-  const addClanFigure = (clanId: string, type: 'bushi' | 'shinto' | 'daimyo') => {
+  const getClanFigureLabel = (type: ClanFigureType) =>
+    type === 'bushi' ? 'Bushi'
+      : type === 'shinto' ? 'Shinto'
+        : type === 'daimyo' ? 'Daimyo'
+          : 'Fortaleza';
+
+  const addClanFigure = (clanId: string, type: ClanFigureType) => {
     const clan = CLANS.find(item => item.id === clanId);
     if (!clan) return;
     addFigure({
-      label: `${type === 'bushi' ? 'Bushi' : type === 'shinto' ? 'Shinto' : 'Daimyo'} ${clan.name}`,
+      label: `${getClanFigureLabel(type)} ${clan.name}`,
       figure: { id: `debug-${type}-${clanId}`, owner: `debug-${clanId}`, type },
       clanId,
       clanName: clan.name,
@@ -242,7 +250,7 @@ export const AdminDioramaModal = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  const getClanFigureScale = (clanId: string, type: 'bushi' | 'shinto' | 'daimyo') =>
+  const getClanFigureScale = (clanId: string, type: ClanFigureType) =>
     getFigureSizeOverride(
       { id: `scale-${type}-${clanId}`, owner: '', type },
       clanId,
@@ -335,7 +343,7 @@ export const AdminDioramaModal = ({ onClose }: { onClose: () => void }) => {
                     <span>{clan.name}</span>
                   </div>
                   <div className="admin-diorama-clan-figures">
-                    {(['bushi', 'shinto', 'daimyo'] as const).map(type => (
+                    {(['bushi', 'shinto', 'daimyo', 'fortress'] as const).map(type => (
                       <button
                         key={type}
                         onClick={() => addClanFigure(clan.id, type)}
@@ -345,12 +353,13 @@ export const AdminDioramaModal = ({ onClose }: { onClose: () => void }) => {
                           src={
                             type === 'bushi' ? getBushiImage(clan.id) || ''
                               : type === 'shinto' ? getShintoImage(clan.id) || ''
-                                : getDaimyoImage(clan.id) || ''
+                                : type === 'daimyo' ? getDaimyoImage(clan.id) || ''
+                                  : getCastleImage(clan.id) || ''
                           }
                           alt=""
                         />
                         <span>
-                          {type === 'bushi' ? 'Bushi' : type === 'shinto' ? 'Shinto' : 'Daimyo'}
+                          {getClanFigureLabel(type)}
                           {' '}({formatFigureScale(getClanFigureScale(clan.id, type))})
                         </span>
                       </button>

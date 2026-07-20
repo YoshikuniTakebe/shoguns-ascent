@@ -1077,3 +1077,12 @@ server restart — no longer loses the game.
   so it remains distinct from the warrior and readable in every clan color at 14-21px.
 - The C1 design preview was updated to match the implemented icon.
 - TypeScript, lint and the production build pass. Lint retains only the two pre-existing warnings.
+
+## Changelog - 2026-07-20 (fortresses in admin Diorama)
+
+- Every clan row in the admin Diorama catalogue now includes its real Fortress miniature alongside
+  Bushi, Shinto and Daimyo.
+- Fortresses can be placed in any Diorama line, removed from occupied slots and calibrated with the
+  same signed percentage control. Their saved keys are clan-specific (`fortress-<clanId>`), so the
+  resulting scale also applies to the in-game Province Diorama and figure zoom.
+- TypeScript, lint and the production build pass. Lint retains only the two pre-existing warnings.
