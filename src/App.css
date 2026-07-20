@@ -747,6 +747,10 @@
   border-right-color: rgba(15, 15, 25, 0.98);
 }
 
+.clan-power-tooltip-portal-loto {
+  width: min(410px, calc(100vw - 24px));
+}
+
 .clan-power-tooltip-title,
 .clan-power-tooltip-text {
   display: flex;

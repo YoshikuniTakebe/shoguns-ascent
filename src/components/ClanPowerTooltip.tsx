@@ -18,7 +18,16 @@ const ClanPowerContent = ({ clanId, color }: { clanId: string; color: string }) 
         </span>
       );
     case 'loto':
-      return <>Puede elegir cualquier <strong>Mandato político</strong>, sin importar las fichas que haya robado.</>;
+      return (
+        <span className="clan-power-tooltip-lines">
+          <span className="clan-power-tooltip-line">
+            Escoge un <strong style={{ color }}>Mandato Político</strong> que pondrá boca abajo,
+          </span>
+          <span className="clan-power-tooltip-line">
+            ocultándolo y dictando qué mandato se ejecutará en su lugar.
+          </span>
+        </span>
+      );
     case 'tortuga':
       return <>Sus <FortressIcon size={17} color={color} /> se mueven como figuras y cuentan como <FistIcon size={16} color={color} /> 1.</>;
     case 'libelula':
@@ -28,7 +37,16 @@ const ClanPowerContent = ({ clanId, color }: { clanId: string; color: string }) 
     case 'bonsai':
       return <>El coste máximo de cualquier compra es <CoinIcon size={17} color={color} /> 1.</>;
     case 'luna':
-      return <>Todas sus figuras tienen <FistIcon size={17} color={color} /> 2. Máximo 2 figuras por Provincia y 2 en cada Santuario.</>;
+      return (
+        <span className="clan-power-tooltip-lines">
+          <span className="clan-power-tooltip-line">
+            Todas tus figuras tienen <FistIcon size={17} color={color} /> 2
+          </span>
+          <span className="clan-power-tooltip-line">
+            Máximo 2 figuras por Provincia o Santuario.
+          </span>
+        </span>
+      );
     default:
       return null;
   }
@@ -53,7 +71,7 @@ export const ClanPowerTooltip = ({ player, children, className = '' }: { player:
     >
       {children}
       {visible && createPortal(
-        <span className="clan-power-tooltip-portal" style={{ top: position.top, left: position.left, borderColor: clan.color }}>
+        <span className={`clan-power-tooltip-portal clan-power-tooltip-portal-${clan.id}`} style={{ top: position.top, left: position.left, borderColor: clan.color }}>
           <span className="clan-power-tooltip-title">
             <ClanShield clanId={player.clanId} size={28} />
             <strong style={{ color: clan.color }}>Clan {clan.name}</strong>

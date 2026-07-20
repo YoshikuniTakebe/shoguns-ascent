@@ -1118,3 +1118,10 @@ server restart — no longer loses the game.
   its button with the standard `ready/total listos` counter plus an `Esperando al resto` message.
 - The duplicate ready counter was removed from the right Action panel, keeping the multiplayer
   acknowledgement feedback in the same place as the rest of the game's shared popups.
+
+## Changelog - 2026-07-20 (Luna and Loto clan tooltips)
+
+- Luna's power is now presented on two fixed lines: all figures have Force 2, followed by the shared
+  maximum of two figures per Province or Shrine.
+- Loto's power now describes hiding a selected Political Mandate face down and declaring the Mandate
+  resolved in its place. `Mandato Politico` is bold and rendered in the clan color.
