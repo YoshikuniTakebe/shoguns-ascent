@@ -5,7 +5,7 @@ import type { Player } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { BushiIcon, CoinIcon, DaimyoIcon, FistIcon, FortressIcon, HonorIcon, MonsterIcon, RoninIcon, ShintoIcon, VPIcon } from './Icons';
 
-const ClanPowerContent = ({ clanId, color }: { clanId: string; color: string }) => {
+export const ClanPowerContent = ({ clanId, color }: { clanId: string; color: string }) => {
   switch (clanId) {
     case 'koi':
       return <>Puede usar <CoinIcon size={16} color={color} /> como <RoninIcon size={16} color={color} />. Al comenzar la Guerra cambia su Ronin por Monedas y, al Contratar Ronin, sus Monedas suman <FistIcon size={16} color={color} />.</>;

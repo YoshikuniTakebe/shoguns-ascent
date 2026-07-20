@@ -11,19 +11,9 @@ import { getServerWsUrl } from '../config';
 import { ConfigModal } from './ConfigModal';
 import { AddFriendModal, FriendsListModal, fetchFriends } from './FriendsModal';
 import type { Friend } from './FriendsModal';
+import { ClanPowerContent } from './ClanPowerTooltip';
 import titleImg from '../img/NoboruTaiyo.png';
 import typeGameBgImg from '../img/type_game_bg.png';
-
-const CLAN_POWERS: Record<string, string> = {
-  koi: 'Monedas como Ronin. Al inicio de Guerra cambia Ronin por Monedas. En Contratar Ronin, sus Monedas suman Fuerza.',
-  sol: 'Al ganar empate por Honor, gana 1 Moneda + 1 PV. El perdedor pierde 1 Moneda + 1 PV.',
-  loto: 'Elige cualquier Orden Politica, sin importar las fichas que robe.',
-  tortuga: 'Fortalezas se mueven como figuras y cuentan como 1 de Fuerza.',
-  libelula: 'Invoca figuras en cualquier Provincia. Mueve figuras a cualquier Provincia.',
-  zorro: 'Al inicio de Guerra, coloca 1 Bushi gratis en cada provincia sin unidades propias.',
-  bonsai: 'El coste maximo de cualquier compra es 1 Moneda.',
-  luna: 'Todas sus figuras tienen Fuerza 2. Max 2 figuras por provincia y max 2 en Santuarios.',
-};
 
 export const MainMenu = () => {
   const { createGame, connectWebSocket, setLobbyId, setScreen, setAuthInitialMode, language, setLanguage, isAuthenticated, authUser, authToken, logout } = useGameStore();
@@ -767,7 +757,12 @@ export const MainMenu = () => {
                 <span className="clan-tooltip-name" style={{ color: c.color }}>{c.name}</span>
                 <span className="clan-tooltip-stat" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><HonorIcon size={14} color={c.color} /> Honor inicial: {c.initialHonor}</span>
                 <span className="clan-tooltip-stat" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CoinIcon size={14} color={c.color} /> Ingresos: {CLAN_INCOME[c.id] ?? 0}</span>
-                <span className="clan-tooltip-power">Poder: {CLAN_POWERS[c.id] ?? ''}</span>
+                <span className="clan-tooltip-power">
+                  <span className="clan-tooltip-power-label">Poder del clan</span>
+                  <span className="clan-tooltip-power-content">
+                    <ClanPowerContent clanId={c.id} color={c.color} />
+                  </span>
+                </span>
               </div>
             </div>
           ))}

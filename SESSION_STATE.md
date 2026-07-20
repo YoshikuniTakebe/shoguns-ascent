@@ -1132,3 +1132,9 @@ server restart — no longer loses the game.
   [Honor]`, with the bold amount placed before the VP icon.
 - Benevolence logs use Coin and Honor icon tokens and include the owner's final Honor Track position
   immediately after the Honor gain.
+
+## Changelog - 2026-07-20 (shared clan powers on home)
+
+- The home clan previews no longer use their own stale plain-text power table.
+- Home, Player sidebar and Honor Track now render the same shared clan-power content, including the
+  current wording, figure/resource icons, line structure and clan-colored emphasis.

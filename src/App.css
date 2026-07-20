@@ -790,6 +790,40 @@
   white-space: nowrap;
 }
 
+.clan-tooltip-power {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--accent-cream);
+  font-style: normal;
+}
+
+.clan-tooltip-power-label {
+  color: var(--accent-gold);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.clan-tooltip-power-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: var(--accent-cream);
+}
+
+.clan-tooltip-power .clan-power-tooltip-lines {
+  align-items: center;
+  width: 100%;
+}
+
+.clan-tooltip-power .clan-power-tooltip-line {
+  justify-content: center;
+  white-space: normal;
+}
+
 .figure-icon-sol {
   animation: solGlow 2.5s ease-in-out infinite;
 }
