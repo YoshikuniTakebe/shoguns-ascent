@@ -24,7 +24,7 @@ const ClanPowerContent = ({ clanId, color }: { clanId: string; color: string }) 
     case 'libelula':
       return <>Puede invocar y mover sus <BushiIcon size={16} color={color} /> <ShintoIcon size={17} color={color} /> <DaimyoIcon size={16} color={color} /> <MonsterIcon size={17} color={color} /> a cualquier Provincia.</>;
     case 'zorro':
-      return <>Al inicio de la Guerra coloca <BushiIcon size={17} color={color} /> 1 gratis en cada Provincia donde no tenga figuras.</>;
+      return <>Al inicio de la Guerra coloca un <BushiIcon size={17} color={color} /> gratis en cada Provincia donde no tenga figuras.</>;
     case 'bonsai':
       return <>El coste máximo de cualquier compra es <CoinIcon size={17} color={color} /> 1.</>;
     case 'luna':

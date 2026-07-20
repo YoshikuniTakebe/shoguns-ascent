@@ -1109,3 +1109,5 @@ server restart — no longer loses the game.
 - The Sol clan power now reads `empate por [Honor]`, making the tiebreak condition explicit.
 - The Libelula clan power includes the Monster icon alongside Bushi, Shinto and Daimyo because its
   Monsters can also be summoned and moved to any Province.
+- The Zorro clan power now says `coloca un [Bushi] gratis` instead of placing a numeric `1` after
+  the figure icon.
