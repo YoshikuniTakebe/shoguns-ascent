@@ -1111,3 +1111,10 @@ server restart — no longer loses the game.
   Monsters can also be summoned and moved to any Province.
 - The Zorro clan power now says `coloca un [Bushi] gratis` instead of placing a numeric `1` after
   the figure icon.
+
+## Changelog - 2026-07-20 (Tea Ceremony ready feedback)
+
+- In online season setup, accepting the Tea Ceremony popup now keeps that popup visible and replaces
+  its button with the standard `ready/total listos` counter plus an `Esperando al resto` message.
+- The duplicate ready counter was removed from the right Action panel, keeping the multiplayer
+  acknowledgement feedback in the same place as the rest of the game's shared popups.

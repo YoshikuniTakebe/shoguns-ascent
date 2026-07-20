@@ -816,10 +816,12 @@ export const GameBoard = () => {
       )}
 
       {/* Tea Ready Popup (online seasonSetup) */}
-      {gameState.mode === 'online' && gameState.currentPhase === 'seasonSetup' && localPlayerId && !(gameState.teaReadyPlayers || []).includes(localPlayerId) && (() => {
+      {gameState.mode === 'online' && gameState.currentPhase === 'seasonSetup' && localPlayerId && (() => {
         const localPlayer = gameState.players.find(p => p.id === localPlayerId);
         if (!localPlayer) return null;
         const clanColor = CLANS.find(c => c.id === localPlayer.clanId)?.color;
+        const readyCount = (gameState.teaReadyPlayers || []).length;
+        const isReady = gameState.teaReadyPlayers.includes(localPlayerId);
         return (
           <div className="monster-placement-popup" style={{ zIndex: 1200 }}>
             <div className="tea-ready-popup-content" style={{
@@ -842,9 +844,16 @@ export const GameBoard = () => {
                 {localPlayer.name}
               </p>
               <h4 style={{ color: '#fff', margin: '0px 0px', textAlign: 'center', marginBottom: '15px' }}>{t('game.teaReadyTitle')}</h4>
-              <button className="monster-placement-btn" onClick={doTeaReady} style={{ fontSize: '1.02rem', padding: '0.68rem 2.12rem', marginTop: '-11px' }}>
-                {t('game.turnPopupAccept')}
-              </button>
+              {isReady ? (
+                <div className="tea-ready-waiting">
+                  <strong>{readyCount}/{gameState.players.length} listos</strong>
+                  <span>Esperando al resto de jugadores...</span>
+                </div>
+              ) : (
+                <button className="monster-placement-btn" onClick={doTeaReady} style={{ fontSize: '1.02rem', padding: '0.68rem 2.12rem', marginTop: '-11px' }}>
+                  {t('game.turnPopupAccept')}
+                </button>
+              )}
             </div>
           </div>
         );
