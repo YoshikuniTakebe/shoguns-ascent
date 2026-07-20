@@ -4095,7 +4095,6 @@ export function prepareBattleCardDecision(state: GameState, provinceId: string):
   if (!province || !battle) return state;
 
   const effectOrder: Array<{ type: 'earth-dragon' | 'fire-dragon' | 'jorogumo'; cardId: string; applied: boolean }> = [
-    { type: 'earth-dragon', cardId: 'sp-earth-dragon', applied: !!battle.earthDragonEffectApplied },
     { type: 'fire-dragon', cardId: 'su-fire-dragon', applied: !!battle.fireDragonEffectApplied },
     { type: 'jorogumo', cardId: 'sp-jorogumo', applied: !!battle.jorogumoEffectApplied },
   ];
@@ -4118,6 +4117,30 @@ export function prepareBattleCardDecision(state: GameState, provinceId: string):
       ownerId: nextEffect.figure.owner,
       provinceId,
       sourceFigureId: nextEffect.figure.id,
+      stage: 'post-bids',
+    },
+  };
+}
+
+export function preparePreBattleCardDecision(state: GameState, provinceId: string): GameState {
+  if (state.pendingBattleCardDecision) return state;
+  const province = state.provinces[provinceId];
+  const battle = state.activeBattles.find(candidate => candidate.provinceId === provinceId && !candidate.resolved);
+  if (!province || !battle || battle.earthDragonEffectApplied) return state;
+
+  const earthDragon = province.figures.find(figure => figure.type === 'monster' && figure.monsterCardId === 'sp-earth-dragon');
+  if (!earthDragon) return markBattleDecisionApplied(state, provinceId, 'earth-dragon');
+  const candidates = battleDecisionCandidates(state, 'earth-dragon', earthDragon.owner, provinceId);
+  if (Object.keys(candidates).length === 0) return markBattleDecisionApplied(state, provinceId, 'earth-dragon');
+
+  return {
+    ...state,
+    pendingBattleCardDecision: {
+      type: 'earth-dragon',
+      ownerId: earthDragon.owner,
+      provinceId,
+      sourceFigureId: earthDragon.id,
+      stage: 'pre-battle',
     },
   };
 }
@@ -4176,7 +4199,9 @@ export function resolveBattleCardDecision(
     const owner = state.players.find(player => player.id === playerId);
     resolvedState = { ...state, log: [...state.log, `${owner?.name || 'Jugador'} decide no usar Earth Dragon en ${state.provinces[pending.provinceId]?.name || pending.provinceId}`] };
   }
-  return prepareBattleCardDecision(markBattleDecisionApplied(resolvedState, pending.provinceId, pending.type, captured), pending.provinceId);
+  const completedState = markBattleDecisionApplied(resolvedState, pending.provinceId, pending.type, captured);
+  if (pending.stage === 'pre-battle') return resolveUncontestedBattles(completedState);
+  return prepareBattleCardDecision(completedState, pending.provinceId);
 }
 
 /**
@@ -4922,6 +4947,7 @@ export function resolveNextBattle(state: GameState): GameState {
         newState.log = [...newState.log, `${winner.name} gastó ${totalBid} monedas en la batalla`];
         const share = Math.floor(totalBid / losers.length);
         const remainder = totalBid % losers.length;
+        const allocations: Record<string, number> = Object.fromEntries(losers.map(pid => [pid, share]));
         if (share > 0) {
           losers.forEach((pid) => {
             const loser = newState.players.find((p) => p.id === pid)!;
@@ -4929,14 +4955,22 @@ export function resolveNextBattle(state: GameState): GameState {
             newState.log = [...newState.log, `${loser.name} recibe ${share} monedas del ganador. Total {coin} ${loser.coins}`];
           });
         }
-        // Coins have no further use during War, so distribute any remainder deterministically
-        // and continue directly to the battle result instead of pausing for another popup.
+        // Remainders are deterministic; the following popup only reports the final allocation.
         losers.slice(0, remainder).forEach((pid) => {
           const loser = newState.players.find((p) => p.id === pid)!;
           loser.coins += 1;
+          allocations[pid] += 1;
           newState.log = [...newState.log, `${loser.name} recibe 1 moneda restante del ganador. Total {coin} ${loser.coins}`];
         });
-        newState.coinDistributionPending = null;
+        newState.coinDistributionPending = {
+          battleProvinceId: battle.provinceId,
+          winnerId,
+          losers,
+          remainder: 0,
+          distributed: totalBid,
+          sharePerLoser: share,
+          allocations,
+        };
       }
     }
 

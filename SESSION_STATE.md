@@ -1086,3 +1086,20 @@ server restart — no longer loses the game.
   same signed percentage control. Their saved keys are clan-specific (`fortress-<clanId>`), so the
   resulting scale also applies to the in-game Province Diorama and figure zoom.
 - TypeScript, lint and the production build pass. Lint retains only the two pre-existing warnings.
+
+## Changelog - 2026-07-20 (Earth Dragon pre-battle and battle UI)
+
+- Earth Dragon now resolves after every player accepts the battle introduction and before any War
+  Tactics bids are submitted. Moving the selected figures recalculates the province participants;
+  if the move leaves no opposition, the battle is reclassified and awarded without opening bids.
+- Its decision UI uses clan-bordered figure choices and province-colored destination choices instead
+  of native selects. The owner can inspect the map and return without losing the current selection.
+- Take Hostage, Hire Ronin and Imperial Poets are displayed as Tomar Rehén, Contratar Ronin and
+  Poetas Imperiales in both bidding and result summaries; Seppuku remains unchanged.
+- The clan-power tooltip is now shared by the left player panel and every Honor Track entry.
+- Battle coin reparations remain automatically divided, including deterministic remainder coins, but
+  now pause on an all-player informational popup listing the exact amount received by each loser.
+- TypeScript and lint pass. The production build passes with Vite's runner config loader; the default
+  config bundler was blocked by Windows from writing its temporary file under `node_modules`.
+- Focused logic checks cover Earth Dragon converting a contested battle to uncontested before bids
+  and a five-coin reparation split reported as three and two coins.

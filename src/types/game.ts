@@ -172,6 +172,7 @@ export interface PendingBattleCardDecision {
   ownerId: string;
   provinceId: string;
   sourceFigureId: string;
+  stage?: 'pre-battle' | 'post-bids';
 }
 
 export interface PendingMonsterEnterDecision {
@@ -397,6 +398,7 @@ export interface GameState {
     remainder: number;
     distributed: number;
     sharePerLoser: number;
+    allocations?: Record<string, number>;
   } | null;
   warPhaseReadyPlayers: string[];
   warPhaseStartAcknowledged?: boolean;

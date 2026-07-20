@@ -45,6 +45,7 @@ import {
   processHostageReturn,
   finalizeCleanupAndAdvance,
   determineTacticWinners,
+  preparePreBattleCardDecision,
   prepareBattleCardDecision,
   resolveBattleCardDecision,
   resolveBattleMercyDecision,
@@ -1502,6 +1503,10 @@ wss.on('connection', (ws: WebSocket, req) => {
           );
           if (nextState === l.gameState) return;
           l.gameState = nextState;
+          if (pending.stage === 'pre-battle') {
+            broadcastState(l);
+            break;
+          }
           if (!l.gameState.pendingBattleCardDecision) {
             const battle = l.gameState.activeBattles.find(candidate => candidate.provinceId === pending.provinceId && !candidate.resolved);
             if (battle) {
@@ -3353,6 +3358,10 @@ wss.on('connection', (ws: WebSocket, req) => {
           }
           if (l.gameState.battlePopupReadyPlayers.length >= l.gameState.players.length) {
             l.gameState = { ...l.gameState, battlePopupReadyPlayers: [] };
+            const currentBattle = l.gameState.activeBattles.find(battle => !battle.resolved && !battle.uncontested);
+            if (currentBattle) {
+              l.gameState = preparePreBattleCardDecision(l.gameState, currentBattle.provinceId);
+            }
           }
           broadcastState(l);
           break;

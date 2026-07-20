@@ -45,6 +45,7 @@ import {
   processHostageReturn,
   finalizeCleanupAndAdvance,
   determineTacticWinners,
+  preparePreBattleCardDecision,
   prepareBattleCardDecision,
   resolveBattleCardDecision,
   resolveBattleMercyDecision,
@@ -3549,6 +3550,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     const nextState = resolveBattleCardDecision(gameState, playerId, useEffect, selectedByPlayer, destinationsByFigure, useMercy);
     if (nextState === gameState) return;
+    if (pending.stage === 'pre-battle') {
+      const currentBattle = nextState.activeBattles.find(candidate => !candidate.resolved);
+      set({
+        gameState: nextState,
+        warTacticBidsSubmitted: false,
+        battleStepPhase: currentBattle?.uncontested ? 'popup' : 'bidding',
+        battleCurrentBiddingIndex: 0,
+        battleResolutionData: null,
+        selectedHostageTarget: null,
+      });
+      return;
+    }
     if (nextState.pendingBattleCardDecision) {
       set({ gameState: nextState, battleStepPhase: null });
       return;
@@ -4172,7 +4185,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().sendAction({ type: 'BATTLE_POPUP_READY', playerId: get().localPlayerId });
       return;
     }
-    set({ battleStepPhase: 'bidding' });
+    const preparedState = preparePreBattleCardDecision(gameState, battle.provinceId);
+    set({
+      gameState: preparedState,
+      battleStepPhase: preparedState.pendingBattleCardDecision ? null : 'bidding',
+      battleCurrentBiddingIndex: 0,
+    });
   },
 
   // --- Coin Distribution ---
@@ -4761,7 +4779,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // When battlePopupReadyPlayers clears (all accepted battle start popup), transition to bidding
             const prevBattlePopupReady = prevGameState?.battlePopupReadyPlayers?.length || 0;
             if (prevBattlePopupReady > 0 && (state.battlePopupReadyPlayers?.length || 0) === 0) {
-              uiResets.battleStepPhase = 'bidding';
+              uiResets.battleStepPhase = state.pendingBattleCardDecision ? null : 'bidding';
+            }
+
+            if (prevGameState?.pendingBattleCardDecision?.stage === 'pre-battle' && !state.pendingBattleCardDecision) {
+              const currentBattle = state.activeBattles.find((candidate: { resolved?: boolean }) => !candidate.resolved);
+              uiResets.battleStepPhase = currentBattle?.uncontested ? 'popup' : 'bidding';
+              uiResets.battleCurrentBiddingIndex = 0;
             }
 
             // When battleResultReadyPlayers clears (all accepted battle result), advance to next battle popup

@@ -11,8 +11,7 @@ import { calculateForce } from '../utils/gameLogic';
 import { BattleBiddingOverlay } from './BattleBiddingOverlay';
 import type { BattleCombatant } from './BattleBiddingOverlay';
 
-// Kept only so older snapshots containing coinDistributionPending can continue directly to results.
-const SHOW_COIN_DISTRIBUTION_POPUP = false;
+const SHOW_COIN_DISTRIBUTION_POPUP = true;
 
 /**
  * Extract log entries for a resolved battle using its logStartIndex
@@ -251,9 +250,9 @@ function BattleResultPopup({
   const tacticIds = ['seppuku', 'take-hostage', 'hire-ronin', 'imperial-poets'] as const;
   const tacticLabels: Record<string, string> = {
     'seppuku': 'Seppuku',
-    'take-hostage': 'Take Hostage',
-    'hire-ronin': 'Hire Ronin',
-    'imperial-poets': 'Imperial Poets',
+    'take-hostage': 'Tomar Rehén',
+    'hire-ronin': 'Contratar Ronin',
+    'imperial-poets': 'Poetas Imperiales',
   };
 
   return (
@@ -588,7 +587,7 @@ export const BattlePanel = () => {
               </div>
             )}
             <p style={{ margin: '0.5rem 0', fontSize: '0.95em' }}>
-              {t('battle.coinDistributionInfo', { amount: pending.sharePerLoser })}
+              Los perdedores reciben las monedas apostadas por el ganador:
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.75rem' }}>
               {pending.losers.map(loserId => {
@@ -599,7 +598,7 @@ export const BattlePanel = () => {
                     <ClanShield clanId={loser?.clanId || ''} size={20} />
                     <span style={{ color: loserClan?.color, fontWeight: 'bold' }}>{loser?.name}</span>
                     <CoinIcon size={14} color="#FFD700" />
-                    <span style={{ color: '#FFD700', fontWeight: 'bold' }}>+{pending.sharePerLoser}</span>
+                    <span style={{ color: '#FFD700', fontWeight: 'bold' }}>+{pending.allocations?.[loserId] ?? pending.sharePerLoser}</span>
                   </div>
                 );
               })}

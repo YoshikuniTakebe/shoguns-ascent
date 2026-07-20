@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
+import { ClanPowerTooltip } from './ClanPowerTooltip';
 
 export const HonorTrack = () => {
   const { gameState } = useGameStore();
@@ -34,34 +35,23 @@ export const HonorTrack = () => {
           if (!clan) return null;
           const isPromoted = player.id === promotedPlayerId;
           return (
-            <div key={player.id} className={`honor-track-entry${isPromoted ? ' honor-promoted' : ''}`}>
-              <div className="honor-hexagon" style={{ '--clan-color': clan.color } as React.CSSProperties}>
-                <svg viewBox="0 0 100 100" className="hexagon-bg">
-                  <polygon
-                    points="50,3 93,25 93,75 50,97 7,75 7,25"
-                    fill="rgba(0,0,0,0.4)"
-                    stroke={clan.color}
-                    strokeWidth="3"
-                  />
-                  <polygon
-                    points="50,10 85,28 85,72 50,90 15,72 15,28"
-                    fill="rgba(0,0,0,0.2)"
-                    stroke={clan.color}
-                    strokeWidth="1"
-                    opacity="0.5"
-                  />
-                </svg>
-                <div className="hexagon-content">
-                  <ClanShield clanId={player.clanId} size={28} />
+            <ClanPowerTooltip key={player.id} player={player}>
+              <div className={`honor-track-entry${isPromoted ? ' honor-promoted' : ''}`}>
+                <div className="honor-hexagon" style={{ '--clan-color': clan.color } as React.CSSProperties}>
+                  <svg viewBox="0 0 100 100" className="hexagon-bg">
+                    <polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(0,0,0,0.4)" stroke={clan.color} strokeWidth="3" />
+                    <polygon points="50,10 85,28 85,72 50,90 15,72 15,28" fill="rgba(0,0,0,0.2)" stroke={clan.color} strokeWidth="1" opacity="0.5" />
+                  </svg>
+                  <div className="hexagon-content">
+                    <ClanShield clanId={player.clanId} size={28} />
+                  </div>
+                </div>
+                <div className="honor-info">
+                  <span className="honor-clan-name" style={{ color: clan.color }}>{clan.name}</span>
+                  <span className="honor-value">{index + 1}</span>
                 </div>
               </div>
-              <div className="honor-info">
-                <span className="honor-clan-name" style={{ color: clan.color }}>
-                  {clan.name}
-                </span>
-                <span className="honor-value">{index + 1}</span>
-              </div>
-            </div>
+            </ClanPowerTooltip>
           );
         })}
       </div>

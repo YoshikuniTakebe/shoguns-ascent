@@ -753,7 +753,11 @@ export const GameBoard = () => {
             <path d="M19 12H5" />
             <polyline points="12 19 5 12 12 5" />
           </svg>
-          {gameState.pendingNureOnnaDecision ? t('nureOnna.returnToDecision') : t('battle.returnToBids')}
+          {gameState.pendingNureOnnaDecision
+            ? t('nureOnna.returnToDecision')
+            : gameState.pendingBattleCardDecision?.type === 'earth-dragon'
+              ? 'Volver al Dragón de Tierra'
+              : t('battle.returnToBids')}
         </button>
       )}
 

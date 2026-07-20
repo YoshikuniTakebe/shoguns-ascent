@@ -676,6 +676,13 @@
   gap: 8px;
 }
 
+.battle-card-decision-question {
+  max-width: 360px;
+  margin: 0.9rem auto 1.25rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .battle-card-decision-mercy {
   display: flex;
   justify-content: center;
@@ -822,18 +829,72 @@
 
 .battle-card-decision-group {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) minmax(130px, 1fr) minmax(130px, 1fr);
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
+  grid-template-columns: 110px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px 12px;
+  padding: 10px;
   border: 1px solid rgba(200, 169, 81, 0.3);
   border-radius: 6px;
   background: rgba(7, 13, 31, 0.42);
 }
 
-.battle-card-decision-group select {
-  min-width: 0;
-  width: 100%;
+.battle-card-decision-player {
+  min-height: 31px;
+}
+
+.battle-card-choice-block {
+  display: grid;
+  gap: 5px;
+}
+
+.battle-card-choice-block:last-child {
+  grid-column: 2;
+}
+
+.battle-card-choice-label {
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.battle-card-choice-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.battle-card-choice {
+  min-height: 31px;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--choice-color) 52%, #596078);
+  border-radius: 4px;
+  background: rgba(14, 23, 45, 0.94);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.battle-card-choice:hover:not(:disabled),
+.battle-card-choice.selected {
+  border-color: var(--choice-color);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--choice-color) 48%, transparent);
+}
+
+.battle-card-choice.selected {
+  background: color-mix(in srgb, var(--choice-color) 18%, #10182f);
+}
+
+.battle-card-choice:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.battle-card-map-button {
+  position: static;
+  margin: 0 auto 14px;
 }
 
 .spring-light-popup-icon {
@@ -968,5 +1029,9 @@
 @media (max-width: 620px) {
   .battle-card-decision-group {
     grid-template-columns: 1fr;
+  }
+
+  .battle-card-choice-block:last-child {
+    grid-column: 1;
   }
 }

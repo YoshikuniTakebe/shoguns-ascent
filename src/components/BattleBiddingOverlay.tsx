@@ -47,6 +47,13 @@ const TACTIC_SYMBOLS: Record<string, string> = {
   'imperial-poets': '📜',
 };
 
+const TACTIC_NAMES: Record<string, string> = {
+  seppuku: 'Seppuku',
+  'take-hostage': 'Tomar Rehén',
+  'hire-ronin': 'Contratar Ronin',
+  'imperial-poets': 'Poetas Imperiales',
+};
+
 /** All valid drop target ids: tactic ids + 'pool' */
 const ALL_DROP_TARGETS = [...WAR_TACTICS.map(t => t.id), 'pool'];
 
@@ -351,7 +358,7 @@ export const BattleBiddingOverlay = ({
                 >
                   <div className="bidding-tactic-symbol">{TACTIC_SYMBOLS[tactic.id]}</div>
                   <div className="bidding-tactic-kanji">{TACTIC_KANJI[tactic.id]}</div>
-                  <div className="bidding-tactic-name">{tactic.name}</div>
+                  <div className="bidding-tactic-name">{TACTIC_NAMES[tactic.id] || tactic.name}</div>
                   <div className="bidding-tactic-tooltip">
                     {t(tooltipKey)}
                   </div>

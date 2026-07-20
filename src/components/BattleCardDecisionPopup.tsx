@@ -17,6 +17,8 @@ export const BattleCardDecisionPopup = () => {
   const gameState = useGameStore(state => state.gameState);
   const localPlayerId = useGameStore(state => state.localPlayerId);
   const resolveDecision = useGameStore(state => state.doResolveBattleCardDecision);
+  const biddingMapPeek = useGameStore(state => state.biddingMapPeek);
+  const setBiddingMapPeek = useGameStore(state => state.setBiddingMapPeek);
   const pending = gameState?.pendingBattleCardDecision;
   const decisionKey = pending ? `${pending.type}:${pending.sourceFigureId}:${pending.provinceId}` : '';
   const [earthAccepted, setEarthAccepted] = useState(false);
@@ -49,7 +51,7 @@ export const BattleCardDecisionPopup = () => {
     return grouped;
   }, [gameState, pending]);
 
-  if (!gameState || !pending) return null;
+  if (!gameState || !pending || biddingMapPeek) return null;
   const owner = gameState.players.find(player => player.id === pending.ownerId);
   const ownerClan = owner ? CLANS.find(clan => clan.id === owner.clanId) : null;
   const hasMercy = !!owner?.seasonCards.some(card => card.id === 'su-mercy' || card.id === 'su-mercy-2');
@@ -105,7 +107,7 @@ export const BattleCardDecisionPopup = () => {
           <p className="waiting-label">Esperando a que {owner?.name || 'el jugador'} resuelva {names[pending.type]}...</p>
         ) : pending.type === 'earth-dragon' && !earthChoiceMade ? (
           <>
-            <p>¿Quieres mover una figura de cada rival fuera de esta provincia?</p>
+            <p className="battle-card-decision-question">¿Quieres mover una figura de cada rival fuera de esta provincia?</p>
             <div className="battle-card-decision-actions">
               <button className="btn-primary" onClick={() => { setEarthAccepted(true); setEarthChoiceMade(true); }}>Usar</button>
               <button className="btn-secondary" onClick={() => resolveDecision(false, {})}>Omitir</button>
@@ -124,29 +126,64 @@ export const BattleCardDecisionPopup = () => {
                 const player = gameState.players.find(candidate => candidate.id === playerId);
                 const clan = player ? CLANS.find(candidate => candidate.id === player.clanId) : null;
                 const selectedFigureId = selectedByPlayer[playerId];
+                const selectedDestinationId = selectedFigureId ? destinationsByFigure[selectedFigureId] : '';
                 return (
-                  <div className="battle-card-decision-group" key={playerId}>
+                  <div className="battle-card-decision-group" key={playerId} style={{ borderColor: clan?.color }}>
                     <div className="battle-card-decision-player">
                       {player && <ClanShield clanId={player.clanId} size={21} />}
                       <strong style={{ color: clan?.color }}>{player?.name}</strong>
                     </div>
-                    <select value={selectedFigureId || ''} onChange={event => chooseFigure(playerId, event.target.value)}>
-                      <option value="">Elige figura</option>
-                      {figures.map(figure => <option key={figure.id} value={figure.id}>{figureName(figure)}</option>)}
-                    </select>
-                    {pending.type === 'earth-dragon' && selectedFigureId && (
-                      <select
-                        value={destinationsByFigure[selectedFigureId] || ''}
-                        onChange={event => setDestinationsByFigure(current => ({ ...current, [selectedFigureId]: event.target.value }))}
-                      >
-                        <option value="">Elige destino</option>
-                        {adjacentIds.map(provinceId => <option key={provinceId} value={provinceId}>{gameState.provinces[provinceId]?.name || provinceId}</option>)}
-                      </select>
+                    <div className="battle-card-choice-block">
+                      <span className="battle-card-choice-label">Figura</span>
+                      <div className="battle-card-choice-options">
+                        {figures.map(figure => (
+                          <button
+                            key={figure.id}
+                            type="button"
+                            className={`battle-card-choice${selectedFigureId === figure.id ? ' selected' : ''}`}
+                            style={{ '--choice-color': clan?.color || '#c8a951' } as React.CSSProperties}
+                            onClick={() => chooseFigure(playerId, figure.id)}
+                          >
+                            {figureName(figure)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {pending.type === 'earth-dragon' && (
+                      <div className="battle-card-choice-block">
+                        <span className="battle-card-choice-label">Provincia de destino</span>
+                        <div className="battle-card-choice-options">
+                          {adjacentIds.map(provinceId => {
+                            const provinceColor = PROVINCE_COLORS[provinceId] || '#c8a951';
+                            return (
+                              <button
+                                key={provinceId}
+                                type="button"
+                                className={`battle-card-choice province${selectedDestinationId === provinceId ? ' selected' : ''}`}
+                                style={{ '--choice-color': provinceColor, color: provinceColor } as React.CSSProperties}
+                                disabled={!selectedFigureId}
+                                onClick={() => selectedFigureId && setDestinationsByFigure(current => ({ ...current, [selectedFigureId]: provinceId }))}
+                              >
+                                {gameState.provinces[provinceId]?.name || provinceId}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     )}
                   </div>
                 );
               })}
             </div>
+            {pending.type === 'earth-dragon' && (
+              <button className="bidding-peek-map-btn battle-card-map-button" onClick={() => setBiddingMapPeek(true)}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                Ver mapa
+              </button>
+            )}
             <div className="battle-card-decision-actions">
               {pending.type === 'earth-dragon' && earthAccepted && <button className="btn-secondary" onClick={() => { setEarthChoiceMade(false); setEarthAccepted(false); }}>Cancelar</button>}
               <button className="btn-primary" disabled={!canConfirm} onClick={() => resolveDecision(true, selectedByPlayer, destinationsByFigure, useMercy)}>Confirmar</button>
