@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560">
+  <defs>
+    <style>
+      .bg{fill:#11182d}.card{fill:#182442;stroke:#c8a951;stroke-width:1.5}
+      .title{fill:#f5e6ca;font:700 19px "Segoe UI",sans-serif}
+      .desc{fill:#b8a88a;font:14px "Segoe UI",sans-serif}
+      .label{fill:#c8a951;font:700 15px "Segoe UI",sans-serif}
+      .body{fill:#e9b91e}.cut{fill:#11182d}.sword{fill:#e9b91e;stroke:#11182d;stroke-width:.55;stroke-linejoin:miter}
+      .sample{fill:#0c1224;stroke:#394765}
+    </style>
+
+    <!-- Angular Bushi with katana raised diagonally. -->
+    <g id="guardia-alta">
+      <path class="body" d="M7 7L9 4L12 3L15 4L17 7L16 8H8Z"/>
+      <path class="body" d="M5 8H18L16 10H7Z"/>
+      <path class="body" d="M9 10H14L16 17L13 18L12 14L11 18L7 17Z"/>
+      <path class="body" d="M8 16L11 17L8 22H5ZM13 17L16 16L19 21L16 22Z"/>
+      <path class="body" d="M9 11L12 12L16 9L17 11L13 15L9 14Z"/>
+      <path class="sword" d="M14.8 11.3L17.4 8.4L18.8 9.7L16 12.5Z"/>
+      <path class="sword" d="M17.5 8.3Q20.2 4.8 21.7 1.8L23 1L22.5 3Q20.5 6.3 18.7 9.3Z"/>
+      <path class="sword" d="M16.1 7.6L19.6 10.4L18.8 11.4L15.3 8.5Z"/>
+      <path class="cut" d="M10 5.2L12 4.4L14 5.2L13.4 6.3H10.6Z"/>
+    </g>
+
+    <!-- Low side stance with a long horizontal katana. -->
+    <g id="corte-horizontal">
+      <path class="body" d="M4 9L6 6L9 5L12 6L13 9L11 10H5Z"/>
+      <path class="body" d="M3 9H14L12 11H5Z"/>
+      <path class="body" d="M7 11L13 11L16 16L12 18L8 16L5 18L3 16Z"/>
+      <path class="body" d="M7 16L11 17L7 22H3ZM12 17L16 16L21 19L19 22Z"/>
+      <path class="body" d="M10 11L15 9L16 11L12 14L8 14Z"/>
+      <path class="sword" d="M14.4 9L17.1 7.4L18.1 9L15.3 10.6Z"/>
+      <path class="sword" d="M17.2 7.1Q20.2 5.2 22.6 3.8L24 3.7L22.9 5.2Q20.3 7 18 8.8Z"/>
+      <path class="sword" d="M15.7 6.5L18.6 10.3L17.5 11L14.7 7.2Z"/>
+      <path class="cut" d="M6.6 7L9 6.2L11 7L10.2 8H7.2Z"/>
+    </g>
+
+    <!-- Frontal silhouette, sword held with both hands across the body. -->
+    <g id="guardia-frontal">
+      <path class="body" d="M6 7L8 4L12 2L16 4L18 7L16 9H8Z"/>
+      <path class="body" d="M4 8H20L17 10H7Z"/>
+      <path class="body" d="M8 10H16L17 18L13 17L12 14L11 17L7 18Z"/>
+      <path class="body" d="M8 16L11 18L8 22H4ZM13 18L16 16L20 22H16Z"/>
+      <path class="body" d="M7 11L10 12L14 15L12 17L8 15ZM17 11L14 12L11 15L13 17L17 15Z"/>
+      <path class="sword" d="M10.8 14.2L13 11.8L14.4 13.1L12.1 15.5Z"/>
+      <path class="sword" d="M13.1 11.8Q17 7 20.8 2.9L22.4 2L21.7 3.8Q17.9 8.4 14.5 13Z"/>
+      <path class="sword" d="M11.8 10.6L15.5 13.7L14.6 14.7L10.9 11.5Z"/>
+      <path class="cut" d="M9 5L12 3.8L15 5L14 6.5H10Z"/>
+    </g>
+
+    <!-- Forward charge with the blade clearly separated from the warrior. -->
+    <g id="carga">
+      <path class="body" d="M4 8L6 5L9 4L12 5L14 8L12 9H5Z"/>
+      <path class="body" d="M3 8H15L12 10H5Z"/>
+      <path class="body" d="M7 10L13 11L15 17L11 18L8 15L5 17L3 15Z"/>
+      <path class="body" d="M7 15L11 17L7 22H2ZM12 17L15 16L22 19L20 22Z"/>
+      <path class="body" d="M10 11L14 8L16 10L12 14L8 14Z"/>
+      <path class="sword" d="M14.1 8.4L16.5 5.9L17.9 7.3L15.4 9.7Z"/>
+      <path class="sword" d="M16.7 5.8Q19.3 3.2 21.4 1.4L23 .6L22.2 2.5Q19.5 5.1 17.9 7Z"/>
+      <path class="sword" d="M15.1 5L19 8.6L18 9.6L14.2 5.9Z"/>
+      <path class="cut" d="M6 6L9 5L11.7 6L10.8 7.2H6.8Z"/>
+    </g>
+  </defs>
+
+  <rect class="bg" width="960" height="560"/>
+  <text class="title" x="40" y="42">Bushi angular: evolución de la propuesta C</text>
+  <text class="desc" x="40" y="68">Kabuto, cuerpo geométrico y katana con hoja, tsuba y empuñadura separadas.</text>
+
+  <g transform="translate(40 96)">
+    <rect class="card" width="420" height="190" rx="4"/>
+    <text class="label" x="18" y="30">C1. Guardia alta</text>
+    <text class="desc" x="18" y="53">Postura firme y katana larga en diagonal.</text>
+    <g transform="translate(27 72) scale(3)"><use href="#guardia-alta"/></g>
+    <circle class="sample" cx="180" cy="114" r="25"/><g transform="translate(164 98) scale(1.33)"><use href="#guardia-alta"/></g>
+    <circle class="sample" cx="246" cy="114" r="18"/><g transform="translate(236 104) scale(.83)"><use href="#guardia-alta"/></g>
+    <text class="desc" x="285" y="108">Equilibrada y</text><text class="desc" x="285" y="128">muy Bushi.</text>
+  </g>
+
+  <g transform="translate(500 96)">
+    <rect class="card" width="420" height="190" rx="4"/>
+    <text class="label" x="18" y="30">C2. Corte horizontal</text>
+    <text class="desc" x="18" y="53">Perfil bajo, silueta agresiva y dinámica.</text>
+    <g transform="translate(27 72) scale(3)"><use href="#corte-horizontal"/></g>
+    <circle class="sample" cx="180" cy="114" r="25"/><g transform="translate(164 98) scale(1.33)"><use href="#corte-horizontal"/></g>
+    <circle class="sample" cx="246" cy="114" r="18"/><g transform="translate(236 104) scale(.83)"><use href="#corte-horizontal"/></g>
+    <text class="desc" x="285" y="108">Más movimiento,</text><text class="desc" x="285" y="128">menos simetría.</text>
+  </g>
+
+  <g transform="translate(40 322)">
+    <rect class="card" width="420" height="190" rx="4"/>
+    <text class="label" x="18" y="30">C3. Guardia frontal</text>
+    <text class="desc" x="18" y="53">Kabuto amplio y katana sostenida a dos manos.</text>
+    <g transform="translate(27 72) scale(3)"><use href="#guardia-frontal"/></g>
+    <circle class="sample" cx="180" cy="114" r="25"/><g transform="translate(164 98) scale(1.33)"><use href="#guardia-frontal"/></g>
+    <circle class="sample" cx="246" cy="114" r="18"/><g transform="translate(236 104) scale(.83)"><use href="#guardia-frontal"/></g>
+    <text class="desc" x="285" y="108">La más sólida</text><text class="desc" x="285" y="128">a tamaño pequeño.</text>
+  </g>
+
+  <g transform="translate(500 322)">
+    <rect class="card" width="420" height="190" rx="4"/>
+    <text class="label" x="18" y="30">C4. Carga</text>
+    <text class="desc" x="18" y="53">Cuerpo inclinado y katana apuntando al avance.</text>
+    <g transform="translate(27 72) scale(3)"><use href="#carga"/></g>
+    <circle class="sample" cx="180" cy="114" r="25"/><g transform="translate(164 98) scale(1.33)"><use href="#carga"/></g>
+    <circle class="sample" cx="246" cy="114" r="18"/><g transform="translate(236 104) scale(.83)"><use href="#carga"/></g>
+    <text class="desc" x="285" y="108">La más agresiva</text><text class="desc" x="285" y="128">y direccional.</text>
+  </g>
+</svg>

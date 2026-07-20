@@ -1058,3 +1058,13 @@ server restart — no longer loses the game.
   `design/bushi-icon-proposals.svg` and its rendered PNG. The current game icon remains unchanged
   until one proposal is selected.
 - TypeScript, lint and the production build pass. Lint retains only the two pre-existing warnings.
+
+## Design pending - 2026-07-20 (angular Bushi icon)
+
+- The first four crossed-weapon proposals were rejected for looking too rounded and insufficiently
+  like katanas.
+- `design/bushi-icon-proposals-v2.svg` and its PNG develop the preferred Bushi-silhouette direction
+  into four angular variants: high guard, horizontal cut, frontal guard and charge.
+- Each variant uses a geometric kabuto/body plus a separately outlined single-edged katana with a
+  visible tsuba and handle, previewed at 64px, 32px and 20px.
+- No in-game icon has been changed yet; the next step depends on selecting or refining C1-C4.
