@@ -16,9 +16,9 @@
       <path class="body" d="M9 10H14L16 17L13 18L12 14L11 18L7 17Z"/>
       <path class="body" d="M8 16L11 17L8 22H5ZM13 17L16 16L19 21L16 22Z"/>
       <path class="body" d="M9 11L12 12L16 9L17 11L13 15L9 14Z"/>
-      <path class="sword" d="M14.8 11.3L17.4 8.4L18.8 9.7L16 12.5Z"/>
-      <path class="sword" d="M17.5 8.3Q20.2 4.8 21.7 1.8L23 1L22.5 3Q20.5 6.3 18.7 9.3Z"/>
-      <path class="sword" d="M16.1 7.6L19.6 10.4L18.8 11.4L15.3 8.5Z"/>
+      <path class="sword" d="M14.5 11.5L17.3 8.2L18.9 9.7L15.9 12.8Z"/>
+      <path class="sword" d="M17.3 8.3Q20.1 4.6 21.6 1.7L23.2.8L22.6 3.2Q20.5 6.6 18.8 9.7Z"/>
+      <path class="sword" d="M15.8 7.4L19.8 10.5L18.8 11.7L14.8 8.5Z"/>
       <path class="cut" d="M10 5.2L12 4.4L14 5.2L13.4 6.3H10.6Z"/>
     </g>
 

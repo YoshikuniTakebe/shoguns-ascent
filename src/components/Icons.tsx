@@ -10,7 +10,7 @@ interface IconProps {
   strokeWidth?: string;
 }
 
-/** Two crossed katanas - used for Bushi forces */
+/** Angular Bushi in high guard with a clearly outlined katana. */
 export const BushiIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg
     className={className}
@@ -18,19 +18,38 @@ export const BushiIcon = ({ size = 24, color = 'currentColor', className }: Icon
     height={size}
     viewBox="0 0 24 24"
     fill="none"
-    stroke={color}
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
   >
-    {/* Left katana (curved blade + guard + handle) */}
-    <path d="M4 20 Q9 13 17 3" />
-    <circle cx="15.5" cy="5.5" r="1.3" fill={color} stroke="none" />
-    <line x1="17" y1="3" x2="19" y2="1" />
-    {/* Right katana (curved blade + guard + handle) */}
-    <path d="M20 20 Q15 13 7 3" />
-    <circle cx="8.5" cy="5.5" r="1.3" fill={color} stroke="none" />
-    <line x1="7" y1="3" x2="5" y2="1" />
+    {/* Kabuto and angular body */}
+    <path fill={color} d="M7 7L9 4L12 3L15 4L17 7L16 8H8Z" />
+    <path fill={color} d="M5 8H18L16 10H7Z" />
+    <path fill={color} d="M9 10H14L16 17L13 18L12 14L11 18L7 17Z" />
+    <path fill={color} d="M8 16L11 17L8 22H5Z" />
+    <path fill={color} d="M13 17L16 16L19 21L16 22Z" />
+    <path fill={color} d="M9 11L12 12L16 9L17 11L13 15L9 14Z" />
+    {/* Dark face opening keeps the kabuto readable in every clan color */}
+    <path fill="rgba(0,0,0,0.55)" d="M10 5.2L12 4.4L14 5.2L13.4 6.3H10.6Z" />
+    {/* Thick katana: handle, tsuba and single-edged curved blade */}
+    <path
+      fill={color}
+      stroke="rgba(0,0,0,0.6)"
+      strokeWidth="0.65"
+      strokeLinejoin="miter"
+      d="M14.5 11.5L17.3 8.2L18.9 9.7L15.9 12.8Z"
+    />
+    <path
+      fill={color}
+      stroke="rgba(0,0,0,0.6)"
+      strokeWidth="0.65"
+      strokeLinejoin="miter"
+      d="M17.3 8.3Q20.1 4.6 21.6 1.7L23.2 0.8L22.6 3.2Q20.5 6.6 18.8 9.7Z"
+    />
+    <path
+      fill={color}
+      stroke="rgba(0,0,0,0.6)"
+      strokeWidth="0.65"
+      strokeLinejoin="miter"
+      d="M15.8 7.4L19.8 10.5L18.8 11.7L14.8 8.5Z"
+    />
   </svg>
 );
 

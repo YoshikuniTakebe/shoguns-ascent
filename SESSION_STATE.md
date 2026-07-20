@@ -1068,3 +1068,12 @@ server restart — no longer loses the game.
 - Each variant uses a geometric kabuto/body plus a separately outlined single-edged katana with a
   visible tsuba and handle, previewed at 64px, 32px and 20px.
 - No in-game icon has been changed yet; the next step depends on selecting or refining C1-C4.
+
+## Changelog - 2026-07-20 (Bushi C1 icon selected)
+
+- The former crossed-swords Bushi icon was replaced globally with the selected C1 high-guard Bushi:
+  an angular kabuto, geometric warrior silhouette and raised single-edged katana.
+- The final katana is thicker than the proposal at the blade, tsuba and handle, with a dark outline
+  so it remains distinct from the warrior and readable in every clan color at 14-21px.
+- The C1 design preview was updated to match the implemented icon.
+- TypeScript, lint and the production build pass. Lint retains only the two pre-existing warnings.
