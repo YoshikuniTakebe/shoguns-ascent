@@ -213,7 +213,7 @@ const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; co
   if (figure.type === 'kami') {
     return (
       <span className={`figure-icon figure-icon-wrapper kami-map-icon${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`} style={{ color }}>
-        <span aria-hidden="true">K</span>
+        <span aria-hidden="true">神</span>
         {tooltipContent}
       </span>
     );

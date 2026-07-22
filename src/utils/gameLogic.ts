@@ -2785,19 +2785,19 @@ function applyPatienceAtKamiEnd(state: GameState): void {
  */
 export function resolveCurrentKamiReward(state: GameState): GameState {
   if (!state.kamiResolutionActive) return state;
-  const currentTemple = state.kamiResolutionTemples[state.kamiResolutionIndex];
+  let currentTemple = state.kamiResolutionTemples[state.kamiResolutionIndex];
   if (!currentTemple) return state;
 
-  // If winnerId was not pre-computed (deferred), compute it now using the current honorTrack
-  let winnerId = currentTemple.winnerId;
+  // The board is authoritative. Earlier Kami rewards may add a praying figure to a
+  // later Shrine, so both its forces and winner must be rebuilt at resolution time.
+  let winnerId: string | null = null;
   let newState = { ...state };
-  if (!winnerId && currentTemple.forces.length > 0) {
+  {
     const temple = newState.temples[currentTemple.templeIndex];
-    const { winnerId: computedWinnerId } = computeTempleWinner(temple.figures, newState.honorTrack, newState.players);
-    winnerId = computedWinnerId;
-    // Store the computed winnerId back into the temple data for display
+    const computed = computeTempleWinner(temple.figures, newState.honorTrack, newState.players);
+    winnerId = computed.winnerId;
     const updatedTemples = [...newState.kamiResolutionTemples];
-    const updatedTemple = { ...updatedTemples[newState.kamiResolutionIndex], winnerId };
+    const updatedTemple = { ...updatedTemples[newState.kamiResolutionIndex], winnerId, forces: computed.forces };
 
     // Compute susanoo VP if applicable
     if (currentTemple.kamiType === 'susanoo' && winnerId) {
@@ -2812,6 +2812,7 @@ export function resolveCurrentKamiReward(state: GameState): GameState {
 
     updatedTemples[newState.kamiResolutionIndex] = updatedTemple;
     newState = { ...newState, kamiResolutionTemples: updatedTemples, kamiResolutionCurrentPlayerId: winnerId };
+    currentTemple = updatedTemple;
   }
 
   // No winner - nothing to apply
@@ -2954,17 +2955,16 @@ export function advanceKamiResolution(state: GameState): GameState {
 
   // Move to the next temple
   const nextTemple = state.kamiResolutionTemples[nextIndex];
-  let nextWinnerId = nextTemple?.winnerId || null;
+  let nextWinnerId: string | null = null;
 
   // Compute winner dynamically for the next temple using current honorTrack
   let updatedTemples = state.kamiResolutionTemples;
-  if (nextTemple && !nextWinnerId && nextTemple.forces.length > 0) {
+  if (nextTemple) {
     const temple = state.temples[nextTemple.templeIndex];
-    const { winnerId: computedWinnerId } = computeTempleWinner(temple.figures, state.honorTrack, state.players);
-    nextWinnerId = computedWinnerId;
-    // Store back into temple data for display
+    const computed = computeTempleWinner(temple.figures, state.honorTrack, state.players);
+    nextWinnerId = computed.winnerId;
     updatedTemples = [...state.kamiResolutionTemples];
-    const updatedNextTemple: typeof nextTemple = { ...nextTemple, winnerId: nextWinnerId };
+    const updatedNextTemple: typeof nextTemple = { ...nextTemple, winnerId: nextWinnerId, forces: computed.forces };
 
     // Compute susanoo VP if applicable
     if (nextTemple.kamiType === 'susanoo' && nextWinnerId) {

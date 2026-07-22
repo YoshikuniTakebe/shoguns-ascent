@@ -19,6 +19,30 @@ export const en = {
   'menu.clans': 'CLANS',
   'menu.randomize': 'Randomize',
   'menu.initialHonor': 'Initial Honor:',
+  'menu.income': 'Income:',
+
+  // Clan Powers
+  'clanPower.label': 'Clan Power',
+  'clanPower.and': 'and',
+  'clanPower.koi.coinAs': 'May use',
+  'clanPower.koi.as': 'as',
+  'clanPower.koi.warStart': 'At the start of War, exchanges Ronin for Coins; when Hiring Ronin, Coins add',
+  'clanPower.sol.tie': 'When winning a tie through',
+  'clanPower.sol.gains': 'gains',
+  'clanPower.sol.loser': 'and the loser loses',
+  'clanPower.loto.choose': 'Chooses a',
+  'clanPower.loto.mandate': 'Political Mandate',
+  'clanPower.loto.faceDown': 'to place face down,',
+  'clanPower.loto.hidden': 'hiding it and declaring which Mandate is performed instead.',
+  'clanPower.tortuga.before': 'Its',
+  'clanPower.tortuga.after': 'move as figures and count as',
+  'clanPower.libelula.before': 'May Summon and Move its',
+  'clanPower.libelula.after': 'to any Province.',
+  'clanPower.zorro.before': 'At the start of War, places one',
+  'clanPower.zorro.after': 'for free in every Province where it has no figures.',
+  'clanPower.bonsai.before': 'The maximum cost of any purchase is',
+  'clanPower.luna.force': 'All your figures have',
+  'clanPower.luna.limit': 'Maximum 2 figures per Province or Shrine.',
 
   // Deck Config
   'deck.config': 'Deck Configuration',
@@ -212,7 +236,7 @@ export const en = {
   'kami.amaterasu.expansionEffect': 'Figures of highest-honor player in this Province cannot be killed by others.',
 
   // Kami Summaries (short)
-  'kami.amaterasu.summary': 'Honor a la posición 1',
+  'kami.amaterasu.summary': 'Move to Honor position 1',
   'kami.fujin.summary': '+2 Moves',
   'kami.raijin.summary': 'Summon 1 Bushi anywhere',
   'kami.ryujin.summary': 'Buy 1 Season Card',
@@ -232,6 +256,7 @@ export const en = {
   'kami.unbound.undo': 'Undo selection',
   'kami.unbound.confirm': 'Confirm',
   'kami.unbound.waiting': 'Waiting for {player} to place {kami}...',
+  'kami.unbound.mapPower': 'Map Power',
 
   // Deck Names
   'deck.archway': 'Archway',

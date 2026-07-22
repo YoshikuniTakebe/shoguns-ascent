@@ -49,6 +49,16 @@ const DECK_NAME_KEYS: Record<DeckName, TranslationKey> = {
   Mountain: 'deck.mountain',
 };
 
+const KAMI_EXPANSION_EFFECT_KEYS: Record<string, TranslationKey> = {
+  amaterasu: 'kami.amaterasu.expansionEffect',
+  fujin: 'kami.fujin.expansionEffect',
+  hachiman: 'kami.hachiman.expansionEffect',
+  raijin: 'kami.raijin.expansionEffect',
+  ryujin: 'kami.ryujin.expansionEffect',
+  susanoo: 'kami.susanoo.expansionEffect',
+  tsukuyomi: 'kami.tsukuyomi.expansionEffect',
+};
+
 const MAP_WIDTH = 1672;
 const MAP_HEIGHT = 941;
 
@@ -1094,6 +1104,12 @@ export const GameBoard = () => {
                   <ClanShield clanId={clan.id} size={28} />
                   <strong>{owner.name}</strong>
                   <span>{clan.name}</span>
+                </div>
+              )}
+              {gameState.kamiPlacementKamiType && (
+                <div className="kami-unbound-power" style={{ borderColor: color }}>
+                  <span>{t('kami.unbound.mapPower')}</span>
+                  <p>{t(KAMI_EXPANSION_EFFECT_KEYS[gameState.kamiPlacementKamiType])}</p>
                 </div>
               )}
               {isOwner ? (

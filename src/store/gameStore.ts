@@ -2903,22 +2903,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
     if (!currentTemple) return;
 
-    // If no winner and no forces (truly empty temple), auto-advance
-    if (!currentTemple.winnerId && currentTemple.forces.length === 0) {
-      let ns = advanceKamiResolution(gameState);
-      if (!ns.kamiResolutionActive && ns.currentPhase === 'politics' && gameState.mode === 'hotseat') {
-        if (ns.kamiSummaryVisible) {
-          set({ gameState: ns });
-        } else {
-          set({ gameState: ns, turnPopupPlayer: ns.players[ns.currentPlayerIndex]?.id || null });
-        }
-      } else {
-        set({ gameState: ns, ...detectWarTransitionWithPopup(ns) });
-      }
-      return;
-    }
-
-    // Apply the reward for the current temple (winnerId will be computed dynamically if null)
+    // Rebuild the Shrine from the live board before applying its reward.
     let ns = resolveCurrentKamiReward(gameState);
 
     // If the reward is interactive (step changed to 'interactive'), wait for player input

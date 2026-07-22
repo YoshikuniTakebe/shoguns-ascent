@@ -21,6 +21,30 @@ export const es: Record<TranslationKey, string> = {
   'menu.clans': 'CLANES',
   'menu.randomize': 'Aleatorio',
   'menu.initialHonor': 'Honor Inicial:',
+  'menu.income': 'Ingresos:',
+
+  // Poderes de clan
+  'clanPower.label': 'Poder del clan',
+  'clanPower.and': 'y',
+  'clanPower.koi.coinAs': 'Puede usar',
+  'clanPower.koi.as': 'como',
+  'clanPower.koi.warStart': 'Al comenzar la Guerra cambia su Ronin por Monedas y, al Contratar Ronin, sus Monedas suman',
+  'clanPower.sol.tie': 'Cuando gana un empate por',
+  'clanPower.sol.gains': 'gana',
+  'clanPower.sol.loser': 'y el perdedor pierde',
+  'clanPower.loto.choose': 'Escoge un',
+  'clanPower.loto.mandate': 'Mandato Pol\u00EDtico',
+  'clanPower.loto.faceDown': 'que pondr\u00E1 boca abajo,',
+  'clanPower.loto.hidden': 'ocult\u00E1ndolo y dictando qu\u00E9 mandato se ejecutar\u00E1 en su lugar.',
+  'clanPower.tortuga.before': 'Sus',
+  'clanPower.tortuga.after': 'se mueven como figuras y cuentan como',
+  'clanPower.libelula.before': 'Puede invocar y mover sus',
+  'clanPower.libelula.after': 'a cualquier Provincia.',
+  'clanPower.zorro.before': 'Al inicio de la Guerra coloca un',
+  'clanPower.zorro.after': 'gratis en cada Provincia donde no tenga figuras.',
+  'clanPower.bonsai.before': 'El coste m\u00E1ximo de cualquier compra es',
+  'clanPower.luna.force': 'Todas tus figuras tienen',
+  'clanPower.luna.limit': 'M\u00E1ximo 2 figuras por Provincia o Santuario.',
 
   // Deck Config
   'deck.config': 'Configuraci\u00F3n del Mazo',
@@ -253,6 +277,7 @@ export const es: Record<TranslationKey, string> = {
   'kami.unbound.undo': 'Deshacer selección',
   'kami.unbound.confirm': 'Confirmar',
   'kami.unbound.waiting': 'Esperando a que {player} coloque a {kami}...',
+  'kami.unbound.mapPower': 'Poder en el mapa',
 
   // Deck Names
   'deck.archway': 'Torii',

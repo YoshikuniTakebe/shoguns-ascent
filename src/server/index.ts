@@ -3127,15 +3127,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
           if (!currentTemple) return;
 
-          // If no winner and no forces, auto-advance (empty temple that slipped through)
-          if (!currentTemple.winnerId && currentTemple.forces.length === 0) {
-            const s = advanceKamiResolution(l.gameState);
-            l.gameState = s;
-            broadcastState(l);
-            break;
-          }
-
-          // Apply the reward for the current temple (resolveCurrentKamiReward will compute winner dynamically if needed)
+          // Rebuild the Shrine from the live board before applying its reward.
           let s = resolveCurrentKamiReward(l.gameState);
 
           // If the reward is interactive, keep state and wait for player input

@@ -1163,3 +1163,17 @@ server restart — no longer loses the game.
 - Proposed production URL: `https://shogun.thehappysamurai.com`. Deployment still needs DNS access,
   SSH access to the Droplet, and inspection of its existing Docker/reverse-proxy layout before making
   any server changes.
+
+## Changelog - 2026-07-22 (Kami information, live Shrine resolution and clan translations)
+
+- Clicking a Shrine with Kami Unbound enabled now shows the temporary Kami figure and its Province
+  power alongside the base Shrine reward. The manifestation popup shows the same power and has more
+  breathing room between its explanatory text and action button.
+- Manifested Kami use the `神` divinity kanji as their compact map icon.
+- Shrine force and winner data are rebuilt from the live board when each Shrine becomes current and
+  again immediately before its reward. A Komainu or Hotei placed in a later Shrine during Ryujin can
+  therefore change that later result correctly; the focused Kami check covers this regression.
+- Shared clan-power tooltips are fully bilingual. Home clan previews use the same icon-rich content,
+  fixed-line presentation and header treatment as the in-game sidebar and Honor Track tooltips.
+- `npm run lint`, `npm run check:kami` and the production build pass. Lint retains only the two
+  pre-existing warnings in FriendsModal and PoliticsTrack.

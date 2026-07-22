@@ -7,6 +7,7 @@ import { useT } from '../i18n';
 import { MonsterIcon, ShintoIcon, FistIcon } from './Icons';
 import { getCardEffectKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
+import { TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
 
 /**
  * Rich hover tooltip for a monster figure in a shrine, matching the map tooltip
@@ -50,6 +51,16 @@ const KAMI_SUMMARY_KEYS: Record<KamiType, TranslationKey> = {
   ryujin: 'kami.ryujin.summary',
   susanoo: 'kami.susanoo.summary',
   tsukuyomi: 'kami.tsukuyomi.summary',
+};
+
+const KAMI_EXPANSION_EFFECT_KEYS: Record<KamiType, TranslationKey> = {
+  amaterasu: 'kami.amaterasu.expansionEffect',
+  fujin: 'kami.fujin.expansionEffect',
+  hachiman: 'kami.hachiman.expansionEffect',
+  raijin: 'kami.raijin.expansionEffect',
+  ryujin: 'kami.ryujin.expansionEffect',
+  susanoo: 'kami.susanoo.expansionEffect',
+  tsukuyomi: 'kami.tsukuyomi.expansionEffect',
 };
 
 import amaterasuImg from '../img/Amaterasu.png';
@@ -337,6 +348,18 @@ export const TemplePanel = () => {
               {selectedKamiData.name}
             </h3>
             <p className="kami-modal-effect">{t(KAMI_BASE_EFFECT_KEYS[selectedKami])}</p>
+            {gameState.kamiUnboundEnabled && (
+              <div className="kami-modal-unbound" style={{ borderColor: KAMI_PALETTES[selectedKami].primary }}>
+                <div className="kami-modal-unbound-figure">
+                  <img src={TEMPLATE_FIGURE_IMG} alt={selectedKamiData.name} />
+                  <strong style={{ color: KAMI_PALETTES[selectedKami].primary }}>{selectedKamiData.name}</strong>
+                </div>
+                <div className="kami-modal-unbound-power">
+                  <span>{t('kami.unbound.mapPower')}</span>
+                  <p>{t(KAMI_EXPANSION_EFFECT_KEYS[selectedKami])}</p>
+                </div>
+              </div>
+            )}
             {figuresByClan.length > 0 && (
               <div className="kami-modal-figures">
                 <h4 className="kami-modal-figures-title">{t('kamiModal.shintoFigures')}</h4>

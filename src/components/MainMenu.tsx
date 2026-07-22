@@ -766,11 +766,14 @@ export const MainMenu = () => {
             <div key={c.id} className="clan-preview-seal-wrapper">
               <ClanShield clanId={c.id} size={150} />
               <div className="clan-tooltip" style={{ borderColor: c.color }}>
-                <span className="clan-tooltip-name" style={{ color: c.color }}>{c.name}</span>
-                <span className="clan-tooltip-stat" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><HonorIcon size={14} color={c.color} /> Honor inicial: {c.initialHonor}</span>
-                <span className="clan-tooltip-stat" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CoinIcon size={14} color={c.color} /> Ingresos: {CLAN_INCOME[c.id] ?? 0}</span>
+                <span className="clan-tooltip-name" style={{ color: c.color }}>
+                  <ClanShield clanId={c.id} size={24} />
+                  Clan {c.name}
+                </span>
+                <span className="clan-tooltip-stat"><HonorIcon size={14} color={c.color} /> {t('menu.initialHonor')} {c.initialHonor}</span>
+                <span className="clan-tooltip-stat"><CoinIcon size={14} color={c.color} /> {t('menu.income')} {CLAN_INCOME[c.id] ?? 0}</span>
                 <span className="clan-tooltip-power">
-                  <span className="clan-tooltip-power-label">Poder del clan</span>
+                  <span className="clan-tooltip-power-label">{t('clanPower.label')}</span>
                   <span className="clan-tooltip-power-content">
                     <ClanPowerContent clanId={c.id} color={c.color} />
                   </span>

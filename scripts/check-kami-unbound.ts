@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  advanceKamiResolution,
   calculateForce,
   canBeKilledByPlayer,
   cleanupSeason,
@@ -21,6 +22,27 @@ function stateWithKami(selectedKami: KamiType[] = ['amaterasu', 'raijin', 'ryuji
     undefined,
     { chosenDeck: 'Archway', extraMonsters: 0, selectedKami, kamiUnbound: true },
   );
+}
+
+{
+  const state = stateWithKami(['ryujin', 'amaterasu', 'raijin', 'susanoo']);
+  const [first, second] = state.players;
+  state.temples[0].figures = [{ playerId: first.id, figureId: 'ryujin-worshipper' }];
+  state.temples[1].figures = [{ playerId: second.id, figureId: 'new-komainu', monsterCardId: 'su-komainu' }];
+  state.kamiResolutionActive = true;
+  state.kamiResolutionIndex = 0;
+  state.kamiResolutionStep = 'interactive';
+  state.kamiResolutionCurrentPlayerId = first.id;
+  state.kamiResolutionTemples = [
+    { templeIndex: 0, kamiType: 'ryujin', winnerId: first.id, reward: '', forces: [{ playerId: first.id, count: 1 }] },
+    { templeIndex: 1, kamiType: 'amaterasu', winnerId: first.id, reward: '', forces: [{ playerId: first.id, count: 1 }] },
+  ];
+  state.kamiVassalResolvedTempleIndexes = [0];
+  state.kamiManifestedTempleIndexes = [0];
+
+  const advanced = advanceKamiResolution(state);
+  assert.equal(advanced.kamiResolutionCurrentPlayerId, second.id, 'A later Shrine must use figures placed during an earlier Kami reward');
+  assert.deepEqual(advanced.kamiResolutionTemples[1].forces, [{ playerId: second.id, count: 2 }], 'Later Shrine forces must be rebuilt from the live board');
 }
 
 {
