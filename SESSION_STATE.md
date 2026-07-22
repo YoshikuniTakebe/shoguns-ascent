@@ -1185,3 +1185,6 @@ server restart — no longer loses the game.
   `Monedas suman`; Tortuga and Libelula use intentional two-line layouts.
 - The Loto home tooltip has a wider clan-specific layout so both fixed power lines remain inside
   its border.
+- Removed the legacy 220px home power-column limit so power text is centered against the complete
+  tooltip width. Bonsai no longer ends in a period, and Zorro uses two intentional lines with
+  `gratis` on the first and `figuras.` on the second.

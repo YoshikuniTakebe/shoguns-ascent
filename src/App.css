@@ -1191,6 +1191,13 @@
   text-align: center;
 }
 
+.clan-tooltip .clan-tooltip-power {
+  width: 100%;
+  max-width: none;
+  align-items: center;
+  text-align: center;
+}
+
 .clan-tooltip .clan-power-tooltip-lines {
   align-items: center;
 }

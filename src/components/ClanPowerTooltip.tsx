@@ -51,9 +51,14 @@ export const ClanPowerContent = ({ clanId, color }: { clanId: string; color: str
         </span>
       );
     case 'zorro':
-      return <>{t('clanPower.zorro.before')} <BushiIcon size={17} color={color} /> {t('clanPower.zorro.after')}</>;
+      return (
+        <span className="clan-power-tooltip-lines">
+          <span className="clan-power-tooltip-line">{t('clanPower.zorro.before')} <BushiIcon size={17} color={color} /> {t('clanPower.zorro.line1End')}</span>
+          <span className="clan-power-tooltip-line">{t('clanPower.zorro.line2')}</span>
+        </span>
+      );
     case 'bonsai':
-      return <>{t('clanPower.bonsai.before')} <CoinIcon size={17} color={color} /> 1.</>;
+      return <>{t('clanPower.bonsai.before')} <CoinIcon size={17} color={color} /> 1</>;
     case 'luna':
       return (
         <span className="clan-power-tooltip-lines">
