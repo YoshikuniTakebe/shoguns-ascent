@@ -52,6 +52,7 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
             <div className="legend-tooltip-row"><FortressIcon size={20} color="#fff" /><span>{t('legend.fortress')}</span></div>
             <div className="legend-tooltip-row"><DaimyoIcon size={20} color="#fff" /><span>{t('legend.daimyo')}</span></div>
             <div className="legend-tooltip-row"><MonsterIcon size={20} color="#fff" /><span>{t('legend.monster')}</span></div>
+            <div className="legend-tooltip-row"><span className="legend-kami-icon">神</span><span>{t('legend.kami')}</span></div>
             <div className="legend-tooltip-row"><CoinIcon size={20} color="#c8a951" /><span>{t('legend.coin')}</span></div>
             <div className="legend-tooltip-row"><VPIcon size={20} color="#e94560" /><span>{t('legend.vp')}</span></div>
             <div className="legend-tooltip-row"><HonorIcon size={20} color="#9b59b6" /><span>{t('legend.honor')}</span></div>

@@ -1188,3 +1188,11 @@ server restart — no longer loses the game.
 - Removed the legacy 220px home power-column limit so power text is centered against the complete
   tooltip width. Bonsai no longer ends in a period, and Zorro uses two intentional lines with
   `gratis` on the first and `figuras.` on the second.
+
+## Changelog - 2026-07-22 (Kami placement retention and legend)
+
+- A manifested Kami can now be confirmed without selecting another Province, keeping it in its
+  current location. First manifestation still requires a destination, and the toolbar identifies
+  the retained Province before confirmation.
+- Added the `神` Kami figure symbol to every icon legend in Spanish and English.
+- The focused Kami checks cover retaining an existing Kami without a new Province selection.

@@ -353,6 +353,7 @@ export const GameBoard = () => {
             <div className="legend-tooltip-row"><FortressIcon size={20} color="#fff" /><span>{t('legend.fortress')}</span></div>
             <div className="legend-tooltip-row"><DaimyoIcon size={20} color="#fff" /><span>{t('legend.daimyo')}</span></div>
             <div className="legend-tooltip-row"><MonsterIcon size={20} color="#fff" /><span>{t('legend.monster')}</span></div>
+            <div className="legend-tooltip-row"><span className="legend-kami-icon">神</span><span>{t('legend.kami')}</span></div>
             <div className="legend-tooltip-row"><CoinIcon size={20} color="#c8a951" /><span style={{ color: '#c8a951' }}>{t('legend.coin')}</span></div>
             <div className="legend-tooltip-row"><VPIcon size={20} color="#e94560" /><span style={{ color: '#e94560' }}>{t('legend.vp')}</span></div>
             <div className="legend-tooltip-row"><HonorIcon size={20} color="#9b59b6" /><span style={{ color: '#9b59b6' }}>{t('legend.honor')}</span></div>
@@ -1073,6 +1074,9 @@ export const GameBoard = () => {
         const color = clan?.color || 'var(--accent-gold)';
         const kami = KAMI_DATA.find(candidate => candidate.type === gameState.kamiPlacementKamiType);
         const selectedProvince = gameState.kamiPlacementProvinceId ? gameState.provinces[gameState.kamiPlacementProvinceId] : undefined;
+        const currentKamiProvince = Object.values(gameState.provinces).find(province =>
+          province.figures.some(figure => figure.type === 'kami' && figure.kamiType === gameState.kamiPlacementKamiType)
+        );
         const isOwner = gameState.mode === 'hotseat' || localPlayerId === gameState.kamiPlacementPlayerId;
 
         if (isOwner && kamiPlacementMapMode) {
@@ -1080,12 +1084,18 @@ export const GameBoard = () => {
             <div className="kami-unbound-toolbar" style={{ borderColor: color }}>
               <div className="kami-unbound-toolbar-title">
                 <strong style={{ color }}>{kami?.name}</strong>
-                <span>{selectedProvince ? selectedProvince.name : t('kami.unbound.chooseProvince')}</span>
+                <span>
+                  {selectedProvince
+                    ? selectedProvince.name
+                    : currentKamiProvince
+                      ? t('kami.unbound.keepProvince', { province: currentKamiProvince.name })
+                      : t('kami.unbound.chooseProvince')}
+                </span>
               </div>
               <button className="icon-btn" title={t('kami.unbound.undo')} disabled={!selectedProvince} onClick={doKamiUndoProvince}>
                 <UndoIcon size={21} />
               </button>
-              <button className="btn-primary" disabled={!selectedProvince} onClick={() => { doKamiConfirmProvince(); setKamiPlacementMapMode(false); }}>
+              <button className="btn-primary" disabled={!selectedProvince && !currentKamiProvince} onClick={() => { doKamiConfirmProvince(); setKamiPlacementMapMode(false); }}>
                 {t('kami.unbound.confirm')}
               </button>
             </div>
@@ -1114,10 +1124,21 @@ export const GameBoard = () => {
               )}
               {isOwner ? (
                 <>
-                  <p>{t('kami.unbound.ownerPrompt', { kami: kami?.name || '' })}</p>
-                  <button className="btn-primary" onClick={() => setKamiPlacementMapMode(true)}>
-                    {t('kami.unbound.choose')}
-                  </button>
+                  <p>
+                    {currentKamiProvince
+                      ? t('kami.unbound.ownerPromptExisting', { kami: kami?.name || '', province: currentKamiProvince.name })
+                      : t('kami.unbound.ownerPrompt', { kami: kami?.name || '' })}
+                  </p>
+                  <div className="kami-unbound-popup-actions">
+                    <button className={currentKamiProvince ? 'btn-secondary' : 'btn-primary'} onClick={() => setKamiPlacementMapMode(true)}>
+                      {t('kami.unbound.choose')}
+                    </button>
+                    {currentKamiProvince && (
+                      <button className="btn-primary" onClick={() => { doKamiConfirmProvince(); setKamiPlacementMapMode(false); }}>
+                        {t('kami.unbound.confirm')}
+                      </button>
+                    )}
+                  </div>
                 </>
               ) : (
                 <p>{t('kami.unbound.waiting', { player: owner?.name || '', kami: kami?.name || '' })}</p>

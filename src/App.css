@@ -1092,9 +1092,31 @@
   text-shadow: 0 1px 2px #000, 0 0 4px currentColor;
 }
 
+.legend-kami-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 20px;
+  color: #fff;
+  font-family: serif;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 20px;
+  text-shadow: 0 1px 2px #000, 0 0 4px currentColor;
+}
+
 .kami-unbound-popup > p {
   margin: 14px 0 20px;
   line-height: 1.45;
+}
+
+.kami-unbound-popup-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .kami-unbound-power {

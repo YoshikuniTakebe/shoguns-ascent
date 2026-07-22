@@ -2572,8 +2572,12 @@ export function undoKamiManifestationProvince(state: GameState, playerId: string
 
 export function confirmKamiManifestation(state: GameState, playerId: string): GameState {
   const kamiType = state.kamiPlacementKamiType;
-  const provinceId = state.kamiPlacementProvinceId;
-  if (!state.kamiPlacementActive || state.kamiPlacementPlayerId !== playerId || !kamiType || !provinceId) return state;
+  if (!state.kamiPlacementActive || state.kamiPlacementPlayerId !== playerId || !kamiType) return state;
+  const currentProvinceId = Object.entries(state.provinces).find(([, province]) =>
+    province.figures.some(figure => figure.type === 'kami' && figure.kamiType === kamiType)
+  )?.[0];
+  const provinceId = state.kamiPlacementProvinceId || currentProvinceId;
+  if (!provinceId) return state;
   const destination = state.provinces[provinceId];
   if (!destination || provinceId === 'ocean') return state;
 
@@ -2595,7 +2599,12 @@ export function confirmKamiManifestation(state: GameState, playerId: string): Ga
     kamiPlacementKamiType: null,
     kamiPlacementProvinceId: null,
     kamiManifestedTempleIndexes: [...new Set([...(state.kamiManifestedTempleIndexes || []), state.kamiResolutionIndex])],
-    log: [...state.log, `${player?.name || 'Jugador'} manifiesta a ${kamiName} en ${destination.name} (Kami Unbound)`],
+    log: [
+      ...state.log,
+      state.kamiPlacementProvinceId
+        ? `${player?.name || 'Jugador'} manifiesta a ${kamiName} en ${destination.name} (Kami Unbound)`
+        : `${player?.name || 'Jugador'} mantiene a ${kamiName} en ${destination.name} (Kami Unbound)`,
+    ],
   };
   syncKamiControllers(nextState);
   nextState = advanceKamiResolution(nextState);

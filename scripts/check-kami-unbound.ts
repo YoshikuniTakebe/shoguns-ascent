@@ -4,6 +4,7 @@ import {
   calculateForce,
   canBeKilledByPlayer,
   cleanupSeason,
+  confirmKamiManifestation,
   createInitialGameState,
   isFigureTrappedBySusanoo,
   moveForces,
@@ -22,6 +23,20 @@ function stateWithKami(selectedKami: KamiType[] = ['amaterasu', 'raijin', 'ryuji
     undefined,
     { chosenDeck: 'Archway', extraMonsters: 0, selectedKami, kamiUnbound: true },
   );
+}
+
+{
+  const state = stateWithKami();
+  const owner = state.players[0];
+  state.provinces.kanto.figures = [kami('amaterasu', owner.id)];
+  state.kamiPlacementActive = true;
+  state.kamiPlacementPlayerId = owner.id;
+  state.kamiPlacementKamiType = 'amaterasu';
+  state.kamiPlacementProvinceId = null;
+
+  const confirmed = confirmKamiManifestation(state, owner.id);
+  assert.equal(confirmed.kamiPlacementActive, false, 'An existing Kami may confirm without selecting a new Province');
+  assert.equal(confirmed.provinces.kanto.figures.some(item => item.type === 'kami' && item.kamiType === 'amaterasu'), true, 'Confirming without a selection must keep the Kami in place');
 }
 
 {
