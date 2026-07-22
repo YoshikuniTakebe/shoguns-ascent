@@ -11,7 +11,14 @@ export const ClanPowerContent = ({ clanId, color }: { clanId: string; color: str
 
   switch (clanId) {
     case 'koi':
-      return <>{t('clanPower.koi.coinAs')} <CoinIcon size={16} color={color} /> {t('clanPower.koi.as')} <RoninIcon size={16} color={color} />. {t('clanPower.koi.warStart')} <FistIcon size={16} color={color} />.</>;
+      return (
+        <span className="clan-power-tooltip-lines">
+          <span className="clan-power-tooltip-line">{t('clanPower.koi.coinAs')} <CoinIcon size={16} color={color} /> {t('clanPower.koi.as')} <RoninIcon size={16} color={color} /></span>
+          <span className="clan-power-tooltip-line">{t('clanPower.koi.warStartLine1')}</span>
+          <span className="clan-power-tooltip-line">{t('clanPower.koi.warStartLine2')}</span>
+          <span className="clan-power-tooltip-line">{t('clanPower.koi.warStartLine3')} <FistIcon size={16} color={color} /></span>
+        </span>
+      );
     case 'sol':
       return (
         <span className="clan-power-tooltip-lines">
@@ -30,9 +37,19 @@ export const ClanPowerContent = ({ clanId, color }: { clanId: string; color: str
         </span>
       );
     case 'tortuga':
-      return <>{t('clanPower.tortuga.before')} <FortressIcon size={17} color={color} /> {t('clanPower.tortuga.after')} <FistIcon size={16} color={color} /> 1.</>;
+      return (
+        <span className="clan-power-tooltip-lines">
+          <span className="clan-power-tooltip-line">{t('clanPower.tortuga.before')} <FortressIcon size={17} color={color} /> {t('clanPower.tortuga.line1')}</span>
+          <span className="clan-power-tooltip-line">{t('clanPower.tortuga.line2')} <FistIcon size={16} color={color} /> 1.</span>
+        </span>
+      );
     case 'libelula':
-      return <>{t('clanPower.libelula.before')} <BushiIcon size={16} color={color} /> <ShintoIcon size={17} color={color} /> <DaimyoIcon size={16} color={color} /> <MonsterIcon size={17} color={color} /> {t('clanPower.libelula.after')}</>;
+      return (
+        <span className="clan-power-tooltip-lines">
+          <span className="clan-power-tooltip-line">{t('clanPower.libelula.before')} <BushiIcon size={16} color={color} /> <ShintoIcon size={17} color={color} /> <DaimyoIcon size={16} color={color} /> <MonsterIcon size={17} color={color} /></span>
+          <span className="clan-power-tooltip-line">{t('clanPower.libelula.after')}</span>
+        </span>
+      );
     case 'zorro':
       return <>{t('clanPower.zorro.before')} <BushiIcon size={17} color={color} /> {t('clanPower.zorro.after')}</>;
     case 'bonsai':

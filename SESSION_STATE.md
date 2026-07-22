@@ -1177,3 +1177,11 @@ server restart — no longer loses the game.
   fixed-line presentation and header treatment as the in-game sidebar and Honor Track tooltips.
 - `npm run lint`, `npm run check:kami` and the production build pass. Lint retains only the two
   pre-existing warnings in FriendsModal and PoliticsTrack.
+
+## Changelog - 2026-07-22 (clan tooltip layout refinement)
+
+- Clan power text is centered consistently on the home, player sidebar and Honor Track.
+- Koi uses stable centered lines with no stray punctuation and keeps the Force icon beside
+  `Monedas suman`; Tortuga and Libelula use intentional two-line layouts.
+- The Loto home tooltip has a wider clan-specific layout so both fixed power lines remain inside
+  its border.

@@ -771,15 +771,17 @@
 
 .clan-power-tooltip-text {
   flex-wrap: wrap;
+  justify-content: center;
   color: var(--accent-cream);
   font-size: 0.78rem;
   line-height: 1.45;
+  text-align: center;
 }
 
 .clan-power-tooltip-lines {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 2px;
 }
 
@@ -1166,6 +1168,10 @@
   white-space: normal;
 }
 
+.clan-tooltip-loto {
+  width: min(430px, calc(100vw - 24px));
+}
+
 .clan-tooltip-stat {
   display: inline-flex;
   align-items: center;
@@ -1182,6 +1188,7 @@
 
 .clan-tooltip-power-content {
   width: 100%;
+  text-align: center;
 }
 
 .clan-tooltip .clan-power-tooltip-lines {

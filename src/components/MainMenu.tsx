@@ -765,7 +765,7 @@ export const MainMenu = () => {
           {CLANS.map(c => (
             <div key={c.id} className="clan-preview-seal-wrapper">
               <ClanShield clanId={c.id} size={150} />
-              <div className="clan-tooltip" style={{ borderColor: c.color }}>
+              <div className={`clan-tooltip clan-tooltip-${c.id}`} style={{ borderColor: c.color }}>
                 <span className="clan-tooltip-name" style={{ color: c.color }}>
                   <ClanShield clanId={c.id} size={24} />
                   Clan {c.name}
