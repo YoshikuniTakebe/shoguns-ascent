@@ -1,6 +1,11 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'shoguns-ascent-secret-key-change-in-production';
+const fallbackSecret = 'shoguns-ascent-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || fallbackSecret;
+
+if (process.env.NODE_ENV === 'production' && JWT_SECRET === fallbackSecret) {
+  throw new Error('JWT_SECRET must be configured in production');
+}
 
 export interface TokenPayload {
   userId: string;

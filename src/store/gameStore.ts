@@ -81,6 +81,10 @@ import {
   toggleWarStartMercy,
   confirmWarStartAction,
   skipWarStartAction,
+  selectKamiManifestationProvince,
+  undoKamiManifestationProvince,
+  confirmKamiManifestation,
+  syncKamiControllers,
 } from '../utils/gameLogic';
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -474,6 +478,9 @@ interface GameStore {
   dismissKamiPhasePopup: () => void;
   doKamiPhaseReady: () => void;
   doKamiSummaryReady: () => void;
+  doKamiSelectProvince: (provinceId: string) => void;
+  doKamiUndoProvince: () => void;
+  doKamiConfirmProvince: () => void;
   kamiTurnPopupShownForIndex: number | null;
   kamiSummaryVisibleSince: number | null;
 
@@ -691,6 +698,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       jinmenjuUsedThisMandate: true,
       log: [...gameState.log, `${player.name} invoca un ${recruitFigureType} en ${jinmenjuProvince.name} usando Jinmenju (pierde {h})`],
     };
+
+    syncKamiControllers(ns);
 
     // Lose honor
     loseHonor(ns, cp.id);
@@ -2083,6 +2092,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       log: [...gameState.log, `${player.name} coloca un shinto en santuario de ${capitalize(temple.kamiType)}`],
     };
 
+    syncKamiControllers(ns);
+
     // Path of the Warlord: recruit counts as a single summon; award at most once per turn
     // (covers players who recruit only into temples).
     ns = grantRecruitWarlordCoinOnce(ns, apid);
@@ -2656,6 +2667,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       log: [...gameState.log, logMessage],
     };
 
+    syncKamiControllers(ns);
+
     // Path of the Warlord (hotseat): placing a purchased monster (Komainu/Hotei) is a summon.
     // In online mode the server awards this coin when it processes the MONSTER_PLACED action.
     if (gameState.mode === 'hotseat') {
@@ -2955,6 +2968,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else {
       set({ gameState: ns, moveMode: false, moveFrom: null, selectedFigures: [], ...detectWarTransitionWithPopup(ns) });
     }
+  },
+
+  doKamiSelectProvince: (provinceId: string) => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState?.kamiPlacementActive || !gameState.kamiPlacementPlayerId) return;
+    const playerId = gameState.mode === 'online' ? localPlayerId : gameState.kamiPlacementPlayerId;
+    if (!playerId || playerId !== gameState.kamiPlacementPlayerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'KAMI_UNBOUND_SELECT_PROVINCE', playerId, payload: { provinceId } });
+      return;
+    }
+    set({ gameState: selectKamiManifestationProvince(gameState, playerId, provinceId) });
+  },
+
+  doKamiUndoProvince: () => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState?.kamiPlacementActive || !gameState.kamiPlacementPlayerId) return;
+    const playerId = gameState.mode === 'online' ? localPlayerId : gameState.kamiPlacementPlayerId;
+    if (!playerId || playerId !== gameState.kamiPlacementPlayerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'KAMI_UNBOUND_UNDO_PROVINCE', playerId });
+      return;
+    }
+    set({ gameState: undoKamiManifestationProvince(gameState, playerId) });
+  },
+
+  doKamiConfirmProvince: () => {
+    const { gameState, ws, localPlayerId } = get();
+    if (!gameState?.kamiPlacementActive || !gameState.kamiPlacementPlayerId) return;
+    const playerId = gameState.mode === 'online' ? localPlayerId : gameState.kamiPlacementPlayerId;
+    if (!playerId || playerId !== gameState.kamiPlacementPlayerId) return;
+    if (ws && gameState.mode === 'online') {
+      get().sendAction({ type: 'KAMI_UNBOUND_CONFIRM_PROVINCE', playerId });
+      return;
+    }
+    const nextState = confirmKamiManifestation(gameState, playerId);
+    set({ gameState: nextState, ...detectWarTransitionWithPopup(nextState) });
   },
 
   fujinPreMoveState: null,

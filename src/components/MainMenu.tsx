@@ -35,6 +35,7 @@ export const MainMenu = () => {
   const [extraMonsters, setExtraMonsters] = useState<0 | 1 | 2>(0);
   const [kamiMode, setKamiMode] = useState<'random' | 'manual'>('random');
   const [selectedKami, setSelectedKami] = useState<KamiType[]>([]);
+  const [kamiUnbound, setKamiUnbound] = useState(false);
   const [hotseatPassword, setHotseatPassword] = useState('');
   const [showConfig, setShowConfig] = useState(false);
   const [showAddFriend, setShowAddFriend] = useState(false);
@@ -48,6 +49,7 @@ export const MainMenu = () => {
   const [createExtraMonsters, setCreateExtraMonsters] = useState<0 | 1 | 2>(0);
   const [createKamiMode, setCreateKamiMode] = useState<'random' | 'manual'>('random');
   const [createSelectedKami, setCreateSelectedKami] = useState<KamiType[]>([]);
+  const [createKamiUnbound, setCreateKamiUnbound] = useState(false);
 
   const [createMode, setCreateMode] = useState<'manual' | 'random'>('manual');
   const [randomClans, setRandomClans] = useState<string[]>(() => shuffle(CLANS.map(c => c.id)).slice(0, createPc));
@@ -99,6 +101,7 @@ export const MainMenu = () => {
     chosenDeck,
     extraMonsters,
     selectedKami: kamiMode === 'manual' && selectedKami.length === 4 ? selectedKami : undefined,
+    kamiUnbound,
   });
 
   return (
@@ -338,6 +341,10 @@ export const MainMenu = () => {
                 &#9998; {t('kami.manual')}
               </button>
             </div>
+            <label className="kami-unbound-toggle">
+              <input type="checkbox" checked={kamiUnbound} onChange={event => setKamiUnbound(event.target.checked)} />
+              <span>{t('kami.unbound.enable')}</span>
+            </label>
             {kamiMode === 'manual' && (
               <div className="kami-selection-panel">
                 <span className="kami-selection-counter">
@@ -615,6 +622,10 @@ export const MainMenu = () => {
                 &#9998; {t('kami.manual')}
               </button>
             </div>
+            <label className="kami-unbound-toggle">
+              <input type="checkbox" checked={createKamiUnbound} onChange={event => setCreateKamiUnbound(event.target.checked)} />
+              <span>{t('kami.unbound.enable')}</span>
+            </label>
             {createKamiMode === 'manual' && (
               <div className="kami-selection-panel">
                 <span className="kami-selection-counter">
@@ -659,6 +670,7 @@ export const MainMenu = () => {
                   chosenDeck: createDeck,
                   extraMonsters: createExtraMonsters,
                   selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
+                  kamiUnbound: createKamiUnbound,
                 };
 
                 if (createMode === 'manual') {

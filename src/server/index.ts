@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
 import { URL } from 'url';
+import path from 'path';
 import {
   createInitialGameState,
   breakAllAlliances,
@@ -82,6 +83,10 @@ import {
   toggleWarStartMercy,
   confirmWarStartAction,
   skipWarStartAction,
+  selectKamiManifestationProvince,
+  undoKamiManifestationProvince,
+  confirmKamiManifestation,
+  syncKamiControllers,
 } from '../utils/gameLogic';
 import type { GameState, RuleEventNotice } from '../types/game';
 import { SEASON_CARDS_DATA } from '../types/game';
@@ -146,10 +151,15 @@ import bcrypt from 'bcryptjs';
 
 const app = express();
 
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
 // Manual CORS middleware for Express 5 compatibility
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin) {
+  if (origin && (allowedOrigins.length === 0 || allowedOrigins.includes(origin))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
@@ -167,7 +177,7 @@ const wss = new WebSocketServer({ server });
 
 interface LobbyConfig {
   availableClans: string[];
-  deckConfig: { chosenDeck: string; extraMonsters: 0 | 1 | 2; selectedKami?: string[] };
+  deckConfig: { chosenDeck: string; extraMonsters: 0 | 1 | 2; selectedKami?: string[]; kamiUnbound?: boolean };
   kamiMode: 'random' | 'manual';
   selectedKami?: string[];
   autoAssignClan?: boolean;
@@ -2531,6 +2541,7 @@ wss.on('connection', (ws: WebSocket, req) => {
               temples: updatedTemples,
               log: [...s.log, placementLog],
             };
+            syncKamiControllers(s);
             applyDignityMonsterSummon(s, playerId);
             // Upgrade: Path of the Warlord - placing a purchased monster (Komainu/Hotei) is a summon.
             s = grantWarlordSummonCoin(s, playerId);
@@ -2991,6 +3002,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             recruitPlacementsRemaining: l.gameState.recruitPlacementsRemaining - 1,
             log: [...l.gameState.log, `${recruitPlayer.name} coloca un shinto en santuario de ${capitalize(temple.kamiType)}`],
           };
+          syncKamiControllers(l.gameState);
           // Path of the Warlord: recruit counts as a single summon; award at most once per turn
           // (covers players who recruit only into temples). Undo snapshot was saved above.
           l.gameState = grantRecruitWarlordCoinOnce(l.gameState, data.playerId);
@@ -3137,6 +3149,32 @@ wss.on('connection', (ws: WebSocket, req) => {
           // Auto reward applied - advance to next temple
           s = advanceKamiResolution(s);
           l.gameState = s;
+          broadcastState(l);
+          break;
+        }
+
+        case 'KAMI_UNBOUND_SELECT_PROVINCE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const { provinceId } = data.payload || {};
+          if (!provinceId || data.playerId !== l.gameState.kamiPlacementPlayerId) return;
+          l.gameState = selectKamiManifestationProvince(l.gameState, data.playerId, provinceId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'KAMI_UNBOUND_UNDO_PROVINCE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || data.playerId !== l.gameState.kamiPlacementPlayerId) return;
+          l.gameState = undoKamiManifestationProvince(l.gameState, data.playerId);
+          broadcastState(l);
+          break;
+        }
+
+        case 'KAMI_UNBOUND_CONFIRM_PROVINCE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || data.playerId !== l.gameState.kamiPlacementPlayerId) return;
+          l.gameState = confirmKamiManifestation(l.gameState, data.playerId);
           broadcastState(l);
           break;
         }
@@ -3622,4 +3660,18 @@ function broadcastLobby(l: Lobby) {
 }
 
 const PORT = process.env.PORT || 3001;
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok' });
+});
+
+const distDir = path.resolve(process.cwd(), 'dist');
+app.use(express.static(distDir));
+app.use((req, res, next) => {
+  if (req.method !== 'GET' || req.path.startsWith('/api/')) {
+    next();
+    return;
+  }
+  res.sendFile(path.join(distDir, 'index.html'));
+});
+
 server.listen(PORT, () => console.log(`Shogun's Ascent server on port ${PORT}`));

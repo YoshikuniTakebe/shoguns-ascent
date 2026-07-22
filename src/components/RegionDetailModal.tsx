@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, SEASON_CARDS_DATA, PROVINCE_COLORS } from '../types/game';
+import { CLANS, SEASON_CARDS_DATA, PROVINCE_COLORS, KAMI_DATA } from '../types/game';
 import type { Figure, GameState } from '../types/game';
 import { useT, t as tStandalone } from '../i18n';
 import { FistIcon } from './Icons';
@@ -15,19 +15,6 @@ interface RegionDetailModalProps {
   regionId: string;
   onClose: () => void;
 }
-
-/** Kami sparkle icon */
-const KamiIcon = ({ size = 28, color = 'currentColor' }: { size?: number; color?: string }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill={color}
-    stroke="none"
-  >
-    <path d="M12 2L13.5 8.5L20 7L15 12L20 17L13.5 15.5L12 22L10.5 15.5L4 17L9 12L4 7L10.5 8.5Z" />
-  </svg>
-);
 
 /** Get monster card info (name and effect) by monsterCardId */
 function getMonsterInfo(monsterCardId: string): { name: string; effect: string; force?: number } | null {
@@ -56,7 +43,19 @@ function getFigureTypeName(type: string): string {
 
 /** Get individual force value for a figure */
 function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameState, regionId: string): number {
+  const province = gameState.provinces[regionId];
+  const raijinPresent = gameState.kamiUnboundEnabled && province?.figures.some(candidate => candidate.type === 'kami' && candidate.kamiType === 'raijin');
+  if (raijinPresent && figure.type !== 'bushi' && figure.type !== 'kami') return 0;
   switch (figure.type) {
+    case 'kami': {
+      if (figure.kamiType === 'ryujin') {
+        const player = gameState.players.find(candidate => candidate.id === figure.owner);
+        const types = new Set((player?.seasonCards || []).map(card => card.cardType));
+        if (player?.seasonCards.some(card => card.id === 'sp-jurojin' || card.id === 'sp-jurojin-2')) types.add('virtue');
+        return ownerClanId === 'luna' ? Math.max(2, types.size) : types.size;
+      }
+      return ownerClanId === 'luna' ? 2 : 1;
+    }
     case 'bushi': {
       const player = gameState.players.find(p => p.id === figure.owner);
       const isLuna = ownerClanId === 'luna';
@@ -242,6 +241,11 @@ export const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, icon
       tooltipText = `${info.name} - ${ownerName}\n${info.effect}`;
     }
   }
+  if (figure.type === 'kami' && figure.kamiType) {
+    const kami = KAMI_DATA.find(candidate => candidate.type === figure.kamiType);
+    const power = tStandalone(`kami.${figure.kamiType}.expansionEffect`);
+    tooltipText = `${kami?.name || figure.kamiType} - ${ownerName}${power ? `\n${power}` : ''}`;
+  }
 
   // Monster with actual image
   if (figure.type === 'monster' && figure.monsterCardId) {
@@ -319,7 +323,12 @@ export const DioramaFigure = ({ figure, ownerColor, ownerClanId, ownerName, icon
       case 'shinto':
         return <img ref={imgRef} src={getShintoImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Shinto" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
       case 'kami':
-        return <KamiIcon size={iconSize} color={ownerColor} />;
+        return (
+          <div className="kami-template-figure">
+            <img ref={imgRef} src={TEMPLATE_FIGURE_IMG} alt={figure.kamiType || 'Kami'} className="region-diorama-figure-img" style={{ height: figureHeight }} />
+            <span style={{ color: ownerColor }}>{KAMI_DATA.find(kami => kami.type === figure.kamiType)?.name || figure.kamiType}</span>
+          </div>
+        );
       default:
         return <img ref={imgRef} src={TEMPLATE_FIGURE_IMG} alt="Figure" className="region-diorama-figure-img" style={{ height: figureHeight }} />;
     }
@@ -434,6 +443,9 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
         monsterPowerText = info.effect;
       }
     }
+    if (figure.type === 'kami' && figure.kamiType) {
+      monsterPowerText = t(`kami.${figure.kamiType}.expansionEffect`) || null;
+    }
 
     // Render the figure image/icon large
     const renderLargeFigure = () => {
@@ -464,7 +476,12 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
         case 'shinto':
           return <img src={getShintoImage(ownerClanId) || TEMPLATE_FIGURE_IMG} alt="Shinto" style={zoomStyle} />;
         case 'kami':
-          return <KamiIcon size={200} color={ownerColor} />;
+          return (
+            <div className="kami-template-figure kami-template-figure-zoom">
+              <img src={TEMPLATE_FIGURE_IMG} alt={figure.kamiType || 'Kami'} style={zoomStyle} />
+              <span style={{ color: ownerColor }}>{KAMI_DATA.find(kami => kami.type === figure.kamiType)?.name || figure.kamiType}</span>
+            </div>
+          );
         default:
           return <img src={TEMPLATE_FIGURE_IMG} alt="Figure" style={zoomStyle} />;
       }
@@ -492,6 +509,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
               : figure.type === 'shinto' ? 'Shinto'
               : figure.type === 'daimyo' ? 'Daimyo'
               : figure.type === 'fortress' ? 'Fortaleza'
+              : figure.type === 'kami' ? (KAMI_DATA.find(kami => kami.type === figure.kamiType)?.name || 'Kami')
               : ''}
           </div>
           {monsterPowerText && (

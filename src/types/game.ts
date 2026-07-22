@@ -29,6 +29,7 @@ export interface Figure {
   owner: string;
   id: string;
   monsterCardId?: string;
+  kamiType?: KamiType;
 }
 
 export interface Province {
@@ -164,6 +165,7 @@ export interface Battle {
   jorogumoCaptured?: { figureId: string; originalOwner: string } | null;
   fireDragonEffectApplied?: boolean;
   earthDragonEffectApplied?: boolean;
+  tsukuyomiEffectApplied?: boolean;
   mercyChoice?: boolean;
 }
 
@@ -252,6 +254,7 @@ export interface DeckConfig {
   chosenDeck: DeckName | 'random';
   extraMonsters: 0 | 1 | 2;
   selectedKami?: KamiType[];
+  kamiUnbound?: boolean;
 }
 
 export interface KamiResolutionTemple {
@@ -366,6 +369,12 @@ export interface GameState {
   raijinPlacementActive: boolean;
   raijinPlacementDone?: boolean;
   ryujinBuyActive: boolean;
+  kamiUnboundEnabled?: boolean;
+  kamiPlacementActive?: boolean;
+  kamiPlacementPlayerId?: string | null;
+  kamiPlacementKamiType?: KamiType | null;
+  kamiPlacementProvinceId?: string | null;
+  kamiManifestedTempleIndexes?: number[];
   zorroPlacementActive: boolean;
   zorroPlacementPlayerId: string | null;
   zorroPlacementsRemaining: number;

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import { ClanShield } from './ClanShields';
+import { canBeKilledByPlayer } from '../utils/gameLogic';
 
 export const NinjaDecisionPopup = () => {
   const gameState = useGameStore(state => state.gameState);
@@ -20,7 +21,7 @@ export const NinjaDecisionPopup = () => {
   const targets = useMemo(() => {
     if (!gameState || !pending) return [];
     return Object.entries(gameState.provinces).flatMap(([provinceId, province]) => province.figures
-      .filter(figure => figure.type === 'bushi' && figure.owner !== pending.ownerId)
+      .filter(figure => figure.type === 'bushi' && figure.owner !== pending.ownerId && canBeKilledByPlayer(gameState, provinceId, figure, pending.ownerId))
       .map(figure => ({ figure, provinceId, province })));
   }, [gameState, pending]);
 

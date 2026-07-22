@@ -223,6 +223,7 @@ export function resolveSpringPlacementDecision(
   if (pending.type === 'kannushi' && !(nextState.pendingSpringPlacementQueue || []).some(entry => entry.type === 'kannushi' && entry.ownerId === playerId)) {
     nextState.marshalKannushiUsedBy = [...(nextState.marshalKannushiUsedBy || []), playerId];
   }
+  if (pending.type === 'light' || pending.type === 'kannushi') syncKamiControllers(nextState);
   return refreshPendingKamiResolution(advanceSpringPlacementQueue(nextState));
 }
 
@@ -371,7 +372,9 @@ function applySummonUpgradeBonuses(state: GameState, playerId: string): GameStat
   }
 
   if (playerHasCard(player, 'sp-path-of-the-ninja')) {
-    const hasTarget = Object.values(newState.provinces).some(province => province.figures.some(figure => figure.type === 'bushi' && figure.owner !== playerId));
+    const hasTarget = Object.values(newState.provinces).some(province => province.figures.some(figure =>
+      figure.type === 'bushi' && figure.owner !== playerId && canBeKilledByPlayer(newState, province.id, figure, playerId)
+    ));
     if (hasTarget && !newState.pendingNinjaDecision) newState.pendingNinjaDecision = { ownerId: playerId };
   }
 
@@ -667,6 +670,12 @@ export function createInitialGameState(
     fujinMovesRemaining: 0,
     raijinPlacementActive: false,
     ryujinBuyActive: false,
+    kamiUnboundEnabled: config.kamiUnbound === true,
+    kamiPlacementActive: false,
+    kamiPlacementPlayerId: null,
+    kamiPlacementKamiType: null,
+    kamiPlacementProvinceId: null,
+    kamiManifestedTempleIndexes: [],
     zorroPlacementActive: false,
     zorroPlacementPlayerId: null,
     zorroPlacementsRemaining: 0,
@@ -854,6 +863,7 @@ export function resolveNinjaDecision(
     }
   }
   if (!target || !targetProvinceId) return state;
+  if (!canBeKilledByPlayer(nextState, targetProvinceId, target, playerId)) return state;
   const victim = nextState.players.find(player => player.id === target!.owner);
   if (!victim) return state;
   loseHonor(nextState, playerId);
@@ -1837,7 +1847,8 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
     // Only grant the reward if the strongest player is one of the harvesters (issuer or ally)
     // and the province has at least one non-zero reward value
     if (strongestId && maxForce > 0 && harvesters.includes(strongestId)) {
-      const rewards = province.harvestRewards;
+      const multiplier = getKamiInProvince(newState, province.id, 'fujin') ? 2 : 1;
+      const rewards = Object.fromEntries(Object.entries(province.harvestRewards).map(([key, value]) => [key, (value || 0) * multiplier]));
       const hasReward = (rewards.vp && rewards.vp > 0) || (rewards.coins && rewards.coins > 0) || (rewards.ronin && rewards.ronin > 0) || (rewards.honor && rewards.honor > 0);
       if (hasReward) {
         harvestPlayerRewards.push({
@@ -1901,7 +1912,8 @@ function executeHarvest(state: GameState, issuerId: string): GameState {
     // Only grant if the Kotahi owner has majority
     if (strongestId !== kotahiOwnerId || maxForce <= 0) return;
 
-    const rewards = province.harvestRewards;
+    const multiplier = getKamiInProvince(state, province.id, 'fujin') ? 2 : 1;
+    const rewards = Object.fromEntries(Object.entries(province.harvestRewards).map(([key, value]) => [key, (value || 0) * multiplier]));
     const hasReward = (rewards.vp && rewards.vp > 0) || (rewards.coins && rewards.coins > 0) || (rewards.ronin && rewards.ronin > 0) || (rewards.honor && rewards.honor > 0);
     if (hasReward) {
       harvestPlayerRewards.push({
@@ -2002,12 +2014,7 @@ export function advanceHarvestResolution(state: GameState): GameState {
           if (rewards.coins) gainCoinsFromSupply(newState, player.id, rewards.coins, 'cosecha');
           if (rewards.ronin) player.ronin += rewards.ronin;
           if (rewards.honor) {
-            const currentIdx = newState.honorTrack.indexOf(player.id);
-            if (currentIdx > 0) {
-              newState.honorTrack = [...newState.honorTrack];
-              newState.honorTrack.splice(currentIdx, 1);
-              newState.honorTrack.splice(currentIdx - 1, 0, player.id);
-            }
+            gainHonor(newState, player.id);
           }
           const provinceName = newState.provinces[entry.provinceId]?.name || entry.provinceId;
           const rewardParts: string[] = [];
@@ -2044,13 +2051,7 @@ export function advanceHarvestResolution(state: GameState): GameState {
       if (rewards.coins) gainCoinsFromSupply(newState, player.id, rewards.coins, 'cosecha');
       if (rewards.ronin) player.ronin += rewards.ronin;
       if (rewards.honor) {
-        // Move player up in honor track
-        const currentIdx = newState.honorTrack.indexOf(player.id);
-        if (currentIdx > 0) {
-          newState.honorTrack = [...newState.honorTrack];
-          newState.honorTrack.splice(currentIdx, 1);
-          newState.honorTrack.splice(currentIdx - 1, 0, player.id);
-        }
+        gainHonor(newState, player.id);
       }
       const provinceName = newState.provinces[entry.provinceId]?.name || entry.provinceId;
       const rewardParts: string[] = [];
@@ -2106,7 +2107,8 @@ function applySengokuHarvestBonus(state: GameState): void {
     if (alreadyRewarded) continue;
     const province = state.provinces[daimyoProvinceId];
     if (!province) continue;
-    const rewards = province.harvestRewards;
+    const multiplier = getKamiInProvince(state, province.id, 'fujin') ? 2 : 1;
+    const rewards = Object.fromEntries(Object.entries(province.harvestRewards).map(([key, value]) => [key, (value || 0) * multiplier]));
     if (rewards.vp) gainVictoryPoints(state, player.id, rewards.vp, 'Camino de Sengoku');
     if (rewards.coins) gainCoinsFromSupply(state, player.id, rewards.coins, 'Camino de Sengoku');
     if (rewards.ronin) player.ronin += rewards.ronin;
@@ -2247,7 +2249,7 @@ export function betraySelectFigure(state: GameState, issuerId: string, figureId:
   if (figure.owner === issuerId) return state;
 
   // Validation: cannot target daimyo
-  if (figure.type === 'daimyo') return state;
+  if (figure.type === 'daimyo' || figure.type === 'kami') return state;
 
   // Validation: cannot target monsters that count as daimyo (Fukurokuju, Yurei)
   if (figure.type === 'monster' && figure.monsterCardId && ['sp-fukurokuju', 'su-yurei'].includes(figure.monsterCardId)) return state;
@@ -2422,6 +2424,7 @@ export function resolveKamiAbility(state: GameState, kamiType: KamiType, playerI
           const p = newState.players.find(pl => pl.id === pid);
           if (p) p.honor = idx + 1;
         });
+        syncKamiControllers(newState);
         newState.log = [...newState.log, `${player.name} sube a la cima del Track de Honor (Amaterasu)`];
       } else {
         newState.log = [...newState.log, `${player.name} permanece en la cima del Track de Honor (Amaterasu)`];
@@ -2508,6 +2511,95 @@ function computeTempleWinner(
   });
 
   return { winnerId, forces };
+}
+
+export function getKamiInProvince(state: GameState, provinceId: string, kamiType?: KamiType): Figure | undefined {
+  return state.provinces[provinceId]?.figures.find(figure =>
+    figure.type === 'kami' && (!kamiType || figure.kamiType === kamiType)
+  );
+}
+
+export function isProtectedByAmaterasu(state: GameState, provinceId: string, playerId: string): boolean {
+  if (!state.kamiUnboundEnabled || !getKamiInProvince(state, provinceId, 'amaterasu')) return false;
+  const province = state.provinces[provinceId];
+  if (!province || calculateForce(province, playerId, state) <= 0) return false;
+  const represented = state.players.filter(player => calculateForce(province, player.id, state) > 0);
+  const playerHonor = state.honorTrack.indexOf(playerId);
+  return represented.every(player => state.honorTrack.indexOf(player.id) >= playerHonor);
+}
+
+export function canBeKilledByPlayer(state: GameState, provinceId: string, figure: Figure, killerId: string): boolean {
+  if (figure.type === 'kami') return false;
+  if (figure.owner !== killerId && isProtectedByAmaterasu(state, provinceId, figure.owner)) return false;
+  return true;
+}
+
+/** Keep manifested Kami attached to the current top worshipper after shrine or Honor changes. */
+export function syncKamiControllers(state: GameState): void {
+  if (!state.kamiUnboundEnabled) return;
+  for (const temple of state.temples) {
+    const { winnerId } = computeTempleWinner(temple.figures, state.honorTrack, state.players);
+    if (!winnerId) continue;
+    for (const province of Object.values(state.provinces)) {
+      const kami = province.figures.find(figure => figure.type === 'kami' && figure.kamiType === temple.kamiType);
+      if (kami) kami.owner = winnerId;
+    }
+  }
+
+  // A control change during War can introduce a new clan into an unresolved
+  // battle. Preserve existing bidders and include the new controller in force totals.
+  for (const battle of state.activeBattles) {
+    if (battle.resolved) continue;
+    const province = state.provinces[battle.provinceId];
+    if (!province) continue;
+    const presentOwners = province.figures
+      .filter(figure => figure.type !== 'fortress')
+      .map(figure => figure.owner);
+    battle.participants = [...new Set([...battle.participants, ...presentOwners])];
+  }
+}
+
+export function selectKamiManifestationProvince(state: GameState, playerId: string, provinceId: string): GameState {
+  if (!state.kamiUnboundEnabled || !state.kamiPlacementActive || state.kamiPlacementPlayerId !== playerId) return state;
+  if (!state.provinces[provinceId] || provinceId === 'ocean') return state;
+  return { ...state, kamiPlacementProvinceId: provinceId };
+}
+
+export function undoKamiManifestationProvince(state: GameState, playerId: string): GameState {
+  if (!state.kamiPlacementActive || state.kamiPlacementPlayerId !== playerId) return state;
+  return { ...state, kamiPlacementProvinceId: null };
+}
+
+export function confirmKamiManifestation(state: GameState, playerId: string): GameState {
+  const kamiType = state.kamiPlacementKamiType;
+  const provinceId = state.kamiPlacementProvinceId;
+  if (!state.kamiPlacementActive || state.kamiPlacementPlayerId !== playerId || !kamiType || !provinceId) return state;
+  const destination = state.provinces[provinceId];
+  if (!destination || provinceId === 'ocean') return state;
+
+  const provinces = Object.fromEntries(Object.entries(state.provinces).map(([id, province]) => [
+    id,
+    { ...province, figures: province.figures.filter(figure => !(figure.type === 'kami' && figure.kamiType === kamiType)) },
+  ]));
+  provinces[provinceId] = {
+    ...provinces[provinceId],
+    figures: [...provinces[provinceId].figures, { type: 'kami', owner: playerId, id: `kami-${kamiType}`, kamiType }],
+  };
+  const player = state.players.find(candidate => candidate.id === playerId);
+  const kamiName = KAMI_DATA.find(kami => kami.type === kamiType)?.name || kamiType;
+  let nextState: GameState = {
+    ...state,
+    provinces,
+    kamiPlacementActive: false,
+    kamiPlacementPlayerId: null,
+    kamiPlacementKamiType: null,
+    kamiPlacementProvinceId: null,
+    kamiManifestedTempleIndexes: [...new Set([...(state.kamiManifestedTempleIndexes || []), state.kamiResolutionIndex])],
+    log: [...state.log, `${player?.name || 'Jugador'} manifiesta a ${kamiName} en ${destination.name} (Kami Unbound)`],
+  };
+  syncKamiControllers(nextState);
+  nextState = advanceKamiResolution(nextState);
+  return nextState;
 }
 
 /**
@@ -2660,6 +2752,7 @@ export function betrayReplaceWorshippingShinto(state: GameState, issuerId: strin
   });
   applyRighteousnessVP(nextState, nextVictim.id, 1);
   nextState.log.push(`${nextIssuer.name} reemplaza el Shinto rezando de ${nextVictim.name} en ${kamiName}; la figura sustituida vuelve a su reserva (Camino del Injusto)`);
+  syncKamiControllers(nextState);
   return nextState;
 }
 
@@ -2797,6 +2890,24 @@ export function advanceKamiResolution(state: GameState): GameState {
     }
     state = { ...state, kamiVassalResolvedTempleIndexes: [...(state.kamiVassalResolvedTempleIndexes || []), state.kamiResolutionIndex] };
   }
+
+  // Kami Unbound: after the shrine ability (and its reactions) the top worshipper
+  // manifests or relocates the Kami in any Province. The selection is persisted so
+  // reconnecting players resume the exact interaction instead of advancing the turn.
+  if (
+    state.kamiUnboundEnabled
+    && currentTemple?.winnerId
+    && !(state.kamiManifestedTempleIndexes || []).includes(state.kamiResolutionIndex)
+  ) {
+    return {
+      ...state,
+      kamiResolutionStep: 'interactive',
+      kamiPlacementActive: true,
+      kamiPlacementPlayerId: currentTemple.winnerId,
+      kamiPlacementKamiType: currentTemple.kamiType,
+      kamiPlacementProvinceId: null,
+    };
+  }
   const nextIndex = state.kamiResolutionIndex + 1;
 
   // All temples resolved
@@ -2813,6 +2924,11 @@ export function advanceKamiResolution(state: GameState): GameState {
       fujinMovesRemaining: 0,
       raijinPlacementActive: false,
       ryujinBuyActive: false,
+      kamiPlacementActive: false,
+      kamiPlacementPlayerId: null,
+      kamiPlacementKamiType: null,
+      kamiPlacementProvinceId: null,
+      kamiManifestedTempleIndexes: [],
       kamiSummaryVisible: false,
       kamiSummaryData: summaryData,
       kamiSummaryReadyPlayers: [],
@@ -2873,6 +2989,10 @@ export function advanceKamiResolution(state: GameState): GameState {
     fujinMovesRemaining: 0,
     raijinPlacementActive: false,
     ryujinBuyActive: false,
+    kamiPlacementActive: false,
+    kamiPlacementPlayerId: null,
+    kamiPlacementKamiType: null,
+    kamiPlacementProvinceId: null,
   };
 }
 
@@ -3186,7 +3306,9 @@ function findPendingNureOnnaForBattle(state: GameState, battle: Battle) {
       if (fromProvinceId === battle.provinceId || !province.seaRoutes.includes(battle.provinceId)) continue;
       const figure = province.figures.find(item =>
         item.owner === ownerId && item.type === 'monster' && item.monsterCardId === 'su-nure-onna' && !checked.includes(item.id));
-      if (figure) return { ownerId, figureId: figure.id, fromProvinceId, battleProvinceId: battle.provinceId };
+      if (figure && !isFigureTrappedBySusanoo(state, fromProvinceId, figure)) {
+        return { ownerId, figureId: figure.id, fromProvinceId, battleProvinceId: battle.provinceId };
+      }
     }
   }
   return null;
@@ -3287,7 +3409,7 @@ export function selectWarStartFigure(state: GameState, playerId: string, provinc
   }
 
   if (action.type === 'keiri') {
-    if (figure.owner === playerId || (figure.type !== 'bushi' && figure.type !== 'shinto')) return state;
+    if (figure.owner === playerId || (figure.type !== 'bushi' && figure.type !== 'shinto') || !canBeKilledByPlayer(state, provinceId, figure, playerId)) return state;
     const hasDaimyo = province.figures.some(candidate => candidate.owner === playerId && (
       candidate.type === 'daimyo' || (candidate.type === 'monster' && ['su-yurei', 'sp-fukurokuju'].includes(candidate.monsterCardId || ''))
     ));
@@ -3373,6 +3495,7 @@ export function confirmWarStartAction(state: GameState, playerId: string): GameS
     const destination = nextState.provinces[selection.destinationProvinceId];
     const figure = source?.figures.find(candidate => candidate.id === selection.figureId && candidate.owner === playerId && candidate.type === 'bushi');
     if (!source || !destination || !figure) return state;
+    if (isFigureTrappedBySusanoo(nextState, selection.sourceProvinceId, figure)) return state;
     const plague = destination.figures.find(candidate => candidate.type === 'monster' && candidate.monsterCardId === 'au-oni-of-plagues' && candidate.owner !== playerId);
     if (plague && nextState.honorTrack.indexOf(playerId) < nextState.honorTrack.indexOf(plague.owner)) return state;
     if (player?.clanId === 'luna' && destination.figures.filter(candidate => candidate.owner === playerId && candidate.type !== 'fortress').length >= 2) return state;
@@ -3399,7 +3522,11 @@ export function confirmWarStartAction(state: GameState, playerId: string): GameS
       const hasDaimyo = province.figures.some(figure => figure.owner === playerId && (
         figure.type === 'daimyo' || (figure.type === 'monster' && ['su-yurei', 'sp-fukurokuju'].includes(figure.monsterCardId || ''))
       ));
-      if (!hasDaimyo || provinceTargets.length > 2 || provinceTargets.some(figure => figure.owner === playerId || (figure.type !== 'bushi' && figure.type !== 'shinto'))) return state;
+      if (!hasDaimyo || provinceTargets.length > 2 || provinceTargets.some(figure =>
+        figure.owner === playerId
+        || (figure.type !== 'bushi' && figure.type !== 'shinto')
+        || !canBeKilledByPlayer(nextState, provinceId, figure, playerId)
+      )) return state;
       if (provinceTargets.length > 0 && mercyProvinceIds.includes(provinceId)) {
         gainVictoryPoints(nextState, playerId, 2, 'Misericordia');
         nextState.log.push(`${player.name} perdona las figuras seleccionadas en ${province.name} y gana 2 PV (Misericordia)`);
@@ -3502,7 +3629,7 @@ export function resolveNureOnnaDecision(state: GameState, playerId: string, move
     const source = nextState.provinces[pending.fromProvinceId];
     const destination = nextState.provinces[pending.battleProvinceId];
     const figure = source?.figures.find(item => item.id === pending.figureId && item.owner === playerId);
-    if (source && destination && figure && source.seaRoutes.includes(pending.battleProvinceId)) {
+    if (source && destination && figure && source.seaRoutes.includes(pending.battleProvinceId) && !isFigureTrappedBySusanoo(nextState, pending.fromProvinceId, figure)) {
       nextState = {
         ...nextState,
         provinces: {
@@ -3553,6 +3680,15 @@ export function resolveUncontestedBattles(state: GameState): GameState {
 
     const province = newState.provinces[battle.provinceId];
     if (!province) return battle;
+
+    if (getKamiInProvince(newState, province.id, 'tsukuyomi') && !battle.tsukuyomiEffectApplied) {
+      const recipients = newState.players.filter(player => calculateForce(province, player.id, newState) > 0);
+      for (const recipient of recipients) gainCoinsFromSupply(newState, recipient.id, 4, 'Tsukuyomi');
+      if (recipients.length > 0) {
+        newState.log.push(`${recipients.map(player => player.name).join(', ')} ${recipients.length === 1 ? 'gana' : 'ganan'} 4 monedas antes de resolver ${province.name} (Tsukuyomi)`);
+      }
+      battle = { ...battle, tsukuyomiEffectApplied: true };
+    }
 
     // Re-evaluate participants based on current figures in province
     // Exclude players who ONLY have fortress figures, unless their clan is 'tortuga'
@@ -3693,6 +3829,7 @@ export function applyFireDragonEffect(
     // Find a killable figure (not daimyo, not daimyo-type monsters, not Fire Dragon itself)
     // Priority: bushi first, then shinto, then non-immune monsters
     const isImmune = (f: Figure): boolean => {
+      if (f.type === 'kami') return true;
       if (f.type === 'daimyo') return true;
       if (f.type === 'monster' && f.monsterCardId === 'su-fire-dragon') return true;
       if (f.type === 'monster' && f.monsterCardId && DAIMYO_IMMUNE_MONSTERS.includes(f.monsterCardId)) return true;
@@ -3789,6 +3926,23 @@ function applyWarTokenCardRewards(state: GameState, winnerId: string, provinceId
     state.log.push(`${winner.name} gana 2 PV por obtener una ficha de Provincia en Guerra (Coraje${copy > 0 ? `, copia ${copy + 1}` : ''})`);
   }
 
+  if (getKamiInProvince(state, provinceId, 'fujin')) {
+    const rewards = province.harvestRewards;
+    if (rewards.vp) gainVictoryPoints(state, winnerId, rewards.vp, 'Fujin');
+    if (rewards.coins) gainCoinsFromSupply(state, winnerId, rewards.coins, 'Fujin');
+    if (rewards.ronin) winner.ronin += rewards.ronin;
+    if (rewards.honor) {
+      for (let step = 0; step < rewards.honor; step += 1) gainHonor(state, winnerId);
+    }
+    const parts = [
+      rewards.vp ? `${rewards.vp} PV` : '',
+      rewards.coins ? `${rewards.coins} monedas` : '',
+      rewards.ronin ? `${rewards.ronin} ronin` : '',
+      rewards.honor ? `${rewards.honor} Honor` : '',
+    ].filter(Boolean);
+    state.log.push(`${winner.name} obtiene la recompensa de Cosecha de ${province.name}: ${parts.join(', ')} (Fujin)`);
+  }
+
   const hasShinto = province.figures.some(figure => figure.owner === winnerId && (
     figure.type === 'shinto' || (figure.type === 'monster' && ['sp-komainu', 'su-hotei'].includes(figure.monsterCardId || ''))
   ));
@@ -3849,6 +4003,8 @@ export function applyEarthDragonEffect(
     const isImmune = (f: Figure): boolean => {
       if (f.type === 'daimyo') return true;
       if (f.type === 'fortress') return true;
+      if (f.type === 'kami') return true;
+      if (isFigureTrappedBySusanoo(newState, provinceId, f)) return true;
       if (f.type === 'monster' && f.monsterCardId && DAIMYO_IMMUNE_MONSTERS.includes(f.monsterCardId)) return true;
       return false;
     };
@@ -4390,11 +4546,12 @@ export function resolveNextBattle(state: GameState): GameState {
     let force = calculateForce(provinceAfterDragon, pid, newState);
     if (pid === preHireRoninWinner) {
       const player = newState.players.find(p => p.id === pid)!;
-      force += player.ronin;
+      const hachimanMultiplier = getKamiInProvince(newState, battle.provinceId, 'hachiman') ? 2 : 1;
+      force += player.ronin * hachimanMultiplier;
       if (player.clanId === 'koi') {
         const totalBidByPlayer = Object.values(battle.warTacticBids[pid] || {}).reduce((s, v) => s + v, 0);
         const remainingCoins = player.coins - totalBidByPlayer;
-        force += Math.max(0, remainingCoins);
+        force += Math.max(0, remainingCoins) * hachimanMultiplier;
       }
     }
     return { playerId: pid, force };
@@ -4587,12 +4744,13 @@ export function resolveNextBattle(state: GameState): GameState {
       }
       case 'hire-ronin': {
         // Ronin tokens add force (tracked for final calculation)
-        let roninForce = bidder.ronin;
+        const hachimanMultiplier = getKamiInProvince(newState, battle.provinceId, 'hachiman') ? 2 : 1;
+        let roninForce = bidder.ronin * hachimanMultiplier;
         if (bidder.clanId === 'koi') {
           // Koi clan: coins count as ronin, but only coins remaining after all bids
           const totalBidByBidder = Object.values(battle.warTacticBids[highestBidder] || {}).reduce((s, v) => s + v, 0);
           const remainingCoins = bidder.coins - totalBidByBidder;
-          roninForce += Math.max(0, remainingCoins);
+          roninForce += Math.max(0, remainingCoins) * hachimanMultiplier;
         }
         newState.log = [...newState.log, `${bidder.name} contrata ronin: +${roninForce} fuerza`];
         break;
@@ -4636,12 +4794,13 @@ export function resolveNextBattle(state: GameState): GameState {
     let force = calculateForce(finalProvince, pid, newState);
     // Add ronin force only if this player won the hire-ronin tactic
     if (pid === hireRoninWinner) {
-      force += player.ronin;
+      const hachimanMultiplier = getKamiInProvince(newState, battle.provinceId, 'hachiman') ? 2 : 1;
+      force += player.ronin * hachimanMultiplier;
       // Koi clan power: coins also count as ronin for hire-ronin, but only remaining coins after bids
       if (player.clanId === 'koi') {
         const totalBidByPlayer = Object.values(battle.warTacticBids[pid] || {}).reduce((s, v) => s + v, 0);
         const remainingCoins = player.coins - totalBidByPlayer;
-        force += Math.max(0, remainingCoins);
+        force += Math.max(0, remainingCoins) * hachimanMultiplier;
       }
     }
     if (force > maxForce) {
@@ -4662,11 +4821,12 @@ export function resolveNextBattle(state: GameState): GameState {
       const player = newState.players.find((p) => p.id === pid)!;
       let force = calculateForce(finalProvince, pid, newState);
       if (pid === hireRoninWinner) {
-        force += player.ronin;
+        const hachimanMultiplier = getKamiInProvince(newState, battle.provinceId, 'hachiman') ? 2 : 1;
+        force += player.ronin * hachimanMultiplier;
         if (player.clanId === 'koi') {
           const totalBidByPlayer = Object.values(battle.warTacticBids[pid] || {}).reduce((s, v) => s + v, 0);
           const remainingCoins = player.coins - totalBidByPlayer;
-          force += Math.max(0, remainingCoins);
+          force += Math.max(0, remainingCoins) * hachimanMultiplier;
         }
       }
       return force === maxForce;
@@ -4706,7 +4866,7 @@ export function resolveNextBattle(state: GameState): GameState {
     const wouldKillFigures = battle.participants.some((pid) => {
       if (pid === winnerId) return false;
       if (winner.allies.includes(pid)) return false;
-      return finalProvince.figures.some((f) => f.owner === pid && f.type !== 'fortress');
+      return finalProvince.figures.some((f) => f.owner === pid && f.type !== 'fortress' && canBeKilledByPlayer(newState, battle.provinceId, f, winnerId!));
     });
     if (hasMercyVirtue && wouldKillFigures && battle.mercyChoice === undefined) {
       return {
@@ -4729,7 +4889,9 @@ export function resolveNextBattle(state: GameState): GameState {
         if (pid === winnerId) return;
         // Skip killing figures of players allied with the winner
         if (winner.allies.includes(pid)) return;
-        const loserFigures = finalProvince.figures.filter((f) => f.owner === pid);
+        const loserFigures = finalProvince.figures.filter((f) =>
+          f.owner === pid && canBeKilledByPlayer(newState, battle.provinceId, f, winnerId!)
+        );
         loserFigures.forEach((fig) => {
           if (fig.type === 'fortress') return; // Fortresses immune
           const loser = newState.players.find((p) => p.id === pid)!;
@@ -4883,11 +5045,11 @@ export function resolveNextBattle(state: GameState): GameState {
     if (!mercyActive || !wouldKillFigures) {
       const casualtyFigures = battle.participants
         .filter(pid => pid !== winnerId && !winner.allies.includes(pid))
-        .flatMap(pid => finalProvince.figures.filter(figure => figure.owner === pid && figure.type !== 'fortress'));
+        .flatMap(pid => finalProvince.figures.filter(figure => figure.owner === pid && figure.type !== 'fortress' && canBeKilledByPlayer(newState, battle.provinceId, figure, winnerId!)));
       battle.participants.forEach((pid) => {
         if (pid === winnerId) return;
         if (winner.allies.includes(pid)) return;
-        const loserFiguresForTriggers = finalProvince.figures.filter(f => f.owner === pid && f.type !== 'fortress');
+        const loserFiguresForTriggers = finalProvince.figures.filter(f => f.owner === pid && f.type !== 'fortress' && canBeKilledByPlayer(newState, battle.provinceId, f, winnerId!));
         for (const fig of loserFiguresForTriggers) {
           if (fig.type === 'monster' && fig.monsterCardId === 'au-ebisu') {
             applyEbisuDeathEffect(newState, pid);
@@ -4903,7 +5065,7 @@ export function resolveNextBattle(state: GameState): GameState {
       newState.provinces[battle.provinceId] = {
         ...finalProvince,
         figures: finalProvince.figures.filter(
-          (f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'fortress'
+          (f) => f.owner === winnerId || winner.allies.includes(f.owner) || f.type === 'fortress' || !canBeKilledByPlayer(newState, battle.provinceId, f, winnerId!)
         ),
       };
     }
@@ -4921,7 +5083,7 @@ export function resolveNextBattle(state: GameState): GameState {
     if (!mercyActive || !wouldKillFigures) {
       const phoenixKilled = battle.participants
         .filter((pid) => pid !== winnerId && !winner.allies.includes(pid))
-        .flatMap((pid) => finalProvince.figures.filter((f) => f.owner === pid && f.monsterCardId === 'sp-phoenix'));
+        .flatMap((pid) => finalProvince.figures.filter((f) => f.owner === pid && f.monsterCardId === 'sp-phoenix' && canBeKilledByPlayer(newState, battle.provinceId, f, winnerId!)));
       if (phoenixKilled.length > 0) {
         const phoenixFig = phoenixKilled[0];
         const phoenixOwner = newState.players.find((p) => p.id === phoenixFig.owner)!;
@@ -5032,7 +5194,10 @@ export function cleanupSeason(state: GameState): GameState {
       allianceSeasons: p.allies.length > 0 ? p.allianceSeasons + 1 : p.allianceSeasons,
     })),
     temples: state.temples.map((t) => ({ ...t, figures: [] })),
-    provinces: { ...state.provinces },
+    provinces: Object.fromEntries(Object.entries(state.provinces).map(([id, province]) => [
+      id,
+      { ...province, figures: province.figures.filter(figure => figure.type !== 'kami') },
+    ])) as GameState['provinces'],
     mandatesDeck: shuffleMandates(),
     drawnMandates: [],
     mandateChoicePhase: false,
@@ -5062,6 +5227,11 @@ export function cleanupSeason(state: GameState): GameState {
     hostageReturnReadyPlayers: [],
     cleanupTeaCeremonyReady: false,
     cleanupTeaCeremonyReadyPlayers: [],
+    kamiPlacementActive: false,
+    kamiPlacementPlayerId: null,
+    kamiPlacementKamiType: null,
+    kamiPlacementProvinceId: null,
+    kamiManifestedTempleIndexes: [],
     log: [...state.log, 'Limpieza: Ronin y monedas descartados, Shinto devueltos de los santuarios, alianzas rotas'],
   };
 
@@ -5111,6 +5281,10 @@ export function startInteractiveCleanup(state: GameState): GameState {
       allianceSeasons: p.allies.length > 0 ? p.allianceSeasons + 1 : p.allianceSeasons,
     })),
     temples: state.temples.map((t) => ({ ...t, figures: [] })),
+    provinces: Object.fromEntries(Object.entries(state.provinces).map(([id, province]) => [
+      id,
+      { ...province, figures: province.figures.filter(figure => figure.type !== 'kami') },
+    ])) as GameState['provinces'],
     allianceProposals: [],
     hostageReturnActive: false,
     hostageReturnOrder: [],
@@ -5118,6 +5292,11 @@ export function startInteractiveCleanup(state: GameState): GameState {
     hostageReturnReadyPlayers: [],
     cleanupTeaCeremonyReady: false,
     cleanupTeaCeremonyReadyPlayers: [],
+    kamiPlacementActive: false,
+    kamiPlacementPlayerId: null,
+    kamiPlacementKamiType: null,
+    kamiPlacementProvinceId: null,
+    kamiManifestedTempleIndexes: [],
     log: [...state.log, 'Limpieza: Ronin y monedas descartados, Shinto devueltos de los santuarios, alianzas rotas'],
   };
 
@@ -5439,7 +5618,8 @@ function applyMonsterEnterEffects(state: GameState, provinceId: string, figure: 
     const hasTargets = province.figures.some(candidate =>
       candidate.owner !== playerId
       && state.honorTrack.indexOf(candidate.owner) < oniOwnerHonorIndex
-      && (candidate.type === 'bushi' || candidate.type === 'shinto'));
+      && (candidate.type === 'bushi' || candidate.type === 'shinto')
+      && canBeKilledByPlayer(state, provinceId, candidate, playerId));
     if (hasTargets && !state.pendingMonsterEnterDecision) {
       state.pendingMonsterEnterDecision = { type: 'oni-hate', ownerId: playerId, provinceId, sourceFigureId: figure.id };
     }
@@ -5529,6 +5709,7 @@ export function resolveMonsterEnterDecision(
       && !isCardEffectImmuneDaimyo(figure));
     const provinceData = PROVINCES_DATA.find(item => item.id === pending.provinceId);
     if (!target || !destinationId || !provinceData || ![...provinceData.adjacentProvinces, ...provinceData.seaRoutes].includes(destinationId)) return state;
+    if (isFigureTrappedBySusanoo(nextState, pending.provinceId, target)) return state;
     const destination = nextState.provinces[destinationId];
     const targetOwner = nextState.players.find(player => player.id === target.owner);
     if (!destination || !targetOwner) return state;
@@ -5547,14 +5728,14 @@ export function resolveMonsterEnterDecision(
 
   const ownerHonorIndex = nextState.honorTrack.indexOf(playerId);
   const requiredOwners = [...new Set(province.figures
-    .filter(figure => figure.owner !== playerId && nextState.honorTrack.indexOf(figure.owner) < ownerHonorIndex && (figure.type === 'bushi' || figure.type === 'shinto'))
+    .filter(figure => figure.owner !== playerId && nextState.honorTrack.indexOf(figure.owner) < ownerHonorIndex && (figure.type === 'bushi' || figure.type === 'shinto') && canBeKilledByPlayer(nextState, pending.provinceId, figure, playerId))
     .map(figure => figure.owner))];
   const figuresBeforeDeath = [...province.figures];
   const killedFigures: Figure[] = [];
   for (const victimId of requiredOwners) {
     const targetId = selectedByPlayer[victimId];
     const target = nextState.provinces[pending.provinceId].figures.find(figure =>
-      figure.id === targetId && figure.owner === victimId && (figure.type === 'bushi' || figure.type === 'shinto'));
+      figure.id === targetId && figure.owner === victimId && (figure.type === 'bushi' || figure.type === 'shinto') && canBeKilledByPlayer(nextState, pending.provinceId, figure, playerId));
     if (!target) return state;
     const victim = nextState.players.find(player => player.id === victimId);
     if (!victim) return state;
@@ -5572,6 +5753,10 @@ export function resolveMonsterEnterDecision(
 function resumeAfterMonsterEnter(state: GameState, resume: PendingMonsterEnterDecision['resume']): GameState {
   if (state.pendingMonsterEnterDecision || resume !== 'continue-fujin') return state;
   return continuePendingFujinMovement(state);
+}
+
+export function isFigureTrappedBySusanoo(state: GameState, provinceId: string, figure: Figure): boolean {
+  return figure.type !== 'kami' && !!getKamiInProvince(state, provinceId, 'susanoo');
 }
 
 export function moveForces(
@@ -5615,6 +5800,7 @@ export function moveForces(
       // Find the figure in current from-province figures
       const figure = currentFromFigures.find(f => f.id === figureId && f.owner === playerId);
       if (!figure) continue;
+      if (isFigureTrappedBySusanoo(state, fromProvinceId, figure)) continue;
 
       // Reject fortress movement unless player is Tortuga clan
       if (figure.type === 'fortress' && player.clanId !== 'tortuga') continue;
@@ -5687,6 +5873,7 @@ export function moveForces(
     if (uniqueFigureIds.length < 1 || uniqueFigureIds.length > 2 || uniqueFigureIds.length !== figureIds.length) return state;
     const movedFigures = fromProvince.figures.filter(f => uniqueFigureIds.includes(f.id) && f.owner === playerId);
     if (movedFigures.length !== uniqueFigureIds.length) return state;
+    if (movedFigures.some(figure => isFigureTrappedBySusanoo(state, fromProvinceId, figure))) return state;
     if (movedFigures.some(figure => figure.type === 'fortress') && player.clanId !== 'tortuga') return state;
 
     const path = getFujinMovementPath(player.clanId, fromProvinceId, toProvinceId, movedFigures.length);
@@ -5775,7 +5962,7 @@ export function moveForces(
 
   // Verify all figures belong to the player and are in the source province
   const figuresValid = figureIds.every((fid) =>
-    fromProvince.figures.some((f) => f.id === fid && f.owner === playerId)
+    fromProvince.figures.some((f) => f.id === fid && f.owner === playerId && !isFigureTrappedBySusanoo(state, fromProvinceId, f))
   );
   if (!figuresValid) return state;
 
@@ -6001,6 +6188,9 @@ function applySolTiebreakBonus(state: GameState, winnerId: string, losers: strin
 
 export function calculateForce(province: Province & { figures: Figure[] }, playerId: string, state: GameState): number {
   const playerFigures = province.figures.filter((f) => f.owner === playerId);
+  const raijinUnbound = state.kamiUnboundEnabled && province.figures.some(
+    figure => figure.type === 'kami' && figure.kamiType === 'raijin'
+  );
 
   const playerCards = getPlayerSeasonCardEffects(state, playerId);
   const cardIds = new Set(playerCards.map((c) => c.id));
@@ -6017,12 +6207,21 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
   let totalForce = 0;
 
   for (const fig of playerFigures) {
+    // Raijin suppresses every figure except Bushi and manifested Kami.
+    if (raijinUnbound && fig.type !== 'bushi' && fig.type !== 'kami') continue;
+
     // Fortresses do NOT count as force for anyone except Tortuga (handled post-loop)
     if (fig.type === 'fortress') {
       continue;
     }
 
     let figForce = isLuna ? 2 : 1; // Luna base force is 2, others 1
+
+    if (fig.type === 'kami' && fig.kamiType === 'ryujin') {
+      const cardTypes = new Set((player?.seasonCards || []).map(card => card.cardType));
+      if (playerHasCard(player, 'sp-jurojin')) cardTypes.add('virtue');
+      figForce = isLuna ? Math.max(2, cardTypes.size) : cardTypes.size;
+    }
 
     if (fig.type === 'daimyo') {
       if (hasCard(cardIds, 'sp-path-of-the-lion')) {
@@ -6113,7 +6312,7 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
   }
 
   // Tortuga clan power: each fortress in the province counts as 1 force
-  if (isTortuga) {
+  if (isTortuga && !raijinUnbound) {
     const fortressCount = province.figures.filter((f) => f.owner === playerId && f.type === 'fortress').length;
     totalForce += fortressCount;
   }
@@ -6130,6 +6329,7 @@ function syncHonorValues(state: GameState): void {
     const p = state.players.find(pl => pl.id === pid);
     if (p) p.honor = i + 1;
   });
+  syncKamiControllers(state);
 }
 
 export function gainHonor(state: GameState, playerId: string): void {

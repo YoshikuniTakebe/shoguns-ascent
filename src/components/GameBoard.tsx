@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, type ReactNode, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, type DeckName } from '../types/game';
+import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, KAMI_DATA, type DeckName } from '../types/game';
 import { RegionCard } from './RegionCard';
 import { PlayerPanel } from './PlayerPanel';
 import { ActionPanel } from './ActionPanel';
@@ -122,15 +122,20 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, doWarStartReset, doWarStartToggleMercy, doWarStartConfirm, doWarStartSkip, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted, rejoinWaitingVisible, rejoinPlayerStatuses, daikaijuPlacementMode, startDaikaijuPlacement, doDaikaijuUndoPlacement, doDaikaijuConfirmPlacement, doDaikaijuSummaryReady } = useGameStore();
+  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, doWarStartReset, doWarStartToggleMercy, doWarStartConfirm, doWarStartSkip, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted, rejoinWaitingVisible, rejoinPlayerStatuses, daikaijuPlacementMode, startDaikaijuPlacement, doDaikaijuUndoPlacement, doDaikaijuConfirmPlacement, doDaikaijuSummaryReady, doKamiUndoProvince, doKamiConfirmProvince } = useGameStore();
   const t = useT();
 
   const [isDragging, setIsDragging] = useState(false);
+  const [kamiPlacementMapMode, setKamiPlacementMapMode] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const panRef = useRef({ x: 0, y: 0 });
   const mapCanvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({ startX: 0, startY: 0, startTranslateX: 0, startTranslateY: 0, didDrag: false, containerWidth: 0, containerHeight: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!gameState?.kamiPlacementActive) setKamiPlacementMapMode(false);
+  }, [gameState?.kamiPlacementActive]);
 
   /** Apply the current pan position directly to the DOM */
   const applyPan = useCallback(() => {
@@ -897,13 +902,13 @@ export const GameBoard = () => {
       <HarvestPopup />
 
       {/* Kami Resolution Popup */}
-      <KamiResolutionPopup />
+      {!gameState?.kamiPlacementActive && <KamiResolutionPopup />}
 
       {/* Kami Summary Popup */}
       <KamiSummaryPopup />
 
       {/* Kami Phase Start Popup */}
-      {kamiPhasePopupVisible && !gameState.pendingSpringPlacement && (
+      {kamiPhasePopupVisible && !gameState.pendingSpringPlacement && !gameState.kamiPlacementActive && (
         <div className="harvest-popup-backdrop">
           <div className="harvest-popup" style={{ borderColor: '#9B59B6', maxWidth: '420px', minWidth: '320px', background: 'linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #1a0a2e 100%)', boxShadow: '0 0 20px rgba(155, 89, 182, 0.4), inset 0 0 30px rgba(155, 89, 182, 0.05)', borderWidth: '2px' }}>
             <h3 style={{ color: '#9B59B6', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
@@ -1050,6 +1055,61 @@ export const GameBoard = () => {
           </div>
         </div>
       )}
+
+      {/* Kami Unbound manifestation */}
+      {gameState?.kamiPlacementActive && (() => {
+        const owner = gameState.players.find(player => player.id === gameState.kamiPlacementPlayerId);
+        const clan = owner ? CLANS.find(candidate => candidate.id === owner.clanId) : undefined;
+        const color = clan?.color || 'var(--accent-gold)';
+        const kami = KAMI_DATA.find(candidate => candidate.type === gameState.kamiPlacementKamiType);
+        const selectedProvince = gameState.kamiPlacementProvinceId ? gameState.provinces[gameState.kamiPlacementProvinceId] : undefined;
+        const isOwner = gameState.mode === 'hotseat' || localPlayerId === gameState.kamiPlacementPlayerId;
+
+        if (isOwner && kamiPlacementMapMode) {
+          return (
+            <div className="kami-unbound-toolbar" style={{ borderColor: color }}>
+              <div className="kami-unbound-toolbar-title">
+                <strong style={{ color }}>{kami?.name}</strong>
+                <span>{selectedProvince ? selectedProvince.name : t('kami.unbound.chooseProvince')}</span>
+              </div>
+              <button className="icon-btn" title={t('kami.unbound.undo')} disabled={!selectedProvince} onClick={doKamiUndoProvince}>
+                <UndoIcon size={21} />
+              </button>
+              <button className="btn-primary" disabled={!selectedProvince} onClick={() => { doKamiConfirmProvince(); setKamiPlacementMapMode(false); }}>
+                {t('kami.unbound.confirm')}
+              </button>
+            </div>
+          );
+        }
+
+        return (
+          <div className="harvest-popup-backdrop">
+            <div className="harvest-popup kami-unbound-popup" style={{ borderColor: color }}>
+              <div className="kami-unbound-figure-wrap">
+                <img src={TEMPLATE_FIGURE_IMG} alt={kami?.name || 'Kami'} />
+                <strong style={{ color }}>{kami?.name}</strong>
+              </div>
+              {owner && clan && (
+                <div className="kami-unbound-owner" style={{ color }}>
+                  <ClanShield clanId={clan.id} size={28} />
+                  <strong>{owner.name}</strong>
+                  <span>{clan.name}</span>
+                </div>
+              )}
+              {isOwner ? (
+                <>
+                  <p>{t('kami.unbound.ownerPrompt', { kami: kami?.name || '' })}</p>
+                  <button className="btn-primary" onClick={() => setKamiPlacementMapMode(true)}>
+                    {t('kami.unbound.choose')}
+                  </button>
+                </>
+              ) : (
+                <p>{t('kami.unbound.waiting', { player: owner?.name || '', kami: kami?.name || '' })}</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Daikaiju Placement Popup */}
       {gameState && gameState.daikaijuPlacementActive && !warPhasePopupVisible && !gameState.daikaijuSummaryVisible && (

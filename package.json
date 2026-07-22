@@ -7,8 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "check:kami": "tsx scripts/check-kami-unbound.ts",
     "preview": "vite preview",
-    "server": "tsx src/server/index.ts"
+    "server": "tsx src/server/index.ts",
+    "start": "tsx src/server/index.ts",
+    "prepare:production-db": "tsx scripts/prepare-production-db.ts",
+    "backup:db": "tsx scripts/backup-database.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -21,6 +25,7 @@
     "jsonwebtoken": "^9.0.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "tsx": "^4.22.4",
     "uuid": "^14.0.1",
     "ws": "^8.21.0",
     "zustand": "^5.0.14"
@@ -35,7 +40,6 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^6.0.2",
     "oxlint": "^1.69.0",
-    "tsx": "^4.22.4",
     "typescript": "~6.0.2",
     "vite": "^8.1.0"
   }

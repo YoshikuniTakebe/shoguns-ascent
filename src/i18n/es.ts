@@ -246,6 +246,13 @@ export const es: Record<TranslationKey, string> = {
   'kami.ryujin.expansionEffect': 'Ryujin cuenta como Fuerza 1 por cada tipo diferente de carta de Estación que tenga quien lo controla.',
   'kami.susanoo.expansionEffect': 'Las figuras que no son Kami no se pueden Mover fuera de esta Provincia.',
   'kami.tsukuyomi.expansionEffect': 'Antes de resolver la Guerra en esta Provincia, todos los jugadores con Fuerza en ella ganan 4 Monedas.',
+  'kami.unbound.enable': 'Jugar con Kami Unbound',
+  'kami.unbound.ownerPrompt': 'Tras resolver el Santuario, coloca a {kami} en cualquier Provincia.',
+  'kami.unbound.choose': 'Elegir Provincia',
+  'kami.unbound.chooseProvince': 'Elige una Provincia',
+  'kami.unbound.undo': 'Deshacer selección',
+  'kami.unbound.confirm': 'Confirmar',
+  'kami.unbound.waiting': 'Esperando a que {player} coloque a {kami}...',
 
   // Deck Names
   'deck.archway': 'Torii',

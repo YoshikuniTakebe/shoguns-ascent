@@ -1,10 +1,12 @@
 const hostname = window.location.hostname;
-const port = '3001';
+const isDevelopment = import.meta.env.DEV;
+const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
 
 // Default endpoints derived from the current host. These are the fallback used when no
 // admin override is configured.
-export const API_BASE = `http://${hostname}:${port}`;
-export const WS_BASE = `ws://${hostname}:${port}`;
+export const API_BASE = (import.meta.env.VITE_API_BASE || (isDevelopment ? `${protocol}//${hostname}:3001` : window.location.origin)).replace(/\/$/, '');
+export const WS_BASE = (import.meta.env.VITE_WS_BASE || (isDevelopment ? `${wsProtocol}//${hostname}:3001` : `${wsProtocol}//${window.location.host}`)).replace(/\/$/, '');
 
 // --- Admin-configurable server URL ---
 // The server URL is an internal, admin-only setting. Regular users never see or set it: it is

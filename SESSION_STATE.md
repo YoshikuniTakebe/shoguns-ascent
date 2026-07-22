@@ -1138,3 +1138,28 @@ server restart — no longer loses the game.
 - The home clan previews no longer use their own stale plain-text power table.
 - Home, Player sidebar and Honor Track now render the same shared clan-power content, including the
   current wording, figure/resource icons, line structure and clan-colored emphasis.
+
+## Changelog - 2026-07-22 (Kami Unbound alpha and production packaging)
+
+- Added the optional Kami Unbound expansion to both hotseat and online game creation. The four
+  selected Kami start each season off-board; after resolving each Shrine, its top worshipper chooses
+  any Province, previews the destination and confirms manifestation or relocation. Rejoining resumes
+  the persisted choice.
+- Until the final miniatures arrive, every Kami uses `template_fig.png` with the Kami name below it
+  in map tooltips, Province Diorama and figure zoom.
+- Implemented all seven leaflet powers: Amaterasu death protection, Tsukuyomi's pre-battle Coins,
+  Susanoo's movement lock, Raijin's Force restriction, Fujin's Harvest/War rewards, Ryujin's variable
+  card-type Force (including Jurojin as Monster and Virtue), and Hachiman's doubled Ronin Force.
+- Kami are 1 Force clan figures controlled by the current top worshipper, change controller after
+  Shrine or Honor changes, move normally, cannot be killed, captured, Betrayed or selected by card
+  effects, and return off-board during seasonal cleanup.
+- Added `npm run check:kami`; its focused rules checks pass. TypeScript and the production Vite build
+  pass, and a production smoke test returned HTTP 200 for both `/api/health` and the SPA root.
+- Production packaging now includes Docker, same-origin HTTPS/WebSocket defaults, strict production
+  JWT configuration, CORS allowlisting, health checks, persistent database/backup mounts and static
+  SPA serving. The container binds only to Droplet loopback port 3002 to coexist with n8n.
+- Added a safe database preparation command. `deployment-data/games.db` was generated from the local
+  database with only admin `Yoshikuni`, no other users and no games; `data/games.db` was not modified.
+- Proposed production URL: `https://shogun.thehappysamurai.com`. Deployment still needs DNS access,
+  SSH access to the Droplet, and inspection of its existing Docker/reverse-proxy layout before making
+  any server changes.

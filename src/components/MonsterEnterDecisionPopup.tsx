@@ -5,6 +5,7 @@ import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, SEASON_CARDS_DATA } from '../ty
 import type { Figure } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { MonsterIcon } from './Icons';
+import { canBeKilledByPlayer } from '../utils/gameLogic';
 
 const IMMUNE_MONSTERS = ['su-yurei', 'sp-fukurokuju'];
 
@@ -40,7 +41,7 @@ export const MonsterEnterDecisionPopup = () => {
     for (const figure of province?.figures || []) {
       if (pending.type === 'benten') {
         if (figure.type !== 'monster' || figure.owner === pending.ownerId || IMMUNE_MONSTERS.includes(figure.monsterCardId || '')) continue;
-      } else if (figure.owner === pending.ownerId || gameState.honorTrack.indexOf(figure.owner) >= ownerHonor || (figure.type !== 'bushi' && figure.type !== 'shinto')) continue;
+      } else if (figure.owner === pending.ownerId || gameState.honorTrack.indexOf(figure.owner) >= ownerHonor || (figure.type !== 'bushi' && figure.type !== 'shinto') || !canBeKilledByPlayer(gameState, pending.provinceId, figure, pending.ownerId)) continue;
       grouped[figure.owner] = [...(grouped[figure.owner] || []), figure];
     }
     return grouped;

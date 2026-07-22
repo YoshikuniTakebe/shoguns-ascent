@@ -225,6 +225,13 @@ export const en = {
   'kami.ryujin.expansionEffect': 'Force 1 per different season card type owned by controller.',
   'kami.susanoo.expansionEffect': 'Non-Kami figures cannot Move out of this Province.',
   'kami.tsukuyomi.expansionEffect': 'Before war here, all players with Force gain 4 Coins.',
+  'kami.unbound.enable': 'Play with Kami Unbound',
+  'kami.unbound.ownerPrompt': 'After resolving the Shrine, place {kami} in any Province.',
+  'kami.unbound.choose': 'Choose Province',
+  'kami.unbound.chooseProvince': 'Choose a Province',
+  'kami.unbound.undo': 'Undo selection',
+  'kami.unbound.confirm': 'Confirm',
+  'kami.unbound.waiting': 'Waiting for {player} to place {kami}...',
 
   // Deck Names
   'deck.archway': 'Archway',
