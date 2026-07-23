@@ -28,7 +28,7 @@ export const SerpentChargePopup = () => {
           {owner && <ClanShield clanId={owner.clanId} size={28} />}
           <strong style={{ color: ownerClan?.color }}>{owner?.name}</strong>
         </div>
-        <p>
+        <p className="battle-card-decision-question">
           ¿Quieres cobrar <CoinIcon size={19} color="#f1c40f" /> <strong>1</strong> a{' '}
           <span className="rule-event-inline-clan"><ClanShield clanId={mover?.clanId || ''} size={21} /><strong style={{ color: moverClan?.color }}>{mover?.name}</strong></span>{' '}
           por usar la ruta marítima de{' '}

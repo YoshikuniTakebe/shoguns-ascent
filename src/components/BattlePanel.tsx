@@ -405,28 +405,31 @@ function BattleResultPopup({
           </div>
         )}
         {/* Prisoners section */}
-        {resData?.capturedHostage && (
+        {(resData?.capturedHostages?.length || resData?.capturedHostage) && (
           <div style={{ margin: '0.75rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
             <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>
               Prisioneros
             </p>
-            {(() => {
-              const captor = gameState.players.find(p => p.id === resData.capturedHostage!.captorId);
+            {(resData.capturedHostages?.length
+              ? resData.capturedHostages
+              : resData.capturedHostage ? [resData.capturedHostage] : []
+            ).map((captured, index) => {
+              const captor = gameState.players.find(p => p.id === captured.captorId);
               const captorClan = captor ? CLANS.find(c => c.id === captor.clanId) : null;
-              const victim = gameState.players.find(p => p.id === resData.capturedHostage!.fromClanId);
+              const victim = gameState.players.find(p => p.id === captured.fromClanId);
               const victimClan = victim ? CLANS.find(c => c.id === victim.clanId) : null;
               return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.9em', flexWrap: 'wrap' }}>
+                <div key={`${captured.captorId}-${captured.fromClanId}-${captured.figureName}-${index}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', fontSize: '0.9em', flexWrap: 'wrap', marginTop: index > 0 ? '0.35rem' : 0 }}>
                   <ClanShield clanId={captor?.clanId || ''} size={16} />
                   <span style={{ color: captorClan?.color, fontWeight: 'bold' }}>{captor?.name}</span>
                   <span style={{ opacity: 0.7 }}>captura</span>
-                  <span style={{ fontWeight: 'bold', color: victimClan?.color || '#fff' }}>{resData.capturedHostage!.figureName}</span>
+                  <span style={{ fontWeight: 'bold', color: victimClan?.color || '#fff' }}>{captured.figureName}</span>
                   <span style={{ opacity: 0.7 }}>de</span>
                   <ClanShield clanId={victim?.clanId || ''} size={16} />
                   <span style={{ color: victimClan?.color, fontWeight: 'bold' }}>{victim?.name}</span>
                 </div>
               );
-            })()}
+            })}
           </div>
         )}
         {/* Imperial Poets section */}

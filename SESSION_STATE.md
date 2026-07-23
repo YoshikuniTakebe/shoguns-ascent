@@ -1255,3 +1255,12 @@ server restart — no longer loses the game.
   seals, and the War start popup uses the same samurai helmet seal as the lobby.
 - Added `npm run check:war` for pre-battle Fire Dragon/Koneko ordering, negative-balance recovery and
   rejection of negative bids.
+
+## Changelog - 2026-07-23 (final battle distribution and Respect summary)
+
+- The last unresolved battle of a War still performs the internal coin transfer but skips the
+  now-irrelevant distribution popup and proceeds directly to the battle result.
+- Battle results render every hostage captured through Respect instead of only the legacy singular
+  hostage field, so both figure names and owners remain visible.
+- Camino de la Serpiente uses the shared decision-question spacing, keeping its text clear of the
+  charge/decline buttons.

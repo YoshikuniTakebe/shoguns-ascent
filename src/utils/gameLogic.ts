@@ -4543,6 +4543,9 @@ export function resolveNextBattle(state: GameState): GameState {
   };
 
   const battle = newState.activeBattles[unresolvedIdx];
+  const isFinalBattle = newState.activeBattles.every((candidate, index) =>
+    index === unresolvedIdx || candidate.resolved || candidate.uncontested
+  );
   const province = newState.provinces[battle.provinceId];
   if (!province) {
     battle.resolved = true;
@@ -5199,15 +5202,17 @@ export function resolveNextBattle(state: GameState): GameState {
           allocations[pid] += 1;
           newState.log = [...newState.log, `${loser.name} recibe 1 moneda restante del ganador. Total {coin} ${loser.coins}`];
         });
-        newState.coinDistributionPending = {
-          battleProvinceId: battle.provinceId,
-          winnerId,
-          losers,
-          remainder: 0,
-          distributed: totalBid,
-          sharePerLoser: share,
-          allocations,
-        };
+        if (!isFinalBattle) {
+          newState.coinDistributionPending = {
+            battleProvinceId: battle.provinceId,
+            winnerId,
+            losers,
+            remainder: 0,
+            distributed: totalBid,
+            sharePerLoser: share,
+            allocations,
+          };
+        }
       }
     }
 
