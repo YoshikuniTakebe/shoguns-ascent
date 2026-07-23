@@ -1673,6 +1673,13 @@ function executeTrain(state: GameState, issuerId: string): GameState {
 export function buySeasonCard(state: GameState, playerId: string, cardId: string): GameState {
   // Can only buy during politics phase when Train mandate is active
   if (!state.trainMandateActive || state.currentPhase !== 'politics') return state;
+  // Follow-up effects belong to the purchase already made. Until they resolve,
+  // the Train buyer cannot start another purchase from a stale market window.
+  if (
+    state.pendingBenevolence ||
+    state.pendingMonsterPlacementCardId ||
+    (state.pendingRuleNotices?.length || 0) > 0
+  ) return state;
 
   const card = state.seasonCardsDeck.find((c) => c.id === cardId);
   if (!card) return state;

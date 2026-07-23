@@ -90,13 +90,23 @@ const PlayerReserves = ({ player, gameState }: { player: Player; gameState: Game
 };
 
 export const PlayerPanel = () => {
-  const { gameState, localPlayerId, warPhasePopupVisible } = useGameStore();
+  const { gameState, localPlayerId, warPhasePopupVisible, setShowTrainModal } = useGameStore();
   const t = useT();
   const [viewingCardsPlayer, setViewingCardsPlayer] = useState<Player | null>(null);
   const [viewingWarTokensPlayer, setViewingWarTokensPlayer] = useState<Player | null>(null);
   const [viewingHostagesPlayer, setViewingHostagesPlayer] = useState<Player | null>(null);
   if (!gameState) return null;
   const cp = gameState.players[gameState.currentPlayerIndex];
+  const trainBuyerId = gameState.trainResolutionOrder?.[gameState.trainResolutionIndex];
+  const canReturnToTrainPurchase = Boolean(
+    viewingCardsPlayer &&
+    gameState.trainMandateActive &&
+    viewingCardsPlayer.id === trainBuyerId &&
+    (gameState.mode !== 'online' || localPlayerId === trainBuyerId) &&
+    !gameState.pendingMonsterPlacementCardId &&
+    !gameState.pendingBenevolence &&
+    !(gameState.pendingRuleNotices?.length || 0)
+  );
 
   return (
     <div className="player-panel">
@@ -180,6 +190,10 @@ export const PlayerPanel = () => {
         <PlayerCardsModal
           player={viewingCardsPlayer}
           onClose={() => setViewingCardsPlayer(null)}
+          onReturnToPurchase={canReturnToTrainPurchase ? () => {
+            setViewingCardsPlayer(null);
+            setShowTrainModal(true);
+          } : undefined}
         />,
         document.body
       )}

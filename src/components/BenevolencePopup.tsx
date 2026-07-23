@@ -4,7 +4,6 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { CoinIcon, HonorIcon, VPIcon } from './Icons';
-import { AllianceDisplay } from './AllianceDisplay';
 
 export const BenevolencePopup = () => {
   const gameState = useGameStore(state => state.gameState);
@@ -24,7 +23,6 @@ export const BenevolencePopup = () => {
 
   return createPortal(
     <div className="battle-popup-overlay benevolence-overlay">
-      <AllianceDisplay />
       <div className="battle-popup-card battle-card-decision" style={{ borderColor: ownerClan?.color || '#c8a951' }}>
         <h3 className="battle-popup-title benevolence-title" style={{ color: ownerClan?.color || '#c8a951' }}>
           <ClanShield clanId={owner?.clanId || ''} size={32} />

@@ -3,6 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
 import { SeasonCardsModal } from './SeasonCardsModal';
+import { useT } from '../i18n';
 
 import RecruitImg from '../img/Recruit.png';
 import TrainImg from '../img/Train.png';
@@ -45,15 +46,16 @@ const MANDATE_IMAGES: Record<MandateType, string> = {
  */
 export const PoliticsTrack = () => {
   const { gameState, showTrainModal, setShowTrainModal, monsterPlacementPopupVisible, monsterPlacementMode, komainuChoiceVisible, monsterNoPlacementPopupVisible, localPlayerId } = useGameStore();
+  const t = useT();
   const [showSeasonCards, setShowSeasonCards] = useState(false);
+  const activeTrainBuyerId = gameState?.trainResolutionOrder?.[gameState?.trainResolutionIndex ?? 0];
 
   // Auto-open the season cards modal when trainMandateActive becomes true
   // In online mode, only open for the current train resolution player
   useEffect(() => {
     if (gameState?.trainMandateActive) {
       if (gameState.mode === 'online') {
-        const currentResolutionPlayer = gameState.trainResolutionOrder?.[gameState.trainResolutionIndex];
-        if (currentResolutionPlayer === localPlayerId) {
+        if (activeTrainBuyerId === localPlayerId) {
           setShowSeasonCards(true);
         } else {
           // Not this player's turn - close if open
@@ -70,14 +72,30 @@ export const PoliticsTrack = () => {
       // Auto-close when train mandate completes
       setShowSeasonCards(false);
     }
-  }, [gameState?.trainMandateActive, gameState?.ryujinBuyActive, gameState?.kamiResolutionStep, gameState?.trainResolutionIndex, gameState?.mode, localPlayerId]);
+  }, [gameState?.trainMandateActive, gameState?.ryujinBuyActive, gameState?.kamiResolutionStep, gameState?.mode, activeTrainBuyerId, localPlayerId]);
 
   // Close the modal when monster placement is active
   useEffect(() => {
-    if (monsterPlacementPopupVisible || monsterPlacementMode || komainuChoiceVisible || monsterNoPlacementPopupVisible) {
+    if (
+      monsterPlacementPopupVisible ||
+      monsterPlacementMode ||
+      komainuChoiceVisible ||
+      monsterNoPlacementPopupVisible ||
+      gameState?.pendingMonsterPlacementCardId ||
+      gameState?.pendingBenevolence ||
+      (gameState?.pendingRuleNotices?.length || 0) > 0
+    ) {
       setShowSeasonCards(false);
     }
-  }, [monsterPlacementPopupVisible, monsterPlacementMode, komainuChoiceVisible, monsterNoPlacementPopupVisible]);
+  }, [
+    monsterPlacementPopupVisible,
+    monsterPlacementMode,
+    komainuChoiceVisible,
+    monsterNoPlacementPopupVisible,
+    gameState?.pendingMonsterPlacementCardId,
+    gameState?.pendingBenevolence,
+    gameState?.pendingRuleNotices,
+  ]);
 
   // Also open when triggered from outside (e.g. ActionPanel button)
   useEffect(() => {
@@ -91,6 +109,23 @@ export const PoliticsTrack = () => {
 
   const mandates = gameState.mandatesThisTurn;
   const mandateCount = gameState.politicsMandateCount;
+  const trainBuyerId = activeTrainBuyerId;
+  const isLocalTrainBuyer = gameState.mode !== 'online' || trainBuyerId === localPlayerId;
+  const trainFollowUpPending = Boolean(
+    gameState.pendingMonsterPlacementCardId ||
+    gameState.pendingBenevolence ||
+    (gameState.pendingRuleNotices?.length || 0) > 0 ||
+    monsterPlacementPopupVisible ||
+    monsterPlacementMode ||
+    komainuChoiceVisible ||
+    monsterNoPlacementPopupVisible
+  );
+  const canReturnToTrainPurchase = Boolean(
+    gameState.trainMandateActive &&
+    isLocalTrainBuyer &&
+    !showSeasonCards &&
+    !trainFollowUpPending
+  );
 
   // Count how many times each mandate type has been played this season
   const mandateCounts: Record<MandateType, number> = {
@@ -338,6 +373,14 @@ export const PoliticsTrack = () => {
         <span className="season-cards-btn-kanji">旭</span>
         <span className="season-cards-btn-text">Cartas</span>
       </button>
+      {canReturnToTrainPurchase && (
+        <button
+          className="train-return-purchase-btn"
+          onClick={() => setShowSeasonCards(true)}
+        >
+          {t('seasonCardsModal.returnToPurchase')}
+        </button>
+      )}
 
       {/* Season Cards Modal */}
       <SeasonCardsModal open={showSeasonCards} onClose={() => setShowSeasonCards(false)} />

@@ -29,9 +29,10 @@ const CARD_TYPE_KEYS: Record<CardType, TranslationKey> = {
 interface PlayerCardsModalProps {
   player: Player;
   onClose: () => void;
+  onReturnToPurchase?: () => void;
 }
 
-export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => {
+export const PlayerCardsModal = ({ player, onClose, onReturnToPurchase }: PlayerCardsModalProps) => {
   const t = useT();
   const { cardsLightMode, setCardsLightMode } = useGameStore();
   const clan = CLANS.find(c => c.id === player.clanId);
@@ -121,6 +122,13 @@ export const PlayerCardsModal = ({ player, onClose }: PlayerCardsModalProps) => 
                 )}
               </div>
             ))}
+          </div>
+        )}
+        {onReturnToPurchase && (
+          <div className="train-card-navigation">
+            <button className="btn-primary train-card-navigation-btn" onClick={onReturnToPurchase}>
+              {t('seasonCardsModal.returnToPurchase')}
+            </button>
           </div>
         )}
 

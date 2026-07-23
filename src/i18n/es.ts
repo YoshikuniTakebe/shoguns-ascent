@@ -234,6 +234,8 @@ export const es: Record<TranslationKey, string> = {
   'seasonCardsModal.discount': 'descuento',
   'seasonCardsModal.buyButton': 'Comprar',
   'seasonCardsModal.openMarket': 'Abrir Mercado',
+  'seasonCardsModal.viewMyCards': 'Ver mis cartas',
+  'seasonCardsModal.returnToPurchase': 'Volver a la compra',
   'seasonCardsModal.skipPurchase': 'No comprar nada',
   'seasonCardsModal.chooseCard': 'Elige carta',
   'seasonCardsModal.playerCoins': 'Monedas: {coins}',

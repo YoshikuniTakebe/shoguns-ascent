@@ -9,6 +9,7 @@ import { CoinIcon, SpringIcon, SummerIcon, AutumnIcon, SunIcon, MoonIcon, FistIc
 import { getMonsterImage } from '../utils/figureImages';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
+import { PlayerCardsModal } from './PlayerCardsModal';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
   monster: '#cd7f32',
@@ -65,6 +66,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   const [purchasePending, setPurchasePending] = useState(false);
   const [pendingCardId, setPendingCardId] = useState<string | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [showOwnedCards, setShowOwnedCards] = useState(false);
   const purchaseErrorVersionRef = useRef(serverErrorVersion);
   const prevTrainMandateActiveRef = useRef<boolean>(false);
 
@@ -78,6 +80,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
       setPendingCardId(null);
       setPurchaseError(null);
       setConfirmCard(null);
+      setShowOwnedCards(false);
     }
   }, [trainResIdx]);
 
@@ -92,6 +95,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
       setPendingCardId(null);
       setPurchaseError(null);
       setConfirmCard(null);
+      setShowOwnedCards(false);
       lastTrainIndexRef.current = -1;
     }
     prevTrainMandateActiveRef.current = trainMandateActive;
@@ -134,7 +138,12 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   const isTrainMode = gameState.trainMandateActive && gameState.currentPhase === 'politics';
   const isRyujinMode = gameState.ryujinBuyActive && gameState.kamiResolutionActive;
   const isInteractiveMode = isTrainMode || isRyujinMode;
-  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const trainBuyerId = isTrainMode
+    ? gameState.trainResolutionOrder?.[gameState.trainResolutionIndex]
+    : null;
+  const currentPlayer = (trainBuyerId
+    ? gameState.players.find(player => player.id === trainBuyerId)
+    : null) || gameState.players[gameState.currentPlayerIndex];
   const currentClan = currentPlayer ? CLANS.find(c => c.id === currentPlayer.clanId) : null;
 
   // In online train mode, check if the local player is the current resolution player
@@ -280,6 +289,19 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
 
   const seasonTitleColor = seasonColors[gameState.currentSeason] || 'var(--accent-gold)';
 
+  if (showOwnedCards && isTrainMode && currentPlayer) {
+    return (
+      <PlayerCardsModal
+        player={currentPlayer}
+        onClose={() => {
+          setShowOwnedCards(false);
+          onClose();
+        }}
+        onReturnToPurchase={() => setShowOwnedCards(false)}
+      />
+    );
+  }
+
   return (
     <div className="season-cards-modal-backdrop" onClick={isRyujinMode ? undefined : onClose}>
       <div className={`season-cards-modal${cardsLightMode ? ' light-theme' : ''}`} onClick={(e) => e.stopPropagation()}>
@@ -418,6 +440,17 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
         {purchaseError && (
           <div role="alert" style={{ color: '#ff6b7a', textAlign: 'center', marginTop: '12px', fontWeight: 700 }}>
             {purchaseError}
+          </div>
+        )}
+
+        {isTrainMode && isLocalPlayerTrainTurn && !purchasePending && (
+          <div className="train-card-navigation">
+            <button
+              className="btn-secondary train-card-navigation-btn"
+              onClick={() => setShowOwnedCards(true)}
+            >
+              {t('seasonCardsModal.viewMyCards')}
+            </button>
           </div>
         )}
 

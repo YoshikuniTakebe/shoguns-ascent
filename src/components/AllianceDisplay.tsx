@@ -69,7 +69,7 @@ export const AllianceDisplay = () => {
   if (alliancePairs.length === 0) return null;
 
   return (
-    <div className="alliance-display">
+    <div className={`alliance-display${gameState.pendingBenevolence ? ' benevolence-raised' : ''}`}>
       <div className="alliance-display-title">
         <span>Alliances</span>
       </div>

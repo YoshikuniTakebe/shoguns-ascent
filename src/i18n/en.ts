@@ -293,6 +293,8 @@ export const en = {
   'seasonCardsModal.discount': 'discount',
   'seasonCardsModal.buyButton': 'Buy',
   'seasonCardsModal.openMarket': 'Open Market',
+  'seasonCardsModal.viewMyCards': 'View my cards',
+  'seasonCardsModal.returnToPurchase': 'Return to purchase',
   'seasonCardsModal.skipPurchase': 'Skip Purchase',
   'seasonCardsModal.chooseCard': 'Choose a card',
   'seasonCardsModal.playerCoins': 'Coins: {coins}',

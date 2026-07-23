@@ -1196,3 +1196,16 @@ server restart — no longer loses the game.
   the retained Province before confirmation.
 - Added the `神` Kami figure symbol to every icon legend in Spanish and English.
 - The focused Kami checks cover retaining an existing Kami without a new Province selection.
+
+## Changelog - 2026-07-23 (Train market navigation and Benevolence priority)
+
+- During Train, the market now includes `Ver mis cartas`; the owned-card view provides
+  `Volver a la compra`, and closing the market exposes the same explicit return action on the
+  Politics Track while that player still has a pending purchase.
+- Buying a card keeps the market locked until the authoritative update arrives. Benevolence,
+  monster placement and rule notices close the market and take visual priority; the game logic
+  also rejects any duplicate purchase while one of those follow-up flows remains unresolved.
+- Benevolence now raises the existing board Alliance Track beside Honor instead of rendering a
+  duplicate track inside its popup.
+- Added `npm run check:train` to cover the duplicate-purchase guard during a pending Benevolence
+  decision.

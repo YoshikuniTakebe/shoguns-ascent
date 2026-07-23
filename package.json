@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "check:kami": "tsx scripts/check-kami-unbound.ts",
+    "check:train": "tsx scripts/check-train-flow.ts",
     "preview": "vite preview",
     "server": "tsx src/server/index.ts",
     "start": "tsx src/server/index.ts",
