@@ -1220,3 +1220,13 @@ server restart — no longer loses the game.
   mandate-choice lists during an active resolution, repairing the visual symptom in older saves.
 - Added `npm run check:loto` covering the seventh-mandate replacement flow, duplicate-draw
   rejection and cleanup of a previously corrupted state.
+
+## Changelog - 2026-07-23 (online Fujin undo synchronization)
+
+- Fujin undo is now authoritative in online games: the server stores the last valid pre-move
+  state, restores it on `FUJIN_UNDO` and broadcasts the restored board to every player.
+- The client no longer restores only its private copy of the board. This fixes subsequent moves
+  being silently rejected because the client and server disagreed about a figure's origin.
+- Online Fujin moves are preview-validated before being sent, so an invalid move cannot enable a
+  misleading Undo action. Confirming Fujin clears the server snapshot. The focused Kami checks
+  cover Luna moving again from the restored origin after Undo.

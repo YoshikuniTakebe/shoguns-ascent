@@ -197,6 +197,7 @@ interface Lobby {
   config: LobbyConfig | null;
   recruitUndoSnapshot: GameState | null;
   betrayUndoSnapshot: GameState | null;
+  fujinUndoSnapshot: GameState | null;
   // Task 7 matchmaking: user ids invited to this game (excluding the host). When some slots
   // remain uninvited, the game is "open" and any player may Join an open slot. An empty list
   // means the classic behaviour (join by shared id), preserving backward compatibility.
@@ -301,6 +302,7 @@ function lobbyFromPersisted(p: DbPendingLobby): Lobby {
     config: (p.config as Lobby['config']) ?? null,
     recruitUndoSnapshot: null,
     betrayUndoSnapshot: null,
+    fujinUndoSnapshot: null,
     invitedUserIds: p.invitedUserIds || [],
     invitedClans: p.invitedClans || {},
     createdAt: p.createdAt,
@@ -559,6 +561,7 @@ app.post('/api/lobbies', (req, res) => {
     config: null,
     recruitUndoSnapshot: null,
     betrayUndoSnapshot: null,
+    fujinUndoSnapshot: null,
     invitedUserIds: [],
     invitedClans: {},
     createdAt: new Date().toISOString(),
@@ -1148,6 +1151,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             config,
             recruitUndoSnapshot: null,
             betrayUndoSnapshot: null,
+            fujinUndoSnapshot: null,
             invitedUserIds,
             invitedClans,
             createdAt: new Date().toISOString(),
@@ -3212,12 +3216,32 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!currentTemple || !currentTemple.winnerId) return;
 
           const movementCost = getFujinMovementCost(l.gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds.length);
-          if (movementCost === null || movementCost > l.gameState.fujinMovesRemaining) return;
+          if (movementCost === null || movementCost > l.gameState.fujinMovesRemaining) {
+            safeSend(ws, { type: 'ERROR', message: 'Movimiento de Fujin no valido' });
+            return;
+          }
+          const preMoveState = JSON.parse(JSON.stringify(l.gameState)) as GameState;
           const moved = moveForces(l.gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds);
-          if (moved === l.gameState) return; // validation failed
+          if (moved === l.gameState) {
+            safeSend(ws, { type: 'ERROR', message: 'Movimiento de Fujin no valido' });
+            return;
+          }
 
           const remaining = moved.fujinMovesRemaining - movementCost;
+          l.fujinUndoSnapshot = preMoveState;
           l.gameState = { ...moved, fujinMovesRemaining: remaining };
+          broadcastState(l);
+          break;
+        }
+
+        case 'FUJIN_UNDO': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || !l.fujinUndoSnapshot) return;
+          if (!l.gameState.kamiResolutionActive) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+
+          l.gameState = JSON.parse(JSON.stringify(l.fujinUndoSnapshot));
+          l.fujinUndoSnapshot = null;
           broadcastState(l);
           break;
         }
@@ -3231,6 +3255,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const ns = resolvePendingSerpentCrossings({ ...l.gameState, fujinMovesRemaining: 0 });
           const hasPendingSerpent = !!ns.pendingSerpentCharge || (ns.pendingRuleNotices?.length || 0) > (l.gameState.pendingRuleNotices?.length || 0);
           const s = hasPendingSerpent ? ns : advanceKamiResolution(ns);
+          l.fujinUndoSnapshot = null;
           l.gameState = s;
           broadcastState(l);
           break;
@@ -3547,6 +3572,7 @@ wss.on('connection', (ws: WebSocket, req) => {
               config: null,
               recruitUndoSnapshot: null,
               betrayUndoSnapshot: null,
+              fujinUndoSnapshot: null,
               invitedUserIds: [],
               invitedClans: {},
               createdAt: new Date().toISOString(),

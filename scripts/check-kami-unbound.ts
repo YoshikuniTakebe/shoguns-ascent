@@ -12,6 +12,7 @@ import {
   syncKamiControllers,
 } from '../src/utils/gameLogic';
 import type { Figure, GameState, KamiType } from '../src/types/game';
+import { PROVINCES_DATA } from '../src/types/game';
 
 const kami = (type: KamiType, owner: string): Figure => ({ id: `kami-${type}`, type: 'kami', owner, kamiType: type });
 const figure = (id: string, type: Figure['type'], owner: string): Figure => ({ id, type, owner });
@@ -96,6 +97,30 @@ function stateWithKami(selectedKami: KamiType[] = ['amaterasu', 'raijin', 'ryuji
   syncKamiControllers(state);
   assert.equal(state.provinces.kanto.figures[0].owner, second.id, 'Kami control must follow the top worshipper immediately');
   assert.equal(cleanupSeason(state).provinces.kanto.figures.some(item => item.type === 'kami'), false, 'Kami must leave the board during cleanup');
+}
+
+{
+  const state = stateWithKami(['fujin', 'amaterasu', 'raijin', 'susanoo']);
+  const luna = state.players.find(player => player.clanId === 'luna')!;
+  const sourceId = 'kanto';
+  const sourceData = PROVINCES_DATA.find(province => province.id === sourceId)!;
+  const destinationId = sourceData.adjacentProvinces[0] || sourceData.seaRoutes[0];
+  const movingFigure = figure('luna-fujin-bushi', 'bushi', luna.id);
+  state.provinces[sourceId].figures = [movingFigure];
+  state.provinces[destinationId].figures = [];
+  state.kamiResolutionActive = true;
+  state.kamiResolutionStep = 'interactive';
+  state.kamiResolutionCurrentPlayerId = luna.id;
+  state.fujinMovesRemaining = 2;
+
+  const preMoveSnapshot = JSON.parse(JSON.stringify(state)) as GameState;
+  const firstMove = moveForces(state, luna.id, sourceId, destinationId, [movingFigure.id]);
+  assert.notEqual(firstMove, state, 'Luna must be able to make the initial Fujin move');
+
+  const restored = JSON.parse(JSON.stringify(preMoveSnapshot)) as GameState;
+  const moveAfterUndo = moveForces(restored, luna.id, sourceId, destinationId, [movingFigure.id]);
+  assert.notEqual(moveAfterUndo, restored, 'Luna must be able to move again after Fujin undo restores the shared state');
+  assert.equal(moveAfterUndo.provinces[destinationId].figures.some(item => item.id === movingFigure.id), true, 'The post-undo Fujin move must reach its destination');
 }
 
 {

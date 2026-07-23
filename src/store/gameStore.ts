@@ -3002,6 +3002,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // In online mode, send the action to the server
     if (ws && gameState.mode === 'online') {
+      const currentTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
+      if (!currentTemple?.winnerId) return;
+      const movementCost = getFujinMovementCost(gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds.length);
+      if (movementCost === null || movementCost > gameState.fujinMovesRemaining) return;
+      const preview = moveForces(gameState, currentTemple.winnerId, fromProvinceId, toProvinceId, figureIds);
+      if (preview === gameState) {
+        const lang = get().language;
+        set({ ruleViolationMessage: lang === 'en' ? 'Invalid move' : 'Movimiento no valido' });
+        return;
+      }
       set({ fujinPreMoveState: JSON.parse(JSON.stringify(gameState)) });
       get().sendAction({ type: 'FUJIN_MOVE', playerId: get().localPlayerId, payload: { fromProvinceId, toProvinceId, figureIds } });
       return;
@@ -3035,8 +3045,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doFujinUndo: () => {
-    const { fujinPreMoveState } = get();
+    const { fujinPreMoveState, gameState, ws } = get();
     if (!fujinPreMoveState) return;
+    if (ws && gameState?.mode === 'online') {
+      set({
+        fujinPreMoveState: null,
+        moveFrom: null,
+        selectedFigures: [],
+      });
+      get().sendAction({ type: 'FUJIN_UNDO', playerId: get().localPlayerId });
+      return;
+    }
     set({
       gameState: JSON.parse(JSON.stringify(fujinPreMoveState)),
       fujinPreMoveState: null,
