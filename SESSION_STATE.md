@@ -1209,3 +1209,14 @@ server restart — no longer loses the game.
   duplicate track inside its popup.
 - Added `npm run check:train` to cover the duplicate-purchase guard during a pending Benevolence
   decision.
+
+## Changelog - 2026-07-23 (Loto final-mandate sidebar flow)
+
+- Entering Loto's `Sustituir por` step no longer looks like an idle Politics turn, so dismissing
+  a turn popup cannot trigger a second draw of four mandate tiles.
+- Mandate draws are rejected in both shared game logic and the online server whenever a draw,
+  Loto replacement, mandate resolution or Kami transition is already active.
+- Choosing Loto's actual mandate clears stale drawn tiles defensively. The sidebar also hides
+  mandate-choice lists during an active resolution, repairing the visual symptom in older saves.
+- Added `npm run check:loto` covering the seventh-mandate replacement flow, duplicate-draw
+  rejection and cleanup of a previously corrupted state.

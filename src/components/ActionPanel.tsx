@@ -951,7 +951,7 @@ export const ActionPanel = () => {
             );
           })()}
 
-          {!gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && !gameState.lotoChoicePhase && (
+          {!gameState.trainMandateActive && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && !gameState.harvestMandateActive && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && !gameState.lotoChoicePhase && (
             <button className="btn-primary" onClick={doDrawMandateTiles}>
               {t('actions.drawMandateTiles')}
             </button>
@@ -964,7 +964,14 @@ export const ActionPanel = () => {
             </div>
           )}
 
-          {gameState.drawnMandates.length > 0 && (
+          {gameState.mandateChoicePhase &&
+            !gameState.lotoChoicePhase &&
+            !gameState.trainMandateActive &&
+            !gameState.marshalMandateActive &&
+            !gameState.recruitMandateActive &&
+            !gameState.betrayMandateActive &&
+            !gameState.harvestMandateActive &&
+            gameState.drawnMandates.length > 0 && (
             <div className="mandate-options">
               {gameState.drawnMandates.map((m: MandateType, i: number) => (
                 <button
@@ -979,7 +986,12 @@ export const ActionPanel = () => {
             </div>
           )}
 
-          {gameState.lotoChoicePhase === true && (
+          {gameState.lotoChoicePhase === true &&
+            !gameState.trainMandateActive &&
+            !gameState.marshalMandateActive &&
+            !gameState.recruitMandateActive &&
+            !gameState.betrayMandateActive &&
+            !gameState.harvestMandateActive && (
             <div className="mandate-options loto-choice">
               <p className="loto-choice-label">Sustituir por:</p>
               {(['recruit', 'marshal', 'train', 'harvest', 'betray'] as MandateType[]).map((m: MandateType) => (

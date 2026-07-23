@@ -1128,6 +1128,24 @@ function isKamiTurn(mandateCount: number): boolean {
 }
 
 export function drawMandateTiles(state: GameState): GameState {
+  const resolutionActive =
+    state.trainMandateActive ||
+    state.marshalMandateActive ||
+    state.recruitMandateActive ||
+    state.betrayMandateActive ||
+    state.harvestMandateActive;
+  if (
+    state.currentPhase !== 'politics' ||
+    state.mandateChoicePhase ||
+    state.lotoChoicePhase ||
+    state.drawnMandates.length > 0 ||
+    resolutionActive ||
+    state.kamiResolutionActive ||
+    state.kamiPhasePopupPending ||
+    state.kamiSummaryVisible ||
+    state.generosityPending
+  ) return state;
+
   const newState: GameState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [] as MandateType[], log: [...state.log] };
 
   // If deck is too small, reshuffle
@@ -1194,6 +1212,7 @@ export function respondToGenerosity(state: GameState, playerId: string, accept: 
 }
 
 export function chooseMandateTile(state: GameState, mandate: MandateType, playerId: string): GameState {
+  if (!state.mandateChoicePhase || state.lotoChoicePhase) return state;
   let newState: GameState = { ...state, mandatesDeck: [...state.mandatesDeck], drawnMandates: [...state.drawnMandates] };
 
   const player = state.players.find((p) => p.id === playerId);
@@ -1235,8 +1254,13 @@ export function chooseMandateTile(state: GameState, mandate: MandateType, player
 }
 
 export function lotoChooseActualMandate(state: GameState, mandate: MandateType, playerId: string): GameState {
+  const player = state.players.find(candidate => candidate.id === playerId);
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  if (!state.lotoChoicePhase || player?.clanId !== 'loto' || currentPlayer?.id !== playerId) return state;
   let newState: GameState = {
     ...state,
+    drawnMandates: [],
+    mandateChoicePhase: false,
     lotoChoicePhase: false,
     lotoDiscardedMandate: null,
     lastMandateIssuerId: playerId,

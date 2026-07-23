@@ -1306,6 +1306,21 @@ wss.on('connection', (ws: WebSocket, req) => {
             ws.send(JSON.stringify({ type: 'ERROR', message: 'Cannot draw mandate tiles outside of politics phase' }));
             return;
           }
+          if (
+            l.gameState.mandateChoicePhase ||
+            l.gameState.lotoChoicePhase ||
+            l.gameState.drawnMandates.length > 0 ||
+            l.gameState.trainMandateActive ||
+            l.gameState.marshalMandateActive ||
+            l.gameState.recruitMandateActive ||
+            l.gameState.betrayMandateActive ||
+            l.gameState.harvestMandateActive ||
+            l.gameState.kamiResolutionActive ||
+            l.gameState.kamiPhasePopupPending
+          ) {
+            safeSend(ws, { type: 'ERROR', message: 'Ya hay una seleccion o resolucion de mandato en curso' });
+            return;
+          }
           // Validate that the requesting player is the current player
           const currentPlayer = l.gameState.players[l.gameState.currentPlayerIndex];
           if (currentPlayer && currentPlayer.id !== playerId) {
@@ -1434,6 +1449,10 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const mandate = data.payload?.mandate;
           if (!mandate) return;
+          if (!l.gameState.mandateChoicePhase || l.gameState.lotoChoicePhase) {
+            safeSend(ws, { type: 'ERROR', message: 'La seleccion de mandato ya no esta activa' });
+            return;
+          }
           // Validate that the requesting player is the current player
           const choosingPlayer = l.gameState.players[l.gameState.currentPlayerIndex];
           if (choosingPlayer && choosingPlayer.id !== playerId) {
@@ -3104,6 +3123,15 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const { mandate: lotoMandate } = data.payload || {};
           if (!lotoMandate) return;
+          const lotoPlayer = l.gameState.players[l.gameState.currentPlayerIndex];
+          if (
+            !l.gameState.lotoChoicePhase ||
+            lotoPlayer?.id !== data.playerId ||
+            lotoPlayer?.clanId !== 'loto'
+          ) {
+            safeSend(ws, { type: 'ERROR', message: 'La seleccion de mandato de Loto ya no es valida' });
+            return;
+          }
           let s = lotoChooseActualMandate(l.gameState, lotoMandate, data.playerId);
           if (!s.betrayMandateActive && !s.trainMandateActive && !s.marshalMandateActive && !s.recruitMandateActive && !s.harvestMandateActive) {
             const prevPhaseLM = s.currentPhase;

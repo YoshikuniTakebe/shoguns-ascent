@@ -4365,7 +4365,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState, localPlayerId, ws } = get();
     set({ turnPopupPlayer: null, turnPopupDismissedForIndex: gameState?.currentPlayerIndex ?? null });
     // For online politics: after dismissing turn popup, draw mandate tiles for this player
-    if (ws && gameState && gameState.mode === 'online' && gameState.currentPhase === 'politics' && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && !gameState.harvestMandateActive && !gameState.trainMandateActive) {
+    if (ws && gameState && gameState.mode === 'online' && gameState.currentPhase === 'politics' && gameState.drawnMandates.length === 0 && !gameState.mandateChoicePhase && !gameState.lotoChoicePhase && !gameState.marshalMandateActive && !gameState.recruitMandateActive && !gameState.betrayMandateActive && !gameState.harvestMandateActive && !gameState.trainMandateActive) {
       get().sendAction({ type: 'DRAW_MANDATE_TILES', playerId: localPlayerId });
     }
   },
@@ -4594,7 +4594,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
           if (state.mode === 'online' && state.currentPhase === 'politics') {
             const noResolution = !state.trainMandateActive && !state.marshalMandateActive && !state.recruitMandateActive && !state.betrayMandateActive && !state.harvestMandateActive;
-            if (noResolution && state.drawnMandates.length === 0 && !state.mandateChoicePhase && !state.kamiResolutionActive && !state.kamiSummaryVisible && !state.kamiPhasePopupPending) {
+            if (noResolution && state.drawnMandates.length === 0 && !state.mandateChoicePhase && !state.lotoChoicePhase && !state.kamiResolutionActive && !state.kamiSummaryVisible && !state.kamiPhasePopupPending) {
               // Only show the popup if it wasn't already dismissed for this player's turn
               // Use the potentially-reset dismissedIdx so popup fires after mandate resolution ends and advancePlayer changes currentPlayerIndex
               if (dismissedIdx !== state.currentPlayerIndex) {
@@ -4705,7 +4705,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           // Force show turn popup when a mandate just ended and no mandate is active now
           const prevMandateWasActive = prevGameState?.trainMandateActive || prevGameState?.marshalMandateActive || prevGameState?.recruitMandateActive || prevGameState?.betrayMandateActive || prevGameState?.harvestMandateActive;
           const noMandateNow = !state.trainMandateActive && !state.marshalMandateActive && !state.recruitMandateActive && !state.betrayMandateActive && !state.harvestMandateActive;
-          if (prevMandateWasActive && noMandateNow && state.drawnMandates.length === 0 && !state.mandateChoicePhase && !state.kamiResolutionActive && !state.kamiSummaryVisible && !state.kamiPhasePopupPending) {
+          if (prevMandateWasActive && noMandateNow && state.drawnMandates.length === 0 && !state.mandateChoicePhase && !state.lotoChoicePhase && !state.kamiResolutionActive && !state.kamiSummaryVisible && !state.kamiPhasePopupPending) {
             newTurnPopup = state.players[state.currentPlayerIndex]?.id || null;
             uiResets.turnPopupDismissedForIndex = null;
           }
