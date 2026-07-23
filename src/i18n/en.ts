@@ -203,6 +203,15 @@ export const en = {
   'gameOver.returnToMenu': 'Return to Menu',
   'gameOver.warProvinceTokens': 'War Province Tokens',
   'gameOver.sharedVictory': 'Shared victory with allies:',
+  'gameOver.viewLog': 'View Log',
+  'gameOver.fullLog': 'Complete Game Log',
+  'gameOver.closeLog': 'Close game log',
+  'gameOver.noLogEntries': 'No entries were recorded for this season.',
+  'gameOver.springTokens': 'Spring Province tokens',
+  'gameOver.summerTokens': 'Summer Province tokens',
+  'gameOver.autumnTokens': 'Autumn Province tokens',
+  'gameOver.provinceSet': 'Different Province set',
+  'gameOver.winterTotal': 'Total scored in Winter',
 
   // SeasonCardsMarket
   'market.title': 'Season Cards Market',

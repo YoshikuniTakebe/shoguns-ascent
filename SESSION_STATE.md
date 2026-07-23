@@ -1264,3 +1264,14 @@ server restart — no longer loses the game.
   hostage field, so both figure names and owners remain visible.
 - Camino de la Serpiente uses the shared decision-question spacing, keeping its text clear of the
   charge/decline buttons.
+
+## Changelog - 2026-07-23 (complete end-game log)
+
+- The final game screen now includes `Ver Log`, opening a large, scrollable modal with tabs for
+  Spring, Summer, Autumn and Winter.
+- Spring, Summer and Autumn reuse the game's rich log rendering, including clan/province colors,
+  icons and private entries visible to the appropriate players. Autumn is separated from the
+  Winter scoring lines that remain in the active log when the game ends.
+- Winter shows only the final scoring breakdown for each player: Province tokens by season,
+  different-Province set bonus, each Winter scoring card and the total VP gained in Winter.
+- Added complete Spanish and English labels and responsive styling for the final log modal.

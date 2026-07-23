@@ -205,6 +205,15 @@ export const es: Record<TranslationKey, string> = {
   'gameOver.returnToMenu': 'Volver al Men\u00FA',
   'gameOver.warProvinceTokens': 'Fichas de Provincia en Guerra',
   'gameOver.sharedVictory': 'Victoria compartida con aliados:',
+  'gameOver.viewLog': 'Ver Log',
+  'gameOver.fullLog': 'Log completo de la partida',
+  'gameOver.closeLog': 'Cerrar log de la partida',
+  'gameOver.noLogEntries': 'No se registraron entradas en esta estaci\u00F3n.',
+  'gameOver.springTokens': 'Fichas de Provincia de Primavera',
+  'gameOver.summerTokens': 'Fichas de Provincia de Verano',
+  'gameOver.autumnTokens': 'Fichas de Provincia de Oto\u00F1o',
+  'gameOver.provinceSet': 'Set de Provincias diferentes',
+  'gameOver.winterTotal': 'Total obtenido en Invierno',
 
   // SeasonCardsMarket
   'market.title': 'Mercado de Cartas de Estaci\u00F3n',

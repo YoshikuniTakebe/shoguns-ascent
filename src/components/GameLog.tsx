@@ -21,7 +21,9 @@ const MANDATE_COLORS: Record<string, string> = {
 
 const PROVINCE_NAMES = ['Hokkaido', 'Oshu', 'Edo', 'Kanto', 'Kansai', 'Nagato', 'Shikoku', 'Kyushu'];
 
-function renderLogEntry(entry: string, players: { name: string; clanId: string }[]): ReactNode {
+// Shared with the full end-game log, which uses the same rich entry formatting.
+// oxlint-disable-next-line react/only-export-components
+export function renderLogEntry(entry: string, players: { name: string; clanId: string }[]): ReactNode {
   // Build a list of replacements to apply
   type Segment = { type: 'text'; value: string } | { type: 'node'; value: ReactNode };
 

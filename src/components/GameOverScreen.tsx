@@ -8,6 +8,7 @@ import { SpringIcon, SummerIcon, AutumnIcon, WinterIcon, WarTokenIcon } from './
 import { WarTokensModal } from './WarTokensModal';
 import { PlayerCardsModal } from './PlayerCardsModal';
 import { scoreWinterUpgrade } from '../utils/gameLogic';
+import { FinalGameLogModal } from './FinalGameLogModal';
 import titleImg from '../img/NoboruTaiyo.png';
 
 const SeasonIcon = ({ season }: { season: string }) => {
@@ -68,11 +69,12 @@ function computeScoringBreakdown(player: Player, gameState: GameState) {
 }
 
 export const GameOverScreen = () => {
-  const { gameState, viewingFinishedGame } = useGameStore();
+  const { gameState, viewingFinishedGame, localPlayerId } = useGameStore();
   const t = useT();
   const [viewingWarTokensPlayer, setViewingWarTokensPlayer] = useState<Player | null>(null);
   const [viewingCardsPlayer, setViewingCardsPlayer] = useState<Player | null>(null);
   const [scoringBreakdownPlayer, setScoringBreakdownPlayer] = useState<Player | null>(null);
+  const [showFullLog, setShowFullLog] = useState(false);
 
   if (!gameState) return null;
 
@@ -228,6 +230,9 @@ export const GameOverScreen = () => {
         </div>
 
         <div className="game-over-actions">
+          <button className="btn-secondary" onClick={() => setShowFullLog(true)}>
+            {t('gameOver.viewLog')}
+          </button>
           <button className="btn-primary" onClick={() => {
             if (viewingFinishedGame) {
               useGameStore.setState({ gameState: null, viewingFinishedGame: false, screen: 'games-lobby' });
@@ -245,6 +250,13 @@ export const GameOverScreen = () => {
       )}
       {viewingCardsPlayer && (
         <PlayerCardsModal player={viewingCardsPlayer} onClose={() => setViewingCardsPlayer(null)} />
+      )}
+      {showFullLog && (
+        <FinalGameLogModal
+          gameState={gameState}
+          localPlayerId={localPlayerId}
+          onClose={() => setShowFullLog(false)}
+        />
       )}
 
       {scoringBreakdownPlayer && (() => {
