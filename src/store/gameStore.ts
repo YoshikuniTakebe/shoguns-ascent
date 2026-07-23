@@ -3615,7 +3615,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({
         gameState: nextState,
         warTacticBidsSubmitted: false,
-        battleStepPhase: currentBattle?.uncontested ? 'popup' : 'bidding',
+        battleStepPhase: nextState.pendingBattleCardDecision
+          ? null
+          : currentBattle?.uncontested ? 'popup' : 'bidding',
         battleCurrentBiddingIndex: 0,
         battleResolutionData: null,
         selectedHostageTarget: null,

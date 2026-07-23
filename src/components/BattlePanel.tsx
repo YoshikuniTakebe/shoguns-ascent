@@ -1266,7 +1266,7 @@ export const BattlePanel = () => {
     const currentParticipant = battle.participants[battleCurrentBiddingIndex];
     const player = gameState.players.find(p => p.id === currentParticipant);
     const playerClan = player ? CLANS.find(c => c.id === player.clanId) : null;
-    const maxCoins = player?.coins || 0;
+    const maxCoins = Math.max(0, player?.coins || 0);
 
     // Calculate battle count for current player
     const playerBattles = allBattles.filter(b => b.participants.includes(currentParticipant));
@@ -1339,7 +1339,7 @@ export const BattlePanel = () => {
   const apid = localPlayerId;
   const isPart = apid ? battle.participants.includes(apid) : false;
   const hasBid = apid ? battle.warTacticBids[apid] !== undefined : false;
-  const maxCoins = apid ? (gameState.players.find(p => p.id === apid)?.coins || 0) : 0;
+  const maxCoins = apid ? Math.max(0, gameState.players.find(p => p.id === apid)?.coins || 0) : 0;
 
   return (
     <div className="battle-panel">

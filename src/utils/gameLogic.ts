@@ -3800,16 +3800,23 @@ export function submitWarTacticBids(
 ): GameState {
   const newState: GameState = {
     ...state,
+    players: state.players.map(player => ({ ...player, coins: Math.max(0, player.coins) })),
     activeBattles: state.activeBattles.map((b) => ({ ...b, warTacticBids: { ...b.warTacticBids } })),
   };
 
   const battle = newState.activeBattles.find((b) => b.provinceId === provinceId);
-  if (!battle || battle.resolved) return state;
+  if (!battle || battle.resolved || !battle.participants.includes(playerId)) return state;
+  if (battle.warTacticBids[playerId] !== undefined) return state;
 
   // Validate bids against player coin balance
-  const player = state.players.find((p) => p.id === playerId);
+  const player = newState.players.find((p) => p.id === playerId);
   if (!player) return state;
-  const totalBid = Object.values(tacticBids).reduce((sum, v) => sum + v, 0);
+  const validTacticIds = new Set(WAR_TACTICS.map(tactic => tactic.id));
+  const bidEntries = Object.entries(tacticBids);
+  if (bidEntries.some(([tacticId, amount]) =>
+    !validTacticIds.has(tacticId) || !Number.isInteger(amount) || amount < 0
+  )) return state;
+  const totalBid = bidEntries.reduce((sum, [, amount]) => sum + amount, 0);
   if (totalBid > player.coins) {
     // Reject bids that exceed coin balance - return unchanged state
     return state;
@@ -4326,20 +4333,39 @@ export function preparePreBattleCardDecision(state: GameState, provinceId: strin
   if (state.pendingBattleCardDecision) return state;
   const province = state.provinces[provinceId];
   const battle = state.activeBattles.find(candidate => candidate.provinceId === provinceId && !candidate.resolved);
-  if (!province || !battle || battle.earthDragonEffectApplied) return state;
+  if (!province || !battle) return state;
 
-  const earthDragon = province.figures.find(figure => figure.type === 'monster' && figure.monsterCardId === 'sp-earth-dragon');
-  if (!earthDragon) return markBattleDecisionApplied(state, provinceId, 'earth-dragon');
-  const candidates = battleDecisionCandidates(state, 'earth-dragon', earthDragon.owner, provinceId);
-  if (Object.keys(candidates).length === 0) return markBattleDecisionApplied(state, provinceId, 'earth-dragon');
+  const effectOrder: Array<{ type: 'earth-dragon' | 'fire-dragon' | 'jorogumo'; cardId: string; applied: boolean }> = [
+    { type: 'earth-dragon', cardId: 'sp-earth-dragon', applied: !!battle.earthDragonEffectApplied },
+    { type: 'fire-dragon', cardId: 'su-fire-dragon', applied: !!battle.fireDragonEffectApplied },
+    { type: 'jorogumo', cardId: 'sp-jorogumo', applied: !!battle.jorogumoEffectApplied },
+  ];
+  const pendingEffects = effectOrder
+    .filter(effect => !effect.applied)
+    .map(effect => ({ ...effect, figure: province.figures.find(figure => figure.type === 'monster' && figure.monsterCardId === effect.cardId) }))
+    .filter((effect): effect is typeof effect & { figure: Figure } => !!effect.figure)
+    .sort((left, right) => state.honorTrack.indexOf(left.figure.owner) - state.honorTrack.indexOf(right.figure.owner));
+
+  const nextEffect = pendingEffects[0];
+  if (!nextEffect) {
+    let completedState = state;
+    for (const effect of effectOrder.filter(effect => !effect.applied)) {
+      completedState = markBattleDecisionApplied(completedState, provinceId, effect.type);
+    }
+    return completedState;
+  }
+  const candidates = battleDecisionCandidates(state, nextEffect.type, nextEffect.figure.owner, provinceId);
+  if (Object.keys(candidates).length === 0) {
+    return preparePreBattleCardDecision(markBattleDecisionApplied(state, provinceId, nextEffect.type), provinceId);
+  }
 
   return {
     ...state,
     pendingBattleCardDecision: {
-      type: 'earth-dragon',
-      ownerId: earthDragon.owner,
+      type: nextEffect.type,
+      ownerId: nextEffect.figure.owner,
       provinceId,
-      sourceFigureId: earthDragon.id,
+      sourceFigureId: nextEffect.figure.id,
       stage: 'pre-battle',
     },
   };
@@ -4400,7 +4426,10 @@ export function resolveBattleCardDecision(
     resolvedState = { ...state, log: [...state.log, `${owner?.name || 'Jugador'} decide no usar Earth Dragon en ${state.provinces[pending.provinceId]?.name || pending.provinceId}`] };
   }
   const completedState = markBattleDecisionApplied(resolvedState, pending.provinceId, pending.type, captured);
-  if (pending.stage === 'pre-battle') return resolveUncontestedBattles(completedState);
+  if (pending.stage === 'pre-battle') {
+    const nextState = preparePreBattleCardDecision(completedState, pending.provinceId);
+    return nextState.pendingBattleCardDecision ? nextState : resolveUncontestedBattles(nextState);
+  }
   return prepareBattleCardDecision(completedState, pending.provinceId);
 }
 
@@ -4453,9 +4482,11 @@ export function applyProvinceDeathCardEffects(
     for (const affectedId of affectedPlayerIds) {
       const affected = state.players.find(player => player.id === affectedId);
       if (!affected) continue;
+      const coinsLost = Math.min(2, Math.max(0, affected.coins));
+      const roninLost = Math.min(2, Math.max(0, affected.ronin));
       affected.coins = Math.max(0, affected.coins - 2);
       affected.ronin = Math.max(0, affected.ronin - 2);
-      affectedPlayers.push({ playerId: affected.id, coins: affected.coins, ronin: affected.ronin });
+      affectedPlayers.push({ playerId: affected.id, coins: affected.coins, ronin: affected.ronin, coinsLost, roninLost });
     }
     state.log.push(`Koneko muere: ${owner.name} gana 2 Monedas y 2 Ronin; los demas clanes presentes pierden hasta 2 Monedas y 2 Ronin`);
     state.pendingRuleNotices = [...(state.pendingRuleNotices || []), {

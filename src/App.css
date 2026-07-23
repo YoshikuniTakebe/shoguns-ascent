@@ -642,6 +642,11 @@
 .games-lobby-card-turn-seal-name{font-size:0.72rem;font-weight:bold;margin-top:0.1rem}
 .games-lobby-card-war-seal{min-width:58px;gap:0.08rem}
 .games-lobby-card-war-seal .war-seal{display:block;color:#ff405d;filter:drop-shadow(0 0 4px rgba(227,48,79,0.32))}
+
+.language-selector{align-items:center;z-index:1200}
+.language-selector .legend-tooltip{left:auto;right:0;transform:translateY(6px)}
+.language-selector .legend-button-wrapper:hover .legend-tooltip{transform:translateY(0)}
+.language-selector .legend-tooltip::before{left:auto;right:8px;transform:none}
 .games-lobby-card-war-seal-name{font-size:0.72rem;font-weight:800;color:#ff405d;margin-top:0.08rem}
 .games-lobby-card-clans-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0.2rem 0.5rem}
 .games-lobby-card-gameid{font-size:0.72rem;color:var(--text-secondary);font-weight:normal;margin-left:0.3rem}

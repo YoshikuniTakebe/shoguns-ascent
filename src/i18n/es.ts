@@ -485,6 +485,7 @@ export const es: Record<TranslationKey, string> = {
   'legend.daimyo': 'Daimyo',
   'legend.monster': 'Monstruo',
   'legend.kami': 'Kami',
+  'legend.title': 'Leyenda de iconos',
   'legend.coin': 'Moneda',
   'legend.vp': 'PV',
   'legend.honor': 'Honor',

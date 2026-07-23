@@ -110,7 +110,17 @@ export const RuleEventNoticePopup = () => {
             {(notice.affectedPlayers || []).map(entry => {
               const player = gameState.players.find(candidate => candidate.id === entry.playerId);
               const clan = player ? CLANS.find(candidate => candidate.id === player.clanId) : null;
-              return <p key={entry.playerId} className="rule-event-affected"><ClanShield clanId={player?.clanId || ''} size={20} /><strong style={{ color: clan?.color }}>{player?.name}</strong> pierde hasta <CoinIcon size={17} color={clan?.color} /> 2 y <RoninIcon size={17} color={clan?.color} /> 2. Total: <CoinIcon size={17} color={clan?.color} /> {entry.coins} <RoninIcon size={17} color={clan?.color} /> {entry.ronin}</p>;
+              const coinsLost = entry.coinsLost ?? (entry.coins === 0 ? 2 : 0);
+              const roninLost = entry.roninLost ?? (entry.ronin === 0 ? 2 : 0);
+              return (
+                <p key={entry.playerId} className="rule-event-affected">
+                  <ClanShield clanId={player?.clanId || ''} size={20} />
+                  <strong style={{ color: clan?.color }}>{player?.name}</strong> pierde{' '}
+                  <CoinIcon size={17} color={clan?.color} /> {coinsLost} y{' '}
+                  <RoninIcon size={17} color={clan?.color} /> {roninLost}.
+                  {coinsLost < 2 && <> Total: <CoinIcon size={17} color={clan?.color} /> <strong style={{ color: clan?.color }}>0</strong></>}
+                </p>
+              );
             })}
           </>
         )}

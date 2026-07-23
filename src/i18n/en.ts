@@ -483,6 +483,7 @@ export const en = {
   'legend.daimyo': 'Daimyo',
   'legend.monster': 'Monster',
   'legend.kami': 'Kami',
+  'legend.title': 'Icon legend',
   'legend.coin': 'Coin',
   'legend.vp': 'VP',
   'legend.honor': 'Honor',

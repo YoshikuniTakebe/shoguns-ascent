@@ -290,6 +290,18 @@ export const GameLog = () => {
     activeTab === currentSeason
       ? [...(logHistory[currentSeason] ?? []), ...gameState.log]
       : logHistory[activeTab] ?? [];
+  const warStartIndex = publicDisplayLog.lastIndexOf('=== Comienza la Fase de Guerra ===');
+  const currentWarComplete = gameState.activeBattles.length > 0
+    && gameState.activeBattles.every(battle => battle.resolved || battle.uncontested);
+  const concealCurrentWarTotals = activeTab === currentSeason
+    && gameState.currentPhase === 'war'
+    && !currentWarComplete
+    && warStartIndex >= 0;
+  const visiblePublicDisplayLog = concealCurrentWarTotals
+    ? publicDisplayLog.map((entry, index) =>
+        index >= warStartIndex ? entry.replace(/\s*\.?\s+Total\b.*$/i, '') : entry
+      )
+    : publicDisplayLog;
   const historyPrefixLength = activeTab === currentSeason ? (logHistory[currentSeason]?.length ?? 0) : 0;
   const privateEntries = (gameState.privateLogEntries || [])
     .filter(entry => entry.season === activeTab && (
@@ -300,11 +312,11 @@ export const GameLog = () => {
       displayIndex: entry.logIndex + historyPrefixLength,
     }));
   const displayLog: string[] = [];
-  for (let index = 0; index <= publicDisplayLog.length; index++) {
+  for (let index = 0; index <= visiblePublicDisplayLog.length; index++) {
     privateEntries
       .filter(entry => entry.displayIndex === index)
       .forEach(entry => displayLog.push(entry.text));
-    if (index < publicDisplayLog.length) displayLog.push(publicDisplayLog[index]);
+    if (index < visiblePublicDisplayLog.length) displayLog.push(visiblePublicDisplayLog[index]);
   }
 
   const players = gameState.players;

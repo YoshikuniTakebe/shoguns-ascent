@@ -1491,7 +1491,12 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const { provinceId, tacticBids } = data.payload || {};
           if (!provinceId || !tacticBids) return;
-          l.gameState = submitWarTacticBids(l.gameState, provinceId, data.playerId, tacticBids);
+          const submittedState = submitWarTacticBids(l.gameState, provinceId, data.playerId, tacticBids);
+          if (submittedState === l.gameState) {
+            safeSend(ws, { type: 'ERROR', message: 'La apuesta de guerra no es valida' });
+            return;
+          }
+          l.gameState = submittedState;
           // Only resolve once all participants have submitted their bids
           if (allBidsSubmitted(l.gameState, provinceId)) {
             l.gameState = prepareBattleCardDecision(l.gameState, provinceId);

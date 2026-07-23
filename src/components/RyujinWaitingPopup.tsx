@@ -26,7 +26,7 @@ export const RyujinWaitingPopup = () => {
       <div className="battle-popup-card" style={{ borderColor: clan?.color || '#1E90FF' }}>
         <h3 className="battle-popup-title" style={{ color: '#1E90FF' }}>Ryujin</h3>
         <p className="battle-popup-message" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-          {winner && <ClanShield clanId={winner.clanId} size={30} />}
+          {winner && <ClanShield clanId={winner.clanId} size={60} />}
           <span style={{ color: clan?.color || '#fff' }}>
             {t('kami.resolution.ryujinWaiting', { name: winner?.name || '' })}
           </span>

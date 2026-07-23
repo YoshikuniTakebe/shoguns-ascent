@@ -209,7 +209,7 @@ export interface RuleEventNotice {
   provinceId?: string;
   fromProvinceId?: string;
   toProvinceId?: string;
-  affectedPlayers?: Array<{ playerId: string; coins: number; ronin: number }>;
+  affectedPlayers?: Array<{ playerId: string; coins: number; ronin: number; coinsLost?: number; roninLost?: number }>;
   templeKami?: KamiType;
   resume?: 'advance-kami' | 'advance-train' | 'advance-marshal' | 'advance-war-start' | 'continue-benevolence' | null;
 }

@@ -12,6 +12,7 @@ import { ConfigModal } from './ConfigModal';
 import { AddFriendModal, FriendsListModal, fetchFriends } from './FriendsModal';
 import type { Friend } from './FriendsModal';
 import { ClanPowerContent } from './ClanPowerTooltip';
+import { IconLegend } from './IconLegend';
 import titleImg from '../img/NoboruTaiyo.png';
 import typeGameBgImg from '../img/type_game_bg.png';
 
@@ -107,6 +108,7 @@ export const MainMenu = () => {
   return (
     <div className="main-menu">
       <div className="language-selector">
+        <IconLegend />
         <button
           className={`lang-btn${language === 'en' ? ' active' : ''}`}
           onClick={() => setLanguage('en')}

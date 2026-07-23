@@ -35,7 +35,7 @@ import { VassalDecisionPopup } from './VassalDecisionPopup';
 import { SerpentChargePopup } from './SerpentChargePopup';
 import { MonsterEnterDecisionPopup } from './MonsterEnterDecisionPopup';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, UndoIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, FistIcon } from './Icons';
-import { ClanShield } from './ClanShields';
+import { ClanShield, WarSeal } from './ClanShields';
 import { getMonsterFigureImage, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
@@ -976,27 +976,9 @@ export const GameBoard = () => {
         <div className="harvest-popup-backdrop">
           <div className="harvest-popup" style={{ borderColor: '#DC143C', maxWidth: '450px', minWidth: '320px' }}>
             <h3 style={{ color: '#DC143C', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                <path d="M4 4l16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M20 4l-16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="8" cy="8" r="2" stroke="var(--accent-red)" strokeWidth="1" fill="none" opacity="0.7"/>
-                <circle cx="16" cy="8" r="2" stroke="var(--accent-red)" strokeWidth="1" fill="none" opacity="0.7"/>
-                <path d="M3 3l1.5 0.5L4 4" fill="var(--accent-red)" opacity="0.9"/>
-                <path d="M21 3l-1.5 0.5L20 4" fill="var(--accent-red)" opacity="0.9"/>
-                <circle cx="12" cy="12" r="1.5" fill="var(--accent-red)" opacity="0.6"/>
-                <path d="M12 9v-1.5M12 15v1.5M9 12h-1.5M15 12h1.5" stroke="var(--accent-red)" strokeWidth="1" strokeLinecap="round" opacity="0.5"/>
-              </svg>
+              <span style={{ color: '#DC143C', display: 'inline-flex' }}><WarSeal size={34} /></span>
               <span>{t('war.phaseStart.title')}</span>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                <path d="M4 4l16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M20 4l-16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="8" cy="8" r="2" stroke="var(--accent-red)" strokeWidth="1" fill="none" opacity="0.7"/>
-                <circle cx="16" cy="8" r="2" stroke="var(--accent-red)" strokeWidth="1" fill="none" opacity="0.7"/>
-                <path d="M3 3l1.5 0.5L4 4" fill="var(--accent-red)" opacity="0.9"/>
-                <path d="M21 3l-1.5 0.5L20 4" fill="var(--accent-red)" opacity="0.9"/>
-                <circle cx="12" cy="12" r="1.5" fill="var(--accent-red)" opacity="0.6"/>
-                <path d="M12 9v-1.5M12 15v1.5M9 12h-1.5M15 12h1.5" stroke="var(--accent-red)" strokeWidth="1" strokeLinecap="round" opacity="0.5"/>
-              </svg>
+              <span style={{ color: '#DC143C', display: 'inline-flex' }}><WarSeal size={34} /></span>
             </h3>
             {warPhaseUpgradeSummary.length > 0 ? (
               <div style={{ marginBottom: '16px' }}>

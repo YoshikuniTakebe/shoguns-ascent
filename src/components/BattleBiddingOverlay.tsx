@@ -275,7 +275,7 @@ export const BattleBiddingOverlay = ({
             {isLastBattle && <span> {t('battle.lastBattle')}</span>}
           </h2>
           <p className="bidding-overlay-player">
-            {playerClanId && <ClanShield clanId={playerClanId} size={22} />}
+            {playerClanId && <ClanShield clanId={playerClanId} size={55} />}
             <span style={{ color: playerClanColor }}>{playerName}</span>
             <span style={{ color: '#ffffff' }}> - {t('battle.warTactics')}</span>
           </p>

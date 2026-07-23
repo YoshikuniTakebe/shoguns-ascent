@@ -1239,3 +1239,19 @@ server restart — no longer loses the game.
   allowing Buy or Skip, preventing observers or stale windows from submitting a purchase.
 - Ryujin now shares Train's card navigation: `Ver mis cartas`, `Volver a la compra`, backdrop/X
   closing and the persistent return-to-purchase action while the reward remains unresolved.
+
+## Changelog - 2026-07-23 (pre-battle ordering, hidden totals and war UI)
+
+- Earth Dragon, Fire Dragon and Jorogumo now resolve completely before War Tactics open. Multiple
+  effects are queued by Honor and each decision blocks bidding until the pre-battle sequence ends.
+- Fire Dragon deaths and Koneko resource changes therefore happen before players commit coins.
+  War bids reject negative or malformed amounts, and submitting zero bids repairs a legacy negative
+  balance to zero so affected saved games can continue.
+- Koneko shows each actual loss but reveals a player's remaining Coins only when they could not pay
+  the full two-coin loss, in which case the popup justifies the shortfall with a zero balance.
+- The live War log hides resource/VP totals from the start of War until all battles resolve, then
+  restores the original complete entries for the finished season.
+- Home now includes the complete icon legend. Ryujin waiting and the active bidder use larger clan
+  seals, and the War start popup uses the same samurai helmet seal as the lobby.
+- Added `npm run check:war` for pre-battle Fire Dragon/Koneko ordering, negative-balance recovery and
+  rejection of negative bids.
