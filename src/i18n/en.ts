@@ -390,6 +390,7 @@ export const en = {
   'kami.resolution.fujinCancel': 'Cancel Movement',
   'kami.resolution.raijinPlace': 'Place Bushi in a province',
   'kami.resolution.ryujinBuy': 'Buy a Season Card',
+  'kami.resolution.ryujinWaiting': 'Waiting for {name} to buy a Season Card',
   'kami.resolution.templeOf': 'Shrine {number}',
   'kami.resolution.susanooVP': 'Gains {vp} VP ({fortresses} Fortresses on map)',
   'kami.resolution.waitingFor': 'Waiting for {name} to resolve shrine',

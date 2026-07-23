@@ -1774,6 +1774,9 @@ export function buySeasonCard(state: GameState, playerId: string, cardId: string
  * Bonsai clan power still applies.
  */
 export function ryujinBuyCard(state: GameState, playerId: string, cardId: string): GameState {
+  if (!state.kamiResolutionActive || !state.ryujinBuyActive) return state;
+  const currentTemple = state.kamiResolutionTemples[state.kamiResolutionIndex];
+  if (!currentTemple || currentTemple.kamiType !== 'ryujin' || currentTemple.winnerId !== playerId) return state;
   const card = state.seasonCardsDeck.find((c) => c.id === cardId);
   if (!card) return state;
 

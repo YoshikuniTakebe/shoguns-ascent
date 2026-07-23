@@ -49,6 +49,9 @@ export const PoliticsTrack = () => {
   const t = useT();
   const [showSeasonCards, setShowSeasonCards] = useState(false);
   const activeTrainBuyerId = gameState?.trainResolutionOrder?.[gameState?.trainResolutionIndex ?? 0];
+  const activeRyujinBuyerId = gameState?.ryujinBuyActive
+    ? gameState.kamiResolutionTemples?.[gameState.kamiResolutionIndex]?.winnerId
+    : null;
 
   // Auto-open the season cards modal when trainMandateActive becomes true
   // In online mode, only open for the current train resolution player
@@ -66,13 +69,13 @@ export const PoliticsTrack = () => {
         setShowSeasonCards(true);
       }
     } else if (gameState?.ryujinBuyActive && gameState?.kamiResolutionStep === 'interactive') {
-      // Only open for Ryujin when in interactive step (not while showing popup)
-      setShowSeasonCards(true);
+      // Ryujin is a private purchase action. Other online players see the waiting popup.
+      setShowSeasonCards(gameState.mode !== 'online' || activeRyujinBuyerId === localPlayerId);
     } else {
       // Auto-close when train mandate completes
       setShowSeasonCards(false);
     }
-  }, [gameState?.trainMandateActive, gameState?.ryujinBuyActive, gameState?.kamiResolutionStep, gameState?.mode, activeTrainBuyerId, localPlayerId]);
+  }, [gameState?.trainMandateActive, gameState?.ryujinBuyActive, gameState?.kamiResolutionStep, gameState?.mode, activeTrainBuyerId, activeRyujinBuyerId, localPlayerId]);
 
   // Close the modal when monster placement is active
   useEffect(() => {
@@ -111,6 +114,7 @@ export const PoliticsTrack = () => {
   const mandateCount = gameState.politicsMandateCount;
   const trainBuyerId = activeTrainBuyerId;
   const isLocalTrainBuyer = gameState.mode !== 'online' || trainBuyerId === localPlayerId;
+  const isLocalRyujinBuyer = gameState.mode !== 'online' || activeRyujinBuyerId === localPlayerId;
   const trainFollowUpPending = Boolean(
     gameState.pendingMonsterPlacementCardId ||
     gameState.pendingBenevolence ||
@@ -120,9 +124,15 @@ export const PoliticsTrack = () => {
     komainuChoiceVisible ||
     monsterNoPlacementPopupVisible
   );
-  const canReturnToTrainPurchase = Boolean(
-    gameState.trainMandateActive &&
-    isLocalTrainBuyer &&
+  const canReturnToCardPurchase = Boolean(
+    (
+      (gameState.trainMandateActive && isLocalTrainBuyer) ||
+      (
+        gameState.ryujinBuyActive &&
+        gameState.kamiResolutionStep === 'interactive' &&
+        isLocalRyujinBuyer
+      )
+    ) &&
     !showSeasonCards &&
     !trainFollowUpPending
   );
@@ -373,7 +383,7 @@ export const PoliticsTrack = () => {
         <span className="season-cards-btn-kanji">旭</span>
         <span className="season-cards-btn-text">Cartas</span>
       </button>
-      {canReturnToTrainPurchase && (
+      {canReturnToCardPurchase && (
         <button
           className="train-return-purchase-btn"
           onClick={() => setShowSeasonCards(true)}

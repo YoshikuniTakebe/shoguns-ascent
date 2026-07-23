@@ -3173,8 +3173,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doRyujinBuyCard: (cardId: string) => {
-    const { gameState, ws } = get();
+    const { gameState, ws, localPlayerId } = get();
     if (!gameState || !gameState.kamiResolutionActive || !gameState.ryujinBuyActive) return;
+    const activeTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
+    if (!activeTemple?.winnerId) return;
+    if (gameState.mode === 'online' && activeTemple.winnerId !== localPlayerId) return;
 
     // In online mode, send the action to the server
     if (ws && gameState.mode === 'online') {
@@ -3299,8 +3302,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   doRyujinSkip: () => {
-    const { gameState, ws } = get();
+    const { gameState, ws, localPlayerId } = get();
     if (!gameState || !gameState.kamiResolutionActive || !gameState.ryujinBuyActive) return;
+    const activeTemple = gameState.kamiResolutionTemples[gameState.kamiResolutionIndex];
+    if (!activeTemple?.winnerId) return;
+    if (gameState.mode === 'online' && activeTemple.winnerId !== localPlayerId) return;
 
     // In online mode, send the action to the server
     if (ws && gameState.mode === 'online') {

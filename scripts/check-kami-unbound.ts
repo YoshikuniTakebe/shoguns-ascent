@@ -9,10 +9,11 @@ import {
   isFigureTrappedBySusanoo,
   moveForces,
   resolveUncontestedBattles,
+  ryujinBuyCard,
   syncKamiControllers,
 } from '../src/utils/gameLogic';
 import type { Figure, GameState, KamiType } from '../src/types/game';
-import { PROVINCES_DATA } from '../src/types/game';
+import { PROVINCES_DATA, SEASON_CARDS_DATA } from '../src/types/game';
 
 const kami = (type: KamiType, owner: string): Figure => ({ id: `kami-${type}`, type: 'kami', owner, kamiType: type });
 const figure = (id: string, type: Figure['type'], owner: string): Figure => ({ id, type, owner });
@@ -121,6 +122,33 @@ function stateWithKami(selectedKami: KamiType[] = ['amaterasu', 'raijin', 'ryuji
   const moveAfterUndo = moveForces(restored, luna.id, sourceId, destinationId, [movingFigure.id]);
   assert.notEqual(moveAfterUndo, restored, 'Luna must be able to move again after Fujin undo restores the shared state');
   assert.equal(moveAfterUndo.provinces[destinationId].figures.some(item => item.id === movingFigure.id), true, 'The post-undo Fujin move must reach its destination');
+}
+
+{
+  const state = stateWithKami(['ryujin', 'amaterasu', 'raijin', 'susanoo']);
+  const [winner, observer] = state.players;
+  const card = SEASON_CARDS_DATA.find(candidate => candidate.id === 'sp-courage')!;
+  winner.coins = 10;
+  observer.coins = 10;
+  state.seasonCardsDeck = [card];
+  state.kamiResolutionActive = true;
+  state.kamiResolutionStep = 'interactive';
+  state.kamiResolutionIndex = 0;
+  state.kamiResolutionCurrentPlayerId = winner.id;
+  state.ryujinBuyActive = true;
+  state.kamiResolutionTemples = [{
+    templeIndex: 0,
+    kamiType: 'ryujin',
+    winnerId: winner.id,
+    reward: '',
+    forces: [{ playerId: winner.id, count: 1 }],
+  }];
+
+  const observerPurchase = ryujinBuyCard(state, observer.id, card.id);
+  assert.equal(observerPurchase, state, 'A non-winner must never be allowed to buy during Ryujin');
+  const winnerPurchase = ryujinBuyCard(state, winner.id, card.id);
+  assert.notEqual(winnerPurchase, state, 'The Ryujin winner must be allowed to buy an affordable card');
+  assert.equal(winnerPurchase.players[0].seasonCards.some(candidate => candidate.id === card.id), true, 'The Ryujin purchase must belong to the Shrine winner');
 }
 
 {

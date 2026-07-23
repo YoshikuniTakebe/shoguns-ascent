@@ -392,6 +392,7 @@ export const es: Record<TranslationKey, string> = {
   'kami.resolution.fujinCancel': 'Cancelar Movimiento',
   'kami.resolution.raijinPlace': 'Coloca un Bushi en una provincia',
   'kami.resolution.ryujinBuy': 'Compra una carta de Estacion',
+  'kami.resolution.ryujinWaiting': 'Esperando a que {name} compre una Carta de Estaci\u00f3n',
   'kami.resolution.templeOf': 'Santuario {number}',
   'kami.resolution.susanooVP': 'Gana {vp} PV ({fortresses} Fortalezas en mapa)',
   'kami.resolution.waitingFor': 'Esperando a que {name} resuelva el santuario',

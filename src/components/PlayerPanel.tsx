@@ -98,11 +98,24 @@ export const PlayerPanel = () => {
   if (!gameState) return null;
   const cp = gameState.players[gameState.currentPlayerIndex];
   const trainBuyerId = gameState.trainResolutionOrder?.[gameState.trainResolutionIndex];
-  const canReturnToTrainPurchase = Boolean(
+  const ryujinBuyerId = gameState.ryujinBuyActive
+    ? gameState.kamiResolutionTemples?.[gameState.kamiResolutionIndex]?.winnerId
+    : null;
+  const canReturnToCardPurchase = Boolean(
     viewingCardsPlayer &&
-    gameState.trainMandateActive &&
-    viewingCardsPlayer.id === trainBuyerId &&
-    (gameState.mode !== 'online' || localPlayerId === trainBuyerId) &&
+    (
+      (
+        gameState.trainMandateActive &&
+        viewingCardsPlayer.id === trainBuyerId &&
+        (gameState.mode !== 'online' || localPlayerId === trainBuyerId)
+      ) ||
+      (
+        gameState.ryujinBuyActive &&
+        gameState.kamiResolutionStep === 'interactive' &&
+        viewingCardsPlayer.id === ryujinBuyerId &&
+        (gameState.mode !== 'online' || localPlayerId === ryujinBuyerId)
+      )
+    ) &&
     !gameState.pendingMonsterPlacementCardId &&
     !gameState.pendingBenevolence &&
     !(gameState.pendingRuleNotices?.length || 0)
@@ -190,7 +203,7 @@ export const PlayerPanel = () => {
         <PlayerCardsModal
           player={viewingCardsPlayer}
           onClose={() => setViewingCardsPlayer(null)}
-          onReturnToPurchase={canReturnToTrainPurchase ? () => {
+          onReturnToPurchase={canReturnToCardPurchase ? () => {
             setViewingCardsPlayer(null);
             setShowTrainModal(true);
           } : undefined}

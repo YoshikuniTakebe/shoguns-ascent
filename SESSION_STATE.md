@@ -1230,3 +1230,12 @@ server restart — no longer loses the game.
 - Online Fujin moves are preview-validated before being sent, so an invalid move cannot enable a
   misleading Undo action. Confirming Fujin clears the server snapshot. The focused Kami checks
   cover Luna moving again from the restored origin after Undo.
+
+## Changelog - 2026-07-23 (Ryujin private purchase flow)
+
+- Ryujin's Season Card market now opens only for the Shrine winner in online games. Every other
+  player receives a blocking waiting popup naming the resolving player.
+- Client controls, shared game logic and the online server all verify the Ryujin winner before
+  allowing Buy or Skip, preventing observers or stale windows from submitting a purchase.
+- Ryujin now shares Train's card navigation: `Ver mis cartas`, `Volver a la compra`, backdrop/X
+  closing and the persistent return-to-purchase action while the reward remains unresolved.

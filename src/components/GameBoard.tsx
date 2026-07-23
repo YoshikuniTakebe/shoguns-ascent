@@ -16,6 +16,7 @@ import { PoliticsTrack } from './PoliticsTrack';
 import { RegionDetailModal } from './RegionDetailModal';
 import { HarvestPopup } from './HarvestPopup';
 import { KamiResolutionPopup } from './KamiResolutionPopup';
+import { RyujinWaitingPopup } from './RyujinWaitingPopup';
 import { KamiSummaryPopup } from './KamiSummaryPopup';
 import { TradeModal } from './TradeModal';
 import { TradeOfferPopup } from './TradeOfferPopup';
@@ -914,6 +915,7 @@ export const GameBoard = () => {
 
       {/* Kami Resolution Popup */}
       {!gameState?.kamiPlacementActive && <KamiResolutionPopup />}
+      <RyujinWaitingPopup />
 
       {/* Kami Summary Popup */}
       <KamiSummaryPopup />

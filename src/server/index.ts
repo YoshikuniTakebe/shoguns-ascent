@@ -3381,8 +3381,16 @@ wss.on('connection', (ws: WebSocket, req) => {
 
           const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
           if (!currentTemple || !currentTemple.winnerId) return;
+          if (data.playerId !== currentTemple.winnerId) {
+            safeSend(ws, { type: 'ERROR', message: 'Solo el ganador de Ryujin puede comprar la carta' });
+            return;
+          }
 
           let s = ryujinBuyCardFn(l.gameState, currentTemple.winnerId, cardId);
+          if (s === l.gameState) {
+            safeSend(ws, { type: 'ERROR', message: 'La compra de Ryujin ya no es valida' });
+            return;
+          }
           s = { ...s, ryujinBuyActive: false };
           const jurojinNoticeAdded = (s.pendingRuleNotices?.length || 0) > (l.gameState.pendingRuleNotices?.length || 0);
 
@@ -3420,6 +3428,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           if (!l.gameState.kamiResolutionActive || !l.gameState.ryujinBuyActive) return;
           if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
+          if (!currentTemple?.winnerId || data.playerId !== currentTemple.winnerId) {
+            safeSend(ws, { type: 'ERROR', message: 'Solo el ganador de Ryujin puede omitir la compra' });
+            return;
+          }
 
           let s: GameState = {
             ...l.gameState,
