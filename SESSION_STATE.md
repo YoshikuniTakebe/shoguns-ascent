@@ -1295,3 +1295,11 @@ server restart — no longer loses the game.
   war-helmet seals, using the same `WarSeal` artwork as the lobby and War phase.
 - The seals inherit the winning clan color, retain a compact mobile size and add a restrained glow
   without changing the rest of the final scoring layout.
+
+## Changelog - 2026-07-24 (final screen Seigaiha background)
+
+- The game-over screen now uses the selected Seigaiha and rising-sun treatment: alternating gold
+  and blue-grey Japanese wave lines, a restrained red sun and a dark vignette behind the scoring
+  content.
+- The pattern has a denser mobile scale while preserving the contrast of the winner announcement,
+  scoring tables and final actions.

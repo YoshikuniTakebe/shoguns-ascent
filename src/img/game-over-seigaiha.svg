@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="96" viewBox="0 0 192 96">
+  <g fill="none" stroke-linecap="round">
+    <g stroke="#c8a951" stroke-opacity=".16" stroke-width="1.8">
+      <path d="M0 48a48 48 0 0 1 96 0"/>
+      <path d="M12 48a36 36 0 0 1 72 0"/>
+      <path d="M24 48a24 24 0 0 1 48 0"/>
+      <path d="M36 48a12 12 0 0 1 24 0"/>
+      <path d="M96 48a48 48 0 0 1 96 0"/>
+      <path d="M108 48a36 36 0 0 1 72 0"/>
+      <path d="M120 48a24 24 0 0 1 48 0"/>
+      <path d="M132 48a12 12 0 0 1 24 0"/>
+    </g>
+    <g stroke="#7fa6bd" stroke-opacity=".11" stroke-width="1.6">
+      <path d="M-48 96a48 48 0 0 1 96 0"/>
+      <path d="M-36 96a36 36 0 0 1 72 0"/>
+      <path d="M-24 96a24 24 0 0 1 48 0"/>
+      <path d="M-12 96a12 12 0 0 1 24 0"/>
+      <path d="M48 96a48 48 0 0 1 96 0"/>
+      <path d="M60 96a36 36 0 0 1 72 0"/>
+      <path d="M72 96a24 24 0 0 1 48 0"/>
+      <path d="M84 96a12 12 0 0 1 24 0"/>
+      <path d="M144 96a48 48 0 0 1 96 0"/>
+      <path d="M156 96a36 36 0 0 1 72 0"/>
+      <path d="M168 96a24 24 0 0 1 48 0"/>
+      <path d="M180 96a12 12 0 0 1 24 0"/>
+    </g>
+  </g>
+</svg>
