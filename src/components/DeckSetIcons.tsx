@@ -57,8 +57,9 @@ export const DeckSetIcon = ({ setName, size = 17 }: { setName: CardSetName; size
     case 'Horseman':
       return (
         <svg {...common} fill="currentColor">
-          <path d="M6 22v-2h13v2H6Zm1.5-4c.5-3.1 1.8-5.2 4.2-6.7L7.4 8.1 9.8 5l.8-4 5.2 2.6 1.5 4.1-2.8 3c2.4 1.8 3.6 4.2 3.7 7.3H7.5Z" />
-          <circle cx="13.3" cy="5.7" r="1" fill="#0f1930" />
+          <path d="M6 21v-2h13v2H6Zm1.2-4c.3-2.8 1.5-5 3.8-6.6L8.2 8.2 9.8 6l.7-3.8 5.4 2.7 1.5 4.2-3.1 2.6c2.4 1.2 3.8 3 4.1 5.3H7.2Z" />
+          <path d="m11.1 7.6 2.1-1.4 1.9 1-2.6.4-1.4 1.2Z" fill="var(--bg-dark)" />
+          <circle cx="13.3" cy="5.7" r=".8" fill="var(--bg-dark)" />
         </svg>
       );
     case 'Ship':

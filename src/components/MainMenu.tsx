@@ -13,6 +13,7 @@ import { AddFriendModal, FriendsListModal, fetchFriends } from './FriendsModal';
 import type { Friend } from './FriendsModal';
 import { ClanPowerContent } from './ClanPowerTooltip';
 import { IconLegend } from './IconLegend';
+import { DeckSetIcon } from './DeckSetIcons';
 import titleImg from '../img/NoboruTaiyo.png';
 import typeGameBgImg from '../img/type_game_bg.png';
 
@@ -103,15 +104,6 @@ export const MainMenu = () => {
     Horseman: 'deck.horseman',
     Ship: 'deck.ship',
     Mountain: 'deck.mountain',
-  };
-
-  const DECK_ICONS: Record<DeckName, string> = {
-    Archway: '⛩️',
-    Tower: '🏯',
-    Teapot: '🍵',
-    Horseman: '🐴',
-    Ship: '⛵',
-    Mountain: '⛰️',
   };
 
   const getDeckConfig = (): DeckConfig => ({
@@ -316,7 +308,8 @@ export const MainMenu = () => {
                     className={`deck-group-btn${chosenDeck === g ? ' active' : ''}`}
                     onClick={() => setChosenDeck(g)}
                   >
-                    {DECK_ICONS[g]} {t(DECK_NAME_KEYS[g])}
+                    <DeckSetIcon setName={g} size={18} />
+                    {t(DECK_NAME_KEYS[g])}
                   </button>
                 ))}
               </div>
@@ -603,7 +596,8 @@ export const MainMenu = () => {
                     className={`deck-group-btn${createDeck === g ? ' active' : ''}`}
                     onClick={() => setCreateDeck(g)}
                   >
-                    {DECK_ICONS[g]} {t(DECK_NAME_KEYS[g])}
+                    <DeckSetIcon setName={g} size={18} />
+                    {t(DECK_NAME_KEYS[g])}
                   </button>
                 ))}
               </div>

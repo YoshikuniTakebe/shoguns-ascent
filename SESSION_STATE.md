@@ -1383,3 +1383,10 @@ server restart — no longer loses the game.
 - Every captured hostage now records the exact VP stolen from its owner.
 - The Prisoners section of the battle result shows a second clan-formatted line for each successful
   VP theft. Legacy in-progress snapshots derive the same display from their aggregate hostage data.
+
+## Changelog - 2026-07-24 (Horseman deck icon)
+
+- The Horseman card set now uses the selected solid chess-knight silhouette in the game header,
+  admin card browser and game configurators.
+- Deck selectors use the same native set icons as the in-game badge instead of platform-dependent
+  emoji.
