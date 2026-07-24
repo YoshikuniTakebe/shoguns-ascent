@@ -1310,3 +1310,13 @@ server restart — no longer loses the game.
   covering the app-wide texture on this screen to avoid overlapping motifs.
 - The helmets use a smaller repeat and very low gold opacity so the pattern remains recognizable
   but secondary to the game-mode controls and clan seals.
+
+## Changelog - 2026-07-24 (game setup and admin deck controls)
+
+- Kami Unbound is now presented as an integrated accessible switch in both local and online game
+  setup instead of a plain checkbox.
+- Pressing the active Random game-type button rerolls the available clans again and avoids returning
+  the exact same clan set whenever an alternative set exists.
+- Admin `View Cards` deck filters now match the in-game deck badge style and pair the shared card
+  stack with a distinct symbol for every set (Torii, tower, teapot, horse, ship, mountain and the
+  special card collections).

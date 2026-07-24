@@ -80,6 +80,22 @@ export const MainMenu = () => {
     });
   };
 
+  const rerollRandomClans = (count: number) => {
+    setRandomClans(previous => {
+      const clanIds = CLANS.map(clan => clan.id);
+      let next = shuffle(clanIds).slice(0, count);
+
+      if (count < clanIds.length && next.every(clanId => previous.includes(clanId))) {
+        const replacement = clanIds.find(clanId => !previous.includes(clanId));
+        if (replacement) {
+          next = shuffle([...next.slice(0, -1), replacement]);
+        }
+      }
+
+      return next;
+    });
+  };
+
   const DECK_NAME_KEYS: Record<DeckName, TranslationKey> = {
     Archway: 'deck.archway',
     Tower: 'deck.tower',
@@ -343,9 +359,12 @@ export const MainMenu = () => {
                 &#9998; {t('kami.manual')}
               </button>
             </div>
-            <label className="kami-unbound-toggle">
+            <label className="kami-unbound-switch">
               <input type="checkbox" checked={kamiUnbound} onChange={event => setKamiUnbound(event.target.checked)} />
-              <span>{t('kami.unbound.enable')}</span>
+              <span className="kami-unbound-switch-label">{t('kami.unbound.enable')}</span>
+              <span className="kami-unbound-switch-track" aria-hidden="true">
+                <span className="kami-unbound-switch-thumb" />
+              </span>
             </label>
             {kamiMode === 'manual' && (
               <div className="kami-selection-panel">
@@ -443,10 +462,7 @@ export const MainMenu = () => {
                 className={`deck-group-btn${createMode === 'random' ? ' active' : ''}`}
                 onClick={() => {
                   setCreateMode('random');
-                  // Only re-roll if randomClans length doesn't match createPc (e.g., player count changed)
-                  if (randomClans.length !== createPc) {
-                    setRandomClans(shuffle(CLANS.map(c => c.id)).slice(0, createPc));
-                  }
+                  rerollRandomClans(createPc);
                 }}
               >
                 &#127922; {t('lobby.random')}
@@ -624,9 +640,12 @@ export const MainMenu = () => {
                 &#9998; {t('kami.manual')}
               </button>
             </div>
-            <label className="kami-unbound-toggle">
+            <label className="kami-unbound-switch">
               <input type="checkbox" checked={createKamiUnbound} onChange={event => setCreateKamiUnbound(event.target.checked)} />
-              <span>{t('kami.unbound.enable')}</span>
+              <span className="kami-unbound-switch-label">{t('kami.unbound.enable')}</span>
+              <span className="kami-unbound-switch-track" aria-hidden="true">
+                <span className="kami-unbound-switch-thumb" />
+              </span>
             </label>
             {createKamiMode === 'manual' && (
               <div className="kami-selection-panel">
