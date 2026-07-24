@@ -3818,8 +3818,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
         nextState = skipMarshalTurn(nextState);
         if (!nextState.marshalMandateActive) nextState = advancePlayer(nextState);
       } else if (pending.resume === 'advance-war-start') nextState = advanceWarStartAction(nextState);
+      else if (pending.resume === 'continue-pre-battle') {
+        nextState = preparePreBattleCardDecision(nextState, pending.forcedMove?.battleProvinceId || pending.fromProvinceId);
+        if (!nextState.pendingBattleCardDecision) nextState = resolveUncontestedBattles(nextState);
+      }
     }
-    set({ gameState: nextState, ...detectWarTransitionWithPopup(nextState), ...detectKamiPopupPending(nextState) });
+    const resumedPreBattle = pending.resume === 'continue-pre-battle'
+      && !nextState.pendingSerpentCharge
+      && !(nextState.pendingRuleNotices?.length || 0);
+    const resumedBattle = resumedPreBattle
+      ? nextState.activeBattles.find(battle => !battle.resolved)
+      : null;
+    set({
+      gameState: nextState,
+      ...detectWarTransitionWithPopup(nextState),
+      ...detectKamiPopupPending(nextState),
+      ...(resumedPreBattle ? {
+        battleStepPhase: nextState.pendingBattleCardDecision ? null : resumedBattle?.uncontested ? 'popup' : 'bidding',
+        battleCurrentBiddingIndex: 0,
+      } : {}),
+    });
   },
   doResolveNextBattle: () => {
     const { gameState, ws } = get();
@@ -3869,8 +3887,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (!state.marshalMandateActive) state = advancePlayer(state);
     } else if (notice.resume === 'advance-war-start') {
       state = advanceWarStartAction(state);
+    } else if (notice.resume === 'continue-pre-battle' && notice.fromProvinceId) {
+      state = preparePreBattleCardDecision(state, notice.fromProvinceId);
+      if (!state.pendingBattleCardDecision) state = resolveUncontestedBattles(state);
     }
-    set({ gameState: state, ...detectWarTransitionWithPopup(state), ...detectKamiPopupPending(state) });
+    const resumedBattle = notice.resume === 'continue-pre-battle'
+      ? state.activeBattles.find(battle => !battle.resolved)
+      : null;
+    set({
+      gameState: state,
+      ...detectWarTransitionWithPopup(state),
+      ...detectKamiPopupPending(state),
+      ...(notice.resume === 'continue-pre-battle' ? {
+        battleStepPhase: state.pendingBattleCardDecision ? null : resumedBattle?.uncontested ? 'popup' : 'bidding',
+        battleCurrentBiddingIndex: 0,
+      } : {}),
+    });
   },
   doSeppukuDecision: (accept: boolean) => {
     const { gameState, battleResolutionData, ws } = get();
@@ -4858,6 +4890,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
             if (prevGameState?.pendingBattleCardDecision?.stage === 'pre-battle' && !state.pendingBattleCardDecision) {
               const currentBattle = state.activeBattles.find((candidate: { resolved?: boolean }) => !candidate.resolved);
               uiResets.battleStepPhase = currentBattle?.uncontested ? 'popup' : 'bidding';
+              uiResets.battleCurrentBiddingIndex = 0;
+            }
+
+            const serpentPreBattleFinished = (
+              prevGameState?.pendingSerpentCharge?.resume === 'continue-pre-battle'
+              && !state.pendingSerpentCharge
+              && !(state.pendingRuleNotices?.length || 0)
+            ) || (
+              prevGameState?.pendingRuleNotices?.[0]?.resume === 'continue-pre-battle'
+              && !(state.pendingRuleNotices?.length || 0)
+            );
+            if (serpentPreBattleFinished) {
+              const currentBattle = state.activeBattles.find((candidate: { resolved?: boolean }) => !candidate.resolved);
+              uiResets.battleStepPhase = state.pendingBattleCardDecision
+                ? null
+                : currentBattle?.uncontested ? 'popup' : 'bidding';
               uiResets.battleCurrentBiddingIndex = 0;
             }
 

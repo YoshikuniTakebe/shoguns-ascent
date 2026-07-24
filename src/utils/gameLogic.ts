@@ -3,6 +3,7 @@ import type {
   Battle, Figure, Temple, WarProvinceSlot, SeasonCard,
   AllianceProposal, Hostage, DeckConfig, DeckName, KamiType,
   KamiResolutionTemple, KamiData, BattleResolutionData, RuleEventNotice, WarStartAction, PendingMonsterEnterDecision,
+  PendingSerpentCharge,
 } from '../types/game';
 import {
   CLANS, PROVINCES_DATA, HOME_PROVINCES, WAR_TACTICS,
@@ -4287,6 +4288,28 @@ function battleDecisionCandidates(state: GameState, type: 'earth-dragon' | 'fire
   return grouped;
 }
 
+export function getEarthDragonDestinations(state: GameState, provinceId: string, targetOwnerId: string): string[] {
+  const provinceData = PROVINCES_DATA.find(province => province.id === provinceId);
+  const targetOwner = state.players.find(player => player.id === targetOwnerId);
+  if (!provinceData || !targetOwner) return [];
+
+  return [...provinceData.adjacentProvinces, ...provinceData.seaRoutes].filter(destinationId => {
+    const destination = state.provinces[destinationId];
+    if (!destination) return false;
+    const plague = destination.figures.find(figure =>
+      figure.type === 'monster'
+      && figure.monsterCardId === 'au-oni-of-plagues'
+      && figure.owner !== targetOwnerId
+    );
+    if (plague && state.honorTrack.indexOf(targetOwnerId) < state.honorTrack.indexOf(plague.owner)) return false;
+    if (
+      targetOwner.clanId === 'luna'
+      && destination.figures.filter(figure => figure.owner === targetOwnerId && figure.type !== 'fortress').length >= 2
+    ) return false;
+    return true;
+  });
+}
+
 function markBattleDecisionApplied(state: GameState, provinceId: string, type: 'earth-dragon' | 'fire-dragon' | 'jorogumo', captured?: { figureId: string; originalOwner: string } | null): GameState {
   return {
     ...state,
@@ -4398,20 +4421,16 @@ export function resolveBattleCardDecision(
     } else {
       const requiredCandidates = pending.type === 'fire-dragon' && useMercy
         ? Object.fromEntries(Object.entries(candidates).filter(([ownerId]) => ownerId === playerId))
-        : candidates;
+        : pending.type === 'earth-dragon'
+          ? Object.fromEntries(Object.entries(candidates).filter(([ownerId]) =>
+              getEarthDragonDestinations(state, pending.provinceId, ownerId).length > 0))
+          : candidates;
       for (const [ownerId, ownerCandidates] of Object.entries(requiredCandidates)) {
         const selectedId = selectedByPlayer[ownerId];
         if (!ownerCandidates.some(figure => figure.id === selectedId)) return state;
         if (pending.type !== 'earth-dragon') continue;
         const destinationId = destinationsByFigure[selectedId];
-        const provinceData = PROVINCES_DATA.find(province => province.id === pending.provinceId);
-        if (!destinationId || !provinceData || ![...provinceData.adjacentProvinces, ...provinceData.seaRoutes].includes(destinationId)) return state;
-        const destination = state.provinces[destinationId];
-        const targetOwner = state.players.find(player => player.id === ownerId);
-        if (!destination || !targetOwner) return state;
-        const plague = destination.figures.find(figure => figure.type === 'monster' && figure.monsterCardId === 'au-oni-of-plagues' && figure.owner !== ownerId);
-        if (plague && state.honorTrack.indexOf(ownerId) < state.honorTrack.indexOf(plague.owner)) return state;
-        if (targetOwner.clanId === 'luna' && destination.figures.filter(figure => figure.owner === ownerId && figure.type !== 'fortress').length >= 2) return state;
+        if (!destinationId || !getEarthDragonDestinations(state, pending.provinceId, ownerId).includes(destinationId)) return state;
       }
     }
     if (pending.type === 'earth-dragon') {
@@ -4432,6 +4451,23 @@ export function resolveBattleCardDecision(
   }
   const completedState = markBattleDecisionApplied(resolvedState, pending.provinceId, pending.type, captured);
   if (pending.stage === 'pre-battle') {
+    if (pending.type === 'earth-dragon' && useEffect) {
+      for (const [targetOwnerId, figureId] of Object.entries(selectedByPlayer)) {
+        const destinationId = destinationsByFigure[figureId];
+        const movedFigure = state.provinces[pending.provinceId]?.figures.find(figure => figure.id === figureId && figure.owner === targetOwnerId);
+        if (!destinationId || !movedFigure) continue;
+        chargeSerpentSeaRoute(
+          completedState,
+          targetOwnerId,
+          pending.provinceId,
+          destinationId,
+          [movedFigure],
+          'continue-pre-battle',
+          { figureId, battleProvinceId: pending.provinceId },
+        );
+      }
+      if (completedState.pendingSerpentCharge) return completedState;
+    }
     const nextState = preparePreBattleCardDecision(completedState, pending.provinceId);
     return nextState.pendingBattleCardDecision ? nextState : resolveUncontestedBattles(nextState);
   }
@@ -6131,7 +6167,9 @@ function chargeSerpentSeaRoute(
   moverId: string,
   fromProvinceId: string,
   toProvinceId: string,
-  movedFigures: Figure[]
+  movedFigures: Figure[],
+  resume: RuleEventNotice['resume'] = null,
+  forcedMove?: PendingSerpentCharge['forcedMove'],
 ): void {
   const fromProvince = state.provinces[fromProvinceId];
   const mover = state.players.find(player => player.id === moverId);
@@ -6142,7 +6180,7 @@ function chargeSerpentSeaRoute(
   ) return;
   const charges = state.players
     .filter(player => player.id !== moverId && playerHasCard(player, 'su-path-of-the-serpent'))
-    .map(player => ({ ownerId: player.id, moverId, fromProvinceId, toProvinceId, resume: null }));
+    .map(player => ({ ownerId: player.id, moverId, fromProvinceId, toProvinceId, resume, forcedMove }));
   if (charges.length === 0) return;
   const queue = [...(state.pendingSerpentChargeQueue || []), ...charges];
   if (!state.pendingSerpentCharge) {
@@ -6169,6 +6207,29 @@ export function resolveSerpentChargeDecision(state: GameState, playerId: string,
   const owner = nextState.players.find(player => player.id === pending.ownerId);
   const mover = nextState.players.find(player => player.id === pending.moverId);
   if (!owner || !mover) return state;
+
+  if (chargeCoin && mover.coins <= 0 && pending.forcedMove) {
+    const source = nextState.provinces[pending.fromProvinceId];
+    const destination = nextState.provinces[pending.toProvinceId];
+    const movedFigure = destination?.figures.find(figure => figure.id === pending.forcedMove?.figureId);
+    if (source && destination && movedFigure) {
+      nextState.provinces = {
+        ...nextState.provinces,
+        [source.id]: { ...source, figures: [...source.figures, movedFigure] },
+        [destination.id]: { ...destination, figures: destination.figures.filter(figure => figure.id !== movedFigure.id) },
+      };
+    }
+    const sameForcedMove = (charge: PendingSerpentCharge) =>
+      charge.forcedMove?.figureId === pending.forcedMove?.figureId
+      && charge.fromProvinceId === pending.fromProvinceId
+      && charge.toProvinceId === pending.toProvinceId;
+    const filteredQueue = (state.pendingSerpentChargeQueue || []).filter(charge => !sameForcedMove(charge));
+    const [nextAfterBlock, ...remainingAfterBlock] = filteredQueue;
+    nextState.pendingSerpentCharge = nextAfterBlock || null;
+    nextState.pendingSerpentChargeQueue = remainingAfterBlock;
+    nextState.log.push(`${owner.name} impide a ${mover.name} cruzar la ruta maritima de ${source?.name} a ${destination?.name} al no poder pagar 1 moneda (Camino de la Serpiente)`);
+    return nextState;
+  }
 
   if (!chargeCoin || mover.coins <= 0) {
     nextState.log.push(`${owner.name} decide no cobrar a ${mover.name} por cruzar la ruta maritima de ${nextState.provinces[pending.fromProvinceId]?.name} a ${nextState.provinces[pending.toProvinceId]?.name} (Camino de la Serpiente)`);

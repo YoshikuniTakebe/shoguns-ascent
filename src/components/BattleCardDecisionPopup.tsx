@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, SEASON_CARDS_DATA } from '../types/game';
+import { CLANS, PROVINCE_COLORS, SEASON_CARDS_DATA } from '../types/game';
 import type { Figure } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { MonsterIcon } from './Icons';
+import { getEarthDragonDestinations } from '../utils/gameLogic';
 
 const IMMUNE_MONSTERS = ['su-yurei', 'sp-fukurokuju'];
 
@@ -62,10 +63,11 @@ export const BattleCardDecisionPopup = () => {
     'fire-dragon': 'Fire Dragon',
     jorogumo: 'Jorogumo',
   } as const;
-  const adjacentIds = pending.type === 'earth-dragon'
-    ? [...(PROVINCES_DATA.find(item => item.id === pending.provinceId)?.adjacentProvinces || []), ...(PROVINCES_DATA.find(item => item.id === pending.provinceId)?.seaRoutes || [])]
-    : [];
-  const requiredOwners = Object.keys(candidates).filter(playerId => pending.type !== 'fire-dragon' || !useMercy || playerId === pending.ownerId);
+  const requiredOwners = Object.keys(candidates).filter(playerId => {
+    if (pending.type === 'fire-dragon') return !useMercy || playerId === pending.ownerId;
+    if (pending.type === 'earth-dragon') return getEarthDragonDestinations(gameState, pending.provinceId, playerId).length > 0;
+    return true;
+  });
   const jorogumoSelection = Object.values(selectedByPlayer)[0];
   const allFiguresSelected = pending.type === 'jorogumo'
     ? !!jorogumoSelection
@@ -127,6 +129,9 @@ export const BattleCardDecisionPopup = () => {
                 const clan = player ? CLANS.find(candidate => candidate.id === player.clanId) : null;
                 const selectedFigureId = selectedByPlayer[playerId];
                 const selectedDestinationId = selectedFigureId ? destinationsByFigure[selectedFigureId] : '';
+                const validDestinationIds = pending.type === 'earth-dragon'
+                  ? getEarthDragonDestinations(gameState, pending.provinceId, playerId)
+                  : [];
                 return (
                   <div className="battle-card-decision-group" key={playerId} style={{ borderColor: clan?.color }}>
                     <div className="battle-card-decision-player">
@@ -152,23 +157,31 @@ export const BattleCardDecisionPopup = () => {
                     {pending.type === 'earth-dragon' && (
                       <div className="battle-card-choice-block">
                         <span className="battle-card-choice-label">Provincia de destino</span>
-                        <div className="battle-card-choice-options">
-                          {adjacentIds.map(provinceId => {
-                            const provinceColor = PROVINCE_COLORS[provinceId] || '#c8a951';
-                            return (
-                              <button
-                                key={provinceId}
-                                type="button"
-                                className={`battle-card-choice province${selectedDestinationId === provinceId ? ' selected' : ''}`}
-                                style={{ '--choice-color': provinceColor, color: provinceColor } as React.CSSProperties}
-                                disabled={!selectedFigureId}
-                                onClick={() => selectedFigureId && setDestinationsByFigure(current => ({ ...current, [selectedFigureId]: provinceId }))}
-                              >
-                                {gameState.provinces[provinceId]?.name || provinceId}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        {validDestinationIds.length > 0 ? (
+                          <div className="battle-card-choice-options">
+                            {validDestinationIds.map(provinceId => {
+                              const provinceColor = PROVINCE_COLORS[provinceId] || '#c8a951';
+                              return (
+                                <button
+                                  key={provinceId}
+                                  type="button"
+                                  className={`battle-card-choice province${selectedDestinationId === provinceId ? ' selected' : ''}`}
+                                  style={{ '--choice-color': provinceColor, color: provinceColor } as React.CSSProperties}
+                                  disabled={!selectedFigureId}
+                                  onClick={() => selectedFigureId && setDestinationsByFigure(current => ({ ...current, [selectedFigureId]: provinceId }))}
+                                >
+                                  {gameState.provinces[provinceId]?.name || provinceId}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="waiting-label">
+                            {player?.clanId === 'luna'
+                              ? 'No puede moverse a ninguna provincia porque todos los destinos ya tienen 2 figuras de Luna.'
+                              : 'No hay ninguna provincia de destino válida.'}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

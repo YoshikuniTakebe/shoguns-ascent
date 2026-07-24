@@ -211,7 +211,7 @@ export interface RuleEventNotice {
   toProvinceId?: string;
   affectedPlayers?: Array<{ playerId: string; coins: number; ronin: number; coinsLost?: number; roninLost?: number }>;
   templeKami?: KamiType;
-  resume?: 'advance-kami' | 'advance-train' | 'advance-marshal' | 'advance-war-start' | 'continue-benevolence' | null;
+  resume?: 'advance-kami' | 'advance-train' | 'advance-marshal' | 'advance-war-start' | 'continue-benevolence' | 'continue-pre-battle' | null;
 }
 
 export interface PendingSerpentCrossing {
@@ -226,6 +226,10 @@ export interface PendingSerpentCharge {
   fromProvinceId: string;
   toProvinceId: string;
   resume: RuleEventNotice['resume'];
+  forcedMove?: {
+    figureId: string;
+    battleProvinceId: string;
+  };
 }
 
 export interface PendingMonkeyDecision {

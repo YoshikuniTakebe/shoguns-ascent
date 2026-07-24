@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import {
   createInitialGameState,
+  getEarthDragonDestinations,
   preparePreBattleCardDecision,
   resolveBattleCardDecision,
+  resolveSerpentChargeDecision,
   resolveNextBattle,
   submitWarTacticBids,
 } from '../src/utils/gameLogic';
+import { SEASON_CARDS_DATA } from '../src/types/game';
 import type { Figure } from '../src/types/game';
 
 const earthState = createInitialGameState(
@@ -52,6 +55,70 @@ const afterEarthDragon = resolveBattleCardDecision(
 );
 assert.equal(afterEarthDragon.pendingBattleCardDecision, null, 'Bidding may start after Earth Dragon finishes');
 assert.equal(afterEarthDragon.provinces.edo.figures.some(figure => figure.id === rivalBushi.id), true, 'Earth Dragon must move the selected figure');
+
+const lunaLimitState = createInitialGameState(
+  [
+    { name: 'Earth', clanId: 'sol' },
+    { name: 'Moon', clanId: 'luna' },
+  ],
+  'hotseat',
+);
+const [limitEarthOwner, moonPlayer] = lunaLimitState.players;
+lunaLimitState.currentPhase = 'war';
+lunaLimitState.provinces.kansai.figures = [
+  { id: 'limit-earth', type: 'monster', owner: limitEarthOwner.id, monsterCardId: 'sp-earth-dragon' },
+  { id: 'limit-target', type: 'bushi', owner: moonPlayer.id },
+];
+for (const destinationId of ['edo', 'nagato', 'hokkaido', 'kyushu', 'shikoku']) {
+  lunaLimitState.provinces[destinationId].figures = [
+    { id: `${destinationId}-moon-1`, type: 'bushi', owner: moonPlayer.id },
+    { id: `${destinationId}-moon-2`, type: 'shinto', owner: moonPlayer.id },
+  ];
+}
+assert.deepEqual(
+  getEarthDragonDestinations(lunaLimitState, 'kansai', moonPlayer.id),
+  [],
+  'Earth Dragon must not offer a destination that already contains two Luna figures',
+);
+
+const serpentEarthState = createInitialGameState(
+  [
+    { name: 'Earth', clanId: 'sol' },
+    { name: 'Moon', clanId: 'luna' },
+    { name: 'Serpent', clanId: 'koi' },
+  ],
+  'hotseat',
+);
+const [serpentEarthOwner, serpentMover, serpentOwner] = serpentEarthState.players;
+const serpentCard = SEASON_CARDS_DATA.find(card => card.id === 'su-path-of-the-serpent');
+assert.ok(serpentCard, 'Path of the Serpent card must exist');
+serpentOwner.seasonCards = [serpentCard];
+serpentMover.coins = 0;
+const serpentTarget: Figure = { id: 'serpent-earth-target', type: 'bushi', owner: serpentMover.id };
+serpentEarthState.currentPhase = 'war';
+serpentEarthState.provinces.kansai.figures = [
+  { id: 'serpent-earth-dragon', type: 'monster', owner: serpentEarthOwner.id, monsterCardId: 'sp-earth-dragon' },
+  serpentTarget,
+];
+serpentEarthState.activeBattles = [{
+  provinceId: 'kansai',
+  participants: [serpentEarthOwner.id, serpentMover.id],
+  warTacticBids: {},
+  resolved: false,
+}];
+const preparedSerpentEarth = preparePreBattleCardDecision(serpentEarthState, 'kansai');
+const awaitingSerpent = resolveBattleCardDecision(
+  preparedSerpentEarth,
+  serpentEarthOwner.id,
+  true,
+  { [serpentMover.id]: serpentTarget.id },
+  { [serpentTarget.id]: 'hokkaido' },
+);
+assert.equal(awaitingSerpent.pendingBattleCardDecision, null, 'Earth Dragon must pause while Path of the Serpent resolves');
+assert.equal(awaitingSerpent.pendingSerpentCharge?.ownerId, serpentOwner.id, 'Path of the Serpent owner must decide before bidding');
+const blockedBySerpent = resolveSerpentChargeDecision(awaitingSerpent, serpentOwner.id, true);
+assert.equal(blockedBySerpent.provinces.kansai.figures.some(figure => figure.id === serpentTarget.id), true, 'An unpaid forced crossing must return to its origin');
+assert.equal(blockedBySerpent.provinces.hokkaido.figures.some(figure => figure.id === serpentTarget.id), false, 'An unpaid forced crossing must not remain at its destination');
 
 const state = createInitialGameState(
   [

@@ -1356,3 +1356,13 @@ server restart — no longer loses the game.
   blocking waiting popup to every other player instead of entering the betting flow.
 - Waiting popups for Kami, Harvest and interactive card decisions use clan seals three times larger.
 - The focused War regression check now covers Earth Dragon movement and rejection of premature bids.
+
+## Changelog - 2026-07-24 (Earth Dragon card interactions)
+
+- Earth Dragon destination choices now enforce Luna's two-figure limit before selection. Full Luna
+  destinations are hidden, and the decision explains when no legal destination remains.
+- A forced Earth Dragon move across a Sea Route pauses the pre-battle queue for Path of the Serpent.
+  The card owner may waive the charge; if they demand it and the moved clan cannot pay, passage is
+  blocked and the figure returns to its origin.
+- Serpent decisions and their shared notice must finish before the next pre-battle power or War
+  Tactics can begin. The War regression check covers both the Luna limit and blocked Sea passage.

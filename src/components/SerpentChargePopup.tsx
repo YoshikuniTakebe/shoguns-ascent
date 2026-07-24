@@ -37,7 +37,9 @@ export const SerpentChargePopup = () => {
         </p>
         {isOwner ? (
           <div className="battle-card-decision-actions">
-            <button className="btn-primary" disabled={!mover || mover.coins <= 0} onClick={() => resolveCharge(true)}>Cobrar</button>
+            <button className="btn-primary" disabled={!mover || (!pending.forcedMove && mover.coins <= 0)} onClick={() => resolveCharge(true)}>
+              {pending.forcedMove && (mover?.coins || 0) <= 0 ? 'Impedir el paso' : 'Cobrar'}
+            </button>
             <button className="btn-secondary" onClick={() => resolveCharge(false)}>No cobrar</button>
           </div>
         ) : (

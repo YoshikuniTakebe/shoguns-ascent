@@ -1725,6 +1725,10 @@ wss.on('connection', (ws: WebSocket, req) => {
                 if (nextState.currentPhase === 'cleanup' && previousPhase !== 'cleanup') nextState = startInteractiveCleanup(nextState);
               }
             } else if (pending.resume === 'advance-war-start') nextState = advanceWarStartAction(nextState);
+            else if (pending.resume === 'continue-pre-battle') {
+              nextState = preparePreBattleCardDecision(nextState, pending.forcedMove?.battleProvinceId || pending.fromProvinceId);
+              if (!nextState.pendingBattleCardDecision) nextState = resolveUncontestedBattles(nextState);
+            }
           }
           l.gameState = nextState;
           broadcastState(l);
@@ -2947,6 +2951,9 @@ wss.on('connection', (ws: WebSocket, req) => {
             }
           } else if (notice.resume === 'advance-war-start') {
             s = advanceWarStartAction(s);
+          } else if (notice.resume === 'continue-pre-battle' && notice.fromProvinceId) {
+            s = preparePreBattleCardDecision(s, notice.fromProvinceId);
+            if (!s.pendingBattleCardDecision) s = resolveUncontestedBattles(s);
           }
           l.gameState = s;
           broadcastState(l);
