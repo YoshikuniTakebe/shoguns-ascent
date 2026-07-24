@@ -40,6 +40,7 @@ import { getMonsterFigureImage, TEMPLATE_FIGURE_IMG } from '../utils/figureImage
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import popupBgImg from '../img/popup_bg.png';
+import { API_BASE } from '../config';
 
 const DECK_NAME_KEYS: Record<DeckName, TranslationKey> = {
   Archway: 'deck.archway',
@@ -133,16 +134,23 @@ function clampPan(rawX: number, rawY: number, containerWidth: number, containerH
 }
 
 export const GameBoard = () => {
-  const { gameState, localPlayerId, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, doWarStartReset, doWarStartToggleMercy, doWarStartConfirm, doWarStartSkip, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted, rejoinWaitingVisible, rejoinPlayerStatuses, daikaijuPlacementMode, startDaikaijuPlacement, doDaikaijuUndoPlacement, doDaikaijuConfirmPlacement, doDaikaijuSummaryReady, doKamiUndoProvince, doKamiConfirmProvince } = useGameStore();
+  const { gameState, localPlayerId, authUser, authToken, selectedRegion, selectRegion, moveMode, recruitMode, betrayMode, monsterPlacementMode, buildFortressMode, buildFukurokujuMode, monsterPlacementPopupVisible, monsterPlacementCard, komainuChoiceVisible, komainuPrayMode, confirmMonsterPlacement, doKomainuChooseMap, doKomainuChoosePray, monsterNoPlacementPopupVisible, dismissMonsterNoPlacement, turnPopupPlayer, dismissTurnPopup, ruleViolationMessage, setRuleViolationMessage, doZorroSkipPlacement, doWarStartReset, doWarStartToggleMercy, doWarStartConfirm, doWarStartSkip, kamiPhasePopupVisible, dismissKamiPhasePopup, warPhasePopupVisible, warPhaseUpgradeSummary, dismissWarPhasePopup, warSummaryVisible, dismissWarSummaryPopup, setMoveFrom, setSelectedFigures, doRaijinConfirm, doRaijinUndo, biddingMapPeek, setBiddingMapPeek, doTeaReady, doHostageReturnAccepted, rejoinWaitingVisible, rejoinPlayerStatuses, daikaijuPlacementMode, startDaikaijuPlacement, doDaikaijuUndoPlacement, doDaikaijuConfirmPlacement, doDaikaijuSummaryReady, doKamiUndoProvince, doKamiConfirmProvince } = useGameStore();
   const t = useT();
 
   const [isDragging, setIsDragging] = useState(false);
   const [kamiPlacementMapMode, setKamiPlacementMapMode] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [mapViewReady, setMapViewReady] = useState(false);
   const panRef = useRef({ x: 0, y: 0 });
+  const restoredPanRef = useRef<{ x: number; y: number } | null>(null);
   const mapCanvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({ startX: 0, startY: 0, startTranslateX: 0, startTranslateY: 0, didDrag: false, containerWidth: 0, containerHeight: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapViewGameId = gameState?.id || null;
+  const mapViewUserId = authUser?.id || localPlayerId || 'local';
+  const mapViewStorageKey = mapViewGameId
+    ? `shoguns-ascent-map-view:${mapViewUserId}:${mapViewGameId}`
+    : null;
 
   useEffect(() => {
     if (!gameState?.kamiPlacementActive) setKamiPlacementMapMode(false);
@@ -155,20 +163,100 @@ export const GameBoard = () => {
     }
   }, []);
 
-  // Center the map on first render once the container has a size
   useEffect(() => {
-    if (initialized) return;
+    let cancelled = false;
+    restoredPanRef.current = null;
+    setMapViewReady(false);
+    setInitialized(false);
+
+    if (!mapViewStorageKey || !mapViewGameId) {
+      setMapViewReady(true);
+      return () => { cancelled = true; };
+    }
+
+    try {
+      const stored = localStorage.getItem(mapViewStorageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored) as { x?: unknown; y?: unknown };
+        if (typeof parsed.x === 'number' && Number.isFinite(parsed.x) && typeof parsed.y === 'number' && Number.isFinite(parsed.y)) {
+          restoredPanRef.current = { x: parsed.x, y: parsed.y };
+        }
+      }
+    } catch {
+      // A malformed local preference should fall back to the normal initial position.
+    }
+
+    if (!authToken || !authUser) {
+      setMapViewReady(true);
+      return () => { cancelled = true; };
+    }
+
+    fetch(`${API_BASE}/api/games/${mapViewGameId}/map-view`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json() as Promise<{ view?: { x: number; y: number } | null }>;
+      })
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.view && Number.isFinite(data.view.x) && Number.isFinite(data.view.y)) {
+          restoredPanRef.current = data.view;
+          localStorage.setItem(mapViewStorageKey, JSON.stringify(data.view));
+        }
+      })
+      .catch(() => {
+        // The local copy remains a valid fallback while offline.
+      })
+      .finally(() => {
+        if (!cancelled) setMapViewReady(true);
+      });
+
+    return () => { cancelled = true; };
+  }, [authToken, authUser, mapViewGameId, mapViewStorageKey]);
+
+  // Apply a saved view, or preserve the existing initial positioning for a new game.
+  useEffect(() => {
+    if (initialized || !mapViewReady) return;
     const container = containerRef.current;
     if (!container) return;
     const cw = container.clientWidth;
     const ch = container.clientHeight;
     if (cw === 0 || ch === 0) return;
-    const { x, y } = computeInitialPan(cw, ch);
+    const { x, y } = restoredPanRef.current || computeInitialPan(cw, ch);
     const clamped = clampPan(x, y, cw, ch);
     panRef.current = { x: clamped.x, y: clamped.y };
     applyPan();
     setInitialized(true);
-  }, [initialized, applyPan]);
+  }, [initialized, mapViewReady, applyPan]);
+
+  const persistMapView = useCallback(() => {
+    if (!mapViewStorageKey || !mapViewGameId || !initialized) return;
+    const view = { x: panRef.current.x, y: panRef.current.y };
+    try {
+      localStorage.setItem(mapViewStorageKey, JSON.stringify(view));
+    } catch {
+      // Server persistence can still succeed when local storage is unavailable.
+    }
+    if (authToken && authUser) {
+      fetch(`${API_BASE}/api/games/${mapViewGameId}/map-view`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(view),
+      }).catch(() => {
+        // The local copy will be retried after the next game action.
+      });
+    }
+  }, [authToken, authUser, initialized, mapViewGameId, mapViewStorageKey]);
+
+  useEffect(() => {
+    if (!initialized) return;
+    const timer = window.setTimeout(persistMapView, 200);
+    return () => window.clearTimeout(timer);
+  }, [gameState, initialized, persistMapView]);
 
   // Auto-dismiss rule violation message after 3 seconds
   useEffect(() => {
@@ -225,8 +313,10 @@ export const GameBoard = () => {
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     setIsDragging(false);
-    (e.target as Element).releasePointerCapture(e.pointerId);
-  }, []);
+    const target = e.target as Element;
+    if (target.hasPointerCapture(e.pointerId)) target.releasePointerCapture(e.pointerId);
+    persistMapView();
+  }, [persistMapView]);
 
   if (!gameState) return <div className="loading">Loading...</div>;
   if (gameState.gameOver) return <GameOverScreen />;
@@ -589,6 +679,7 @@ export const GameBoard = () => {
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
           >
             <HonorTrack />
             <DaikaijuOceanMarker />
@@ -601,6 +692,7 @@ export const GameBoard = () => {
             <div
               className="map-canvas"
               ref={mapCanvasRef}
+              style={{ visibility: initialized ? 'visible' : 'hidden' }}
             >
               <JapanMapBackground />
               <svg viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} className="japan-map">

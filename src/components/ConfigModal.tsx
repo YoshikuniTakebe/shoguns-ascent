@@ -3,6 +3,7 @@ import { getConfiguredServerUrl, setConfiguredServerUrl, WS_BASE } from '../conf
 import { useT } from '../i18n';
 import { useGameStore } from '../store/gameStore';
 import { AdminDioramaModal } from './AdminDioramaModal';
+import { AdminCardsModal } from './AdminCardsModal';
 
 /**
  * Admin-only configuration panel. Currently exposes the internal server URL used for online
@@ -14,6 +15,7 @@ export const ConfigModal = ({ onClose }: { onClose: () => void }) => {
   const [serverUrl, setServerUrl] = useState(getConfiguredServerUrl());
   const [saved, setSaved] = useState(false);
   const [showDiorama, setShowDiorama] = useState(false);
+  const [showCards, setShowCards] = useState(false);
   const { authUser, showFigureMeasurements, setShowFigureMeasurements } = useGameStore();
 
   if (!authUser?.isAdmin) return null;
@@ -50,9 +52,14 @@ export const ConfigModal = ({ onClose }: { onClose: () => void }) => {
             />
             <span>Mostrar medidas de las figuras</span>
           </label>
-          <button className="btn-secondary config-diorama-btn" onClick={() => setShowDiorama(true)}>
-            Diorama
-          </button>
+          <div className="config-debug-actions">
+            <button className="btn-secondary" onClick={() => setShowDiorama(true)}>
+              Diorama
+            </button>
+            <button className="btn-secondary" onClick={() => setShowCards(true)}>
+              {t('admin.cards.button')}
+            </button>
+          </div>
         </div>
 
         <div className="config-modal-actions">
@@ -62,6 +69,7 @@ export const ConfigModal = ({ onClose }: { onClose: () => void }) => {
         </div>
       </div>
       {showDiorama && <AdminDioramaModal onClose={() => setShowDiorama(false)} />}
+      {showCards && <AdminCardsModal onClose={() => setShowCards(false)} />}
     </>
   );
 };

@@ -205,6 +205,7 @@ export const es: Record<TranslationKey, string> = {
   'gameOver.returnToMenu': 'Volver al Men\u00FA',
   'gameOver.warProvinceTokens': 'Fichas de Provincia en Guerra',
   'gameOver.sharedVictory': 'Victoria compartida con aliados:',
+  'gameOver.winnerClan': '{name} del clan {clan}',
   'gameOver.viewLog': 'Ver Log',
   'gameOver.fullLog': 'Log completo de la partida',
   'gameOver.closeLog': 'Cerrar log de la partida',
@@ -796,6 +797,10 @@ export const es: Record<TranslationKey, string> = {
   'admin.purgeOrphans': 'Purgar Partidas Antiguas',
   'admin.confirmPurge': 'Esto eliminara todas las partidas sin jugadores asignados. Continuar?',
   'admin.gamesPurged': 'partida(s) purgada(s)',
+  'admin.cards.button': 'Ver Cartas',
+  'admin.cards.title': 'Cat\u00E1logo de Cartas de Estaci\u00F3n',
+  'admin.cards.close': 'Cerrar cat\u00E1logo de cartas',
+  'admin.cards.empty': 'Este set no tiene cartas en la estaci\u00F3n seleccionada.',
 
   // Config (solo admin)
   'config.button': 'Config',

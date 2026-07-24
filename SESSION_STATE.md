@@ -1275,3 +1275,16 @@ server restart — no longer loses the game.
 - Winter shows only the final scoring breakdown for each player: Province tokens by season,
   different-Province set bonus, each Winter scoring card and the total VP gained in Winter.
 - Added complete Spanish and English labels and responsive styling for the final log modal.
+
+## Changelog - 2026-07-24 (admin card catalogue and persistent map view)
+
+- The winner announcement is now fully translated. Spanish uses the ceremonial format
+  `{player} del clan {clan}` instead of the hardcoded English `of`.
+- Admin configuration now includes `Ver Cartas`, a read-only catalogue with badges for every card
+  set, Spring/Summer/Autumn tabs, the complete filtered card grid and the same enlarged card view
+  used by the game.
+- Map pan is stored independently for each user and game. It is restored when the player returns,
+  saved immediately after dragging and refreshed after every authoritative game action.
+- Authenticated users keep the map view in the database with a local browser fallback. Local or
+  unauthenticated games use the same per-player/per-game browser storage without changing the
+  initial map position for a new game.

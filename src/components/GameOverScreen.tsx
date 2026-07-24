@@ -104,7 +104,9 @@ export const GameOverScreen = () => {
             </div>
             <div className="winner-announcement" style={{ borderColor: wClan.color }}>
               <div className="winner-announcement-glow" style={{ background: `radial-gradient(ellipse at center, ${wClan.color}22 0%, transparent 70%)` }} />
-              <h2 style={{ color: wClan.color }}>{winner.name} of {wClan.name}</h2>
+              <h2 style={{ color: wClan.color }}>
+                {t('gameOver.winnerClan', { name: winner.name, clan: wClan.name })}
+              </h2>
               <p className="winner-subtitle">{t('gameOver.ascended')}</p>
               <div className="winner-vp">{winner.victoryPoints} VP</div>
               {winner.allies.length > 0 && (

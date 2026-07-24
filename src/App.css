@@ -572,6 +572,20 @@
 .config-checkbox-row{display:flex;align-items:center;gap:0.65rem;color:var(--text-primary);font-size:0.85rem;cursor:pointer}
 .config-checkbox-row input{width:17px;height:17px;accent-color:var(--accent-gold)}
 .config-diorama-btn{width:100%;margin-top:0.8rem}
+.config-debug-actions{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-top:0.8rem}
+.config-debug-actions .btn-secondary{min-width:0;padding:0.65rem 0.5rem}
+.admin-cards-backdrop{position:fixed;inset:0;z-index:4300;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,0.86);backdrop-filter:blur(5px)}
+.admin-cards-modal{width:min(1180px,96vw);max-width:1180px;height:min(850px,92vh);max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+.admin-cards-modal .season-cards-modal-title{flex:none}
+.admin-card-set-badges{display:flex;justify-content:center;gap:0.45rem;flex-wrap:wrap;padding:0 1.5rem 0.9rem}
+.admin-card-set-badge{padding:0.42rem 0.75rem;border:1px solid rgba(200,169,81,0.5);border-radius:4px;background:rgba(15,25,48,0.72);color:var(--text-secondary);font-size:0.76rem;font-weight:bold;cursor:pointer;transition:background .18s,border-color .18s,color .18s}
+.admin-card-set-badge:hover{border-color:var(--accent-gold);color:var(--text-primary)}
+.admin-card-set-badge.active{background:rgba(200,169,81,0.22);border-color:var(--accent-gold);color:var(--accent-gold);box-shadow:0 0 10px rgba(200,169,81,0.18)}
+.admin-card-season-tabs{display:flex;justify-content:center;gap:0.5rem;padding:0.7rem 0;border-top:1px solid rgba(200,169,81,0.18);border-bottom:1px solid rgba(200,169,81,0.18);flex:none}
+.admin-card-season-tabs .log-season-tab{display:inline-flex;align-items:center;justify-content:center;gap:0.35rem;min-width:125px;padding:0.42rem 0.8rem;font-size:0.78rem}
+.admin-card-grid{padding:1rem 0.25rem 0.5rem;overflow-y:auto;min-height:0}
+.admin-card-empty{margin:auto;color:var(--text-secondary);text-align:center}
+@media(max-width:700px){.admin-card-set-badges{padding-inline:0}.admin-card-season-tabs{flex-wrap:wrap}.admin-card-season-tabs .log-season-tab{min-width:calc(33.333% - .5rem)}}
 .admin-diorama-backdrop{position:fixed;inset:0;z-index:4200;background:rgba(0,0,0,0.86);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:2vh 2vw}
 .admin-diorama-modal{position:relative;width:1300px;height:1024px;max-width:1300px;max-height:90vh;background:#111827;border:2px solid var(--accent-gold);border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,0.8);display:flex;flex-direction:column;overflow:hidden}
 .admin-diorama-header{height:64px;flex:none;display:flex;align-items:baseline;gap:1rem;padding:0.9rem 4rem 0.8rem 1.25rem;border-bottom:1px solid rgba(200,169,81,0.35);background:#16213e}

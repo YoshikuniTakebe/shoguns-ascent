@@ -73,6 +73,17 @@ export function initDatabase(): void {
     CREATE INDEX IF NOT EXISTS idx_game_players_game_id ON game_players(game_id);
     CREATE INDEX IF NOT EXISTS idx_game_players_user_id ON game_players(user_id);
 
+    CREATE TABLE IF NOT EXISTS user_game_map_views (
+      user_id TEXT REFERENCES users(id),
+      game_id TEXT REFERENCES games(id),
+      x REAL NOT NULL,
+      y REAL NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY(user_id, game_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_user_game_map_views_game_id ON user_game_map_views(game_id);
+
     CREATE TABLE IF NOT EXISTS friends (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id TEXT REFERENCES users(id),
@@ -358,6 +369,25 @@ export function updateUserPreferences(
   return getUserById(id);
 }
 
+export function getUserGameMapView(userId: string, gameId: string): { x: number; y: number } | undefined {
+  return db.prepare(`
+    SELECT x, y
+    FROM user_game_map_views
+    WHERE user_id = ? AND game_id = ?
+  `).get(userId, gameId) as { x: number; y: number } | undefined;
+}
+
+export function saveUserGameMapView(userId: string, gameId: string, x: number, y: number): void {
+  db.prepare(`
+    INSERT INTO user_game_map_views (user_id, game_id, x, y, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(user_id, game_id) DO UPDATE SET
+      x = excluded.x,
+      y = excluded.y,
+      updated_at = excluded.updated_at
+  `).run(userId, gameId, x, y, new Date().toISOString());
+}
+
 // --- Game Players functions ---
 
 export function addGamePlayer(gameId: string, userId: string, clanId: string): void {
@@ -538,11 +568,13 @@ export function setAppSetting(key: string, value: string): void {
 export function deleteGame(gameId: string): void {
   const deleteSnapshots = db.prepare(`DELETE FROM snapshots WHERE game_id = ?`);
   const deleteGamePlayers = db.prepare(`DELETE FROM game_players WHERE game_id = ?`);
+  const deleteMapViews = db.prepare(`DELETE FROM user_game_map_views WHERE game_id = ?`);
   const deleteGameStmt = db.prepare(`DELETE FROM games WHERE id = ?`);
 
   const transaction = db.transaction(() => {
     deleteSnapshots.run(gameId);
     deleteGamePlayers.run(gameId);
+    deleteMapViews.run(gameId);
     deleteGameStmt.run(gameId);
   });
   transaction();
@@ -556,11 +588,13 @@ export function purgeOrphanGames(): number {
   `).all() as { id: string }[];
 
   const deleteSnapshots = db.prepare(`DELETE FROM snapshots WHERE game_id = ?`);
+  const deleteMapViews = db.prepare(`DELETE FROM user_game_map_views WHERE game_id = ?`);
   const deleteGameStmt = db.prepare(`DELETE FROM games WHERE id = ?`);
 
   const transaction = db.transaction(() => {
     for (const game of orphanGames) {
       deleteSnapshots.run(game.id);
+      deleteMapViews.run(game.id);
       deleteGameStmt.run(game.id);
     }
   });

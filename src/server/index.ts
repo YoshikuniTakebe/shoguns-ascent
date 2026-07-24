@@ -128,6 +128,8 @@ import {
   getUserByEmail,
   getUserById,
   updateUserPreferences,
+  getUserGameMapView,
+  saveUserGameMapView,
   addGamePlayer,
   getGamesByUserId,
   getGamePlayersByGameId,
@@ -498,6 +500,42 @@ app.patch('/api/auth/preferences', (req, res) => {
       showFigureMeasurements: !!user.is_admin && !!user.show_figure_measurements,
     },
   });
+});
+
+app.get('/api/games/:id/map-view', (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+  if (!getGameById(req.params.id)) {
+    res.status(404).json({ error: 'Game not found' });
+    return;
+  }
+
+  res.json({ view: getUserGameMapView(userId, req.params.id) || null });
+});
+
+app.patch('/api/games/:id/map-view', (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+  if (!getGameById(req.params.id)) {
+    res.status(404).json({ error: 'Game not found' });
+    return;
+  }
+
+  const x = Number(req.body?.x);
+  const y = Number(req.body?.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y) || Math.abs(x) > 10000 || Math.abs(y) > 10000) {
+    res.status(400).json({ error: 'Invalid map position' });
+    return;
+  }
+
+  saveUserGameMapView(userId, req.params.id, x, y);
+  res.json({ view: { x, y } });
 });
 
 app.get('/api/lobbies', (_req, res) => {

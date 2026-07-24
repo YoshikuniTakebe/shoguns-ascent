@@ -203,6 +203,7 @@ export const en = {
   'gameOver.returnToMenu': 'Return to Menu',
   'gameOver.warProvinceTokens': 'War Province Tokens',
   'gameOver.sharedVictory': 'Shared victory with allies:',
+  'gameOver.winnerClan': '{name} of Clan {clan}',
   'gameOver.viewLog': 'View Log',
   'gameOver.fullLog': 'Complete Game Log',
   'gameOver.closeLog': 'Close game log',
@@ -794,6 +795,10 @@ export const en = {
   'admin.purgeOrphans': 'Purge Old Games',
   'admin.confirmPurge': 'This will delete all games without assigned players. Continue?',
   'admin.gamesPurged': 'game(s) purged',
+  'admin.cards.button': 'View Cards',
+  'admin.cards.title': 'Season Card Catalogue',
+  'admin.cards.close': 'Close card catalogue',
+  'admin.cards.empty': 'This set has no cards in the selected season.',
 
   // Config (admin only)
   'config.button': 'Config',
