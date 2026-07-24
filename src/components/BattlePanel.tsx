@@ -531,7 +531,15 @@ export const BattlePanel = () => {
 
   // --- DAIKAIJU: suppress battle popups while Daikaiju placement/summary is active ---
   if (gameState.daikaijuPlacementActive || gameState.daikaijuSummaryVisible) return null;
-  if (gameState.pendingNureOnnaDecision || gameState.pendingBattleCardDecision || gameState.pendingMonsterEnterDecision || gameState.pendingBattleMercyDecision || gameState.pendingNinjaDecision || (gameState.pendingRuleNotices?.length || 0) > 0) return null;
+  if (
+    gameState.pendingNureOnnaDecision
+    || gameState.pendingBattleCardDecision
+    || gameState.pendingMonsterEnterDecision
+    || gameState.pendingBattleMercyDecision
+    || gameState.pendingNinjaDecision
+    || gameState.pendingSerpentCharge
+    || (gameState.pendingRuleNotices?.length || 0) > 0
+  ) return null;
 
   // --- WAR SUMMARY POPUP: suppress battle popups while war summary is visible ---
   if (warSummaryVisible) return null;
@@ -1238,6 +1246,45 @@ export const BattlePanel = () => {
     );
   }
 
+  if (!isHotseat && effectiveBattleStepPhase === 'popup') {
+    const localReady = !!localPlayerId && gameState.battlePopupReadyPlayers.includes(localPlayerId);
+    return createPortal(
+      <div className="battle-popup-overlay">
+        <div className="battle-popup-card">
+          <h3 className="battle-popup-title">
+            {t('battle.battleNumber', { number: battleNumber })}:{' '}
+            <span style={{ color: PROVINCE_COLORS[battle.provinceId] || '#fff' }}>
+              {province?.name || battle.provinceId}
+            </span>
+          </h3>
+          <p className="battle-popup-message">{t('battle.combatants')}</p>
+          <div className="battle-start-combatants">
+            {battle.participants.map(participantId => {
+              const participant = gameState.players.find(player => player.id === participantId);
+              const clan = participant ? CLANS.find(candidate => candidate.id === participant.clanId) : null;
+              return participant ? (
+                <span key={participant.id} className="battle-card-decision-owner">
+                  <ClanShield clanId={participant.clanId} size={28} />
+                  <strong style={{ color: clan?.color }}>{participant.name}</strong>
+                </span>
+              ) : null;
+            })}
+          </div>
+          {localReady ? (
+            <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
+              {gameState.battlePopupReadyPlayers.length}/{gameState.players.length} listos
+            </p>
+          ) : (
+            <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
+              {t('battle.accept')}
+            </button>
+          )}
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
   // In hotseat mode with result phase: show battle result summary
   if (isHotseat && effectiveBattleStepPhase === 'result') {
     // Find the most recently resolved battle (the one just resolved)
@@ -1338,7 +1385,9 @@ export const BattlePanel = () => {
     }
   }
 
-  // --- ONLINE MODE or fallback: show bidding UI for local player simultaneously ---
+  if (!isHotseat && effectiveBattleStepPhase !== 'bidding') return null;
+
+  // --- ONLINE MODE: show bidding UI for each participating local player simultaneously ---
   const apid = localPlayerId;
   const isPart = apid ? battle.participants.includes(apid) : false;
   const hasBid = apid ? battle.warTacticBids[apid] !== undefined : false;

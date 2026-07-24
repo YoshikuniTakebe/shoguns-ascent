@@ -5266,7 +5266,7 @@ export function resolveNextBattle(state: GameState): GameState {
         const loser = newState.players.find((p) => p.id === pid)!;
         loser.coins = Math.max(0, loser.coins - totalBid);
         if (totalBid > 0) {
-          newState.log = [...newState.log, `${loser.name} descarta ${totalBid} monedas`];
+          newState.log = [...newState.log, `${loser.name} gastó {coin} ${totalBid} en apuestas y descarta las monedas apostadas`];
         }
       }
     });

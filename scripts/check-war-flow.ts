@@ -210,7 +210,7 @@ const distributionState = createInitialGameState(
 );
 const [distributionWinner, distributionLoser] = distributionState.players;
 distributionWinner.coins = 3;
-distributionLoser.coins = 0;
+distributionLoser.coins = 2;
 distributionState.currentPhase = 'war';
 distributionState.warProvinceSlots = [{ number: 1, provinceId: 'kansai', season: 'spring' }];
 distributionState.provinces.kansai.figures = [
@@ -220,7 +220,7 @@ distributionState.provinces.kansai.figures = [
 ];
 const paidBids = {
   [distributionWinner.id]: { seppuku: 0, 'take-hostage': 0, 'hire-ronin': 2, 'imperial-poets': 0 },
-  [distributionLoser.id]: { seppuku: 0, 'take-hostage': 0, 'hire-ronin': 0, 'imperial-poets': 0 },
+  [distributionLoser.id]: { seppuku: 0, 'take-hostage': 0, 'hire-ronin': 0, 'imperial-poets': 1 },
 };
 distributionState.activeBattles = [{
   provinceId: 'kansai',
@@ -231,6 +231,13 @@ distributionState.activeBattles = [{
 
 const finalBattleResolved = resolveNextBattle(distributionState);
 assert.equal(finalBattleResolved.coinDistributionPending == null, true, 'The final battle must skip the coin-distribution popup');
+assert.ok(
+  finalBattleResolved.log.some(entry =>
+    entry.includes(distributionLoser.name)
+    && entry.includes('{coin} 1')
+    && entry.includes('en apuestas')),
+  'The battle log must record the losing player bid spend without revealing their balance',
+);
 
 const earlierBattleState = {
   ...distributionState,

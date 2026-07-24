@@ -1366,3 +1366,14 @@ server restart — no longer loses the game.
   blocked and the figure returns to its origin.
 - Serpent decisions and their shared notice must finish before the next pre-battle power or War
   Tactics can begin. The War regression check covers both the Luna limit and blocked Sea passage.
+
+## Changelog - 2026-07-24 (online pre-battle handoff and bid log)
+
+- Contested online battles once again have an explicit shared battle-introduction popup with the
+  standard ready counter. Only after every player accepts does the server prepare the complete
+  pre-battle card queue.
+- The online bidding overlay now requires the actual `bidding` UI phase and remains suppressed by
+  Fire Dragon, Earth Dragon, Jorogumo and Path of the Serpent decisions.
+- Battle logs explicitly record how many bid Coins every losing clan spent and discarded. These
+  entries contain no balance total, so the existing War concealment continues to hide all totals
+  until the battle phase is complete.

@@ -726,6 +726,15 @@
   gap: 8px;
 }
 
+.battle-start-combatants {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 16px;
+  margin: 0.75rem auto 1rem;
+}
+
 .battle-card-decision-question {
   max-width: 360px;
   margin: 0.9rem auto 1.25rem;
