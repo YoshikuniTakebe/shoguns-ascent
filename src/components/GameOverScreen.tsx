@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import type { Player, Season, GameState, SeasonCard } from '../types/game';
 import { useT } from '../i18n';
-import { ClanShield } from './ClanShields';
+import { ClanShield, WarSeal } from './ClanShields';
 import { SpringIcon, SummerIcon, AutumnIcon, WinterIcon, WarTokenIcon } from './Icons';
 import { WarTokensModal } from './WarTokensModal';
 import { PlayerCardsModal } from './PlayerCardsModal';
@@ -104,8 +104,10 @@ export const GameOverScreen = () => {
             </div>
             <div className="winner-announcement" style={{ borderColor: wClan.color }}>
               <div className="winner-announcement-glow" style={{ background: `radial-gradient(ellipse at center, ${wClan.color}22 0%, transparent 70%)` }} />
-              <h2 style={{ color: wClan.color }}>
-                {t('gameOver.winnerClan', { name: winner.name, clan: wClan.name })}
+              <h2 className="winner-clan-title" style={{ color: wClan.color }}>
+                <WarSeal size={46} />
+                <span>{t('gameOver.winnerClan', { name: winner.name, clan: wClan.name })}</span>
+                <WarSeal size={46} />
               </h2>
               <p className="winner-subtitle">{t('gameOver.ascended')}</p>
               <div className="winner-vp">{winner.victoryPoints} VP</div>

@@ -1288,3 +1288,10 @@ server restart — no longer loses the game.
 - Authenticated users keep the map view in the database with a local browser fallback. Local or
   unauthenticated games use the same per-player/per-game browser storage without changing the
   initial map position for a new game.
+
+## Changelog - 2026-07-24 (winner war seals)
+
+- The final winner announcement now frames the ceremonial player/clan title with two large samurai
+  war-helmet seals, using the same `WarSeal` artwork as the lobby and War phase.
+- The seals inherit the winning clan color, retain a compact mobile size and add a restrained glow
+  without changing the rest of the final scoring layout.
