@@ -137,8 +137,8 @@ export interface BattleResolutionData {
   seppukuAccepted: boolean;
   phoenixDiedInSeppuku: boolean;
   phoenixDiedInBattle: boolean;
-  capturedHostage: { captorId: string; fromClanId: string; figureType: string; figureName: string; monsterCardId?: string } | null;
-  capturedHostages?: Array<{ captorId: string; fromClanId: string; figureType: string; figureName: string; monsterCardId?: string }>;
+  capturedHostage: { captorId: string; fromClanId: string; figureType: string; figureName: string; monsterCardId?: string; victoryPointsStolen?: number } | null;
+  capturedHostages?: Array<{ captorId: string; fromClanId: string; figureType: string; figureName: string; monsterCardId?: string; victoryPointsStolen?: number }>;
   hostagesTaken?: number;
   hostageLimit?: number;
   hostageVPGained?: number;

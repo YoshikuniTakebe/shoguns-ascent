@@ -418,15 +418,35 @@ function BattleResultPopup({
               const captorClan = captor ? CLANS.find(c => c.id === captor.clanId) : null;
               const victim = gameState.players.find(p => p.id === captured.fromClanId);
               const victimClan = victim ? CLANS.find(c => c.id === victim.clanId) : null;
+              const legacyStolenVP = Math.max(
+                0,
+                (resData.hostageVPGained || 0) - (resData.sincerityApplied ? 1 : 0),
+              );
+              const victoryPointsStolen = captured.victoryPointsStolen
+                ?? (index < legacyStolenVP ? 1 : 0);
               return (
-                <div key={`${captured.captorId}-${captured.fromClanId}-${captured.figureName}-${index}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', fontSize: '0.9em', flexWrap: 'wrap', marginTop: index > 0 ? '0.35rem' : 0 }}>
-                  <ClanShield clanId={captor?.clanId || ''} size={16} />
-                  <span style={{ color: captorClan?.color, fontWeight: 'bold' }}>{captor?.name}</span>
-                  <span style={{ opacity: 0.7 }}>captura</span>
-                  <span style={{ fontWeight: 'bold', color: victimClan?.color || '#fff' }}>{captured.figureName}</span>
-                  <span style={{ opacity: 0.7 }}>de</span>
-                  <ClanShield clanId={victim?.clanId || ''} size={16} />
-                  <span style={{ color: victimClan?.color, fontWeight: 'bold' }}>{victim?.name}</span>
+                <div key={`${captured.captorId}-${captured.fromClanId}-${captured.figureName}-${index}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', fontSize: '0.9em', marginTop: index > 0 ? '0.55rem' : 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                    <ClanShield clanId={captor?.clanId || ''} size={16} />
+                    <span style={{ color: captorClan?.color, fontWeight: 'bold' }}>{captor?.name}</span>
+                    <span style={{ opacity: 0.7 }}>captura</span>
+                    <span style={{ fontWeight: 'bold', color: victimClan?.color || '#fff' }}>{captured.figureName}</span>
+                    <span style={{ opacity: 0.7 }}>de</span>
+                    <ClanShield clanId={victim?.clanId || ''} size={16} />
+                    <span style={{ color: victimClan?.color, fontWeight: 'bold' }}>{victim?.name}</span>
+                  </div>
+                  {victoryPointsStolen > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                      <ClanShield clanId={captor?.clanId || ''} size={16} />
+                      <span style={{ color: captorClan?.color, fontWeight: 'bold' }}>{captor?.name}</span>
+                      <span style={{ opacity: 0.7 }}>roba</span>
+                      <VPIcon size={16} color={captorClan?.color || '#f5c842'} />
+                      <span style={{ color: captorClan?.color, fontWeight: 'bold' }}>{victoryPointsStolen}</span>
+                      <span style={{ opacity: 0.7 }}>a</span>
+                      <ClanShield clanId={victim?.clanId || ''} size={16} />
+                      <span style={{ color: victimClan?.color, fontWeight: 'bold' }}>{victim?.name}</span>
+                    </div>
+                  )}
                 </div>
               );
             })}

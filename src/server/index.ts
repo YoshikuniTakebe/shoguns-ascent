@@ -1926,6 +1926,7 @@ wss.on('connection', (ws: WebSocket, req) => {
               figureType: targetFigure.type,
               figureName: hostageMonsterName,
               monsterCardId: targetFigure.monsterCardId,
+              victoryPointsStolen: stolenVP,
             };
             const hostagesTaken = (resData2.hostagesTaken || 0) + 1;
             const hostageLimit = resData2.hostageLimit || (1 + hostageWinner.seasonCards.filter(card => card.id === 'su-respect' || card.id === 'su-respect-2').length);

@@ -1377,3 +1377,9 @@ server restart — no longer loses the game.
 - Battle logs explicitly record how many bid Coins every losing clan spent and discarded. These
   entries contain no balance total, so the existing War concealment continues to hide all totals
   until the battle phase is complete.
+
+## Changelog - 2026-07-24 (hostage VP in battle results)
+
+- Every captured hostage now records the exact VP stolen from its owner.
+- The Prisoners section of the battle result shows a second clan-formatted line for each successful
+  VP theft. Legacy in-progress snapshots derive the same display from their aggregate hostage data.

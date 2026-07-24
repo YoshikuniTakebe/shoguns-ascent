@@ -4129,7 +4129,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     newState.log = [...newState.log, `${captor.name} captura un rehen (${selectedHostageTarget.figureName}) de ${victim?.name} y roba ${stolenVP} PV. Total ${captor.name}: ${captor.victoryPoints} PV; ${victim?.name}: ${victim?.victoryPoints} PV`];
 
-    const capturedHostageData = { captorId: hostageWinnerId, fromClanId: capturedFig.owner, figureType: capturedFig.type, figureName: selectedHostageTarget.figureName, monsterCardId: capturedFig.monsterCardId };
+    const capturedHostageData = {
+      captorId: hostageWinnerId,
+      fromClanId: capturedFig.owner,
+      figureType: capturedFig.type,
+      figureName: selectedHostageTarget.figureName,
+      monsterCardId: capturedFig.monsterCardId,
+      victoryPointsStolen: stolenVP,
+    };
     const hostagesTaken = (battleResolutionData.hostagesTaken || 0) + 1;
     const hostageLimit = battleResolutionData.hostageLimit || (1 + captor.seasonCards.filter(card => card.id === 'su-respect' || card.id === 'su-respect-2').length);
     const updatedResData: BattleResolutionData = {
