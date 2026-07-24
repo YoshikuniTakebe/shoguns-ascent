@@ -36,6 +36,7 @@ import { SerpentChargePopup } from './SerpentChargePopup';
 import { MonsterEnterDecisionPopup } from './MonsterEnterDecisionPopup';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, UndoIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, FistIcon } from './Icons';
 import { ClanShield, WarSeal } from './ClanShields';
+import { CardStackIcon, DeckSetIcon } from './DeckSetIcons';
 import { getMonsterFigureImage, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
@@ -354,11 +355,8 @@ export const GameBoard = () => {
           </div>
           {gameState.activeDeckGroup && (
             <div className="deck-indicator">
-              <svg className="deck-indicator-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="4" y="2" width="14" height="18" rx="2" opacity="0.4"/>
-                <rect x="6" y="4" width="14" height="18" rx="2" opacity="0.7"/>
-                <rect x="8" y="6" width="14" height="18" rx="2"/>
-              </svg>
+              <CardStackIcon size={14} />
+              <DeckSetIcon setName={gameState.activeDeckGroup} size={16} />
               <span className="deck-indicator-text">{t(DECK_NAME_KEYS[gameState.activeDeckGroup] || gameState.activeDeckGroup as any)}</span>
             </div>
           )}
@@ -367,7 +365,13 @@ export const GameBoard = () => {
             if (!localPlayer) return null;
             const localClan = CLANS.find(c => c.id === localPlayer.clanId);
             return (
-              <div className="local-player-indicator" style={{ color: localClan?.color }}>
+              <div
+                className="local-player-indicator"
+                style={{
+                  color: localClan?.color,
+                  boxShadow: `inset 0 0 0 2px ${localClan?.color || 'transparent'}`,
+                }}
+              >
                 <ClanShield clanId={localPlayer.clanId} size={22} />
                 <span className="local-player-name">{localPlayer.name}</span>
               </div>
@@ -391,7 +395,7 @@ export const GameBoard = () => {
               const isActionPlayer = gameState.mode === 'hotseat' || localPlayerId === action?.playerId;
               return (
                 <>
-                  <ClanShield clanId={actionClan?.id || ''} size={28} />
+                  <ClanShield clanId={actionClan?.id || ''} size={56} />
                   <span className="current-player-name" style={{ color: actionClan?.color }}>
                     {t('game.turn', { name: actionPlayer?.name || '' })}
                   </span>
@@ -425,7 +429,7 @@ export const GameBoard = () => {
             }
             return (
               <>
-                <ClanShield clanId={cp?.clanId || ''} size={28} />
+                <ClanShield clanId={cp?.clanId || ''} size={56} />
                 <span className="current-player-name" style={{ color: CLANS.find(c => c.id === cp?.clanId)?.color }}>
                   {t('game.turn', { name: cp?.name || '' })}
                 </span>

@@ -1320,3 +1320,12 @@ server restart — no longer loses the game.
 - Admin `View Cards` deck filters now match the in-game deck badge style and pair the shared card
   stack with a distinct symbol for every set (Torii, tower, teapot, horse, ship, mountain and the
   special card collections).
+
+## Changelog - 2026-07-24 (in-game deck and turn badges)
+
+- The active-deck badge in the game header now displays the same set-specific icon as the admin card
+  catalogue alongside the shared card-stack icon.
+- The Horseman set uses a clearer chess-knight silhouette with a defined base and profile at compact
+  badge sizes.
+- The current-turn clan seal is twice its previous size and its text is one point larger. The local
+  player badge beside the deck now has a two-pixel inset border in that player's clan color.
