@@ -25,7 +25,7 @@ export const SerpentChargePopup = () => {
       <div className="battle-popup-card battle-card-decision" style={{ borderColor: ownerClan?.color || '#c8a951' }}>
         <h3 className="battle-popup-title" style={{ color: ownerClan?.color || '#c8a951' }}>Camino de la Serpiente</h3>
         <div className="battle-card-decision-owner">
-          {owner && <ClanShield clanId={owner.clanId} size={28} />}
+          {owner && <ClanShield clanId={owner.clanId} size={isOwner ? 28 : 84} />}
           <strong style={{ color: ownerClan?.color }}>{owner?.name}</strong>
         </div>
         <p className="battle-card-decision-question">

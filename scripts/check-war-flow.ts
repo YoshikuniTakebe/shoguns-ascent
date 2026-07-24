@@ -8,6 +8,51 @@ import {
 } from '../src/utils/gameLogic';
 import type { Figure } from '../src/types/game';
 
+const earthState = createInitialGameState(
+  [
+    { name: 'Earth', clanId: 'sol' },
+    { name: 'Rival', clanId: 'luna' },
+  ],
+  'hotseat',
+);
+const [earthOwner, earthRival] = earthState.players;
+const earthDragon: Figure = {
+  id: 'earth-dragon-test',
+  type: 'monster',
+  owner: earthOwner.id,
+  monsterCardId: 'sp-earth-dragon',
+};
+const rivalBushi: Figure = { id: 'earth-rival-bushi', type: 'bushi', owner: earthRival.id };
+earthState.currentPhase = 'war';
+earthState.provinces.kansai.figures = [earthDragon, rivalBushi];
+earthState.activeBattles = [{
+  provinceId: 'kansai',
+  participants: [earthOwner.id, earthRival.id],
+  warTacticBids: {},
+  resolved: false,
+}];
+
+const blockedEarthBid = submitWarTacticBids(earthState, 'kansai', earthOwner.id, {
+  seppuku: 0,
+  'take-hostage': 0,
+  'hire-ronin': 0,
+  'imperial-poets': 0,
+});
+assert.equal(blockedEarthBid, earthState, 'Bidding must be rejected while Earth Dragon is unresolved');
+
+const preparedEarth = preparePreBattleCardDecision(earthState, 'kansai');
+assert.equal(preparedEarth.pendingBattleCardDecision?.type, 'earth-dragon', 'Earth Dragon must resolve before bidding');
+assert.equal(preparedEarth.pendingBattleCardDecision?.stage, 'pre-battle', 'Earth Dragon must be a pre-battle decision');
+const afterEarthDragon = resolveBattleCardDecision(
+  preparedEarth,
+  earthOwner.id,
+  true,
+  { [earthRival.id]: rivalBushi.id },
+  { [rivalBushi.id]: 'edo' },
+);
+assert.equal(afterEarthDragon.pendingBattleCardDecision, null, 'Bidding may start after Earth Dragon finishes');
+assert.equal(afterEarthDragon.provinces.edo.figures.some(figure => figure.id === rivalBushi.id), true, 'Earth Dragon must move the selected figure');
+
 const state = createInitialGameState(
   [
     { name: 'Dragon', clanId: 'sol' },

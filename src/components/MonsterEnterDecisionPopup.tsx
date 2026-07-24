@@ -66,7 +66,7 @@ export const MonsterEnterDecisionPopup = () => {
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><MonsterIcon size={38} color={ownerClan?.color || '#c8a951'} /></div>
         <h3 className="battle-popup-title" style={{ color: ownerClan?.color }}>{title}</h3>
         <div className="battle-card-decision-owner">
-          {owner && <ClanShield clanId={owner.clanId} size={24} />}
+          {owner && <ClanShield clanId={owner.clanId} size={isOwner ? 24 : 72} />}
           <strong style={{ color: ownerClan?.color }}>{owner?.name}</strong>
         </div>
         <p>Entra en <strong style={{ color: PROVINCE_COLORS[pending.provinceId] || '#fff' }}>{province?.name}</strong></p>

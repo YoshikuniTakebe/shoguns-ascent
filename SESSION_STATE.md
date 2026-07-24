@@ -1346,3 +1346,13 @@ server restart — no longer loses the game.
   one charge for the route.
 - Added `npm run check:serpent` covering repeated routes, opposite directions, Libelula, fortress-only
   Tortuga movement and mixed Tortuga groups.
+
+## Changelog - 2026-07-24 (pre-battle decision gate)
+
+- War Tactics bids now pass through an authoritative pre-battle gate in shared logic, the local
+  store and the online server. Earth Dragon, Fire Dragon and Jorogumo must finish their complete
+  decision queue before any bid can be accepted, including after a stale client transition.
+- A premature online bid now opens the missing pre-battle decision for its owner and broadcasts the
+  blocking waiting popup to every other player instead of entering the betting flow.
+- Waiting popups for Kami, Harvest and interactive card decisions use clan seals three times larger.
+- The focused War regression check now covers Earth Dragon movement and rejection of premature bids.

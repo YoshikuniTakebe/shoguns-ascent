@@ -96,7 +96,7 @@ export const BattleCardDecisionPopup = () => {
         </div>
         <h3 className="battle-popup-title" style={{ color: ownerClan?.color || '#c8a951' }}>{names[pending.type]}</h3>
         <div className="battle-card-decision-owner">
-          {owner && <ClanShield clanId={owner.clanId} size={24} />}
+          {owner && <ClanShield clanId={owner.clanId} size={isOwner ? 24 : 72} />}
           <strong style={{ color: ownerClan?.color }}>{owner?.name}</strong>
         </div>
         <p>

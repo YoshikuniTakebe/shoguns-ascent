@@ -3800,10 +3800,13 @@ export function submitWarTacticBids(
   playerId: string,
   tacticBids: { [tacticId: string]: number }
 ): GameState {
+  const preBattleState = preparePreBattleCardDecision(state, provinceId);
+  if (preBattleState.pendingBattleCardDecision) return state;
+
   const newState: GameState = {
-    ...state,
-    players: state.players.map(player => ({ ...player, coins: Math.max(0, player.coins) })),
-    activeBattles: state.activeBattles.map((b) => ({ ...b, warTacticBids: { ...b.warTacticBids } })),
+    ...preBattleState,
+    players: preBattleState.players.map(player => ({ ...player, coins: Math.max(0, player.coins) })),
+    activeBattles: preBattleState.activeBattles.map((b) => ({ ...b, warTacticBids: { ...b.warTacticBids } })),
   };
 
   const battle = newState.activeBattles.find((b) => b.provinceId === provinceId);

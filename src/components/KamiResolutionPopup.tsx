@@ -56,7 +56,7 @@ export const KamiResolutionPopup = () => {
       <div className="harvest-popup-backdrop">
         <div className="harvest-popup" style={{ borderColor: waitingClan?.color || '#c8a951' }}>
           <h3 className="harvest-popup-title" style={{ color: waitingClan?.color || '#c8a951', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <ClanShield clanId={waitingPlayer?.clanId || ''} size={24} />
+            <ClanShield clanId={waitingPlayer?.clanId || ''} size={72} />
             {t('kami.resolution.waitingFor' as TranslationKey, { name: waitingPlayer?.name || '' })}
           </h3>
         </div>

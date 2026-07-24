@@ -3529,11 +3529,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
+    const preBattleState = preparePreBattleCardDecision(gameState, provinceId);
+    if (preBattleState.pendingBattleCardDecision) {
+      set({
+        gameState: preBattleState,
+        warTacticBidsSubmitted: false,
+        battleStepPhase: null,
+        battleCurrentBiddingIndex: 0,
+      });
+      return;
+    }
+
     // Determine which player is submitting bids
     let apid: string;
-    if (gameState.mode === 'hotseat') {
+    if (preBattleState.mode === 'hotseat') {
       // In hotseat, the current bidding participant is determined by battleCurrentBiddingIndex
-      const battle = gameState.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
+      const battle = preBattleState.activeBattles.find(b => b.provinceId === provinceId && !b.resolved);
       if (!battle) return;
       apid = battle.participants[get().battleCurrentBiddingIndex];
     } else {
@@ -3541,9 +3552,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     if (!apid) return;
 
-    let ns = submitWarTacticBids(gameState, provinceId, apid, tacticBids);
+    let ns = submitWarTacticBids(preBattleState, provinceId, apid, tacticBids);
 
-    if (gameState.mode === 'hotseat') {
+    if (preBattleState.mode === 'hotseat') {
       // In hotseat: after current player bids, check if all done
       if (allBidsSubmitted(ns, provinceId)) {
         // Instead of resolving immediately, enter step-by-step resolution

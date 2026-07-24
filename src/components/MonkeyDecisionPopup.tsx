@@ -35,7 +35,7 @@ export const MonkeyDecisionPopup = () => {
           Camino del Mono{pending.copyNumber > 1 ? ` (${pending.copyNumber}ª copia)` : ''}
         </h3>
         <div className="battle-card-decision-owner">
-          {owner && <ClanShield clanId={owner.clanId} size={28} />}
+          {owner && <ClanShield clanId={owner.clanId} size={isOwner ? 28 : 84} />}
           <strong style={{ color: ownerClan?.color }}>{owner?.name}</strong>
         </div>
         {isOwner ? (

@@ -20,7 +20,7 @@ export const VassalDecisionPopup = () => {
       <div className="battle-popup-card battle-card-decision" style={{ borderColor: clan?.color || '#c8a951' }}>
         <h3 className="battle-popup-title" style={{ color: clan?.color || '#c8a951' }}>Path of the Vassal{copyLabel}</h3>
         <div className="battle-card-decision-owner">
-          {owner && <ClanShield clanId={owner.clanId} size={24} />}
+          {owner && <ClanShield clanId={owner.clanId} size={isOwner ? 24 : 72} />}
           <strong style={{ color: clan?.color }}>{owner?.name}</strong>
         </div>
         <p className="benevolence-prompt">
