@@ -1335,3 +1335,14 @@ server restart — no longer loses the game.
 - The game header keeps the enlarged 56-pixel current-turn clan seal but removes ten pixels of
   vertical padding above and below it, reducing the header padding from twelve to two pixels per
   side.
+
+## Changelog - 2026-07-24 (Path of the Serpent sea-route charging)
+
+- Path of the Serpent now creates at most one optional one-Coin charge per mover and unique Sea
+  Route in a confirmed movement sequence, regardless of how many figures crossed it or whether the
+  same route was crossed in both directions.
+- Libelula movement never creates a charge because its figures fly instead of using Sea Routes.
+  Moving Tortuga fortresses are also exempt; a mixed group containing a normal figure still creates
+  one charge for the route.
+- Added `npm run check:serpent` covering repeated routes, opposite directions, Libelula, fortress-only
+  Tortuga movement and mixed Tortuga groups.

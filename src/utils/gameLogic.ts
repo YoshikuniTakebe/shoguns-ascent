@@ -3631,9 +3631,11 @@ export function confirmWarStartAction(state: GameState, playerId: string): GameS
     return advanceWarStartAction(grantWarlordSummonCoin(nextState, playerId));
   }
   if (action.type === 'naginata' && selection?.sourceProvinceId && selection.destinationProvinceId) {
+    const crossesChargeableSeaRoute = player?.clanId !== 'libelula'
+      && nextState.provinces[selection.sourceProvinceId]?.seaRoutes.includes(selection.destinationProvinceId);
     const withCrossing: GameState = {
       ...nextState,
-      pendingSerpentCrossings: nextState.provinces[selection.sourceProvinceId]?.seaRoutes.includes(selection.destinationProvinceId)
+      pendingSerpentCrossings: crossesChargeableSeaRoute
         ? [...(nextState.pendingSerpentCrossings || []), { moverId: playerId, fromProvinceId: selection.sourceProvinceId, toProvinceId: selection.destinationProvinceId }]
         : [...(nextState.pendingSerpentCrossings || [])],
     };
@@ -5869,6 +5871,7 @@ export function moveForces(
     let currentFromFigures = [...fromProvince.figures];
     let currentToFigures = [...toProvince.figures];
     let movedFigureIds: string[] = [...state.marshalMovedFigures];
+    const movedThisActionIds: string[] = [];
     let logEntries: string[] = [...newState.log];
     let anyMoved = false;
 
@@ -5912,6 +5915,7 @@ export function moveForces(
       currentFromFigures = currentFromFigures.filter(f => f.id !== figureId);
       currentToFigures = [...currentToFigures, figure];
       movedFigureIds = [...movedFigureIds, figureId];
+      movedThisActionIds.push(figureId);
       anyMoved = true;
 
       const figureDisplayName = figure.type === 'monster'
@@ -5926,13 +5930,16 @@ export function moveForces(
     newState.provinces[toProvinceId] = { ...toProvince, figures: currentToFigures };
     newState.marshalMovedFigures = movedFigureIds;
     newState.log = logEntries;
-    const isSeaCrossing = fromProvince.seaRoutes.includes(toProvinceId);
+    const movedFigures = fromProvince.figures.filter(figure => movedThisActionIds.includes(figure.id));
+    const isSeaCrossing = player.clanId !== 'libelula'
+      && movedFigures.some(figure => figure.type !== 'fortress')
+      && fromProvince.seaRoutes.includes(toProvinceId);
     newState.pendingSerpentCrossings = isSeaCrossing
       ? [...(state.pendingSerpentCrossings || []), { moverId: playerId, fromProvinceId, toProvinceId }]
       : [...(state.pendingSerpentCrossings || [])];
 
     // Apply on-enter monster effects for moved figures
-    for (const figureId of figureIds) {
+    for (const figureId of movedThisActionIds) {
       const latestFigures = newState.provinces[toProvinceId].figures;
       const movedFig = latestFigures.find(f => f.id === figureId);
       if (!movedFig || movedFig.type !== 'monster' || !movedFig.monsterCardId) continue;
@@ -5973,7 +5980,11 @@ export function moveForces(
       newState.provinces[intermediateId] = { ...intermediate, figures: [...intermediate.figures, figure] };
       newState.pendingFujinContinuation = { playerId, figureId: figure.id, fromProvinceId: intermediateId, toProvinceId };
       newState.log.push(`${player.name} mueve 1 figura de ${fromProvince.name} a ${intermediate.name} (Fujin, primer movimiento)`);
-      if (fromProvince.seaRoutes.includes(intermediateId)) {
+      if (
+        player.clanId !== 'libelula'
+        && figure.type !== 'fortress'
+        && fromProvince.seaRoutes.includes(intermediateId)
+      ) {
         newState.pendingSerpentCrossings = [...(state.pendingSerpentCrossings || []), { moverId: playerId, fromProvinceId, toProvinceId: intermediateId }];
       }
       if (figure.type === 'monster' && figure.monsterCardId) {
@@ -6009,13 +6020,15 @@ export function moveForces(
     newState.provinces[toProvinceId] = { ...toProvince, figures: [...toProvince.figures, ...movedFigures] };
 
     newState.log = [...newState.log, `${player.name} mueve ${movedFigures.length} ${movedFigures.length === 1 ? 'figura' : 'figuras'} de ${fromProvince.name} a ${toProvince.name} (Fujin)`];
-    const seaCrossings = path.slice(0, -1).flatMap((pathProvinceId, index) => {
+    const serpentApplies = player.clanId !== 'libelula'
+      && movedFigures.some(figure => figure.type !== 'fortress');
+    const seaCrossings = serpentApplies ? path.slice(0, -1).flatMap((pathProvinceId, index) => {
       const nextProvinceId = path[index + 1];
       const pathProvince = state.provinces[pathProvinceId];
       return pathProvince?.seaRoutes.includes(nextProvinceId)
         ? [{ moverId: playerId, fromProvinceId: pathProvinceId, toProvinceId: nextProvinceId }]
         : [];
-    });
+    }) : [];
     newState.pendingSerpentCrossings = [...(state.pendingSerpentCrossings || []), ...seaCrossings];
 
     for (const figure of movedFigures) {
@@ -6056,7 +6069,7 @@ export function moveForces(
   if (player) {
     newState.log = [...newState.log, `${player.name} mueve ${figureIds.length} figuras de ${fromProvince.name} a ${toProvince.name}`];
   }
-  chargeSerpentSeaRoute(newState, playerId, fromProvinceId, toProvinceId);
+  chargeSerpentSeaRoute(newState, playerId, fromProvinceId, toProvinceId, movedFigures);
 
   // Apply on-enter monster effects for moved figures
   for (const fig of movedFigures) {
@@ -6095,7 +6108,11 @@ function continuePendingFujinMovement(state: GameState): GameState {
   nextState.provinces[pending.fromProvinceId] = { ...source, figures: source.figures.filter(candidate => candidate.id !== figure.id) };
   nextState.provinces[pending.toProvinceId] = { ...destination, figures: [...destination.figures, figure] };
   nextState.log.push(`${player.name} mueve 1 figura de ${source.name} a ${destination.name} (Fujin, segundo movimiento)`);
-  if (source.seaRoutes.includes(pending.toProvinceId)) {
+  if (
+    player.clanId !== 'libelula'
+    && figure.type !== 'fortress'
+    && source.seaRoutes.includes(pending.toProvinceId)
+  ) {
     nextState.pendingSerpentCrossings = [...(state.pendingSerpentCrossings || []), {
       moverId: player.id,
       fromProvinceId: pending.fromProvinceId,
@@ -6106,9 +6123,20 @@ function continuePendingFujinMovement(state: GameState): GameState {
   return nextState;
 }
 
-function chargeSerpentSeaRoute(state: GameState, moverId: string, fromProvinceId: string, toProvinceId: string): void {
+function chargeSerpentSeaRoute(
+  state: GameState,
+  moverId: string,
+  fromProvinceId: string,
+  toProvinceId: string,
+  movedFigures: Figure[]
+): void {
   const fromProvince = state.provinces[fromProvinceId];
-  if (!fromProvince?.seaRoutes.includes(toProvinceId)) return;
+  const mover = state.players.find(player => player.id === moverId);
+  if (
+    mover?.clanId === 'libelula'
+    || movedFigures.every(figure => figure.type === 'fortress')
+    || !fromProvince?.seaRoutes.includes(toProvinceId)
+  ) return;
   const charges = state.players
     .filter(player => player.id !== moverId && playerHasCard(player, 'su-path-of-the-serpent'))
     .map(player => ({ ownerId: player.id, moverId, fromProvinceId, toProvinceId, resume: null }));
@@ -6202,9 +6230,16 @@ export function resolvePendingSerpentCrossings(
     pendingSerpentCrossings: [],
   };
   const charges = [];
+  const seenRoutes = new Set<string>();
   for (const crossing of crossings) {
     const fromProvince = resolved.provinces[crossing.fromProvinceId];
     if (!fromProvince?.seaRoutes.includes(crossing.toProvinceId)) continue;
+    const mover = resolved.players.find(player => player.id === crossing.moverId);
+    if (!mover || mover.clanId === 'libelula') continue;
+    const routeKey = [crossing.fromProvinceId, crossing.toProvinceId].sort().join(':');
+    const crossingKey = `${crossing.moverId}:${routeKey}`;
+    if (seenRoutes.has(crossingKey)) continue;
+    seenRoutes.add(crossingKey);
     for (const owner of resolved.players) {
       if (owner.id !== crossing.moverId && playerHasCard(owner, 'su-path-of-the-serpent')) {
         charges.push({ ownerId: owner.id, moverId: crossing.moverId, fromProvinceId: crossing.fromProvinceId, toProvinceId: crossing.toProvinceId, resume });
