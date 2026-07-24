@@ -1303,3 +1303,10 @@ server restart — no longer loses the game.
   content.
 - The pattern has a denser mobile scale while preserving the contrast of the winner announcement,
   scoring tables and final actions.
+
+## Changelog - 2026-07-24 (home Kabuto background)
+
+- The home screen replaces its previous lotus/hex texture with the selected Imperial Kabuto pattern,
+  covering the app-wide texture on this screen to avoid overlapping motifs.
+- The helmets use a smaller repeat and very low gold opacity so the pattern remains recognizable
+  but secondary to the game-mode controls and clan seals.
