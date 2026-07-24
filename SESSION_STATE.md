@@ -1329,3 +1329,9 @@ server restart — no longer loses the game.
   badge sizes.
 - The current-turn clan seal is twice its previous size and its text is one point larger. The local
   player badge beside the deck now has a two-pixel inset border in that player's clan color.
+
+## Changelog - 2026-07-24 (compact game header)
+
+- The game header keeps the enlarged 56-pixel current-turn clan seal but removes ten pixels of
+  vertical padding above and below it, reducing the header padding from twelve to two pixels per
+  side.
