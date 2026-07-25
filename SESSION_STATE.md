@@ -1400,3 +1400,15 @@ server restart — no longer loses the game.
   its remaining cards into Summer and Autumn, so purchased cards never reappear.
 - The market removes its normal season filter in this mode and labels itself as the all-card debug
   market.
+
+## Changelog - 2026-07-25 (all-card catalog market and fixed header)
+
+- The in-game header now has a fixed height of 62px so its layout remains stable regardless of the
+  current season, deck, clan or turn label.
+- The all-card debug market now includes the same card-set badges and Spring, Summer and Autumn tabs
+  as the admin card browser. These controls are available both when opening Cards and while buying
+  through Train or Ryujin.
+- The debug catalog is backed by the game's remaining market pool. A purchased physical card copy
+  disappears from its set and season view and does not return in later seasons.
+- `debugAllCards` is fixed when a game is created. Existing non-debug snapshots are intentionally
+  not converted retroactively; create a new game after restarting an older running server.

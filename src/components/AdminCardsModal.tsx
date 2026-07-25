@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { SEASON_CARDS_DATA, type CardType, type Season, type SeasonCard } from '../types/game';
+import { SEASON_CARDS_DATA, type CardType, type SeasonCard } from '../types/game';
 import { useT, type TranslationKey } from '../i18n';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { getMonsterImage } from '../utils/figureImages';
@@ -14,38 +14,16 @@ import {
   SummerIcon,
   SunIcon,
 } from './Icons';
-import { CardStackIcon, DeckSetIcon, type CardSetName } from './DeckSetIcons';
-
-const CARD_SETS = [
-  'Core',
-  'Archway',
-  'Tower',
-  'Teapot',
-  'Horseman',
-  'Ship',
-  'Mountain',
-  'Dynasty Invasion',
-  'Monster Pack',
-  'Kickstarter Exclusive',
-] as const;
-
-type CardSet = typeof CARD_SETS[number] & CardSetName;
-type CardSeason = Extract<Season, 'spring' | 'summer' | 'autumn'>;
-
-const SEASONS: CardSeason[] = ['spring', 'summer', 'autumn'];
-
-const SET_KEYS: Record<CardSet, TranslationKey> = {
-  Core: 'deck.core',
-  Archway: 'deck.archway',
-  Tower: 'deck.tower',
-  Teapot: 'deck.teapot',
-  Horseman: 'deck.horseman',
-  Ship: 'deck.ship',
-  Mountain: 'deck.mountain',
-  'Dynasty Invasion': 'deck.dynastyInvasion',
-  'Monster Pack': 'deck.monsterPack',
-  'Kickstarter Exclusive': 'deck.kickstarterExclusive',
-};
+import { CardStackIcon, DeckSetIcon } from './DeckSetIcons';
+import {
+  CARD_CATALOG_SEASONS,
+  CARD_CATALOG_SEASON_KEYS,
+  CARD_CATALOG_SETS,
+  CARD_CATALOG_SET_KEYS,
+  cardBelongsToSet,
+  type CardCatalogSeason,
+  type CardCatalogSet,
+} from '../utils/cardCatalog';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
   monster: '#cd7f32',
@@ -63,19 +41,13 @@ const CARD_TYPE_KEYS: Record<CardType, TranslationKey> = {
   winterUpgrade: 'market.winterUpgrade',
 };
 
-const SEASON_KEYS: Record<CardSeason, TranslationKey> = {
-  spring: 'season.spring',
-  summer: 'season.summer',
-  autumn: 'season.autumn',
-};
-
-const SEASON_COLORS: Record<CardSeason, string> = {
+const SEASON_COLORS: Record<CardCatalogSeason, string> = {
   spring: '#FFB7C5',
   summer: '#FF6B35',
   autumn: '#D4A574',
 };
 
-const SeasonIcon = ({ season }: { season: CardSeason }) => {
+const SeasonIcon = ({ season }: { season: CardCatalogSeason }) => {
   switch (season) {
     case 'spring': return <SpringIcon size={16} color="#1a1a2e" />;
     case 'summer': return <SummerIcon size={16} color="#1a1a2e" />;
@@ -83,19 +55,16 @@ const SeasonIcon = ({ season }: { season: CardSeason }) => {
   }
 };
 
-const belongsToSet = (card: SeasonCard, setName: CardSet) =>
-  card.group.split('/').map((group) => group.trim()).includes(setName);
-
 export const AdminCardsModal = ({ onClose }: { onClose: () => void }) => {
   const t = useT();
   const { authUser, cardsLightMode, setCardsLightMode } = useGameStore();
-  const [selectedSet, setSelectedSet] = useState<CardSet>('Core');
-  const [selectedSeason, setSelectedSeason] = useState<CardSeason>('spring');
+  const [selectedSet, setSelectedSet] = useState<CardCatalogSet>('Core');
+  const [selectedSeason, setSelectedSeason] = useState<CardCatalogSeason>('spring');
   const [zoomedCard, setZoomedCard] = useState<SeasonCard | null>(null);
 
   const cards = useMemo(
     () => SEASON_CARDS_DATA.filter((card) =>
-      card.season === selectedSeason && belongsToSet(card, selectedSet)
+      card.season === selectedSeason && cardBelongsToSet(card, selectedSet)
     ),
     [selectedSeason, selectedSet],
   );
@@ -122,7 +91,7 @@ export const AdminCardsModal = ({ onClose }: { onClose: () => void }) => {
         <h2 className="season-cards-modal-title">{t('admin.cards.title')}</h2>
 
         <div className="admin-card-set-badges">
-          {CARD_SETS.map((setName) => (
+          {CARD_CATALOG_SETS.map((setName) => (
             <button
               key={setName}
               className={`admin-card-set-badge${selectedSet === setName ? ' active' : ''}`}
@@ -130,13 +99,13 @@ export const AdminCardsModal = ({ onClose }: { onClose: () => void }) => {
             >
               <CardStackIcon />
               <DeckSetIcon setName={setName} />
-              <span>{t(SET_KEYS[setName])}</span>
+              <span>{t(CARD_CATALOG_SET_KEYS[setName])}</span>
             </button>
           ))}
         </div>
 
         <div className="admin-card-season-tabs" role="tablist">
-          {SEASONS.map((season) => {
+          {CARD_CATALOG_SEASONS.map((season) => {
             const active = selectedSeason === season;
             const color = SEASON_COLORS[season];
             return (
@@ -153,7 +122,7 @@ export const AdminCardsModal = ({ onClose }: { onClose: () => void }) => {
                 aria-selected={active}
               >
                 <SeasonIcon season={season} />
-                {t(SEASON_KEYS[season])}
+                {t(CARD_CATALOG_SEASON_KEYS[season])}
               </button>
             );
           })}

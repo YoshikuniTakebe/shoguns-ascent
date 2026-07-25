@@ -10,6 +10,16 @@ import { getMonsterImage } from '../utils/figureImages';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
 import { PlayerCardsModal } from './PlayerCardsModal';
+import { CardStackIcon, DeckSetIcon } from './DeckSetIcons';
+import {
+  CARD_CATALOG_SEASONS,
+  CARD_CATALOG_SEASON_KEYS,
+  CARD_CATALOG_SETS,
+  CARD_CATALOG_SET_KEYS,
+  cardBelongsToSet,
+  type CardCatalogSeason,
+  type CardCatalogSet,
+} from '../utils/cardCatalog';
 
 const CARD_TYPE_COLORS: Record<CardType, string> = {
   monster: '#cd7f32',
@@ -67,6 +77,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   const [pendingCardId, setPendingCardId] = useState<string | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [showOwnedCards, setShowOwnedCards] = useState(false);
+  const [debugSelectedSet, setDebugSelectedSet] = useState<CardCatalogSet>('Core');
+  const [debugSelectedSeason, setDebugSelectedSeason] = useState<CardCatalogSeason>('spring');
   const purchaseErrorVersionRef = useRef(serverErrorVersion);
   const prevTrainMandateActiveRef = useRef<boolean>(false);
 
@@ -169,7 +181,9 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
   if (isRyujinMode && !isLocalRyujinBuyer) return null;
 
   const currentSeasonCards = gameState.debugAllCards
-    ? gameState.seasonCardsDeck
+    ? gameState.seasonCardsDeck.filter((card) =>
+        card.season === debugSelectedSeason && cardBelongsToSet(card, debugSelectedSet)
+      )
     : gameState.seasonCardsDeck.filter((card) => card.season === gameState.currentSeason);
 
   const translateGroup = (group: string): string => {
@@ -301,6 +315,14 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
     }
   };
 
+  const DebugSeasonIcon = ({ season }: { season: CardCatalogSeason }) => {
+    switch (season) {
+      case 'spring': return <SpringIcon size={16} color="#1a1a2e" />;
+      case 'summer': return <SummerIcon size={16} color="#1a1a2e" />;
+      case 'autumn': return <AutumnIcon size={16} color="#1a1a2e" />;
+    }
+  };
+
   const seasonTitleColor = seasonColors[gameState.currentSeason] || 'var(--accent-gold)';
 
   const purchasePlayer = isRyujinMode ? ryujinPlayer : currentPlayer;
@@ -377,6 +399,46 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
             );
           })()}
         </h2>
+        {gameState.debugAllCards && (
+          <>
+            <div className="admin-card-set-badges">
+              {CARD_CATALOG_SETS.map((setName) => (
+                <button
+                  key={setName}
+                  className={`admin-card-set-badge${debugSelectedSet === setName ? ' active' : ''}`}
+                  onClick={() => setDebugSelectedSet(setName)}
+                >
+                  <CardStackIcon />
+                  <DeckSetIcon setName={setName} />
+                  <span>{t(CARD_CATALOG_SET_KEYS[setName])}</span>
+                </button>
+              ))}
+            </div>
+            <div className="admin-card-season-tabs" role="tablist">
+              {CARD_CATALOG_SEASONS.map((season) => {
+                const active = debugSelectedSeason === season;
+                const color = seasonColors[season];
+                return (
+                  <button
+                    key={season}
+                    className={`log-season-tab${active ? ' active' : ''}`}
+                    style={{
+                      backgroundColor: active ? color : `${color}33`,
+                      borderColor: color,
+                      color: active ? '#1a1a2e' : undefined,
+                    }}
+                    onClick={() => setDebugSelectedSeason(season)}
+                    role="tab"
+                    aria-selected={active}
+                  >
+                    <DebugSeasonIcon season={season} />
+                    {t(CARD_CATALOG_SEASON_KEYS[season])}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
         <div className="season-card-grid">
           {currentSeasonCards.map((card) => {
             const affordable = isInteractiveMode ? canBuyCard(card) : true;
