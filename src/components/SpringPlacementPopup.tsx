@@ -4,8 +4,10 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, KAMI_DATA, PROVINCE_COLORS } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { ShintoIcon, UndoIcon } from './Icons';
+import { useT } from '../i18n';
 
 export const SpringPlacementPopup = () => {
+  const t = useT();
   const gameState = useGameStore(state => state.gameState);
   const localPlayerId = useGameStore(state => state.localPlayerId);
   const resolveDecision = useGameStore(state => state.doResolveSpringPlacement);
@@ -13,6 +15,8 @@ export const SpringPlacementPopup = () => {
   const springLightSelectedTempleId = useGameStore(state => state.springLightSelectedTempleId);
   const beginSpringLightSelection = useGameStore(state => state.beginSpringLightSelection);
   const undoSpringLightSelection = useGameStore(state => state.undoSpringLightSelection);
+  const biddingMapPeek = useGameStore(state => state.biddingMapPeek);
+  const setBiddingMapPeek = useGameStore(state => state.setBiddingMapPeek);
   const pending = gameState?.pendingSpringPlacement;
   const [provinceId, setProvinceId] = useState('');
   const [templeId, setTempleId] = useState('');
@@ -39,7 +43,7 @@ export const SpringPlacementPopup = () => {
     });
   }, [gameState, pending]);
 
-  if (!gameState || !pending || gameState.pendingMonsterEnterDecision || gameState.pendingMonkeyDecision || gameState.pendingNinjaDecision || gameState.pendingBenevolence) return null;
+  if (!gameState || !pending || biddingMapPeek || gameState.pendingMonsterEnterDecision || gameState.pendingMonkeyDecision || gameState.pendingNinjaDecision || gameState.pendingBenevolence) return null;
   const owner = gameState.players.find(player => player.id === pending.ownerId);
   const clan = owner ? CLANS.find(candidate => candidate.id === owner.clanId) : null;
   const isOwner = gameState.mode === 'hotseat' || localPlayerId === pending.ownerId;
@@ -187,6 +191,18 @@ export const SpringPlacementPopup = () => {
               <p className="spring-placement-description">
                 Puedes colocar un Shinto adicional en uno de los santuarios.
               </p>
+            )}
+            {pending.type === 'kenin' && (
+              <button
+                className="bidding-peek-map-btn battle-card-map-button spring-placement-map-button"
+                onClick={() => setBiddingMapPeek(true)}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                {t('battle.viewMap')}
+              </button>
             )}
             <div className="battle-card-decision-actions spring-placement-actions">
               <button className="btn-secondary" onClick={() => resolveDecision(false)}>Omitir</button>

@@ -1065,6 +1065,11 @@
   min-width: 145px;
 }
 
+.spring-placement-map-button {
+  margin-top: 0.9rem;
+  margin-bottom: 0;
+}
+
 .spring-placement-choice-block,
 .popup-choice-block {
   width: 100%;
@@ -1348,7 +1353,7 @@
 .game-over-screen{position:relative;isolation:isolate;background-color:#14172a;background-image:radial-gradient(circle at 82% 9rem,rgba(194,55,61,.42) 0 68px,rgba(225,106,82,.18) 69px 76px,transparent 77px),linear-gradient(180deg,rgba(12,19,40,.2) 0%,rgba(10,13,31,.82) 100%),url("./img/game-over-seigaiha.svg");background-repeat:no-repeat,no-repeat,repeat;background-size:auto,auto,192px 96px;background-attachment:fixed}
 .game-over-screen::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,rgba(7,10,25,.42),transparent 24%,transparent 76%,rgba(7,10,25,.36)),radial-gradient(ellipse at top,transparent 0%,rgba(7,9,24,.32) 72%,rgba(7,9,24,.62) 100%)}
 @media(max-width:600px){.game-over-screen{background-image:radial-gradient(circle at 84% 6.5rem,rgba(194,55,61,.4) 0 48px,rgba(225,106,82,.16) 49px 55px,transparent 56px),linear-gradient(180deg,rgba(12,19,40,.2) 0%,rgba(10,13,31,.82) 100%),url("./img/game-over-seigaiha.svg");background-size:auto,auto,144px 72px}}
-.main-menu{background-color:var(--bg-dark);background-image:url("./img/home-kabuto-pattern.svg"),linear-gradient(135deg,var(--bg-dark) 0%,var(--bg-medium) 50%,#1a0a2e 100%);background-repeat:repeat,no-repeat;background-size:96px 80px,cover}
+.main-menu{background-color:var(--bg-dark);background-image:url("./img/home-kabuto-pattern.svg"),linear-gradient(135deg,var(--bg-dark) 0%,var(--bg-medium) 50%,#1a0a2e 100%);background-repeat:repeat,no-repeat;background-size:124px 104px,cover}
 .kami-unbound-switch{position:relative;display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:12px;padding:0.65rem 0.75rem;background:rgba(15,25,48,.68);border:1px solid rgba(200,169,81,.32);border-radius:6px;color:var(--text-primary);font-weight:600;cursor:pointer;transition:border-color .2s,background .2s}
 .kami-unbound-switch:hover{border-color:var(--accent-gold);background:rgba(200,169,81,.07)}
 .kami-unbound-switch input{position:absolute;opacity:0;pointer-events:none}

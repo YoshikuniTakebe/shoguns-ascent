@@ -40,6 +40,11 @@ assert.equal(afterSecondPlacement.pendingSpringPlacement, null, 'Kenin must wait
 const afterRecruitFinished = skipRecruitTurn(afterSecondPlacement);
 assert.equal(afterRecruitFinished.pendingSpringPlacement?.type, 'kenin', 'Kenin must open after the player finishes Recruit');
 assert.equal(afterRecruitFinished.pendingSpringPlacement?.ownerId, owner.id, 'The finished Recruit player must resolve Kenin');
+assert.equal(
+  (afterRecruitFinished.pendingSpringPlacementQueue || []).filter(entry => entry.type === 'kenin' && entry.ownerId === owner.id).length,
+  0,
+  'Multiple figures in one Recruit action must not queue additional Kenin activations',
+);
 
 const independentSummon = {
   ...state,

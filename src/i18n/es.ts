@@ -174,6 +174,8 @@ export const es: Record<TranslationKey, string> = {
   'battle.lastBattle': '(Última Batalla)',
   'battle.peekMap': 'Ver Mapa',
   'battle.returnToBids': 'Volver a las Apuestas',
+  'battle.viewMap': 'Ver mapa',
+  'kenin.returnToDecision': 'Volver a Camino del Kenin',
   'nureOnna.returnToDecision': 'Volver a Nure-Onna',
   'battle.tacticDesc.seppuku': 'Mata a tus propios Bushi. Gana 1 PV y 1 Honor por cada figura eliminada.',
   'battle.tacticDesc.take-hostage': 'Captura 1 Bushi o Shinto enemigo como rehen. Gana 1 PV.',

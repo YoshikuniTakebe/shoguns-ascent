@@ -1434,3 +1434,16 @@ server restart — no longer loses the game.
   effects still resolve Kenin after their own action.
 - Added `npm run check:recruit` to cover the first placement, final placement, finished Recruit action
   and an independent Summon.
+
+## Changelog - 2026-07-25 (English logs, Kenin map preview and home pattern)
+
+- Live, archived and final-game logs now translate their canonical Spanish entries when the viewing
+  player uses English. The stored snapshot is unchanged, so different online players can view the
+  same game in their own language.
+- Added `npm run check:log` with representative Train, Recruit, Kami and Path of the Kenin entries.
+- Path of the Kenin now offers `View Map`. The popup temporarily closes, keeps the current choice and
+  exposes a return button over the board.
+- The Recruit regression check confirms that placing multiple figures creates only one Kenin
+  resolution for the completed Summon action.
+- Home Kabuto motifs are twice their previous size. Their repeat tile grows by the same clear-space
+  requirement so the helmets retain the established visual separation.

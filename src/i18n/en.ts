@@ -172,6 +172,8 @@ export const en = {
   'battle.lastBattle': '(Last Battle)',
   'battle.peekMap': 'View Map',
   'battle.returnToBids': 'Return to Bids',
+  'battle.viewMap': 'View Map',
+  'kenin.returnToDecision': 'Return to Path of the Kenin',
   'nureOnna.returnToDecision': 'Return to Nure-Onna',
   'battle.tacticDesc.seppuku': 'Kill your own Bushi. Gain 1 VP and 1 Honor for each figure killed.',
   'battle.tacticDesc.take-hostage': 'Capture 1 enemy Bushi or Shinto as a hostage. Gain 1 VP.',

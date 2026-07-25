@@ -5,6 +5,7 @@ import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, ShintoIcon, DaimyoIcon, FortressIcon, MonsterIcon } from './Icons';
 import { ClanShield } from './ClanShields';
+import { localizeLogEntry } from '../utils/logTranslations';
 
 const MANDATE_COLORS: Record<string, string> = {
   train: '#8B4513',
@@ -23,12 +24,13 @@ const PROVINCE_NAMES = ['Hokkaido', 'Oshu', 'Edo', 'Kanto', 'Kansai', 'Nagato', 
 
 // Shared with the full end-game log, which uses the same rich entry formatting.
 // oxlint-disable-next-line react/only-export-components
-export function renderLogEntry(entry: string, players: { name: string; clanId: string }[]): ReactNode {
+export function renderLogEntry(entry: string, players: { name: string; clanId: string }[], language: 'en' | 'es' = 'es'): ReactNode {
   // Build a list of replacements to apply
   type Segment = { type: 'text'; value: string } | { type: 'node'; value: ReactNode };
 
   // Start with the full string as one text segment
-  let segments: Segment[] = [{ type: 'text', value: entry }];
+  const localizedEntry = localizeLogEntry(entry, language);
+  let segments: Segment[] = [{ type: 'text', value: localizedEntry }];
 
   // Global counter for unique keys across all applyPattern calls within this entry
   let globalNodeCounter = 0;
@@ -134,7 +136,7 @@ export function renderLogEntry(entry: string, players: { name: string; clanId: s
   // 5.5. Replace troop type keywords with corresponding icons in clan color
   let troopIconColor = '#DAA520'; // fallback gold
   for (const p of players) {
-    if (entry.includes(p.name)) {
+    if (localizedEntry.includes(p.name)) {
       const clan = CLANS.find(c => c.id === p.clanId);
       if (clan) { troopIconColor = clan.color; break; }
     }
@@ -243,7 +245,7 @@ export function renderLogEntry(entry: string, players: { name: string; clanId: s
 }
 
 export const GameLog = () => {
-  const { gameState, localPlayerId } = useGameStore();
+  const { gameState, localPlayerId, language } = useGameStore();
   const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const [selectedSeason, setSelectedSeason] = useState<string | null>(null);
@@ -325,7 +327,7 @@ export const GameLog = () => {
 
   return (
     <div className="game-log">
-      <h4>Game Log</h4>
+      <h4>{language === 'en' ? 'Game Log' : 'Registro de partida'}</h4>
       {availableSeasons.length > 1 && (
         <div className="log-season-tabs">
           {availableSeasons.map((season) => {
@@ -357,7 +359,7 @@ export const GameLog = () => {
           const entries = displayLog;
           const startIndex = 0;
           return entries.map((e, i) => (
-            <div key={`${startIndex + i}-${e.slice(0, 30)}`} className="log-entry">{renderLogEntry(e, players)}</div>
+            <div key={`${startIndex + i}-${e.slice(0, 30)}`} className="log-entry">{renderLogEntry(e, players, language)}</div>
           ));
         })()}
       </div>

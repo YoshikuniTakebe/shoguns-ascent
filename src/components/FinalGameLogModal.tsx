@@ -6,6 +6,7 @@ import { scoreWinterUpgrade } from '../utils/gameLogic';
 import { ClanShield } from './ClanShields';
 import { AutumnIcon, SpringIcon, SummerIcon, VPIcon, WinterIcon } from './Icons';
 import { renderLogEntry } from './GameLog';
+import { useGameStore } from '../store/gameStore';
 
 type ScoringBreakdown = {
   spring: { count: number; vp: number };
@@ -116,6 +117,7 @@ type FinalGameLogModalProps = {
 
 export const FinalGameLogModal = ({ gameState, localPlayerId, onClose }: FinalGameLogModalProps) => {
   const t = useT();
+  const language = useGameStore(state => state.language);
   const [activeSeason, setActiveSeason] = useState<Season>('spring');
   const sortedPlayers = [...gameState.players].sort((a, b) => {
     if (b.victoryPoints !== a.victoryPoints) return b.victoryPoints - a.victoryPoints;
@@ -164,7 +166,7 @@ export const FinalGameLogModal = ({ gameState, localPlayerId, onClose }: FinalGa
             displayLog.length > 0 ? (
               displayLog.map((entry, index) => (
                 <div key={`${index}-${entry.slice(0, 30)}`} className="final-log-entry">
-                  {renderLogEntry(entry, gameState.players)}
+                  {renderLogEntry(entry, gameState.players, language)}
                 </div>
               ))
             ) : (

@@ -11,6 +11,7 @@
     "check:train": "tsx scripts/check-train-flow.ts",
     "check:loto": "tsx scripts/check-loto-mandate-flow.ts",
     "check:recruit": "tsx scripts/check-recruit-flow.ts",
+    "check:log": "tsx scripts/check-log-translation.ts",
     "check:war": "tsx scripts/check-war-flow.ts",
     "check:serpent": "tsx scripts/check-serpent-flow.ts",
     "preview": "vite preview",

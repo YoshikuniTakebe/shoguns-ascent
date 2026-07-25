@@ -857,7 +857,7 @@ export const GameBoard = () => {
       </div>
 
       {/* Map Peek Return Button - shown when player hides bidding overlay to view map */}
-      {biddingMapPeek && gameState.currentPhase === 'war' && (
+      {biddingMapPeek && (gameState.currentPhase === 'war' || gameState.pendingSpringPlacement?.type === 'kenin') && (
         <button
           className="bidding-map-peek-return-btn"
           onClick={() => setBiddingMapPeek(false)}
@@ -868,7 +868,9 @@ export const GameBoard = () => {
           </svg>
           {gameState.pendingNureOnnaDecision
             ? t('nureOnna.returnToDecision')
-            : gameState.pendingBattleCardDecision?.type === 'earth-dragon'
+            : gameState.pendingSpringPlacement?.type === 'kenin'
+              ? t('kenin.returnToDecision')
+              : gameState.pendingBattleCardDecision?.type === 'earth-dragon'
               ? 'Volver al Dragón de Tierra'
               : t('battle.returnToBids')}
         </button>
