@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, SEASON_CARDS_DATA } from '../types/game';
@@ -99,18 +99,47 @@ export const MonsterEnterDecisionPopup = () => {
                       {player && <ClanShield clanId={player.clanId} size={21} />}
                       <strong style={{ color: clan?.color }}>{player?.name}</strong>
                     </div>
-                    <select
-                      value={selectedByPlayer[playerId] || ''}
-                      onChange={event => setSelectedByPlayer(current => pending.type === 'benten' ? { [playerId]: event.target.value } : { ...current, [playerId]: event.target.value })}
-                    >
-                      <option value="">Elige figura</option>
-                      {figures.map(figure => <option key={figure.id} value={figure.id}>{pending.type === 'benten' ? monsterName(figure) : figure.type === 'bushi' ? 'Bushi' : 'Shinto'}</option>)}
-                    </select>
+                    <div className="battle-card-choice-block">
+                      <span className="battle-card-choice-label">Figura</span>
+                      <div className="battle-card-choice-options">
+                        {figures.map(figure => (
+                          <button
+                            key={figure.id}
+                            type="button"
+                            className={`battle-card-choice${selectedByPlayer[playerId] === figure.id ? ' selected' : ''}`}
+                            style={{ '--choice-color': clan?.color || '#c8a951' } as CSSProperties}
+                            onClick={() => {
+                              setSelectedByPlayer(current => pending.type === 'benten'
+                                ? { [playerId]: figure.id }
+                                : { ...current, [playerId]: figure.id });
+                              if (pending.type === 'benten') setDestinationId('');
+                            }}
+                          >
+                            {pending.type === 'benten' ? monsterName(figure) : figure.type === 'bushi' ? 'Bushi' : 'Shinto'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     {pending.type === 'benten' && selectedByPlayer[playerId] && (
-                      <select value={destinationId} onChange={event => setDestinationId(event.target.value)}>
-                        <option value="">Elige destino</option>
-                        {adjacentIds.map(id => <option key={id} value={id}>{gameState.provinces[id]?.name || id}</option>)}
-                      </select>
+                      <div className="battle-card-choice-block">
+                        <span className="battle-card-choice-label">Provincia de destino</span>
+                        <div className="battle-card-choice-options">
+                          {adjacentIds.map(id => {
+                            const provinceColor = PROVINCE_COLORS[id] || '#c8a951';
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                className={`battle-card-choice province${destinationId === id ? ' selected' : ''}`}
+                                style={{ '--choice-color': provinceColor, color: provinceColor } as CSSProperties}
+                                onClick={() => setDestinationId(id)}
+                              >
+                                {gameState.provinces[id]?.name || id}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     )}
                   </div>
                 );

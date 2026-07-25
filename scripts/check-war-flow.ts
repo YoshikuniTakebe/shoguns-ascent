@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  calculateForce,
   createInitialGameState,
   getEarthDragonDestinations,
   preparePreBattleCardDecision,
@@ -10,6 +11,29 @@ import {
 } from '../src/utils/gameLogic';
 import { SEASON_CARDS_DATA } from '../src/types/game';
 import type { Figure } from '../src/types/game';
+
+const daimyoUpgradeState = createInitialGameState(
+  [
+    { name: 'Daimyo Upgrades', clanId: 'sol' },
+    { name: 'Rival', clanId: 'koi' },
+  ],
+  'hotseat',
+);
+const daimyoUpgradeOwner = daimyoUpgradeState.players[0];
+const lionCard = SEASON_CARDS_DATA.find(card => card.id === 'sp-path-of-the-lion');
+const dragonCard = SEASON_CARDS_DATA.find(card => card.id === 'au-path-of-the-dragon');
+assert.ok(lionCard && dragonCard, 'Daimyo force upgrades must exist');
+daimyoUpgradeOwner.seasonCards = [lionCard, dragonCard];
+daimyoUpgradeState.provinces.kansai.figures = [
+  { id: 'upgraded-daimyo', type: 'daimyo', owner: daimyoUpgradeOwner.id },
+  { id: 'upgraded-yurei', type: 'monster', owner: daimyoUpgradeOwner.id, monsterCardId: 'su-yurei' },
+  { id: 'upgraded-fukurokuju', type: 'monster', owner: daimyoUpgradeOwner.id, monsterCardId: 'sp-fukurokuju' },
+];
+assert.equal(
+  calculateForce(daimyoUpgradeState.provinces.kansai, daimyoUpgradeOwner.id, daimyoUpgradeState),
+  16,
+  'Daimyo upgrades must apply to the Daimyo, Yurei and Fukurokuju',
+);
 
 const earthState = createInitialGameState(
   [

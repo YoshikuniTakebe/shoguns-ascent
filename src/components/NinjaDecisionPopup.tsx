@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
@@ -42,17 +42,29 @@ export const NinjaDecisionPopup = () => {
         {isOwner ? (
           <>
             <p>Puedes eliminar un Bushi rival y perder Honor.</p>
-            <select value={targetFigureId} onChange={event => setTargetFigureId(event.target.value)}>
-              <option value="">Elige un Bushi</option>
-              {targets.map(({ figure, province }) => {
+            <div className="battle-card-choice-block popup-choice-block">
+              <span className="battle-card-choice-label">Bushi objetivo</span>
+              <div className="battle-card-choice-options popup-choice-options">
+                {targets.map(({ figure, province, provinceId }) => {
                 const victim = gameState.players.find(player => player.id === figure.owner);
-                return <option key={figure.id} value={figure.id}>{victim?.name} - {province.name}</option>;
-              })}
-            </select>
-            {targetFigureId && (() => {
-              const selected = targets.find(target => target.figure.id === targetFigureId);
-              return selected ? <p><strong style={{ color: PROVINCE_COLORS[selected.provinceId] || '#fff' }}>{selected.province.name}</strong></p> : null;
-            })()}
+                const victimClan = victim ? CLANS.find(candidate => candidate.id === victim.clanId) : null;
+                const provinceColor = PROVINCE_COLORS[provinceId] || '#c8a951';
+                return (
+                  <button
+                    key={figure.id}
+                    type="button"
+                    className={`battle-card-choice popup-figure-choice${targetFigureId === figure.id ? ' selected' : ''}`}
+                    style={{ '--choice-color': victimClan?.color || provinceColor } as CSSProperties}
+                    onClick={() => setTargetFigureId(figure.id)}
+                  >
+                    {victim && <ClanShield clanId={victim.clanId} size={20} />}
+                    <span style={{ color: victimClan?.color }}>{victim?.name}</span>
+                    <span style={{ color: provinceColor }}>{province.name}</span>
+                  </button>
+                );
+                })}
+              </div>
+            </div>
             {hasMercy && targetFigureId && (
               <div className="battle-card-decision-mercy">
                 <button className={!useMercy ? 'btn-primary' : 'btn-secondary'} onClick={() => setUseMercy(false)}>Eliminar</button>

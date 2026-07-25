@@ -6,7 +6,7 @@ import { useT, t as tStandalone } from '../i18n';
 import { FistIcon } from './Icons';
 import { ClanShield } from './ClanShields';
 import { getMonsterFigureImage, getCastleImage, getDaimyoImage, getBushiImage, getShintoImage, getRegionBackground, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
-import { calculateForce, countVirtueCards, getPlayerSeasonCardEffects } from '../utils/gameLogic';
+import { calculateForce, countVirtueCards, getDaimyoUpgradeForceBonus, getPlayerSeasonCardEffects, isDaimyoFigure } from '../utils/gameLogic';
 import { getBaseCardId, getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
 import { getFigureSizeOverride } from '../utils/figureSizes';
@@ -129,6 +129,9 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
     case 'monster':
       if (figure.monsterCardId) {
         const isLuna = ownerClanId === 'luna';
+        const daimyoBonus = isDaimyoFigure(figure)
+          ? getDaimyoUpgradeForceBonus(gameState, figure.owner)
+          : 0;
         if (figure.monsterCardId === 'sp-daikokuten') {
           const base = (gameState.currentPhase === 'politics' && gameState.harvestMandateActive) ? 8 : 1;
           return isLuna ? Math.max(base, 2) : base;
@@ -167,8 +170,10 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
               }
             }
           }
-          return isLuna ? Math.max(info.force, 2) : info.force;
+          const baseForce = isLuna ? Math.max(info.force, 2) : info.force;
+          return baseForce + daimyoBonus;
         }
+        return (isLuna ? 2 : 1) + daimyoBonus;
       }
       return ownerClanId === 'luna' ? 2 : 1;
     default:

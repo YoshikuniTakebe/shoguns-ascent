@@ -6,7 +6,7 @@ import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, SPRING_CARDS, SUMMER_CARDS, AUT
 import type { Figure, GameState } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon } from './Icons';
-import { countVirtueCards, getFujinMovementCost, getPlayerSeasonCardEffects, isFigureTrappedBySusanoo } from '../utils/gameLogic';
+import { countVirtueCards, getDaimyoUpgradeForceBonus, getFujinMovementCost, getPlayerSeasonCardEffects, isDaimyoFigure, isFigureTrappedBySusanoo } from '../utils/gameLogic';
 import { renderCardEffect } from '../utils/renderCardEffect';
 import { getCardEffectKey } from '../utils/cardTranslations';
 
@@ -89,6 +89,9 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
     case 'monster':
       if (figure.monsterCardId) {
         const isLuna = ownerClanId === 'luna';
+        const daimyoBonus = isDaimyoFigure(figure)
+          ? getDaimyoUpgradeForceBonus(gameState, figure.owner)
+          : 0;
         const province = gameState.provinces[regionId];
         if (figure.monsterCardId === 'sp-oni-of-skulls' || figure.monsterCardId === 'su-oni-of-blood') {
           const ownerIds = [...new Set(province?.figures.map(f => f.owner) || [])];
@@ -118,8 +121,10 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
         const allCards = [...SPRING_CARDS, ...SUMMER_CARDS, ...AUTUMN_CARDS];
         const card = allCards.find(c => c.id === figure.monsterCardId);
         if (card && card.force !== undefined) {
-          return isLuna ? Math.max(card.force, 2) : card.force;
+          const baseForce = isLuna ? Math.max(card.force, 2) : card.force;
+          return baseForce + daimyoBonus;
         }
+        return (isLuna ? 2 : 1) + daimyoBonus;
       }
       return ownerClanId === 'luna' ? 2 : 1;
     default:

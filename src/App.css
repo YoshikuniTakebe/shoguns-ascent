@@ -726,6 +726,14 @@
   gap: 8px;
 }
 
+.battle-card-decision-owner {
+  margin-bottom: 1rem;
+}
+
+.battle-card-decision-actions {
+  margin-top: 1.25rem;
+}
+
 .battle-start-combatants {
   display: flex;
   flex-wrap: wrap;
@@ -1055,6 +1063,29 @@
 
 .spring-placement-actions button {
   min-width: 145px;
+}
+
+.spring-placement-choice-block,
+.popup-choice-block {
+  width: 100%;
+  margin: 0.35rem auto 0.75rem;
+}
+
+.spring-placement-choice-options,
+.popup-choice-options {
+  justify-content: center;
+}
+
+.popup-figure-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.popup-figure-choice span:last-child::before {
+  content: '·';
+  margin-right: 0.4rem;
+  color: var(--text-secondary);
 }
 
 .spring-light-toolbar {

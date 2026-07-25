@@ -4269,9 +4269,15 @@ export function prepareJorogumoEffect(state: GameState, provinceId: string): Gam
 
 const DAIMYO_CARD_EFFECT_IMMUNE_MONSTERS = ['su-yurei', 'sp-fukurokuju'];
 
-function isCardEffectImmuneDaimyo(figure: Figure): boolean {
+export function isDaimyoFigure(figure: Figure): boolean {
   return figure.type === 'daimyo'
     || (figure.type === 'monster' && DAIMYO_CARD_EFFECT_IMMUNE_MONSTERS.includes(figure.monsterCardId || ''));
+}
+
+export function getDaimyoUpgradeForceBonus(state: GameState, playerId: string): number {
+  const cardIds = new Set(getPlayerSeasonCardEffects(state, playerId).map(card => card.id));
+  return (hasCard(cardIds, 'sp-path-of-the-lion') ? 1 : 0)
+    + (hasCard(cardIds, 'au-path-of-the-dragon') ? 3 : 0);
 }
 
 function battleDecisionCandidates(state: GameState, type: 'earth-dragon' | 'fire-dragon' | 'jorogumo', ownerId: string, provinceId: string): Record<string, Figure[]> {
@@ -4279,7 +4285,7 @@ function battleDecisionCandidates(state: GameState, type: 'earth-dragon' | 'fire
   if (!province) return {};
   const grouped: Record<string, Figure[]> = {};
   for (const figure of province.figures) {
-    if (isCardEffectImmuneDaimyo(figure)) continue;
+    if (isDaimyoFigure(figure)) continue;
     if (type === 'earth-dragon') {
       if (figure.owner === ownerId || figure.type === 'fortress') continue;
     } else if (type === 'fire-dragon') {
@@ -5729,7 +5735,7 @@ function applyMonsterEnterEffects(state: GameState, provinceId: string, figure: 
       candidate.type === 'monster'
       && candidate.owner !== playerId
       && candidate.id !== figure.id
-      && !isCardEffectImmuneDaimyo(candidate));
+      && !isDaimyoFigure(candidate));
     if (hasEnemyMonster && !state.pendingMonsterEnterDecision) {
       state.pendingMonsterEnterDecision = { type: 'benten', ownerId: playerId, provinceId, sourceFigureId: figure.id };
     }
@@ -5830,7 +5836,7 @@ export function resolveMonsterEnterDecision(
       figure.id === targetId
       && figure.type === 'monster'
       && figure.owner !== playerId
-      && !isCardEffectImmuneDaimyo(figure));
+      && !isDaimyoFigure(figure));
     const provinceData = PROVINCES_DATA.find(item => item.id === pending.provinceId);
     if (!target || !destinationId || !provinceData || ![...provinceData.adjacentProvinces, ...provinceData.seaRoutes].includes(destinationId)) return state;
     if (isFigureTrappedBySusanoo(nextState, pending.provinceId, target)) return state;
@@ -6406,12 +6412,7 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
     }
 
     if (fig.type === 'daimyo') {
-      if (hasCard(cardIds, 'sp-path-of-the-lion')) {
-        figForce += 1; // Daimyo +1 force
-      }
-      if (hasCard(cardIds, 'au-path-of-the-dragon')) {
-        figForce += 3; // Daimyo +3 force
-      }
+      figForce += getDaimyoUpgradeForceBonus(state, playerId);
       if (IS_DEV) {
         console.log('[calculateForce] daimyo check:', { playerId, cardIds: [...cardIds], hasLion: hasCard(cardIds, 'sp-path-of-the-lion'), figForce });
       }
@@ -6479,14 +6480,8 @@ export function calculateForce(province: Province & { figures: Figure[] }, playe
           figForce = isLuna ? Math.max(monsterCard.force, 2) : monsterCard.force;
         }
       }
-      // Fukurokuju counts as daimyo - apply daimyo bonus cards
-      if (fig.monsterCardId === 'sp-fukurokuju') {
-        if (hasCard(cardIds, 'sp-path-of-the-lion')) {
-          figForce += 1;
-        }
-        if (hasCard(cardIds, 'au-path-of-the-dragon')) {
-          figForce += 3;
-        }
+      if (isDaimyoFigure(fig)) {
+        figForce += getDaimyoUpgradeForceBonus(state, playerId);
       }
     }
 

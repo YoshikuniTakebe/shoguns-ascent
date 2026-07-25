@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, KAMI_DATA, PROVINCE_COLORS } from '../types/game';
@@ -98,31 +98,89 @@ export const SpringPlacementPopup = () => {
         {isOwner ? (
           <>
             {pending.type === 'kenin' && (
-              <select value={provinceId} onChange={event => setProvinceId(event.target.value)}>
-                <option value="">Elige una Fortaleza</option>
-                {fortressProvinces.map(province => <option key={province.id} value={province.id}>{province.name}</option>)}
-              </select>
+              <div className="battle-card-choice-block spring-placement-choice-block">
+                <span className="battle-card-choice-label">Fortaleza donde colocar el Bushi</span>
+                <div className="battle-card-choice-options spring-placement-choice-options">
+                  {fortressProvinces.map(province => {
+                    const provinceColor = PROVINCE_COLORS[province.id] || '#c8a951';
+                    return (
+                      <button
+                        key={province.id}
+                        type="button"
+                        className={`battle-card-choice province${provinceId === province.id ? ' selected' : ''}`}
+                        style={{ '--choice-color': provinceColor, color: provinceColor } as CSSProperties}
+                        onClick={() => setProvinceId(province.id)}
+                      >
+                        {province.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             )}
             {pending.type === 'samurai' && (
-              <select value={provinceId} onChange={event => setProvinceId(event.target.value)}>
-                <option value="">Elige una provincia</option>
-                {samuraiProvinces.map(province => <option key={province.id} value={province.id}>{province.name}</option>)}
-              </select>
+              <div className="battle-card-choice-block spring-placement-choice-block">
+                <span className="battle-card-choice-label">Provincia donde colocar el Bushi</span>
+                <div className="battle-card-choice-options spring-placement-choice-options">
+                  {samuraiProvinces.map(province => {
+                    const provinceColor = PROVINCE_COLORS[province.id] || '#c8a951';
+                    return (
+                      <button
+                        key={province.id}
+                        type="button"
+                        className={`battle-card-choice province${provinceId === province.id ? ' selected' : ''}`}
+                        style={{ '--choice-color': provinceColor, color: provinceColor } as CSSProperties}
+                        onClick={() => setProvinceId(province.id)}
+                      >
+                        {province.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             )}
             {pending.type === 'kannushi' && (
               <>
-                <select value={figureId} onChange={event => { setFigureId(event.target.value); setTempleId(''); }}>
-                  <option value="">Elige un Shinto</option>
-                  {gameState.temples.flatMap(temple => temple.figures.filter(figure => figure.playerId === pending.ownerId).map(figure => (
-                    <option key={figure.figureId} value={figure.figureId}>{KAMI_DATA.find(kami => kami.type === temple.kamiType)?.name || temple.kamiType}</option>
-                  ))) }
-                </select>
-                <select value={templeId} disabled={!figureId} onChange={event => setTempleId(event.target.value)}>
-                  <option value="">Elige santuario de destino</option>
-                  {gameState.temples.filter(temple => temple.id !== sourceTemple?.id && temple.figures.length < gameState.players.length).map(temple => (
-                    <option key={temple.id} value={temple.id}>{KAMI_DATA.find(kami => kami.type === temple.kamiType)?.name || temple.kamiType}</option>
-                  ))}
-                </select>
+                <div className="battle-card-choice-block spring-placement-choice-block">
+                  <span className="battle-card-choice-label">Shinto que quieres mover</span>
+                  <div className="battle-card-choice-options spring-placement-choice-options">
+                    {gameState.temples.flatMap(temple => temple.figures
+                      .filter(figure => figure.playerId === pending.ownerId)
+                      .map(figure => (
+                        <button
+                          key={figure.figureId}
+                          type="button"
+                          className={`battle-card-choice${figureId === figure.figureId ? ' selected' : ''}`}
+                          style={{ '--choice-color': clan?.color || '#c8a951' } as CSSProperties}
+                          onClick={() => {
+                            setFigureId(figure.figureId);
+                            setTempleId('');
+                          }}
+                        >
+                          {KAMI_DATA.find(kami => kami.type === temple.kamiType)?.name || temple.kamiType}
+                        </button>
+                      )))}
+                  </div>
+                </div>
+                <div className="battle-card-choice-block spring-placement-choice-block">
+                  <span className="battle-card-choice-label">Santuario de destino</span>
+                  <div className="battle-card-choice-options spring-placement-choice-options">
+                    {gameState.temples
+                      .filter(temple => temple.id !== sourceTemple?.id && temple.figures.length < gameState.players.length)
+                      .map(temple => (
+                        <button
+                          key={temple.id}
+                          type="button"
+                          className={`battle-card-choice${templeId === temple.id ? ' selected' : ''}`}
+                          style={{ '--choice-color': '#c8a951' } as CSSProperties}
+                          disabled={!figureId}
+                          onClick={() => setTempleId(temple.id)}
+                        >
+                          {KAMI_DATA.find(kami => kami.type === temple.kamiType)?.name || temple.kamiType}
+                        </button>
+                      ))}
+                  </div>
+                </div>
               </>
             )}
             {pending.type === 'light' && (
@@ -130,7 +188,6 @@ export const SpringPlacementPopup = () => {
                 Puedes colocar un Shinto adicional en uno de los santuarios.
               </p>
             )}
-            {provinceId && <p><strong style={{ color: PROVINCE_COLORS[provinceId] }}>{gameState.provinces[provinceId]?.name}</strong></p>}
             <div className="battle-card-decision-actions spring-placement-actions">
               <button className="btn-secondary" onClick={() => resolveDecision(false)}>Omitir</button>
               {pending.type === 'light' ? (

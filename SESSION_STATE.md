@@ -1412,3 +1412,13 @@ server restart — no longer loses the game.
   disappears from its set and season view and does not return in later seasons.
 - `debugAllCards` is fixed when a game is created. Existing non-debug snapshots are intentionally
   not converted retroactively; create a new game after restarting an older running server.
+
+## Changelog - 2026-07-25 (card-choice popups and Daimyo monsters)
+
+- Path of the Kenin now presents valid fortress Provinces as colored game badges instead of a native
+  select, with balanced spacing between its owner, choices and action buttons.
+- The remaining card-resolution selects were removed from Path of the Samurai, Path of the Kannushi,
+  Path of the Ninja, Benten and Oni of Hate. Figures, shrines and Provinces now use the same compact
+  selectable badges as the Earth Dragon flow; setup-form selects remain native form controls.
+- Yurei and Fukurokuju now receive every force bonus that applies to a Daimyo, including Path of the
+  Lion and Path of the Dragon. The shared force total, map tooltip and Province zoom use the same rule.
