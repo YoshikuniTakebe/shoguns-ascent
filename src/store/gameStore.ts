@@ -703,6 +703,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Lose honor
     loseHonor(ns, cp.id);
+    ns = grantWarlordSummonCoin(ns, cp.id);
 
     set({ gameState: ns, jinmenjuSummonActive: false });
   },
@@ -753,6 +754,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Lose honor
     loseHonor(ns, cp.id);
+    ns = grantWarlordSummonCoin(ns, cp.id);
 
     set({ gameState: ns, jinmenjuSummonActive: false });
   },
@@ -2209,6 +2211,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       log: [...gameState.log, `${player.name} invoca a ${monsterCard.name} en ${province.name}`],
     };
     applyDignityMonsterSummon(ns, apid);
+    ns = grantRecruitWarlordCoinOnce(ns, apid);
     ns = prepareMonsterEnterDecision(ns, recruitPendingProvinceId, figureId);
 
     set({ gameState: ns, recruitMonsterSelectionVisible: false, recruitPendingProvinceId: null, monsterPlacementContext: null, monsterPlacementCard: null, monsterPlacementPlayerId: null });
@@ -2676,7 +2679,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // In online mode the server awards this coin when it processes the MONSTER_PLACED action.
     if (gameState.mode === 'hotseat') {
       applyDignityMonsterSummon(ns, komainuPrayPlayerId);
-      ns = grantWarlordSummonCoin(ns, komainuPrayPlayerId);
+      ns = monsterPlacementContext === 'recruit'
+        ? grantRecruitWarlordCoinOnce(ns, komainuPrayPlayerId)
+        : grantWarlordSummonCoin(ns, komainuPrayPlayerId);
     }
 
     if (monsterPlacementContext === 'recruit') {

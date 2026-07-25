@@ -1422,3 +1422,15 @@ server restart — no longer loses the game.
   selectable badges as the Earth Dragon flow; setup-form selects remain native form controls.
 - Yurei and Fukurokuju now receive every force bonus that applies to a Daimyo, including Path of the
   Lion and Path of the Dragon. The shared force total, map tooltip and Province zoom use the same rule.
+
+## Changelog - 2026-07-25 (Path of the Kenin summon timing)
+
+- A Recruit turn records its Summon when the first figure is placed but defers Path of the Kenin and
+  the other `After you Summon` upgrades until that player presses Finish.
+- Kenin no longer interrupts Recruit between placements. It opens after the whole player action,
+  before the next unresolved game flow can continue.
+- Monster and dual monster placements during Recruit now use the same deferred trigger in hotseat
+  and online games. Independent Summons from Kami, purchased monsters, Jinmenju and other card
+  effects still resolve Kenin after their own action.
+- Added `npm run check:recruit` to cover the first placement, final placement, finished Recruit action
+  and an independent Summon.

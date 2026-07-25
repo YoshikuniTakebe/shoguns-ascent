@@ -2887,6 +2887,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             log: [...l.gameState.log, `${player.name} invoca a ${monsterCard.name} en ${province.name}`],
           };
           applyDignityMonsterSummon(l.gameState, data.playerId);
+          l.gameState = grantRecruitWarlordCoinOnce(l.gameState, data.playerId);
           l.gameState = prepareMonsterEnterDecision(l.gameState, monsterProvinceId, figureId);
           broadcastState(l);
           break;

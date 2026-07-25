@@ -414,9 +414,9 @@ export function grantWarlordSummonCoin(state: GameState, playerId: string): Game
 }
 
 /**
- * Award the Path of the Warlord coin for a Recruit turn. A whole Recruit turn counts as a
- * single summon regardless of how many figures (bushi at fortresses, temple shinto, etc.) are
- * placed, so this awards the coin at most once per recruit turn via recruitWarlordCoinAwarded.
+ * Record the single Summon event represented by a Recruit turn. The Warlord reward is immediate,
+ * but interactive "After you Summon" upgrades are deferred until the player finishes every
+ * Recruit placement and presses Finish.
  * Returns a NEW GameState (or the original if nothing to award).
  */
 export function grantRecruitWarlordCoinOnce(state: GameState, playerId: string): GameState {
@@ -425,12 +425,12 @@ export function grantRecruitWarlordCoinOnce(state: GameState, playerId: string):
   if (!player) return state;
   const cardIds = new Set(player.seasonCards.map(c => c.id));
   if (!hasCard(cardIds, 'sp-path-of-the-warlord')) {
-    return applySummonUpgradeBonuses({ ...state, recruitWarlordCoinAwarded: true }, playerId);
+    return { ...state, recruitWarlordCoinAwarded: true };
   }
   const newState = cloneForUpgradeMutation({ ...state, recruitWarlordCoinAwarded: true });
   gainCoinsFromSupply(newState, playerId, 1, 'Camino del Senor de la Guerra');
   newState.log = [...newState.log, `${player.name} gana 1 moneda (Camino del Senor de la Guerra - invocacion)`];
-  return applySummonUpgradeBonuses(newState, playerId);
+  return newState;
 }
 
 // ============================================================
@@ -1576,9 +1576,13 @@ export function recruitPlaceDaimyo(state: GameState, playerId: string, provinceI
  */
 export function skipRecruitTurn(state: GameState): GameState {
   if (!state.recruitMandateActive) return state;
+  const finishingPlayerId = state.recruitResolutionOrder[state.recruitResolutionIndex];
+  const completedSummonState = state.recruitWarlordCoinAwarded && finishingPlayerId
+    ? applySummonUpgradeBonuses(state, finishingPlayerId)
+    : state;
   const newState: GameState = {
-    ...state,
-    recruitResolutionIndex: state.recruitResolutionIndex + 1,
+    ...completedSummonState,
+    recruitResolutionIndex: completedSummonState.recruitResolutionIndex + 1,
   };
   return advanceRecruitResolution(newState);
 }
