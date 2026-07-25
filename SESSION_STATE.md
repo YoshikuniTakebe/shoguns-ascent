@@ -1390,3 +1390,13 @@ server restart — no longer loses the game.
   admin card browser and game configurators.
 - Deck selectors use the same native set icons as the in-game badge instead of platform-dependent
   emoji.
+
+## Changelog - 2026-07-25 (admin all-card debug games)
+
+- Admin game creation now includes an `All cards (Debug)` switch for hotseat and online games.
+- The server strips this option from non-admin lobby requests, and hotseat creation applies the
+  same admin check locally.
+- Debug games expose every card from every set and season from Spring onward. The market carries
+  its remaining cards into Summer and Autumn, so purchased cards never reappear.
+- The market removes its normal season filter in this mode and labels itself as the all-card debug
+  market.

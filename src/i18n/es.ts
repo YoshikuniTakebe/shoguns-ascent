@@ -57,6 +57,7 @@ export const es: Record<TranslationKey, string> = {
   'deck.extraMonsters': 'Monstruos Extra por estaci\u00F3n',
   'deck.none': 'Ninguno',
   'deck.kickstarterHint': 'Incluye cartas de Kickstarter y Monster Pack',
+  'deck.debugAllCards': 'Todas las cartas (Debug)',
   'deck.dynastyNote': 'Las cartas de Invasi\u00F3n Din\u00E1stica se incluyen autom\u00E1ticamente (clan Sol o Luna seleccionado).',
 
   // Kami Config

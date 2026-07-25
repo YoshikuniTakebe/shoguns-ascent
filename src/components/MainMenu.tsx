@@ -38,6 +38,7 @@ export const MainMenu = () => {
   const [kamiMode, setKamiMode] = useState<'random' | 'manual'>('random');
   const [selectedKami, setSelectedKami] = useState<KamiType[]>([]);
   const [kamiUnbound, setKamiUnbound] = useState(false);
+  const [debugAllCards, setDebugAllCards] = useState(false);
   const [hotseatPassword, setHotseatPassword] = useState('');
   const [showConfig, setShowConfig] = useState(false);
   const [showAddFriend, setShowAddFriend] = useState(false);
@@ -52,6 +53,7 @@ export const MainMenu = () => {
   const [createKamiMode, setCreateKamiMode] = useState<'random' | 'manual'>('random');
   const [createSelectedKami, setCreateSelectedKami] = useState<KamiType[]>([]);
   const [createKamiUnbound, setCreateKamiUnbound] = useState(false);
+  const [createDebugAllCards, setCreateDebugAllCards] = useState(false);
 
   const [createMode, setCreateMode] = useState<'manual' | 'random'>('manual');
   const [randomClans, setRandomClans] = useState<string[]>(() => shuffle(CLANS.map(c => c.id)).slice(0, createPc));
@@ -111,6 +113,7 @@ export const MainMenu = () => {
     extraMonsters,
     selectedKami: kamiMode === 'manual' && selectedKami.length === 4 ? selectedKami : undefined,
     kamiUnbound,
+    debugAllCards: authUser?.isAdmin && debugAllCards,
   });
 
   return (
@@ -299,6 +302,7 @@ export const MainMenu = () => {
                 <button
                   className={`deck-group-btn${chosenDeck === 'random' ? ' active' : ''}`}
                   onClick={() => setChosenDeck('random')}
+                  disabled={debugAllCards}
                 >
                   &#127922; {t('deck.random')}
                 </button>
@@ -307,6 +311,7 @@ export const MainMenu = () => {
                     key={g}
                     className={`deck-group-btn${chosenDeck === g ? ' active' : ''}`}
                     onClick={() => setChosenDeck(g)}
+                    disabled={debugAllCards}
                   >
                     <DeckSetIcon setName={g} size={18} />
                     {t(DECK_NAME_KEYS[g])}
@@ -322,6 +327,7 @@ export const MainMenu = () => {
                     key={n}
                     className={`deck-monster-btn${extraMonsters === n ? ' active' : ''}`}
                     onClick={() => setExtraMonsters(n)}
+                    disabled={debugAllCards}
                   >
                     {n === 0 ? t('deck.none') : n}
                   </button>
@@ -333,6 +339,15 @@ export const MainMenu = () => {
               <div className="deck-config-info">
                 &#9962; {t('deck.dynastyNote')}
               </div>
+            )}
+            {authUser?.isAdmin && (
+              <label className="kami-unbound-switch admin-debug-cards-switch">
+                <input type="checkbox" checked={debugAllCards} onChange={event => setDebugAllCards(event.target.checked)} />
+                <span className="kami-unbound-switch-label">{t('deck.debugAllCards')}</span>
+                <span className="kami-unbound-switch-track" aria-hidden="true">
+                  <span className="kami-unbound-switch-thumb" />
+                </span>
+              </label>
             )}
           </div>
 
@@ -587,6 +602,7 @@ export const MainMenu = () => {
                 <button
                   className={`deck-group-btn${createDeck === 'random' ? ' active' : ''}`}
                   onClick={() => setCreateDeck('random')}
+                  disabled={createDebugAllCards}
                 >
                   &#127922; {t('deck.random')}
                 </button>
@@ -595,6 +611,7 @@ export const MainMenu = () => {
                     key={g}
                     className={`deck-group-btn${createDeck === g ? ' active' : ''}`}
                     onClick={() => setCreateDeck(g)}
+                    disabled={createDebugAllCards}
                   >
                     <DeckSetIcon setName={g} size={18} />
                     {t(DECK_NAME_KEYS[g])}
@@ -610,12 +627,22 @@ export const MainMenu = () => {
                     key={n}
                     className={`deck-monster-btn${createExtraMonsters === n ? ' active' : ''}`}
                     onClick={() => setCreateExtraMonsters(n)}
+                    disabled={createDebugAllCards}
                   >
                     {n === 0 ? t('deck.none') : n}
                   </button>
                 ))}
               </div>
             </div>
+            {authUser?.isAdmin && (
+              <label className="kami-unbound-switch admin-debug-cards-switch">
+                <input type="checkbox" checked={createDebugAllCards} onChange={event => setCreateDebugAllCards(event.target.checked)} />
+                <span className="kami-unbound-switch-label">{t('deck.debugAllCards')}</span>
+                <span className="kami-unbound-switch-track" aria-hidden="true">
+                  <span className="kami-unbound-switch-thumb" />
+                </span>
+              </label>
+            )}
           </div>
 
           <div className="kami-config-section">
@@ -686,6 +713,7 @@ export const MainMenu = () => {
                   extraMonsters: createExtraMonsters,
                   selectedKami: createKamiMode === 'manual' && createSelectedKami.length === 4 ? createSelectedKami : undefined,
                   kamiUnbound: createKamiUnbound,
+                  debugAllCards: authUser?.isAdmin && createDebugAllCards,
                 };
 
                 if (createMode === 'manual') {

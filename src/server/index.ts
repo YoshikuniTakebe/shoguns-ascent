@@ -179,7 +179,7 @@ const wss = new WebSocketServer({ server });
 
 interface LobbyConfig {
   availableClans: string[];
-  deckConfig: { chosenDeck: string; extraMonsters: 0 | 1 | 2; selectedKami?: string[]; kamiUnbound?: boolean };
+  deckConfig: { chosenDeck: string; extraMonsters: 0 | 1 | 2; selectedKami?: string[]; kamiUnbound?: boolean; debugAllCards?: boolean };
   kamiMode: 'random' | 'manual';
   selectedKami?: string[];
   autoAssignClan?: boolean;
@@ -1153,9 +1153,14 @@ wss.on('connection', (ws: WebSocket, req) => {
           const lobbyId = uuidv4();
           const availableClans: string[] = data.availableClans || [];
           const hostClanId: string = data.clanId || '';
+          const authenticatedUser = userId ? getUserById(userId) : undefined;
+          const requestedDeckConfig = data.deckConfig || { chosenDeck: 'random', extraMonsters: 0 };
           const config: LobbyConfig = {
             availableClans,
-            deckConfig: data.deckConfig || { chosenDeck: 'random', extraMonsters: 0 },
+            deckConfig: {
+              ...requestedDeckConfig,
+              debugAllCards: !!authenticatedUser?.is_admin && requestedDeckConfig.debugAllCards === true,
+            },
             kamiMode: data.kamiMode || 'random',
             selectedKami: data.selectedKami,
             autoAssignClan: data.autoAssignClan || false,

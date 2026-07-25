@@ -55,6 +55,7 @@ export const en = {
   'deck.extraMonsters': 'Extra Monsters per season',
   'deck.none': 'None',
   'deck.kickstarterHint': 'Includes Kickstarter and Monster Pack cards',
+  'deck.debugAllCards': 'All cards (Debug)',
   'deck.dynastyNote': 'Dynasty Invasion cards are automatically included (Sol or Luna clan selected).',
 
   // Kami Config

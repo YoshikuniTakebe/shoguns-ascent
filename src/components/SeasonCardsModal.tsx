@@ -168,9 +168,9 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
     ryujinPlayer?.id === localPlayerId;
   if (isRyujinMode && !isLocalRyujinBuyer) return null;
 
-  const currentSeasonCards = gameState.seasonCardsDeck.filter(
-    (card) => card.season === gameState.currentSeason
-  );
+  const currentSeasonCards = gameState.debugAllCards
+    ? gameState.seasonCardsDeck
+    : gameState.seasonCardsDeck.filter((card) => card.season === gameState.currentSeason);
 
   const translateGroup = (group: string): string => {
     if (group.includes('/')) {
@@ -355,7 +355,9 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
         <h2 className="season-cards-modal-title">
           <SeasonTitleIcon />
           <span style={{ color: seasonTitleColor }}>
-            {t('seasonCardsModal.titleSeason', { season: t(`season.${gameState.currentSeason}` as TranslationKey) })}
+            {gameState.debugAllCards
+              ? t('deck.debugAllCards')
+              : t('seasonCardsModal.titleSeason', { season: t(`season.${gameState.currentSeason}` as TranslationKey) })}
           </span>
           {isInteractiveMode && (isRyujinMode ? ryujinPlayer : currentPlayer) && (() => {
             const player = isRyujinMode ? ryujinPlayer! : currentPlayer!;

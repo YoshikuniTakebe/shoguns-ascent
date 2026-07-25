@@ -1285,7 +1285,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // --- Game Lifecycle ---
   createGame: (players, mode, deckConfig, password) => {
-    const state = createInitialGameState(players, mode, undefined, deckConfig);
+    const safeDeckConfig = deckConfig
+      ? { ...deckConfig, debugAllCards: !!get().authUser?.isAdmin && deckConfig.debugAllCards === true }
+      : undefined;
+    const state = createInitialGameState(players, mode, undefined, safeDeckConfig);
     set({ gameState: state, localPlayerId: state.players[0].id, screen: 'game', persistentGameId: null });
     // Persist hotseat games
     if (mode === 'hotseat') {

@@ -585,9 +585,10 @@ export function createInitialGameState(
     ? DECK_GROUPS[Math.floor(Math.random() * DECK_GROUPS.length)]
     : config.chosenDeck;
   const resolvedConfig = { chosenDeck: resolvedDeck, extraMonsters: config.extraMonsters };
-  const springDeck = buildSeasonDeck(SPRING_CARDS, resolvedConfig, playerClanIds);
-  const summerDeck = buildSeasonDeck(SUMMER_CARDS, resolvedConfig, playerClanIds);
-  const autumnDeck = buildSeasonDeck(AUTUMN_CARDS, resolvedConfig, playerClanIds);
+  const allCardsDebugDeck = config.debugAllCards ? [...SEASON_CARDS_DATA] : null;
+  const springDeck = allCardsDebugDeck ? [...allCardsDebugDeck] : buildSeasonDeck(SPRING_CARDS, resolvedConfig, playerClanIds);
+  const summerDeck = allCardsDebugDeck ? [...allCardsDebugDeck] : buildSeasonDeck(SUMMER_CARDS, resolvedConfig, playerClanIds);
+  const autumnDeck = allCardsDebugDeck ? [...allCardsDebugDeck] : buildSeasonDeck(AUTUMN_CARDS, resolvedConfig, playerClanIds);
 
   const state: GameState = {
     id: generateId(),
@@ -618,7 +619,8 @@ export function createInitialGameState(
     springDeck,
     summerDeck,
     autumnDeck,
-    activeDeckGroup: resolvedDeck,
+    activeDeckGroup: config.debugAllCards ? null : resolvedDeck,
+    debugAllCards: !!config.debugAllCards,
     turnOrder,
     allianceProposals: [],
     politicsMandateCount: 0,
@@ -790,17 +792,19 @@ export function setupSeason(state: GameState, season: Season): GameState {
   }));
   newState.warProvinceSlots = warSlots;
 
-  // Set season cards for current season from pre-built decks
-  switch (season) {
-    case 'spring':
-      newState.seasonCardsDeck = [...newState.springDeck];
-      break;
-    case 'summer':
-      newState.seasonCardsDeck = [...newState.summerDeck];
-      break;
-    case 'autumn':
-      newState.seasonCardsDeck = [...newState.autumnDeck];
-      break;
+  // Debug games expose every card from Spring and keep the remaining market between seasons.
+  if (!newState.debugAllCards) {
+    switch (season) {
+      case 'spring':
+        newState.seasonCardsDeck = [...newState.springDeck];
+        break;
+      case 'summer':
+        newState.seasonCardsDeck = [...newState.summerDeck];
+        break;
+      case 'autumn':
+        newState.seasonCardsDeck = [...newState.autumnDeck];
+        break;
+    }
   }
 
   // Calculate and distribute seasonal income

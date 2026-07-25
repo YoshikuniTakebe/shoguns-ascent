@@ -259,6 +259,7 @@ export interface DeckConfig {
   extraMonsters: 0 | 1 | 2;
   selectedKami?: KamiType[];
   kamiUnbound?: boolean;
+  debugAllCards?: boolean;
 }
 
 export interface KamiResolutionTemple {
@@ -310,6 +311,7 @@ export interface GameState {
   summerDeck: SeasonCard[];
   autumnDeck: SeasonCard[];
   activeDeckGroup: DeckName | null;
+  debugAllCards?: boolean;
   turnOrder: string[];
   allianceProposals: AllianceProposal[];
   politicsMandateCount: number;
