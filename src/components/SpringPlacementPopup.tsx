@@ -192,7 +192,7 @@ export const SpringPlacementPopup = () => {
                 Puedes colocar un Shinto adicional en uno de los santuarios.
               </p>
             )}
-            {pending.type === 'kenin' && (
+            {pending.type !== 'light' && (
               <button
                 className="bidding-peek-map-btn battle-card-map-button spring-placement-map-button"
                 onClick={() => setBiddingMapPeek(true)}

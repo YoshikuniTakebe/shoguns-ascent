@@ -4,11 +4,15 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { canBeKilledByPlayer } from '../utils/gameLogic';
+import { useT } from '../i18n';
 
 export const NinjaDecisionPopup = () => {
+  const t = useT();
   const gameState = useGameStore(state => state.gameState);
   const localPlayerId = useGameStore(state => state.localPlayerId);
   const resolveDecision = useGameStore(state => state.doResolveNinjaDecision);
+  const biddingMapPeek = useGameStore(state => state.biddingMapPeek);
+  const setBiddingMapPeek = useGameStore(state => state.setBiddingMapPeek);
   const pending = gameState?.pendingNinjaDecision;
   const [targetFigureId, setTargetFigureId] = useState('');
   const [useMercy, setUseMercy] = useState(false);
@@ -25,7 +29,7 @@ export const NinjaDecisionPopup = () => {
       .map(figure => ({ figure, provinceId, province })));
   }, [gameState, pending]);
 
-  if (!gameState || !pending || gameState.pendingMonsterEnterDecision || gameState.pendingMonkeyDecision) return null;
+  if (!gameState || !pending || biddingMapPeek || gameState.pendingMonsterEnterDecision || gameState.pendingMonkeyDecision) return null;
   const owner = gameState.players.find(player => player.id === pending.ownerId);
   const clan = owner ? CLANS.find(candidate => candidate.id === owner.clanId) : null;
   const hasMercy = !!owner?.seasonCards.some(card => card.id === 'su-mercy' || card.id === 'su-mercy-2');
@@ -71,6 +75,16 @@ export const NinjaDecisionPopup = () => {
                 <button className={useMercy ? 'btn-primary' : 'btn-secondary'} onClick={() => setUseMercy(true)}>Misericordia (+2 PV)</button>
               </div>
             )}
+            <button
+              className="bidding-peek-map-btn battle-card-map-button spring-placement-map-button"
+              onClick={() => setBiddingMapPeek(true)}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {t('battle.viewMap')}
+            </button>
             <div className="battle-card-decision-actions">
               <button className="btn-secondary" onClick={() => resolveDecision(false)}>Omitir</button>
               <button className="btn-primary" disabled={!targetFigureId} onClick={() => resolveDecision(true, targetFigureId, useMercy)}>Confirmar</button>

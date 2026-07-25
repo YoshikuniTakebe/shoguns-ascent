@@ -6,6 +6,7 @@ import type { Figure } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { MonsterIcon } from './Icons';
 import { canBeKilledByPlayer } from '../utils/gameLogic';
+import { useT } from '../i18n';
 
 const IMMUNE_MONSTERS = ['su-yurei', 'sp-fukurokuju'];
 
@@ -14,9 +15,12 @@ function monsterName(figure: Figure): string {
 }
 
 export const MonsterEnterDecisionPopup = () => {
+  const t = useT();
   const gameState = useGameStore(state => state.gameState);
   const localPlayerId = useGameStore(state => state.localPlayerId);
   const resolveDecision = useGameStore(state => state.doResolveMonsterEnterDecision);
+  const biddingMapPeek = useGameStore(state => state.biddingMapPeek);
+  const setBiddingMapPeek = useGameStore(state => state.setBiddingMapPeek);
   const pending = gameState?.pendingMonsterEnterDecision;
   const key = pending ? `${pending.type}:${pending.sourceFigureId}:${pending.provinceId}` : '';
   const [useBenten, setUseBenten] = useState(false);
@@ -47,7 +51,7 @@ export const MonsterEnterDecisionPopup = () => {
     return grouped;
   }, [gameState, pending]);
 
-  if (!gameState || !pending) return null;
+  if (!gameState || !pending || biddingMapPeek) return null;
   const owner = gameState.players.find(player => player.id === pending.ownerId);
   const ownerClan = owner ? CLANS.find(clan => clan.id === owner.clanId) : null;
   const hasMercy = !!owner?.seasonCards.some(card => card.id === 'su-mercy' || card.id === 'su-mercy-2');
@@ -76,6 +80,16 @@ export const MonsterEnterDecisionPopup = () => {
         ) : pending.type === 'benten' && !bentenChoiceMade ? (
           <>
             <p>¿Quieres obligar a mover un monstruo rival?</p>
+            <button
+              className="bidding-peek-map-btn battle-card-map-button spring-placement-map-button"
+              onClick={() => setBiddingMapPeek(true)}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {t('battle.viewMap')}
+            </button>
             <div className="battle-card-decision-actions">
               <button className="btn-primary" onClick={() => { setUseBenten(true); setBentenChoiceMade(true); }}>Usar</button>
               <button className="btn-secondary" onClick={() => resolveDecision(false, {})}>Omitir</button>
@@ -145,6 +159,16 @@ export const MonsterEnterDecisionPopup = () => {
                 );
               })}
             </div>
+            <button
+              className="bidding-peek-map-btn battle-card-map-button spring-placement-map-button"
+              onClick={() => setBiddingMapPeek(true)}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {t('battle.viewMap')}
+            </button>
             <div className="battle-card-decision-actions">
               {pending.type === 'benten' && useBenten && <button className="btn-secondary" onClick={() => { setBentenChoiceMade(false); setUseBenten(false); }}>Cancelar</button>}
               <button className="btn-primary" disabled={!canConfirm} onClick={() => resolveDecision(true, selectedByPlayer, destinationId, useMercy)}>Confirmar</button>

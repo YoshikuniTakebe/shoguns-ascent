@@ -477,7 +477,7 @@ export const GameBoard = () => {
           <TemplePanel />
 
           {/* Fujin Interactive Overlay - between kami track and map */}
-          {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && (() => {
+          {!biddingMapPeek && gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && (() => {
             const currentTemple = gameState.kamiResolutionTemples?.[gameState.kamiResolutionIndex ?? 0];
             if (!currentTemple || currentTemple.kamiType !== 'fujin') return null;
             if (gameState.fujinMovesRemaining < 0) return null;
@@ -525,7 +525,7 @@ export const GameBoard = () => {
           })()}
 
           {/* Raijin Interactive Overlay - between kami track and map */}
-          {gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && (gameState.raijinPlacementActive || gameState.raijinPlacementDone) && (() => {
+          {!biddingMapPeek && gameState.kamiResolutionActive && gameState.kamiResolutionStep === 'interactive' && (gameState.raijinPlacementActive || gameState.raijinPlacementDone) && (() => {
             const currentTemple = gameState.kamiResolutionTemples?.[gameState.kamiResolutionIndex ?? 0];
             const winnerPlayer = currentTemple?.winnerId ? gameState.players.find(p => p.id === currentTemple.winnerId) : null;
             const winnerClan = winnerPlayer ? CLANS.find(c => c.id === winnerPlayer.clanId) : null;
@@ -578,7 +578,7 @@ export const GameBoard = () => {
           })()}
 
           {/* Zorro Placement Overlay */}
-          {gameState.zorroPlacementActive && (() => {
+          {!biddingMapPeek && gameState.zorroPlacementActive && (() => {
             const isZorroPlayer = gameState.mode === 'hotseat' || localPlayerId === gameState.zorroPlacementPlayerId;
             if (isZorroPlayer) {
               return (
@@ -857,7 +857,12 @@ export const GameBoard = () => {
       </div>
 
       {/* Map Peek Return Button - shown when player hides bidding overlay to view map */}
-      {biddingMapPeek && (gameState.currentPhase === 'war' || gameState.pendingSpringPlacement?.type === 'kenin') && (
+      {biddingMapPeek && (
+        gameState.currentPhase === 'war'
+        || !!gameState.pendingSpringPlacement
+        || !!gameState.pendingMonsterEnterDecision
+        || !!gameState.pendingNinjaDecision
+      ) && (
         <button
           className="bidding-map-peek-return-btn"
           onClick={() => setBiddingMapPeek(false)}
@@ -870,9 +875,19 @@ export const GameBoard = () => {
             ? t('nureOnna.returnToDecision')
             : gameState.pendingSpringPlacement?.type === 'kenin'
               ? t('kenin.returnToDecision')
+              : gameState.pendingSpringPlacement?.type === 'samurai'
+                ? t('samurai.returnToDecision')
+                : gameState.pendingSpringPlacement?.type === 'kannushi'
+                  ? t('kannushi.returnToDecision')
+                  : gameState.pendingMonsterEnterDecision?.type === 'benten'
+                    ? t('benten.returnToDecision')
+                    : gameState.pendingMonsterEnterDecision?.type === 'oni-hate'
+                      ? t('oniHate.returnToDecision')
+                      : gameState.pendingNinjaDecision
+                        ? t('ninja.returnToDecision')
               : gameState.pendingBattleCardDecision?.type === 'earth-dragon'
-              ? 'Volver al Dragón de Tierra'
-              : t('battle.returnToBids')}
+                          ? t('earthDragon.returnToDecision')
+                          : t('battle.returnToBids')}
         </button>
       )}
 
@@ -1009,17 +1024,17 @@ export const GameBoard = () => {
       })()}
 
       {/* Harvest Popup */}
-      <HarvestPopup />
+      {!biddingMapPeek && <HarvestPopup />}
 
       {/* Kami Resolution Popup */}
-      {!gameState?.kamiPlacementActive && <KamiResolutionPopup />}
-      <RyujinWaitingPopup />
+      {!biddingMapPeek && !gameState?.kamiPlacementActive && <KamiResolutionPopup />}
+      {!biddingMapPeek && <RyujinWaitingPopup />}
 
       {/* Kami Summary Popup */}
-      <KamiSummaryPopup />
+      {!biddingMapPeek && <KamiSummaryPopup />}
 
       {/* Kami Phase Start Popup */}
-      {kamiPhasePopupVisible && !gameState.pendingSpringPlacement && !gameState.kamiPlacementActive && (
+      {!biddingMapPeek && kamiPhasePopupVisible && !gameState.pendingSpringPlacement && !gameState.kamiPlacementActive && (
         <div className="harvest-popup-backdrop">
           <div className="harvest-popup" style={{ borderColor: '#9B59B6', maxWidth: '420px', minWidth: '320px', background: 'linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #1a0a2e 100%)', boxShadow: '0 0 20px rgba(155, 89, 182, 0.4), inset 0 0 30px rgba(155, 89, 182, 0.05)', borderWidth: '2px' }}>
             <h3 style={{ color: '#9B59B6', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>

@@ -1447,3 +1447,13 @@ server restart — no longer loses the game.
   resolution for the completed Summon action.
 - Home Kabuto motifs are twice their previous size. Their repeat tile grows by the same clear-space
   requirement so the helmets retain the established visual separation.
+
+## Changelog - 2026-07-25 (shared map preview and centered clan powers)
+
+- Clan-power tooltips in the player sidebar and Honor Track now center the clan heading, power label
+  and power content as one balanced block.
+- `View Map` is available for Path of the Samurai, Path of the Kannushi, Path of the Ninja, Benten
+  and Oni of Hate as well as Path of the Kenin and the existing pre-battle decisions.
+- Map preview temporarily suppresses Kami resolution and interactive overlays. A Kenin decision
+  triggered after Raijin therefore exposes the board cleanly and resumes the same decision and
+  selection state through its translated return button.
