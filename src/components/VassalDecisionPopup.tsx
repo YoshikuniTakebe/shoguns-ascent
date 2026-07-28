@@ -3,8 +3,10 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { CoinIcon, VPIcon } from './Icons';
+import { useT } from '../i18n';
 
 export const VassalDecisionPopup = () => {
+  const t = useT();
   const gameState = useGameStore(state => state.gameState);
   const localPlayerId = useGameStore(state => state.localPlayerId);
   const resolveDecision = useGameStore(state => state.doResolveVassal);
@@ -24,15 +26,15 @@ export const VassalDecisionPopup = () => {
           <strong style={{ color: clan?.color }}>{owner?.name}</strong>
         </div>
         <p className="benevolence-prompt">
-          ¿Quieres donar <CoinIcon size={22} color="#e2b93b" /> <strong>2</strong> por <VPIcon size={22} color={clan?.color} /> <strong>2</strong>?
+          {t('decision.vassal.questionBefore')} <strong>2</strong> <CoinIcon size={22} color="#e2b93b" /> {t('decision.vassal.questionAfter')} <strong>2</strong> <VPIcon size={22} color={clan?.color} />?
         </p>
         {isOwner ? (
           <div className="battle-card-decision-actions">
-            <button className="btn-primary" onClick={() => resolveDecision(true)}>Aceptar</button>
-            <button className="btn-secondary" onClick={() => resolveDecision(false)}>Rechazar</button>
+            <button className="btn-primary" onClick={() => resolveDecision(true)}>{t('common.accept')}</button>
+            <button className="btn-secondary" onClick={() => resolveDecision(false)}>{t('common.skip')}</button>
           </div>
         ) : (
-          <p className="waiting-label">Esperando a que {owner?.name || 'el jugador'} decida...</p>
+          <p className="waiting-label">{t('common.waitingForPlayer', { name: owner?.name || '' })}</p>
         )}
       </div>
     </div>,

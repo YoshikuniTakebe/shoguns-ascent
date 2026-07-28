@@ -9,8 +9,9 @@ import { useT } from '../i18n';
 import { shuffle } from '../utils/gameLogic';
 import { getServerWsUrl } from '../config';
 import { ConfigModal } from './ConfigModal';
-import { AddFriendModal, FriendsListModal, fetchFriends } from './FriendsModal';
-import type { Friend } from './FriendsModal';
+import { AddFriendModal, FriendRequestBadge, FriendsListModal } from './FriendsModal';
+import { FRIENDS_CHANGED_EVENT, fetchFriends } from '../utils/friendsApi';
+import type { Friend } from '../utils/friendsApi';
 import { ClanPowerContent } from './ClanPowerTooltip';
 import { IconLegend } from './IconLegend';
 import { DeckSetIcon } from './DeckSetIcons';
@@ -20,14 +21,9 @@ import typeGameBgImg from '../img/type_game_bg.png';
 export const MainMenu = () => {
   const { createGame, connectWebSocket, setLobbyId, setScreen, setAuthInitialMode, language, setLanguage, isAuthenticated, authUser, authToken, logout } = useGameStore();
   const t = useT();
-  const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>(() => {
-    const menuMode = useGameStore.getState().menuMode;
-    if (menuMode) {
-      useGameStore.setState({ menuMode: null });
-      return menuMode;
-    }
-    return 'select';
-  });
+  const [mode, setMode] = useState<'select' | 'hotseat' | 'online' | 'online-create' | 'online-join'>(
+    () => useGameStore.getState().menuMode || 'select',
+  );
   const [pc, setPc] = useState(3);
   const [names, setNames] = useState(
     Array.from({ length: 8 }, (_, i) => `Player ${i + 1}`)
@@ -68,7 +64,19 @@ export const MainMenu = () => {
   const [inviteFriendIds, setInviteFriendIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (authToken) fetchFriends(authToken).then(setFriends);
+    if (useGameStore.getState().menuMode) {
+      useGameStore.setState({ menuMode: null });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!authToken) return;
+    const refreshFriends = () => {
+      fetchFriends(authToken).then(setFriends);
+    };
+    refreshFriends();
+    window.addEventListener(FRIENDS_CHANGED_EVENT, refreshFriends);
+    return () => window.removeEventListener(FRIENDS_CHANGED_EVENT, refreshFriends);
   }, [authToken]);
 
   const hasSolOrLuna = clans.slice(0, pc).some(id => id === 'sol' || id === 'luna');
@@ -160,6 +168,7 @@ export const MainMenu = () => {
                 <path d="M2 19c0-3 2.5-5 6-5s6 2 6 5" />
                 <path d="M14 14c3.5 0 6 2 6 5" />
               </svg>
+              <FriendRequestBadge />
             </button>
             {authUser?.isAdmin && (
               <button className="auth-btn auth-btn-config" onClick={() => setShowConfig(true)} title={t('config.title')}>
@@ -813,8 +822,8 @@ export const MainMenu = () => {
                   <ClanShield clanId={c.id} size={24} />
                   Clan {c.name}
                 </span>
-                <span className="clan-tooltip-stat"><HonorIcon size={14} color={c.color} /> {t('menu.initialHonor')} {c.initialHonor}</span>
-                <span className="clan-tooltip-stat"><CoinIcon size={14} color={c.color} /> {t('menu.income')} {CLAN_INCOME[c.id] ?? 0}</span>
+                <span className="clan-tooltip-stat">{t('menu.initialHonor')} {c.initialHonor} <HonorIcon size={14} color={c.color} /></span>
+                <span className="clan-tooltip-stat">{t('menu.income')} {CLAN_INCOME[c.id] ?? 0} <CoinIcon size={14} color={c.color} /></span>
                 <span className="clan-tooltip-power">
                   <span className="clan-tooltip-power-label">{t('clanPower.label')}</span>
                   <span className="clan-tooltip-power-content">

@@ -91,6 +91,9 @@
 .monster-placement-popup-buttons{display:flex;gap:0.75rem;justify-content:center}
 .komainu-pray-overlay{position:fixed;top:auto;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:10px;padding:0.8rem 1.5rem;z-index:900;box-shadow:0 0 20px rgba(200,169,81,0.4);animation:pulse-monster 1.5s infinite}
 .komainu-pray-overlay span{color:var(--accent-gold);font-size:1rem;font-weight:bold}.komainu-target{animation:pulse-monster 1s infinite;cursor:pointer !important}
+.kami-slot.unrighteous-target{animation:pulse-monster 1s infinite;cursor:default !important}
+.unrighteous-shinto-target{appearance:none;padding:0;border:1px solid var(--accent-gold);border-radius:4px;background:rgba(246,205,0,.16);box-shadow:0 0 8px rgba(246,205,0,.9);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+.unrighteous-shinto-target:hover,.unrighteous-shinto-target:focus-visible{transform:scale(1.18);box-shadow:0 0 12px rgba(246,205,0,1);outline:2px solid #fff;outline-offset:2px}
 .kami-action-overlay{display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1a2e,#16213e);border:2px solid var(--accent-gold);border-radius:10px;padding:0.8rem 1.5rem;margin:0.5rem auto;max-width:700px;white-space:nowrap;box-shadow:0 0 20px rgba(200,169,81,0.4);animation:pulse-monster 1.5s infinite;z-index:50}
 .kami-action-overlay span{color:var(--accent-gold);font-size:1rem;font-weight:bold}
 .tea-phase,.politics-phase,.marshal-active,.recruit-active,.betray-active,.train-active{background:rgba(255,255,255,0.03);border:1px solid rgba(200,169,81,0.15);border-radius:8px;padding:0.8rem 0.9rem;margin-bottom:0.8rem}
@@ -336,7 +339,7 @@
 .trade-offer-section-label{color:#aaa;font-size:0.85rem;min-width:50px}
 .trade-offer-resource{display:inline-flex;align-items:center;gap:4px}
 .trade-offer-nonbinding{color:#666;font-size:0.75rem;font-style:italic;margin:0.3rem 0 0.6rem;text-align:center}
-.trade-offer-actions{display:flex;gap:0.6rem;justify-content:center}
+.trade-offer-actions{display:flex;gap:0.6rem;justify-content:center;margin-top:1rem}
 .trade-offer-accept{flex:1;padding:0.5rem}
 .trade-offer-reject{flex:1;padding:0.5rem}
 .rule-event-inline-clan{display:inline-flex;align-items:center;gap:5px;vertical-align:middle}
@@ -679,6 +682,18 @@
 .friends-list-entry{display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.5rem;border-bottom:1px solid rgba(200,169,81,0.15);color:var(--accent-cream)}
 .friends-list-entry:last-child{border-bottom:none}
 .friends-list-avatar{width:26px;height:26px;border-radius:50%;background:rgba(200,169,81,0.2);display:flex;align-items:center;justify-content:center;color:var(--accent-gold);font-weight:bold;font-size:0.8rem}
+.friends-btn-list{position:relative}
+.friend-request-badge{position:absolute;top:-7px;right:-7px;display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border:2px solid var(--bg-medium);border-radius:9px;background:var(--accent-red);color:#fff;font-size:0.65rem;font-weight:800;line-height:1}
+.friends-modal-sections{display:flex;flex-direction:column;gap:0.9rem;max-height:min(60vh,460px);overflow-y:auto;padding-right:0.2rem}
+.friends-modal-section h4{margin:0 0 0.35rem;color:var(--accent-gold);font-size:0.8rem;text-transform:uppercase}
+.friend-request-entry{align-items:center}
+.friend-request-name{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.friend-request-actions{display:flex;gap:0.35rem;margin-left:auto}
+.friend-request-action{border:1px solid;border-radius:4px;padding:0.3rem 0.45rem;color:#fff;font-size:0.72rem;font-weight:700;cursor:pointer}
+.friend-request-action:disabled{opacity:0.5;cursor:not-allowed}
+.friend-request-accept{border-color:#27ae60;background:#1e8449}
+.friend-request-reject{border-color:#e94560;background:#a93246}
+.friend-request-pending{margin-left:auto;color:var(--text-secondary);font-size:0.72rem;font-style:italic}
 
 /* Lobby card: current-turn seal centered + 2-row names */
 .games-lobby-card-turn-seal{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;margin:0}
@@ -1374,3 +1389,140 @@
 .turn-indicator .current-player-name{font-size:calc(1.1rem + 1pt)}
 .game-header{height:62px;min-height:62px;max-height:62px;flex:0 0 62px;padding-top:2px;padding-bottom:2px}
 .kami-unbound-toggle{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;color:var(--text-primary);font-weight:600;cursor:pointer}.kami-unbound-toggle input{width:18px;height:18px;accent-color:var(--accent-gold)}.kami-unbound-popup{width:min(420px,92vw);text-align:center}.kami-unbound-figure-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:12px}.kami-unbound-figure-wrap img{height:150px;max-width:190px;object-fit:contain}.kami-unbound-figure-wrap strong{font-size:1.35rem}.kami-unbound-owner{display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 0 14px}.kami-unbound-owner span{font-size:.78rem;text-transform:uppercase;font-weight:700}.kami-unbound-toolbar{position:fixed;left:50%;bottom:24px;z-index:4000;transform:translateX(-50%);display:flex;align-items:center;gap:12px;min-width:min(520px,92vw);padding:10px 12px;background:rgba(15,20,43,.97);border:2px solid var(--accent-gold);border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.65)}.kami-unbound-toolbar-title{display:flex;flex:1;align-items:center;gap:10px}.kami-unbound-toolbar .icon-btn{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--accent-gold);background:transparent;color:var(--accent-gold);border-radius:50%;cursor:pointer}.kami-unbound-toolbar .icon-btn:disabled{opacity:.35;cursor:not-allowed}.region-card.kami-unbound-target{border-color:#f2d35c;box-shadow:0 0 15px rgba(242,211,92,.7);animation:pulse-gold 1s infinite}.region-card.kami-unbound-selected{border-color:#fff2a8;box-shadow:0 0 25px rgba(255,242,168,.95)}@keyframes pulse-gold{0%,100%{box-shadow:0 0 12px rgba(242,211,92,.45)}50%{box-shadow:0 0 25px rgba(242,211,92,.9)}}.kami-template-figure{display:flex;flex-direction:column;align-items:center;gap:2px}.kami-template-figure>span{font-weight:900;font-size:14px;text-shadow:0 2px 4px #000}.kami-template-figure-zoom>span{font-size:1.25rem;margin-top:-16px}
+
+/* Shared decision and battle presentation */
+.alliance-display{z-index:1100}
+.battle-start-combatants .battle-card-decision-owner{margin:0;padding:.45rem .75rem;border:1.5px solid currentColor;border-radius:999px;background:rgba(9,16,34,.76);box-shadow:inset 0 0 12px rgba(255,255,255,.025)}
+.battle-start-combatants .battle-card-decision-owner strong{font-size:.92rem}
+.marshal-serpent-warning .harvest-popup-title{display:flex;align-items:center;justify-content:center;gap:.55rem}
+.marshal-serpent-warning p{margin:.25rem auto 1.25rem;line-height:1.5}
+.marshal-serpent-warning-cost{display:flex;align-items:center;justify-content:center;gap:.4rem;flex-wrap:wrap}
+.generosity-waiting-popup{min-width:min(380px,90vw)}
+.generosity-waiting-player{display:flex;align-items:center;justify-content:center;gap:.55rem;margin:.8rem 0}
+.rule-event-victim-list{display:flex;flex-direction:column;gap:.5rem;margin:.9rem auto 1.2rem}
+.rule-event-victim-badge{display:flex;align-items:center;justify-content:center;gap:.35rem;padding:.4rem .6rem;border:1px solid;border-radius:999px;background:rgba(8,15,32,.58)}
+.rule-event-victim-badge small{margin-left:.25rem;color:var(--text-secondary)}
+.recruit-active .recruit-mandate-description{font-size:.78rem;line-height:1.35}
+.recruit-active .recruit-player-info{font-size:.72rem;white-space:nowrap;letter-spacing:0}
+.recruit-active .recruit-placements-left{font-size:.84rem;white-space:nowrap}
+
+/* Connected games are visually distinct from the regular blue lobby cards. */
+.games-lobby-card-connected{background:linear-gradient(135deg,rgba(18,76,65,.96),rgba(15,52,72,.96));border-color:#43d39e!important;box-shadow:0 0 11px rgba(67,211,158,.42),inset 0 0 22px rgba(67,211,158,.08)}
+.games-lobby-card-connected:hover{box-shadow:0 0 18px rgba(67,211,158,.58),inset 0 0 26px rgba(67,211,158,.1)}
+
+/* Consistent loading feedback in the app shell and lobby. */
+.loading{gap:.75rem}
+.loading::before,.games-lobby-loading::before{content:"";display:inline-block;width:28px;height:28px;border:3px solid rgba(200,169,81,.25);border-top-color:var(--accent-gold);border-radius:50%;animation:loading-spin .8s linear infinite;flex:0 0 auto}
+.games-lobby-loading{display:flex;align-items:center;justify-content:center;gap:.65rem;min-height:35vh}
+@keyframes loading-spin{to{transform:rotate(360deg)}}
+
+/* Give praying figures a dark stage over the bright Shrine artwork. */
+.kami-slot-figures{position:absolute;bottom:54px;right:6px;display:flex;gap:4px;padding:3px 5px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:rgba(7,13,29,.72);box-shadow:0 2px 8px rgba(0,0,0,.5);backdrop-filter:blur(1px)}
+.kami-slot-amaterasu .kami-slot-figures{background:rgba(6,12,28,.88);border-color:rgba(255,255,255,.3)}
+.kami-phase-torii{flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
+.politics-track-phase-icon.war .war-seal{color:var(--accent-red)}
+.figure-tooltip-portal{position:fixed;right:auto;bottom:auto;z-index:10000;opacity:1;visibility:visible;transform:translate(-50%,-100%);pointer-events:none}
+
+/* Shared action bar for Kami powers and other board placements/resolutions. */
+.kami-action-overlay{
+  position:fixed;
+  left:calc(50% - 45px);
+  bottom:1rem;
+  width:max-content;
+  max-width:min(760px,calc(100vw - 590px));
+  min-height:58px;
+  margin:0;
+  padding:.65rem .8rem;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:center;
+  gap:.65rem;
+  white-space:normal;
+  z-index:900;
+  animation:none;
+}
+.kami-action-overlay>span{flex:1 1 260px;min-width:0;text-align:left;line-height:1.35}
+.kami-action-overlay button{flex:0 0 auto;margin-left:0!important}
+
+.war-upgrade-player-group{padding:6px 10px;border:1px solid;border-radius:6px}
+.war-upgrade-badge{position:relative;display:flex;align-items:center;gap:6px;padding:3px 0;cursor:help}
+.war-upgrade-result{display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;margin-left:auto;font-size:.85rem;white-space:nowrap}
+.war-upgrade-tooltip{
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 8px);
+  width:min(320px,calc(100vw - 40px));
+  padding:.65rem .8rem;
+  border:1px solid var(--accent-gold);
+  border-radius:6px;
+  background:rgba(10,16,34,.98);
+  color:var(--text-primary);
+  font-size:.78rem;
+  font-style:normal;
+  line-height:1.4;
+  text-align:center;
+  box-shadow:0 8px 24px rgba(0,0,0,.55);
+  opacity:0;
+  visibility:hidden;
+  transform:translate(-50%,5px);
+  transition:opacity .18s,transform .18s,visibility .18s;
+  pointer-events:none;
+  z-index:4;
+}
+.war-upgrade-badge:hover .war-upgrade-tooltip{opacity:1;visibility:visible;transform:translate(-50%,0)}
+
+.battle-combatants-popup{
+  background-color:var(--bg-medium);
+  background-image:
+    linear-gradient(145deg,rgba(22,33,62,.94),rgba(15,20,42,.96)),
+    url("./img/home-kabuto-pattern.svg");
+  background-repeat:no-repeat,repeat;
+  background-size:cover,124px 104px;
+}
+.battle-combatants-title{display:flex;align-items:center;justify-content:center;gap:.65rem}
+.battle-combatants-title .war-seal{flex:0 0 auto;color:#dc143c}
+
+/* Stable three-zone game header: language length must not move controls. */
+.game-header{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  column-gap:1rem;
+}
+.header-left{min-width:0;overflow:hidden}
+.turn-indicator{justify-self:center;min-width:0;white-space:nowrap}
+.game-header-right{
+  min-width:0;
+  justify-self:end;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:.75rem;
+}
+.game-header-right .legend-button-wrapper{min-width:0}
+.game-name-header{
+  max-width:180px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.exit-game-btn{position:static;right:auto;top:auto;transform:none;flex:0 0 auto}
+
+/* Four compact player resources on one line. */
+.player-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:.15rem}
+.player-stats .stat{justify-content:center;gap:.2rem;min-width:0}
+.player-stats .stat-value{font-weight:800;color:var(--text-primary);font-variant-numeric:tabular-nums}
+.sidebar-tooltip-line{display:block;margin-top:0.12rem;font-style:normal}
+.player-extras{display:flex;align-items:center;gap:.25rem;margin-top:.25rem;width:100%;min-width:0}
+.player-extra-tooltip{display:inline-flex;align-items:center;min-width:0}
+.player-extra-tooltip-fixed{flex:0 0 auto}
+.player-extra-tooltip-cards{flex:1 1 auto}
+.player-extra-tooltip-cards .player-cards-btn{width:100%;min-width:0;margin-top:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.player-extra-tooltip-fixed .war-token-btn,.player-extra-tooltip-fixed .hostage-btn{margin-top:0;flex:0 0 auto}
+
+@media(max-width:1024px){
+  .kami-action-overlay{left:50%;max-width:calc(100vw - 24px)}
+  .game-header{grid-template-columns:minmax(0,1fr) auto}
+  .turn-indicator{display:none}
+}
+@media(max-width:560px){.kami-phase-start-title{gap:5px!important;font-size:1.15rem!important}.kami-phase-torii{width:36px;height:36px}}

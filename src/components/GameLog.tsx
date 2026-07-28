@@ -129,9 +129,14 @@ export function renderLogEntry(entry: string, players: { name: string; clanId: s
 
   // 5. Replace VP/PV keywords (and preceding number if present) with bold red + icon
   const vpPattern = /(\d+\s*)?\b(VP|PV)\b/gi;
-  segments = applyPattern(segments, vpPattern, (m, key) => (
-    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#E63946', fontWeight: 'bold' }}>{m}<VPIcon size={14} /></span>
-  ));
+  segments = applyPattern(segments, vpPattern, (m, key) => {
+    const number = m.match(/\d+/)?.[0];
+    return (
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#E63946', fontWeight: 'bold' }}>
+        {number && <strong>{number}</strong>}<VPIcon size={14} />
+      </span>
+    );
+  });
 
   // 5.5. Replace troop type keywords with corresponding icons in clan color
   let troopIconColor = '#DAA520'; // fallback gold
@@ -172,15 +177,31 @@ export function renderLogEntry(entry: string, players: { name: string; clanId: s
 
   // 6. Replace ronin keyword (and preceding number if present) with bold red + icon
   const roninPattern = /(\d+\s*)?\b(ronin|ronins)\b/gi;
-  segments = applyPattern(segments, roninPattern, (m, key) => (
-    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#E63946', fontWeight: 'bold' }}>{m}<RoninIcon size={14} color="#E63946" /></span>
-  ));
+  segments = applyPattern(segments, roninPattern, (m, key) => {
+    const number = m.match(/\d+/)?.[0];
+    return (
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#E63946', fontWeight: 'bold' }}>
+        {number && <strong>{number}</strong>}<RoninIcon size={14} color="#E63946" />
+      </span>
+    );
+  });
 
   // 6.5. Replace {h} with just the HonorIcon (no text)
   const honorTokenPattern = /\{h\}/g;
   segments = applyPattern(segments, honorTokenPattern, (_m, key) => (
     <span key={key} style={{ display: 'inline-flex', alignItems: 'center' }}><HonorIcon size={14} color="#DAA520" /></span>
   ));
+
+  // Replace {vp} followed by a number with the VP icon and total.
+  const vpTokenPattern = /\{vp\}\s*(\d+)/g;
+  segments = applyPattern(segments, vpTokenPattern, (m, key) => {
+    const number = m.match(/\d+/)?.[0] || '0';
+    return (
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#E63946', fontWeight: 'bold' }}>
+        <strong>{number}</strong><VPIcon size={14} color="#E63946" />
+      </span>
+    );
+  });
 
   // 6.6. Replace honor keyword with bold styling + HonorIcon
   const honorPattern = /\b(honor)\b/gi;
@@ -195,7 +216,7 @@ export function renderLogEntry(entry: string, players: { name: string; clanId: s
     const clan = CLANS.find(item => item.id === match?.[1]);
     return (
       <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: clan?.color || '#DAA520', fontWeight: 'bold' }}>
-        <ClanShield clanId={match?.[1] || ''} size={16} /><CoinIcon size={14} color={clan?.color || '#DAA520'} />{match?.[2] || '0'}
+        <ClanShield clanId={match?.[1] || ''} size={16} /><strong>{match?.[2] || '0'}</strong><CoinIcon size={14} color={clan?.color || '#DAA520'} />
       </span>
     );
   });
@@ -218,7 +239,7 @@ export function renderLogEntry(entry: string, players: { name: string; clanId: s
     const numberMatch = m.match(/\d+/);
     const number = numberMatch ? numberMatch[0] : '';
     return (
-      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}><CoinIcon size={14} />{number}</span>
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}><strong>{number}</strong><CoinIcon size={14} /></span>
     );
   });
 
@@ -234,7 +255,7 @@ export function renderLogEntry(entry: string, players: { name: string; clanId: s
     const numberMatch = m.match(/\d+/);
     const number = numberMatch ? numberMatch[0] : '';
     return (
-      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}><CoinIcon size={14} />{number}</span>
+      <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#DAA520', fontWeight: 'bold' }}><strong>{number}</strong><CoinIcon size={14} /></span>
     );
   });
 

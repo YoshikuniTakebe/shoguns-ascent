@@ -74,8 +74,11 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
           const provinceHasOni = province.figures.some(
             (f) => f.type === 'monster' && f.monsterCardId && f.monsterCardId.includes('oni-of-')
           );
-          if (hasDisplayCard(cardIds, 'su-path-of-might') && provinceHasOni) {
-            figForce += 1;
+          const pathOfMightCopies = playerCards.filter(card =>
+            card.id === 'su-path-of-might' || card.id === 'su-path-of-might-2'
+          ).length;
+          if (pathOfMightCopies > 0 && provinceHasOni) {
+            figForce += pathOfMightCopies;
           }
         }
       }
@@ -513,7 +516,7 @@ export const RegionDetailModal = ({ regionId, onClose }: RegionDetailModalProps)
               : figure.type === 'bushi' ? 'Bushi'
               : figure.type === 'shinto' ? 'Shinto'
               : figure.type === 'daimyo' ? 'Daimyo'
-              : figure.type === 'fortress' ? 'Fortaleza'
+              : figure.type === 'fortress' ? t('common.fortress')
               : figure.type === 'kami' ? (KAMI_DATA.find(kami => kami.type === figure.kamiType)?.name || 'Kami')
               : ''}
           </div>

@@ -2,8 +2,10 @@ import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import { ClanShield } from './ClanShields';
+import { useT } from '../i18n';
 
 export const BattleMercyDecisionPopup = () => {
+  const t = useT();
   const gameState = useGameStore(state => state.gameState);
   const localPlayerId = useGameStore(state => state.localPlayerId);
   const resolveDecision = useGameStore(state => state.doResolveBattleMercyDecision);
@@ -24,17 +26,17 @@ export const BattleMercyDecisionPopup = () => {
           <strong style={{ color: clan?.color }}>{owner?.name}</strong>
         </div>
         <p>
-          Puedes perdonar todas las figuras rivales que moririan en{' '}
+          {t('decision.mercy.questionBefore')}{' '}
           <strong style={{ color: PROVINCE_COLORS[pending.provinceId] || '#fff' }}>{province?.name}</strong>
-          {' '}y ganar <strong>2 PV</strong>.
+          {' '}{t('decision.mercy.questionAfter')} <strong>2 PV</strong>.
         </p>
         {isOwner ? (
           <div className="battle-card-decision-actions">
-            <button className="btn-primary" onClick={() => resolveDecision(true)}>Perdonar</button>
-            <button className="btn-secondary" onClick={() => resolveDecision(false)}>Resolver bajas</button>
+            <button className="btn-primary" onClick={() => resolveDecision(true)}>{t('common.spare')}</button>
+            <button className="btn-secondary" onClick={() => resolveDecision(false)}>{t('common.resolveCasualties')}</button>
           </div>
         ) : (
-          <p className="waiting-label">Esperando a que {owner?.name || 'el jugador'} decida...</p>
+          <p className="waiting-label">{t('common.waitingForPlayer', { name: owner?.name || '' })}</p>
         )}
       </div>
     </div>,

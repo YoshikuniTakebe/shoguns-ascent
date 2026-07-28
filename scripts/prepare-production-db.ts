@@ -17,6 +17,9 @@ await source.backup(destinationPath);
 source.close();
 
 const target = new Database(destinationPath);
+const hasFriendRequests = !!target.prepare(`
+  SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'friend_requests'
+`).get();
 const admins = target.prepare('SELECT id, username FROM users WHERE is_admin = 1').all() as Array<{ id: string; username: string }>;
 const admin = requestedAdmin
   ? admins.find(candidate => candidate.username.toLowerCase() === requestedAdmin.toLowerCase())
@@ -33,6 +36,7 @@ if (!admin) {
 const sanitize = target.transaction(() => {
   target.prepare('DELETE FROM snapshots').run();
   target.prepare('DELETE FROM game_players').run();
+  if (hasFriendRequests) target.prepare('DELETE FROM friend_requests').run();
   target.prepare('DELETE FROM friends').run();
   target.prepare('DELETE FROM pending_lobbies').run();
   target.prepare('DELETE FROM games').run();

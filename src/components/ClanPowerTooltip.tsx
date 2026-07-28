@@ -23,8 +23,8 @@ export const ClanPowerContent = ({ clanId, color }: { clanId: string; color: str
       return (
         <span className="clan-power-tooltip-lines">
           <span className="clan-power-tooltip-line">{t('clanPower.sol.tie')} <HonorIcon size={16} color={color} /></span>
-          <span className="clan-power-tooltip-line">{t('clanPower.sol.gains')} <CoinIcon size={16} color={color} /> 1 {t('clanPower.and')} <VPIcon size={16} color={color} /> 1</span>
-          <span className="clan-power-tooltip-line">{t('clanPower.sol.loser')} <CoinIcon size={16} color={color} /> 1 {t('clanPower.and')} <VPIcon size={16} color={color} /> 1.</span>
+          <span className="clan-power-tooltip-line">{t('clanPower.sol.gains')} 1 <CoinIcon size={16} color={color} /> {t('clanPower.and')} 1 <VPIcon size={16} color={color} /></span>
+          <span className="clan-power-tooltip-line">{t('clanPower.sol.loser')} 1 <CoinIcon size={16} color={color} /> {t('clanPower.and')} 1 <VPIcon size={16} color={color} />.</span>
         </span>
       );
     case 'loto':
@@ -58,7 +58,7 @@ export const ClanPowerContent = ({ clanId, color }: { clanId: string; color: str
         </span>
       );
     case 'bonsai':
-      return <>{t('clanPower.bonsai.before')} <CoinIcon size={17} color={color} /> 1</>;
+      return <>{t('clanPower.bonsai.before')} 1 <CoinIcon size={17} color={color} /></>;
     case 'luna':
       return (
         <span className="clan-power-tooltip-lines">

@@ -155,6 +155,7 @@ export interface Battle {
   provinceId: string;
   participants: string[];
   warTacticBids: { [playerId: string]: { [tacticId: string]: number } };
+  bidsEscrowed?: boolean;
   resolved: boolean;
   winner?: string;
   uncontested?: boolean;
@@ -195,7 +196,7 @@ export interface AllianceProposal {
 
 export interface RuleEventNotice {
   id: string;
-  type: 'serpent' | 'hotei' | 'ebisu' | 'jurojin' | 'benevolence' | 'jikininki' | 'koneko' | 'patience';
+  type: 'serpent' | 'hotei' | 'ebisu' | 'jurojin' | 'benevolence' | 'jikininki' | 'koneko' | 'patience' | 'righteousness' | 'oni-spite' | 'shadow' | 'vassal' | 'merchant';
   actorId: string;
   targetId: string;
   requiredPlayerIds: string[];
@@ -203,6 +204,7 @@ export interface RuleEventNotice {
   actorCoins?: number;
   targetCoins?: number;
   rewardAmount?: number;
+  figureCount?: number;
   copyNumber?: number;
   honorLost?: number;
   actorRonin?: number;
@@ -210,8 +212,9 @@ export interface RuleEventNotice {
   fromProvinceId?: string;
   toProvinceId?: string;
   affectedPlayers?: Array<{ playerId: string; coins: number; ronin: number; coinsLost?: number; roninLost?: number }>;
+  affectedVictoryPoints?: Array<{ playerId: string; amount: number; remaining: number }>;
   templeKami?: KamiType;
-  resume?: 'advance-kami' | 'advance-train' | 'advance-marshal' | 'advance-war-start' | 'continue-benevolence' | 'continue-pre-battle' | null;
+  resume?: 'advance-kami' | 'advance-train' | 'advance-marshal' | 'advance-war-start' | 'continue-benevolence' | 'continue-pre-battle' | 'continue-fujin' | 'continue-vassal' | 'continue-nure-onna' | null;
 }
 
 export interface PendingSerpentCrossing {
@@ -335,6 +338,7 @@ export interface GameState {
   marshalMandateIssuerId: string | null;
   marshalFortressBuiltBy: string[];
   marshalMovedFigures: string[];
+  pendingMarshalSerpentWarningPlayerId?: string | null;
   recruitMandateActive: boolean;
   recruitResolutionOrder: string[];
   recruitResolutionIndex: number;
@@ -346,9 +350,17 @@ export interface GameState {
   // the current player's recruit turn (a whole recruit turn counts as a single summon).
   // Optional so existing GameState construction sites don't need to change; treated as false.
   recruitWarlordCoinAwarded?: boolean;
+  // A Recruit turn becomes a Summon only after at least one figure is actually placed. The
+  // resulting upgrades are resolved when the player confirms the turn with Finish.
+  recruitSummonOccurred?: boolean;
   jinmenjuUsedThisMandate: boolean;
+  jinmenjuUsedByPlayerIds?: string[];
+  // Provinces containing Jinmenju at the start of the Recruit mandate. Jinmenju is not a
+  // Stronghold and cannot enable its ability if it is summoned during that same mandate.
+  recruitJinmenjuProvinceIds?: Record<string, string[]>;
   betrayMandateActive: boolean;
   betraySelectionsRemaining: number;
+  betrayUnrighteousSelectionsUsed?: number;
   betraySelectedOwners: string[];
   betrayReplacements: { figureType: string; targetClanId: string; targetPlayerName: string; provinceId: string; provinceName: string; replacementMonsterName?: string; replacementMonsterCardId?: string; targetMonsterName?: string; targetMonsterCardId?: string }[];
   betrayMandateIssuerId: string | null;
@@ -365,6 +377,11 @@ export interface GameState {
   harvestAllPlayersOrder: string[];
   harvestCoinAcknowledged: boolean;
   harvestLoyaltyAwardedPlayers?: string[];
+  coinGainEvent?: {
+    id: string;
+    coinsByPlayer: Record<string, number>;
+    triggeredMerchantPairs: string[];
+  } | null;
   kamiResolutionActive: boolean;
   kamiResolutionTemples: KamiResolutionTemple[];
   kamiResolutionIndex: number;
@@ -388,6 +405,12 @@ export interface GameState {
   warStartActionIndex?: number;
   warStartActionsComplete?: boolean;
   warStartSelection?: WarStartSelection | null;
+  warStartActionResults?: Array<{
+    type: WarStartActionType;
+    playerId: string;
+    sourceProvinceId?: string;
+    destinationProvinceId?: string;
+  }>;
   lotoChoicePhase?: boolean;
   lotoDiscardedMandate?: MandateType | null;
   lastMandateIssuerId: string | null;
@@ -433,7 +456,12 @@ export interface GameState {
   daikaijuPlacementProvinceId?: string | null;
   daikaijuSummaryVisible: boolean;
   daikaijuSummaryReadyPlayers: string[];
-  daikaijuSummaryData: { provinceId: string; provinceName: string; destroyedFortresses: { playerId: string; playerName: string; count: number }[] } | null;
+  daikaijuSummaryData: {
+    provinceId: string;
+    provinceName: string;
+    destroyedFortresses: { playerId: string; playerName: string; count: number }[];
+    crushedFukurokuju?: { playerId: string; playerName: string }[];
+  } | null;
   pendingNureOnnaDecision?: {
     ownerId: string;
     figureId: string;
@@ -640,8 +668,8 @@ export const SUMMER_CARDS: SeasonCard[] = [
   { id: 'su-justice', name: 'Justice', cost: 1, season: 'summer', group: 'Archway', cardType: 'virtue', effect: 'Gain 3 VP whenever you kill 1+ figures of a player with less Honor.' },
   { id: 'su-justice-2', name: 'Justice', cost: 1, season: 'summer', group: 'Archway', cardType: 'virtue', effect: 'Gain 3 VP whenever you kill 1+ figures of a player with less Honor.' },
   { id: 'su-koneko', name: 'Koneko', cost: 0, season: 'summer', group: 'Kickstarter Exclusive', cardType: 'monster', effect: 'If killed, gain 2 Coins and 2 Ronin. Others in Province lose 2 Coins and 2 Ronin.' },
-  { id: 'su-loyalty', name: 'Loyalty', cost: 1, season: 'summer', group: 'Teapot', cardType: 'virtue', effect: 'If you have an Ally, whenever you gain 1+ VP, gain 1 extra VP.' },
-  { id: 'su-loyalty-2', name: 'Loyalty', cost: 1, season: 'summer', group: 'Teapot', cardType: 'virtue', effect: 'If you have an Ally, whenever you gain 1+ VP, gain 1 extra VP.' },
+  { id: 'su-loyalty', name: 'Loyalty', cost: 1, season: 'summer', group: 'Teapot', cardType: 'virtue', effect: 'If you have an Ally, whenever you gain 1 VP, gain 1 extra VP.' },
+  { id: 'su-loyalty-2', name: 'Loyalty', cost: 1, season: 'summer', group: 'Teapot', cardType: 'virtue', effect: 'If you have an Ally, whenever you gain 1 VP, gain 1 extra VP.' },
   { id: 'su-mercy', name: 'Mercy', cost: 1, season: 'summer', group: 'Horseman', cardType: 'virtue', effect: 'When you could kill 1+ opponent figures, may leave them all alive and gain 2 VP.' },
   { id: 'su-mercy-2', name: 'Mercy', cost: 1, season: 'summer', group: 'Horseman', cardType: 'virtue', effect: 'When you could kill 1+ opponent figures, may leave them all alive and gain 2 VP.' },
   { id: 'su-nure-onna', name: 'Nure-Onna', cost: 2, season: 'summer', group: 'Kickstarter Exclusive', cardType: 'monster', effect: 'Force 2. Before resolving War in a Province, may cross a Sea Route to join that Battle.', force: 2 },

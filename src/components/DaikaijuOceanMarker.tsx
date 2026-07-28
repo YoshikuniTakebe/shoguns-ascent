@@ -30,7 +30,7 @@ export const DaikaijuOceanMarker = () => {
     <>
       <button className="daikaiju-ocean-marker" style={{ borderColor: color }} onClick={() => setOpen(true)}>
         <MonsterIcon size={18} color={color} />
-        <span style={{ color }}>Daikaiju está en el Océano</span>
+        <span style={{ color }}>{t('daikaiju.oceanMarker')}</span>
       </button>
       {open && createPortal(
         <div className="figure-zoom-overlay" onClick={() => setOpen(false)}>

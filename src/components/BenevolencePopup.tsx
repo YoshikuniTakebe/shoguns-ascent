@@ -4,8 +4,10 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { CoinIcon, HonorIcon, VPIcon } from './Icons';
+import { useT } from '../i18n';
 
 export const BenevolencePopup = () => {
+  const t = useT();
   const gameState = useGameStore(state => state.gameState);
   const localPlayerId = useGameStore(state => state.localPlayerId);
   const resolveDecision = useGameStore(state => state.doResolveBenevolence);
@@ -29,11 +31,11 @@ export const BenevolencePopup = () => {
           <span>Benevolence{copyLabel}</span>
         </h3>
         <p className="benevolence-effect">
-          Si dona <CoinIcon size={19} color="#e2b93b" /> de lo gastado, obtiene
+          Si dona <strong>1</strong> <CoinIcon size={19} color="#e2b93b" /> de lo gastado, obtiene
           <HonorIcon size={20} color={ownerClan?.color} /> y
-          <VPIcon size={20} color={ownerClan?.color} /> <strong>2</strong>.
+          <strong>2</strong> <VPIcon size={20} color={ownerClan?.color} />.
         </p>
-        <p className="benevolence-prompt">Entregar <CoinIcon size={22} color="#e2b93b" /> de lo gastado a:</p>
+        <p className="benevolence-prompt">Entregar <strong>1</strong> <CoinIcon size={22} color="#e2b93b" /> de lo gastado a:</p>
         {isOwner ? (
           <>
             <div className="battle-card-decision-groups">
@@ -54,12 +56,12 @@ export const BenevolencePopup = () => {
               })}
             </div>
             <div className="battle-card-decision-actions">
-              <button className="btn-primary" disabled={!recipientId} onClick={() => resolveDecision(recipientId || undefined)}>Dar moneda</button>
-              <button className="btn-secondary" onClick={() => resolveDecision()}>No dar monedas</button>
+              <button className="btn-primary" disabled={!recipientId} onClick={() => resolveDecision(recipientId || undefined)}>{t('decision.benevolence.give')}</button>
+              <button className="btn-secondary" onClick={() => resolveDecision()}>{t('decision.benevolence.decline')}</button>
             </div>
           </>
         ) : (
-          <p className="waiting-label">Esperando a que {owner?.name || 'el jugador'} termine...</p>
+          <p className="waiting-label">{t('common.waitingForPlayer', { name: owner?.name || '' })}</p>
         )}
       </div>
     </div>,

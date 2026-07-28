@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, KAMI_DATA } from '../types/game';
+import { CLANS } from '../types/game';
 import type { MandateType } from '../types/game';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
@@ -10,6 +10,7 @@ import { ClanShield } from './ClanShields';
 import { getCardEffectKey } from '../utils/cardTranslations';
 import { computeReserveTotals } from '../utils/reserveUtils';
 import { renderCardEffect } from '../utils/renderCardEffect';
+import { canUseUnrighteousBetraySelection } from '../utils/gameLogic';
 
 export const ActionPanel = () => {
   const {
@@ -21,7 +22,7 @@ export const ActionPanel = () => {
     doSkipMarshalTurn, toggleBuildFortressMode, buildFortressMode,
     toggleBuildFukurokujuMode, buildFukurokujuMode,
     doSkipRecruitTurn, toggleRecruitMode, recruitMode, recruitFigureType, setRecruitFigureType,
-    doSkipBetrayTurn, doBetrayReplaceTempleShinto,
+    doSkipBetrayTurn,
     doResolveWinter,
     undoMandateState, doUndoMandate,
     jinmenjuSummonActive, doJinmenjuActivate, doJinmenjuCancel,
@@ -154,14 +155,14 @@ export const ActionPanel = () => {
                             <span>{t('actions.wantsAlliance', { name: '' })} <span style={{ color: CLANS.find(c => c.id === fp?.clanId)?.color, fontWeight: 'bold' }}>{fp?.name || ''}</span></span>
                             {pr.bribeAmount && pr.bribeAmount > 0 && (
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#DAA520' }}>
-                                <CoinIcon size={16} color="#DAA520" />
                                 <span>{pr.bribeAmount}</span>
+                                <CoinIcon size={16} color="#DAA520" />
                               </span>
                             )}
                             {pr.requestAmount && pr.requestAmount > 0 && (
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#e74c3c' }}>
-                                <CoinIcon size={16} color="#e74c3c" />
                                 <span>-{pr.requestAmount}</span>
+                                <CoinIcon size={16} color="#e74c3c" />
                               </span>
                             )}
                           </div>
@@ -308,14 +309,14 @@ export const ActionPanel = () => {
                     <span>{t('actions.wantsAlliance', { name: '' })} <span style={{ color: CLANS.find(c => c.id === fp?.clanId)?.color, fontWeight: 'bold' }}>{fp?.name || ''}</span></span>
                     {pr.bribeAmount && pr.bribeAmount > 0 && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#DAA520' }}>
-                        <CoinIcon size={16} color="#DAA520" />
                         <span>{pr.bribeAmount}</span>
+                        <CoinIcon size={16} color="#DAA520" />
                       </span>
                     )}
                     {pr.requestAmount && pr.requestAmount > 0 && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', fontWeight: 'bold', color: '#e74c3c' }}>
-                        <CoinIcon size={16} color="#e74c3c" />
                         <span>-{pr.requestAmount}</span>
+                        <CoinIcon size={16} color="#e74c3c" />
                       </span>
                     )}
                     <button className="btn-small btn-accept" onClick={() => doAcceptAlliance(pr.from)}>
@@ -519,8 +520,8 @@ export const ActionPanel = () => {
                     <button className={`btn-secondary ${buildFortressMode ? 'active' : ''}`} style={{ fontSize: '0.85rem', width: '100%' }} onClick={toggleBuildFortressMode}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
                         {t('actions.buildFortress')}
-                        <CoinIcon size={16} color="#DAA520" />
                         <span style={{ fontWeight: 'bold', color: '#DAA520', fontSize: '1.1em' }}>{fortressCost}</span>
+                        <CoinIcon size={16} color="#DAA520" />
                       </span>
                     </button>
                     {buildFortressMode && <p className="move-instruction">{t('actions.marshalSelectProvince')}</p>}
@@ -535,8 +536,8 @@ export const ActionPanel = () => {
                     <button className={`btn-secondary ${buildFukurokujuMode ? 'active' : ''}`} style={{ fontSize: '0.85rem', width: '100%' }} onClick={toggleBuildFukurokujuMode}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
                         Fukurokuju
-                        <CoinIcon size={16} color="#DAA520" />
                         <span style={{ fontWeight: 'bold', color: '#DAA520', fontSize: '1.1em' }}>{cp!.clanId === 'bonsai' ? 1 : 3}</span>
+                        <CoinIcon size={16} color="#DAA520" />
                       </span>
                     </button>
                     {buildFukurokujuMode && <p className="move-instruction">{t('actions.marshalSelectProvince')}</p>}
@@ -571,7 +572,7 @@ export const ActionPanel = () => {
                 <ClanShield clanId={cp?.clanId || ''} size={40} />
                 <span style={{ color: (() => { const clan = cp ? CLANS.find(c => c.id === cp.clanId) : null; return clan?.color || '#87CEEB'; })(), fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
               </p>
-              <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
+              <p className="recruit-mandate-description" style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
                 {t('actions.mandateDesc.recruit')}{' '}
                 {gameState.recruitMandateIssuerId && cp &&
                   (cp.id === gameState.recruitMandateIssuerId || gameState.players.find(p => p.id === gameState.recruitMandateIssuerId)?.allies.includes(cp.id)) &&
@@ -580,7 +581,7 @@ export const ActionPanel = () => {
               <p className="recruit-player-info">
                 JUGADOR {gameState.recruitResolutionIndex + 1} DE {gameState.recruitResolutionOrder.length}
               </p>
-              <p style={{ fontWeight: 'bold', color: '#00CED1', fontSize: '1.1em' }}>{t('actions.recruitPlacementsLeft', { count: `${gameState.recruitPlacementsRemaining}/${gameState.recruitPlacementsTotal ?? gameState.recruitPlacementsRemaining}` })}</p>
+              <p className="recruit-placements-left" style={{ fontWeight: 'bold', color: '#00CED1' }}>{t('actions.recruitPlacementsLeft', { count: `${gameState.recruitPlacementsRemaining}/${gameState.recruitPlacementsTotal ?? gameState.recruitPlacementsRemaining}` })}</p>
               {cp && cp.clanId === 'libelula' && (
                 <p className="move-instruction">{t('actions.recruitDragonflyHint')}</p>
               )}
@@ -651,7 +652,7 @@ export const ActionPanel = () => {
                   <div className="monster-placement-popup">
                     <div className="monster-placement-popup-content" style={{ border: `2px solid ${cpClan?.color || '#87CEEB'}`, maxWidth: '400px' }}>
                       <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }}>
-                        Elige <MonsterIcon size={25} color={cpClan?.color || '#87CEEB'} />
+                        {t('actions.chooseMonster')} <MonsterIcon size={25} color={cpClan?.color || '#87CEEB'} />
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }}>
                         {monstersInReserve.map((card) => (
@@ -671,7 +672,7 @@ export const ActionPanel = () => {
                         style={{ width: '100%', marginTop: '4px' }}
                         onClick={() => doRecruitDismissSelection()}
                       >
-                        Cancelar
+                        {t('common.cancel')}
                       </button>
                     </div>
                   </div>,
@@ -685,7 +686,7 @@ export const ActionPanel = () => {
                 return createPortal(
                   <div className="monster-placement-popup">
                     <div className="monster-placement-popup-content" style={{ border: `2px solid ${cpClan?.color || '#87CEEB'}`, maxWidth: '400px' }}>
-                      <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Elige daimyo</p>
+                      <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('actions.chooseDaimyo')}</p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }}>
                         {cp.hasDaimyo && (
                           <button
@@ -702,7 +703,7 @@ export const ActionPanel = () => {
                         style={{ width: '100%', marginTop: '4px' }}
                         onClick={() => doRecruitDismissSelection()}
                       >
-                        Cancelar
+                        {t('common.cancel')}
                       </button>
                     </div>
                   </div>,
@@ -713,12 +714,8 @@ export const ActionPanel = () => {
               {cp && !jinmenjuSummonActive && (() => {
                 const hasJinmenju = cp.seasonCards.some(c => c.id === 'sp-jinmenju');
                 if (!hasJinmenju) return null;
-                if (gameState.jinmenjuUsedThisMandate) return null;
-                // Check if Jinmenju is placed on the map
-                const jinmenjuOnMap = Object.values(gameState.provinces).some(prov =>
-                  prov.figures.some(f => f.owner === cp.id && f.monsterCardId === 'sp-jinmenju')
-                );
-                if (!jinmenjuOnMap) return null;
+                if (gameState.jinmenjuUsedByPlayerIds?.includes(cp.id)) return null;
+                if ((gameState.recruitJinmenjuProvinceIds?.[cp.id]?.length || 0) === 0) return null;
                 return (
                   <div style={{ marginTop: '8px', padding: '0.5rem', background: 'rgba(155,89,182,0.15)', border: '1px solid rgba(155,89,182,0.4)', borderRadius: '6px' }}>
                     <button className="btn-secondary" style={{ width: '100%', color: '#c89bdb', borderColor: '#9b59b6' }} onClick={doJinmenjuActivate}>
@@ -736,7 +733,7 @@ export const ActionPanel = () => {
                     {t('actions.jinmenjuSummon')}
                   </p>
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 6px', textAlign: 'center' }}>
-                    {recruitFigureType === 'shinto' ? t('actions.recruitSelectProvinceOrTemple') : t('actions.recruitSelectProvince')}
+                    {t('actions.recruitSelectProvince')}
                   </p>
                   <button className="btn-secondary" style={{ width: '100%', fontSize: '0.8rem' }} onClick={doJinmenjuCancel}>
                     {t('actions.recruitCancelPlace')}
@@ -769,12 +766,9 @@ export const ActionPanel = () => {
             const canDeployBushi = cp ? cp.bushi > 0 : false;
             const canDeployShinto = cp ? cp.shinto > 0 : false;
             const unrighteousCopies = cp?.seasonCards.filter(card => card.id === 'au-path-of-the-unrighteous' || card.id === 'au-path-of-the-unrighteous-2').length || 0;
-            const isUnrighteousExtraSelection = unrighteousCopies > 0 && gameState.betraySelectionsRemaining <= unrighteousCopies;
-            const worshippingShintoTargets = isUnrighteousExtraSelection && canDeployShinto && cp
-              ? gameState.temples.flatMap(temple => temple.figures
-                .filter(figure => figure.playerId !== cp.id)
-                .map(figure => ({ temple, figure, player: gameState.players.find(player => player.id === figure.playerId) })))
-              : [];
+            const isUnrighteousExtraSelection = cp
+              ? canUseUnrighteousBetraySelection(gameState, cp.id)
+              : false;
             const canDeployMonster = (() => {
               if (!cp) return false;
               if (cp.monsters <= 0) return false;
@@ -808,10 +802,27 @@ export const ActionPanel = () => {
               gameState.temples.forEach(temple => temple.figures.forEach(figure => {
                 if (figure.playerId === cp.id && figure.monsterCardId) deployedMonsterCardIds.add(figure.monsterCardId);
               }));
+              const target = _betrayMonsterSelectionProvinceId && _betrayMonsterSelectionFigureId
+                ? gameState.provinces[_betrayMonsterSelectionProvinceId]?.figures.find(
+                    figure => figure.id === _betrayMonsterSelectionFigureId,
+                  )
+                : undefined;
               return cp.seasonCards.filter(
-                (card) => card.cardType === 'monster' && !deployedMonsterCardIds.has(card.id)
+                card => card.cardType === 'monster'
+                  && !deployedMonsterCardIds.has(card.id)
+                  && (target?.type === 'monster' || ['sp-komainu', 'sp-hotei'].includes(card.id)),
               );
             })();
+            const betraySelectionTarget = _betrayMonsterSelectionProvinceId && _betrayMonsterSelectionFigureId
+              ? gameState.provinces[_betrayMonsterSelectionProvinceId]?.figures.find(
+                  figure => figure.id === _betrayMonsterSelectionFigureId,
+                )
+              : undefined;
+            const canChooseShintoReplacement = !!cp
+              && cp.shinto > 0
+              && (betraySelectionTarget?.type === 'shinto'
+                || (betraySelectionTarget?.type === 'monster'
+                  && ['sp-komainu', 'sp-hotei'].includes(betraySelectionTarget.monsterCardId || '')));
 
             return (
               <div className="betray-active">
@@ -823,7 +834,8 @@ export const ActionPanel = () => {
                   <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold', marginLeft: '4px' }}>{cp?.name || ''}</span>
                 </p>
                 <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>
-                  Puedes reemplazar {2 + unrighteousCopies} figuras desde tu reserva. Las dos primeras deben pertenecer a clanes distintos{unrighteousCopies > 0 ? '; Camino del Injusto permite que las adicionales sean de cualquier jugador o Shintos rezando.' : '.'}
+                  {t('actions.betrayReplaceBase', { count: 2 + unrighteousCopies })}
+                  {unrighteousCopies > 0 ? t('actions.betrayReplaceUnrighteous') : ''}
                 </p>
                 <p className="betray-selections">{t('actions.betraySelectionsLeft', { count: gameState.betraySelectionsRemaining })}</p>
                 {(canDeployBushi || canDeployShinto || canDeployMonster) && (
@@ -833,25 +845,11 @@ export const ActionPanel = () => {
                     {canDeployMonster && <MonsterIcon size={36} color={cpClan?.color || '#E63946'} />}
                   </div>
                 )}
-                <p className="betray-instruction">{t('actions.betrayClickInstruction')}</p>
-
-                {worshippingShintoTargets.length > 0 && (
-                  <div className="betray-worshipping-targets">
-                    <strong>Camino del Injusto: Shinto rezando</strong>
-                    {worshippingShintoTargets.map(({ temple, figure, player }) => {
-                      const targetClan = player ? CLANS.find(clan => clan.id === player.clanId) : null;
-                      const kamiName = KAMI_DATA.find(kami => kami.type === temple.kamiType)?.name || temple.kamiType;
-                      return (
-                        <button key={figure.figureId} className="btn-secondary" onClick={() => doBetrayReplaceTempleShinto(temple.id, figure.figureId)}>
-                          <ClanShield clanId={player?.clanId || ''} size={20} />
-                          <span style={{ color: targetClan?.color, fontWeight: 'bold' }}>{player?.name}</span>
-                          <ShintoIcon size={18} color={targetClan?.color} />
-                          <span>{kamiName}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <p className="betray-instruction">
+                  {isUnrighteousExtraSelection && canDeployShinto
+                    ? t('actions.unrighteousSelectShinto')
+                    : t('actions.betrayClickInstruction')}
+                </p>
 
                 {/* Monster selection popup */}
                 {betrayMonsterSelectionVisible && cp && (
@@ -860,8 +858,18 @@ export const ActionPanel = () => {
                       <ClanShield clanId={cp.clanId} size={36} />
                       <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold' }}>{cp.name}</span>
                     </div>
-                    <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Selecciona monstruo</p>
+                    <p style={{ margin: '4px 0', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('actions.selectReplacementFigure')}</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '8px 0' }}>
+                      {canChooseShintoReplacement && (
+                        <button
+                          className={`btn-alliance${selectedBetrayMonster === '__shinto__' ? ' selected' : ''}`}
+                          style={{ borderColor: cpClan?.color || '#E63946', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          onClick={() => setSelectedBetrayMonster(selectedBetrayMonster === '__shinto__' ? null : '__shinto__')}
+                        >
+                          <ShintoIcon size={18} color={cpClan?.color || '#E63946'} />
+                          <span style={{ color: cpClan?.color || '#E63946', fontWeight: 'bold' }}>Shinto</span>
+                        </button>
+                      )}
                       {reserveMonsters.map((card) => (
                         <button
                           key={card.id}
@@ -893,7 +901,7 @@ export const ActionPanel = () => {
                         style={{ flex: 1 }}
                         onClick={() => { doBetrayDismissMonsterSelection(); setSelectedBetrayMonster(null); }}
                       >
-                        Cancelar
+                        {t('common.cancel')}
                       </button>
                     </div>
                   </div>
@@ -1057,9 +1065,9 @@ export const ActionPanel = () => {
           )}
           {gameState.mode === 'online' && (
             <p className="phase-description" style={{ fontStyle: 'italic', opacity: 0.7 }}>
-              {gameState.hostageReturnActive ? 'Devolucion de rehenes en curso...' :
-               gameState.cleanupTeaCeremonyReady ? 'Esperando ceremonia del te...' :
-               'Procesando limpieza...'}
+              {gameState.hostageReturnActive ? t('actions.hostageReturnInProgress') :
+               gameState.cleanupTeaCeremonyReady ? t('actions.waitingTeaCeremony') :
+               t('actions.processingCleanup')}
             </p>
           )}
         </div>

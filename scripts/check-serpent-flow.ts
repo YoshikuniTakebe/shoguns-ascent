@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import {
+  acknowledgeMarshalSerpentWarning,
   createInitialGameState,
+  executeMandate,
   moveForces,
+  continueNureOnnaAfterSerpent,
+  resolveNureOnnaDecision,
+  resolveSerpentChargeDecision,
   resolvePendingSerpentCrossings,
 } from '../src/utils/gameLogic';
 import { SEASON_CARDS_DATA, type Figure, type GameState } from '../src/types/game';
@@ -27,6 +32,36 @@ const createMovementState = (moverClanId: string): GameState => {
 
 const bushi = (id: string, owner: string): Figure => ({ id, owner, type: 'bushi' });
 const fortress = (id: string, owner: string): Figure => ({ id, owner, type: 'fortress' });
+
+{
+  const state = createInitialGameState(
+    [
+      { name: 'Serpent', clanId: 'sol' },
+      { name: 'Mover', clanId: 'koi' },
+    ],
+    'hotseat',
+  );
+  const [serpent, mover] = state.players;
+  serpent.seasonCards = [serpentCard];
+  state.provinces.hokkaido.figures = [bushi('warning-bushi', mover.id)];
+  const marshal = executeMandate(state, 'marshal', serpent.id);
+  assert.equal(
+    marshal.pendingMarshalSerpentWarningPlayerId,
+    mover.id,
+    'An exposed player must acknowledge Path of the Serpent before their Marshal turn',
+  );
+  assert.equal(
+    moveForces(marshal, mover.id, 'hokkaido', 'oshu', ['warning-bushi']),
+    marshal,
+    'Marshal movement must remain blocked before the warning is acknowledged',
+  );
+  const acknowledged = acknowledgeMarshalSerpentWarning(marshal, mover.id);
+  assert.notEqual(
+    moveForces(acknowledged, mover.id, 'hokkaido', 'oshu', ['warning-bushi']),
+    acknowledged,
+    'Marshal movement must become available after acknowledging the warning',
+  );
+}
 
 {
   const state = createMovementState('koi');
@@ -104,6 +139,72 @@ const fortress = (id: string, owner: string): Figure => ({ id, owner, type: 'for
   const resolved = resolvePendingSerpentCrossings(moved, 'advance-marshal');
   assert.ok(resolved.pendingSerpentCharge, 'A normal figure sharing the route with a fortress still uses the Sea Route');
   assert.equal(resolved.pendingSerpentChargeQueue?.length, 0, 'A mixed group pays once for the route, not once per figure');
+}
+
+{
+  const state = createMovementState('koi');
+  const [serpent, mover] = state.players;
+  state.currentPhase = 'war';
+  state.marshalMandateActive = false;
+  state.activeBattles = [{
+    provinceId: 'oshu',
+    participants: [serpent.id],
+    bids: {},
+    resolved: false,
+  }];
+  state.provinces.hokkaido.figures = [{
+    id: 'nure-onna',
+    owner: mover.id,
+    type: 'monster',
+    monsterCardId: 'su-nure-onna',
+  }];
+  state.provinces.oshu.figures = [bushi('battle-bushi', serpent.id)];
+  state.pendingNureOnnaDecision = {
+    ownerId: mover.id,
+    figureId: 'nure-onna',
+    fromProvinceId: 'hokkaido',
+    battleProvinceId: 'oshu',
+  };
+
+  const moved = resolveNureOnnaDecision(state, mover.id, true);
+  assert.equal(moved.pendingSerpentCharge?.resume, 'continue-nure-onna', 'Nure-Onna must offer the Serpent toll');
+  const declined = resolveSerpentChargeDecision(moved, serpent.id, false);
+  const resumed = continueNureOnnaAfterSerpent(declined);
+  assert.equal(resumed.provinces.oshu.figures.some(figure => figure.id === 'nure-onna'), true);
+  assert.equal(resumed.pendingNureOnnaDecision, null, 'The battle flow must resume after the toll decision');
+
+  const unpaidState = createMovementState('koi');
+  const [unpaidSerpent, unpaidMover] = unpaidState.players;
+  unpaidState.currentPhase = 'war';
+  unpaidState.marshalMandateActive = false;
+  unpaidMover.coins = 0;
+  unpaidState.activeBattles = [{
+    provinceId: 'oshu',
+    participants: [unpaidSerpent.id],
+    bids: {},
+    resolved: false,
+  }];
+  unpaidState.provinces.hokkaido.figures = [{
+    id: 'unpaid-nure-onna',
+    owner: unpaidMover.id,
+    type: 'monster',
+    monsterCardId: 'su-nure-onna',
+  }];
+  unpaidState.provinces.oshu.figures = [bushi('unpaid-battle-bushi', unpaidSerpent.id)];
+  unpaidState.pendingNureOnnaDecision = {
+    ownerId: unpaidMover.id,
+    figureId: 'unpaid-nure-onna',
+    fromProvinceId: 'hokkaido',
+    battleProvinceId: 'oshu',
+  };
+  const unpaidMove = resolveNureOnnaDecision(unpaidState, unpaidMover.id, true);
+  const blocked = resolveSerpentChargeDecision(unpaidMove, unpaidSerpent.id, true);
+  const resumedAfterBlock = continueNureOnnaAfterSerpent(blocked);
+  assert.equal(
+    resumedAfterBlock.provinces.hokkaido.figures.some(figure => figure.id === 'unpaid-nure-onna'),
+    true,
+    'Nure-Onna must return to its source when the owner cannot pay a demanded toll',
+  );
 }
 
 console.log('Path of the Serpent checks passed');

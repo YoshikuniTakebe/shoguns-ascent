@@ -1,28 +1,38 @@
 import { useState, useEffect } from 'react';
-import { API_BASE } from '../config';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../i18n';
+import { FRIENDS_CHANGED_EVENT, fetchFriendRequests, fetchFriends, respondToFriendRequest, sendFriendRequest } from '../utils/friendsApi';
+import type { Friend, FriendRequests } from '../utils/friendsApi';
 
-export interface Friend {
-  id: string;
-  username: string;
-  email: string;
+function announceFriendRequestsChanged() {
+  window.dispatchEvent(new Event(FRIENDS_CHANGED_EVENT));
 }
 
-/** Fetch the current user's friends list. Shared helper used by the lobby too. */
-export async function fetchFriends(authToken: string): Promise<Friend[]> {
-  try {
-    const res = await fetch(`${API_BASE}/api/friends`, {
-      headers: { Authorization: `Bearer ${authToken}` },
-    });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  }
-}
+export const FriendRequestBadge = () => {
+  const authToken = useGameStore((s) => s.authToken);
+  const [count, setCount] = useState(0);
 
-/** "Add friend" modal: search a user by username/email and add them. */
+  useEffect(() => {
+    if (!authToken) {
+      setCount(0);
+      return;
+    }
+    const refresh = () => {
+      fetchFriendRequests(authToken).then(requests => setCount(requests.incoming.length));
+    };
+    refresh();
+    const interval = window.setInterval(refresh, 15000);
+    window.addEventListener(FRIENDS_CHANGED_EVENT, refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener(FRIENDS_CHANGED_EVENT, refresh);
+    };
+  }, [authToken]);
+
+  return count > 0 ? <span className="friend-request-badge">{count > 9 ? '9+' : count}</span> : null;
+};
+
+/** "Add friend" modal: search a user by username/email and send a request. */
 export const AddFriendModal = ({ onClose }: { onClose: () => void }) => {
   const t = useT();
   const authToken = useGameStore((s) => s.authToken);
@@ -35,26 +45,20 @@ export const AddFriendModal = ({ onClose }: { onClose: () => void }) => {
     setBusy(true);
     setMessage(null);
     try {
-      const res = await fetch(`${API_BASE}/api/friends/add`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-        body: JSON.stringify({ identifier: identifier.trim() }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.alreadyFriend) {
-          setMessage({ text: t('friends.alreadyFriend', { name: data.friend.username }), ok: true });
-        } else {
-          setMessage({ text: t('friends.added', { name: data.friend.username }), ok: true });
-        }
-      } else {
-        const err = await res.json().catch(() => ({}));
-        if (err.error === 'self') setMessage({ text: t('friends.self'), ok: false });
-        else if (err.error === 'not_found') setMessage({ text: t('friends.notFound'), ok: false });
-        else setMessage({ text: t('friends.error'), ok: false });
-      }
-    } catch {
-      setMessage({ text: t('friends.error'), ok: false });
+      const data = await sendFriendRequest(authToken, identifier.trim());
+      const messages = {
+        sent: t('friends.requestSent', { name: data.user.username }),
+        already_friend: t('friends.alreadyFriend', { name: data.user.username }),
+        already_pending: t('friends.requestAlreadyPending', { name: data.user.username }),
+        incoming_pending: t('friends.requestIncomingPending', { name: data.user.username }),
+      };
+      setMessage({ text: messages[data.status], ok: true });
+      announceFriendRequestsChanged();
+    } catch (error) {
+      const code = error instanceof Error ? error.message : '';
+      if (code === 'self') setMessage({ text: t('friends.self'), ok: false });
+      else if (code === 'not_found') setMessage({ text: t('friends.notFound'), ok: false });
+      else setMessage({ text: t('friends.error'), ok: false });
     } finally {
       setBusy(false);
     }
@@ -78,7 +82,7 @@ export const AddFriendModal = ({ onClose }: { onClose: () => void }) => {
         )}
         <div className="friends-modal-actions">
           {message?.ok ? (
-            <button className="btn-primary" onClick={onClose}>{t('friends.accept')}</button>
+            <button className="btn-primary" onClick={onClose}>{t('friends.close')}</button>
           ) : (
             <>
               <button className="btn-primary" onClick={handleAdd} disabled={busy}>{t('friends.addButton')}</button>
@@ -96,12 +100,46 @@ export const FriendsListModal = ({ onClose }: { onClose: () => void }) => {
   const t = useT();
   const authToken = useGameStore((s) => s.authToken);
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [requests, setRequests] = useState<FriendRequests>({ incoming: [], outgoing: [] });
   const [loading, setLoading] = useState(true);
+  const [busyRequestId, setBusyRequestId] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
   useEffect(() => {
     if (!authToken) return;
-    fetchFriends(authToken).then((f) => { setFriends(f); setLoading(false); });
+    Promise.all([fetchFriends(authToken), fetchFriendRequests(authToken)])
+      .then(([nextFriends, nextRequests]) => {
+        setFriends(nextFriends);
+        setRequests(nextRequests);
+        setLoading(false);
+      });
   }, [authToken]);
+
+  const handleRequest = async (requestId: string, action: 'accept' | 'reject') => {
+    if (!authToken) return;
+    setBusyRequestId(requestId);
+    setMessage(null);
+    const success = await respondToFriendRequest(authToken, requestId, action);
+    if (!success) {
+      setMessage({ text: t('friends.requestActionError'), ok: false });
+      setBusyRequestId(null);
+      return;
+    }
+    const [nextFriends, nextRequests] = await Promise.all([
+      fetchFriends(authToken),
+      fetchFriendRequests(authToken),
+    ]);
+    setFriends(nextFriends);
+    setRequests(nextRequests);
+    setMessage({
+      text: action === 'accept' ? t('friends.requestAccepted') : t('friends.requestRejected'),
+      ok: true,
+    });
+    setBusyRequestId(null);
+    announceFriendRequestsChanged();
+  };
+
+  const hasContent = requests.incoming.length > 0 || requests.outgoing.length > 0 || friends.length > 0;
 
   return (
     <div className="friends-modal-overlay" onClick={onClose}>
@@ -110,17 +148,71 @@ export const FriendsListModal = ({ onClose }: { onClose: () => void }) => {
         <h3 className="friends-modal-title">{t('friends.listTitle')}</h3>
         {loading ? (
           <p className="friends-modal-msg">...</p>
-        ) : friends.length === 0 ? (
+        ) : !hasContent ? (
           <p className="friends-modal-msg">{t('friends.empty')}</p>
         ) : (
-          <div>
-            {friends.map((f) => (
-              <div key={f.id} className="friends-list-entry">
-                <span className="friends-list-avatar">{f.username.charAt(0).toUpperCase()}</span>
-                <span>{f.username}</span>
-              </div>
-            ))}
+          <div className="friends-modal-sections">
+            {requests.incoming.length > 0 && (
+              <section className="friends-modal-section">
+                <h4>{t('friends.requestsReceived')}</h4>
+                {requests.incoming.map(request => (
+                  <div key={request.id} className="friends-list-entry friend-request-entry">
+                    <span className="friends-list-avatar">{request.user.username.charAt(0).toUpperCase()}</span>
+                    <span className="friend-request-name">{request.user.username}</span>
+                    <div className="friend-request-actions">
+                      <button
+                        className="friend-request-action friend-request-accept"
+                        disabled={busyRequestId === request.id}
+                        onClick={() => handleRequest(request.id, 'accept')}
+                      >
+                        {t('friends.accept')}
+                      </button>
+                      <button
+                        className="friend-request-action friend-request-reject"
+                        disabled={busyRequestId === request.id}
+                        onClick={() => handleRequest(request.id, 'reject')}
+                      >
+                        {t('friends.reject')}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </section>
+            )}
+            {requests.outgoing.length > 0 && (
+              <section className="friends-modal-section">
+                <h4>{t('friends.requestsSent')}</h4>
+                {requests.outgoing.map(request => (
+                  <div key={request.id} className="friends-list-entry">
+                    <span className="friends-list-avatar">{request.user.username.charAt(0).toUpperCase()}</span>
+                    <span className="friend-request-name">{request.user.username}</span>
+                    <span className="friend-request-pending">{t('friends.requestPending')}</span>
+                  </div>
+                ))}
+              </section>
+            )}
+            {friends.length > 0 && (
+              <section className="friends-modal-section">
+                <h4>{t('friends.yourFriends')}</h4>
+                {friends.map((friend) => (
+                  <div key={friend.id} className="friends-list-entry">
+                    <span className="friends-list-avatar">{friend.username.charAt(0).toUpperCase()}</span>
+                    <span>{friend.username}</span>
+                  </div>
+                ))}
+              </section>
+            )}
+            {message && (
+              <p className={`friends-modal-msg ${message.ok ? 'friends-modal-msg-ok' : 'friends-modal-msg-err'}`}>
+                {message.text}
+              </p>
+            )}
           </div>
+        )}
+        {!loading && message && !hasContent && (
+          <p className={`friends-modal-msg ${message.ok ? 'friends-modal-msg-ok' : 'friends-modal-msg-err'}`}>
+            {message.text}
+          </p>
         )}
         <div className="friends-modal-actions" style={{ marginTop: '1rem' }}>
           <button className="btn-secondary" onClick={onClose}>{t('friends.close')}</button>

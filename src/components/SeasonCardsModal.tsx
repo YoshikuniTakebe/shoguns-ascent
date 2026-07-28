@@ -6,7 +6,7 @@ import type { CardType, SeasonCard } from '../types/game';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { CoinIcon, SpringIcon, SummerIcon, AutumnIcon, SunIcon, MoonIcon, FistIcon, BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, VPIcon, HonorIcon, RoninIcon, WinterIcon } from './Icons';
-import { getMonsterImage } from '../utils/figureImages';
+import { getSeasonCardImage } from '../utils/cardImages';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
 import { PlayerCardsModal } from './PlayerCardsModal';
@@ -388,8 +388,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
               <span style={{ fontSize: '1em', marginLeft: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <ClanShield clanId={player.clanId} size={32} />
                 <span style={{ color: playerClan?.color || '#ccc', fontWeight: 'bold' }}>{player.name}</span>
-                <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}><CoinIcon size={24} /></span>
                 <span>{player.coins}</span>
+                <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}><CoinIcon size={24} /></span>
                 {isDiscounted && (
                   <span style={{ color: '#27ae60', marginLeft: '6px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
                     ({t('seasonCardsModal.discount')} -1 <CoinIcon size={23} color="#27ae60" strokeWidth="2" />)
@@ -460,10 +460,10 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 }}
                 onClick={() => setZoomedCard(card)}
               >
-                {card.cardType === 'monster' && getMonsterImage(card.id) ? (
+                {getSeasonCardImage(card.id, card.cardType) ? (
                   <div className="season-card-image-placeholder">
                     <img
-                      src={getMonsterImage(card.id)!}
+                      src={getSeasonCardImage(card.id, card.cardType)!}
                       alt={card.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }}
                     />
@@ -476,7 +476,6 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                 <div className="season-card-header">
                   <span className="season-card-name">{t(getCardNameKey(card.id))}</span>
                   <span className="season-card-cost">
-                    <span className="season-card-coin"><CoinIcon size={16} color="#c8a951" strokeWidth="2.5" /></span>
                     {isInteractiveMode && effectiveCost < card.cost ? (
                       <>
                         <span style={{ textDecoration: 'line-through', opacity: 0.5, marginRight: '4px' }}>{card.cost}</span>
@@ -485,6 +484,7 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
                     ) : (
                       card.cost
                     )}
+                    <span className="season-card-coin"><CoinIcon size={16} color="#c8a951" strokeWidth="2.5" /></span>
                   </span>
                 </div>
                 <span
@@ -592,8 +592,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
               </p>
               <p style={{ margin: '0 0 20px', color: '#aaa', fontSize: '1.1em' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <CoinIcon size={24} color="#DAA520" />
                   <span>{currentPlayer.coins}</span>
+                  <CoinIcon size={24} color="#DAA520" />
                 </span>
                 {isDiscounted && (
                   <span style={{ color: '#27ae60', marginLeft: '8px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
@@ -672,8 +672,8 @@ export const SeasonCardsModal = ({ open, onClose }: SeasonCardsModalProps) => {
         {zoomedCard && (
           <div className="card-zoom-overlay" onClick={() => setZoomedCard(null)}>
             <div className="card-zoom-content">
-              {zoomedCard.cardType === 'monster' && getMonsterImage(zoomedCard.id) ? (
-                <img src={getMonsterImage(zoomedCard.id)!} alt={zoomedCard.name} />
+              {getSeasonCardImage(zoomedCard.id, zoomedCard.cardType) ? (
+                <img src={getSeasonCardImage(zoomedCard.id, zoomedCard.cardType)!} alt={zoomedCard.name} />
               ) : (
                 <div className="card-zoom-fallback">
                   <span className="card-zoom-fallback-icon">&#x1F3B4;</span>

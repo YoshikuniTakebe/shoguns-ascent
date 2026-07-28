@@ -2,8 +2,10 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import { getMonsterFigureImage } from '../utils/figureImages';
 import { ClanShield } from './ClanShields';
+import { useT } from '../i18n';
 
 export const NureOnnaPopup = () => {
+  const t = useT();
   const { gameState, localPlayerId, doNureOnnaDecision, biddingMapPeek, setBiddingMapPeek } = useGameStore();
   const pending = gameState?.pendingNureOnnaDecision;
   if (!gameState || !pending) return null;
@@ -28,7 +30,7 @@ export const NureOnnaPopup = () => {
         </div>
         {canDecide ? (
           <>
-            <p>¿Quieres mover Nure-Onna de <strong style={{ color: sourceColor }}>{source?.name}</strong> a <strong style={{ color: destinationColor }}>{destination?.name}</strong> para participar en esta batalla?</p>
+            <p>{t('decision.nureOnna.questionBefore')} <strong style={{ color: sourceColor }}>{source?.name}</strong> {t('decision.nureOnna.questionBetween')} <strong style={{ color: destinationColor }}>{destination?.name}</strong> {t('decision.nureOnna.questionAfter')}</p>
             <button
               className="bidding-peek-map-btn"
               onClick={() => setBiddingMapPeek(true)}
@@ -41,12 +43,12 @@ export const NureOnnaPopup = () => {
               <span>Ver Mapa</span>
             </button>
             <div className="popup-actions">
-              <button className="btn-primary" onClick={() => doNureOnnaDecision(true)}>Aceptar</button>
-              <button className="btn-secondary" onClick={() => doNureOnnaDecision(false)}>Rechazar</button>
+              <button className="btn-primary" onClick={() => doNureOnnaDecision(true)}>{t('common.accept')}</button>
+              <button className="btn-secondary" onClick={() => doNureOnnaDecision(false)}>{t('common.skip')}</button>
             </div>
           </>
         ) : (
-          <p>Esperando a que {owner?.name} decida si Nure-Onna se une a la batalla de <strong style={{ color: destinationColor }}>{destination?.name}</strong>.</p>
+          <p>{t('common.waitingForPlayer', { name: owner?.name || '' })} <strong style={{ color: destinationColor }}>{destination?.name}</strong></p>
         )}
       </div>
     </div>

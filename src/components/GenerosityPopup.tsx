@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CLANS } from '../types/game';
 import { ClanShield } from './ClanShields';
+import { useT } from '../i18n';
 
 export const GenerosityPopup = () => {
+  const t = useT();
   const { gameState, localPlayerId, doChooseGenerosityRecipient, doRespondToGenerosity } = useGameStore();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const pending = gameState?.generosityPending;
@@ -16,19 +18,37 @@ export const GenerosityPopup = () => {
   const shouldShow = pending.stage === 'choose-recipient'
     ? viewerId === pending.fromPlayerId
     : viewerId === pending.toPlayerId;
-  if (!shouldShow) return null;
 
   const sender = gameState.players.find(p => p.id === pending.fromPlayerId);
+  const activePlayer = pending.stage === 'choose-recipient'
+    ? sender
+    : gameState.players.find(player => player.id === pending.toPlayerId);
+  if (!shouldShow) {
+    const activeClan = activePlayer ? CLANS.find(clan => clan.id === activePlayer.clanId) : null;
+    return (
+      <div className="trade-offer-popup-backdrop">
+        <div className="trade-offer-popup generosity-waiting-popup" style={{ borderColor: activeClan?.color }}>
+          <h3 className="trade-offer-title">{t('decision.generosity.title')}</h3>
+          <div className="generosity-waiting-player">
+            <ClanShield clanId={activePlayer?.clanId || ''} size={42} />
+            <strong style={{ color: activeClan?.color }}>{activePlayer?.name}</strong>
+          </div>
+          <p>{t('common.waitingForPlayer', { name: activePlayer?.name || t('decision.generosity.unknownPlayer') })}</p>
+        </div>
+      </div>
+    );
+  }
+
   const recipients = gameState.players.filter(p => p.id !== pending.fromPlayerId);
 
   return (
     <div className="trade-offer-popup-backdrop">
       <div className="trade-offer-popup">
-        <h3 className="trade-offer-title">Generosidad</h3>
+        <h3 className="trade-offer-title">{t('decision.generosity.title')}</h3>
         <p className="trade-modal-subtitle">
           {pending.stage === 'choose-recipient'
-            ? '¿Quieres ofrecer una moneda?'
-            : `${sender?.name || 'Un jugador'} quiere ofrecerte una moneda. ¿Aceptas?`}
+            ? t('decision.generosity.offer')
+            : t('decision.generosity.request', { name: sender?.name || t('decision.generosity.unknownPlayer') })}
         </p>
 
         {pending.stage === 'choose-recipient' && (
@@ -59,7 +79,7 @@ export const GenerosityPopup = () => {
               ? doChooseGenerosityRecipient(selectedPlayerId)
               : doRespondToGenerosity(true)}
           >
-            Aceptar
+            {t('common.accept')}
           </button>
           <button
             className="btn-secondary trade-offer-reject"
@@ -67,7 +87,7 @@ export const GenerosityPopup = () => {
               ? doChooseGenerosityRecipient(null)
               : doRespondToGenerosity(false)}
           >
-            Rechazar
+            {t('common.skip')}
           </button>
         </div>
       </div>

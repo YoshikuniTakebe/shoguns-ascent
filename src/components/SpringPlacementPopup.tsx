@@ -47,7 +47,13 @@ export const SpringPlacementPopup = () => {
   const owner = gameState.players.find(player => player.id === pending.ownerId);
   const clan = owner ? CLANS.find(candidate => candidate.id === owner.clanId) : null;
   const isOwner = gameState.mode === 'hotseat' || localPlayerId === pending.ownerId;
-  const title = pending.type === 'kannushi' ? 'Camino del Kannushi' : pending.type === 'kenin' ? 'Camino del Kenin' : pending.type === 'samurai' ? 'Camino del Samurai' : 'Camino de la Luz';
+  const title = pending.type === 'kannushi'
+    ? t('decision.spring.kannushiTitle')
+    : pending.type === 'kenin'
+      ? t('decision.spring.keninTitle')
+      : pending.type === 'samurai'
+        ? t('decision.spring.samuraiTitle')
+        : t('decision.spring.lightTitle');
   const copyLabel = pending.copyNumber > 1 ? ` (${pending.copyNumber}a copia)` : '';
   const sourceTemple = gameState.temples.find(temple => temple.figures.some(figure => figure.figureId === figureId));
   const valid = pending.type === 'kenin' || pending.type === 'samurai' ? !!provinceId : pending.type === 'light' ? !!templeId : !!figureId && !!templeId && sourceTemple?.id !== templeId;
@@ -61,15 +67,15 @@ export const SpringPlacementPopup = () => {
       <div className="spring-light-toolbar" style={{ borderColor: clan?.color || '#c8a951' }}>
         <div className="spring-light-toolbar-status">
           <ShintoIcon size={24} color={clan?.color || '#c8a951'} />
-          <span>{selectedKamiName ? `Santuario de ${selectedKamiName}` : 'Elige un santuario'}</span>
+          <span>{selectedKamiName ? t('decision.spring.shrineOf', { name: selectedKamiName }) : t('decision.spring.chooseShrine')}</span>
         </div>
         <div className="spring-light-toolbar-actions">
           <button
             className="spring-light-undo"
             onClick={undoSpringLightSelection}
             disabled={!springLightSelectedTempleId}
-            title="Deshacer"
-            aria-label="Deshacer"
+            title={t('common.undo')}
+            aria-label={t('common.undo')}
           >
             <UndoIcon size={20} color="currentColor" />
           </button>
@@ -78,7 +84,7 @@ export const SpringPlacementPopup = () => {
             disabled={!springLightSelectedTempleId}
             onClick={() => resolveDecision(true, undefined, springLightSelectedTempleId || undefined)}
           >
-            Confirmar
+            {t('common.confirm')}
           </button>
         </div>
       </div>,
@@ -103,7 +109,7 @@ export const SpringPlacementPopup = () => {
           <>
             {pending.type === 'kenin' && (
               <div className="battle-card-choice-block spring-placement-choice-block">
-                <span className="battle-card-choice-label">Fortaleza donde colocar el Bushi</span>
+                <span className="battle-card-choice-label">{t('decision.spring.keninProvince')}</span>
                 <div className="battle-card-choice-options spring-placement-choice-options">
                   {fortressProvinces.map(province => {
                     const provinceColor = PROVINCE_COLORS[province.id] || '#c8a951';
@@ -124,7 +130,7 @@ export const SpringPlacementPopup = () => {
             )}
             {pending.type === 'samurai' && (
               <div className="battle-card-choice-block spring-placement-choice-block">
-                <span className="battle-card-choice-label">Provincia donde colocar el Bushi</span>
+                <span className="battle-card-choice-label">{t('decision.spring.samuraiProvince')}</span>
                 <div className="battle-card-choice-options spring-placement-choice-options">
                   {samuraiProvinces.map(province => {
                     const provinceColor = PROVINCE_COLORS[province.id] || '#c8a951';
@@ -146,7 +152,7 @@ export const SpringPlacementPopup = () => {
             {pending.type === 'kannushi' && (
               <>
                 <div className="battle-card-choice-block spring-placement-choice-block">
-                  <span className="battle-card-choice-label">Shinto que quieres mover</span>
+                  <span className="battle-card-choice-label">{t('decision.spring.shintoToMove')}</span>
                   <div className="battle-card-choice-options spring-placement-choice-options">
                     {gameState.temples.flatMap(temple => temple.figures
                       .filter(figure => figure.playerId === pending.ownerId)
@@ -167,7 +173,7 @@ export const SpringPlacementPopup = () => {
                   </div>
                 </div>
                 <div className="battle-card-choice-block spring-placement-choice-block">
-                  <span className="battle-card-choice-label">Santuario de destino</span>
+                  <span className="battle-card-choice-label">{t('decision.spring.destinationShrine')}</span>
                   <div className="battle-card-choice-options spring-placement-choice-options">
                     {gameState.temples
                       .filter(temple => temple.id !== sourceTemple?.id && temple.figures.length < gameState.players.length)
@@ -189,7 +195,7 @@ export const SpringPlacementPopup = () => {
             )}
             {pending.type === 'light' && (
               <p className="spring-placement-description">
-                Puedes colocar un Shinto adicional en uno de los santuarios.
+                {t('decision.spring.light')}
               </p>
             )}
             {pending.type !== 'light' && (
@@ -205,16 +211,16 @@ export const SpringPlacementPopup = () => {
               </button>
             )}
             <div className="battle-card-decision-actions spring-placement-actions">
-              <button className="btn-secondary" onClick={() => resolveDecision(false)}>Omitir</button>
+              <button className="btn-secondary" onClick={() => resolveDecision(false)}>{t('common.skip')}</button>
               {pending.type === 'light' ? (
-                <button className="btn-primary" onClick={beginSpringLightSelection}>Elegir santuario</button>
+                <button className="btn-primary" onClick={beginSpringLightSelection}>{t('common.chooseShrine')}</button>
               ) : (
-                <button className="btn-primary" disabled={!valid} onClick={() => resolveDecision(true, provinceId || undefined, templeId || undefined, figureId || undefined)}>Confirmar</button>
+                <button className="btn-primary" disabled={!valid} onClick={() => resolveDecision(true, provinceId || undefined, templeId || undefined, figureId || undefined)}>{t('common.confirm')}</button>
               )}
             </div>
           </>
         ) : (
-          <p className="waiting-label">Esperando a que {owner?.name || 'el jugador'} resuelva {title}...</p>
+          <p className="waiting-label">{t('common.waitingForResolution', { name: owner?.name || '', effect: title })}</p>
         )}
       </div>
     </div>,

@@ -25,6 +25,7 @@ interface BattleBiddingOverlayProps {
   provinceColor?: string;
   battleNumber: number;
   isLastBattle?: boolean;
+  isLastConfrontation?: boolean;
   currentPlayerId?: string;
   onConfirm: (bids: Record<string, number>) => void;
   combatants?: BattleCombatant[];
@@ -47,11 +48,11 @@ const TACTIC_SYMBOLS: Record<string, string> = {
   'imperial-poets': '📜',
 };
 
-const TACTIC_NAMES: Record<string, string> = {
-  seppuku: 'Seppuku',
-  'take-hostage': 'Tomar Rehén',
-  'hire-ronin': 'Contratar Ronin',
-  'imperial-poets': 'Poetas Imperiales',
+const TACTIC_NAME_KEYS: Record<string, TranslationKey> = {
+  seppuku: 'battle.tacticName.seppuku',
+  'take-hostage': 'battle.tacticName.takeHostage',
+  'hire-ronin': 'battle.tacticName.hireRonin',
+  'imperial-poets': 'battle.tacticName.imperialPoets',
 };
 
 /** All valid drop target ids: tactic ids + 'pool' */
@@ -68,6 +69,7 @@ export const BattleBiddingOverlay = ({
   provinceColor,
   battleNumber,
   isLastBattle,
+  isLastConfrontation,
   currentPlayerId,
   onConfirm,
   combatants,
@@ -273,6 +275,7 @@ export const BattleBiddingOverlay = ({
           <h2 className="bidding-overlay-title">
             {t('battle.battleNumber', { number: battleNumber })}: <span style={{ color: provinceColor }}>{provinceName}</span>
             {isLastBattle && <span> {t('battle.lastBattle')}</span>}
+            {!isLastBattle && isLastConfrontation && <span> {t('battle.lastConfrontation')}</span>}
           </h2>
           <p className="bidding-overlay-player">
             {playerClanId && <ClanShield clanId={playerClanId} size={55} />}
@@ -286,8 +289,8 @@ export const BattleBiddingOverlay = ({
           )}
           {playerVP !== undefined && (
             <div className="bidding-player-vp">
-              <VPIcon size={26} color="#f1c40f" />
               <strong>{playerVP}</strong>
+              <VPIcon size={26} color="#f1c40f" />
             </div>
           )}
           {onPeekMap && (
@@ -315,16 +318,16 @@ export const BattleBiddingOverlay = ({
                   <ClanShield clanId={c.clanId} size={20} />
                   <span className="bidding-combatant-name" style={{ color: clan?.color || '#fff' }}>{c.playerName}</span>
                   <span className="bidding-combatant-force" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    <FistIcon size={16} color={clan?.color || '#fff'} />
                     <span style={{ fontWeight: 'bold', color: clan?.color || '#fff' }}>{c.force}</span>
+                    <FistIcon size={16} color={clan?.color || '#fff'} />
                   </span>
                   <span className="bidding-combatant-force" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    <RoninIcon size={15} color="#e74c3c" />
                     <span style={{ fontWeight: 'bold', color: '#e74c3c' }}>
                       {c.playerId === currentPlayerId && c.clanId === 'koi'
                         ? Math.max(0, maxCoins - totalAssigned)
                         : c.playerId === currentPlayerId && playerRonin !== undefined ? playerRonin : c.ronin}
                     </span>
+                    <RoninIcon size={15} color="#e74c3c" />
                   </span>
                 </div>
               );
@@ -358,7 +361,7 @@ export const BattleBiddingOverlay = ({
                 >
                   <div className="bidding-tactic-symbol">{TACTIC_SYMBOLS[tactic.id]}</div>
                   <div className="bidding-tactic-kanji">{TACTIC_KANJI[tactic.id]}</div>
-                  <div className="bidding-tactic-name">{TACTIC_NAMES[tactic.id] || tactic.name}</div>
+                  <div className="bidding-tactic-name">{TACTIC_NAME_KEYS[tactic.id] ? t(TACTIC_NAME_KEYS[tactic.id]) : tactic.name}</div>
                   <div className="bidding-tactic-tooltip">
                     {t(tooltipKey)}
                   </div>

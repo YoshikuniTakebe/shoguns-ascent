@@ -6,6 +6,7 @@ import type { Figure } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { MonsterIcon } from './Icons';
 import { getEarthDragonDestinations } from '../utils/gameLogic';
+import { useT } from '../i18n';
 
 const IMMUNE_MONSTERS = ['su-yurei', 'sp-fukurokuju'];
 
@@ -15,6 +16,7 @@ function figureName(figure: Figure): string {
 }
 
 export const BattleCardDecisionPopup = () => {
+  const t = useT();
   const gameState = useGameStore(state => state.gameState);
   const localPlayerId = useGameStore(state => state.localPlayerId);
   const resolveDecision = useGameStore(state => state.doResolveBattleCardDecision);
@@ -102,17 +104,17 @@ export const BattleCardDecisionPopup = () => {
           <strong style={{ color: ownerClan?.color }}>{owner?.name}</strong>
         </div>
         <p>
-          Batalla en <strong style={{ color: PROVINCE_COLORS[pending.provinceId] || '#fff' }}>{province?.name}</strong>
+          {t('battle.inProvince')} <strong style={{ color: PROVINCE_COLORS[pending.provinceId] || '#fff' }}>{province?.name}</strong>
         </p>
 
         {!isOwner ? (
-          <p className="waiting-label">Esperando a que {owner?.name || 'el jugador'} resuelva {names[pending.type]}...</p>
+          <p className="waiting-label">{t('common.waitingForResolution', { name: owner?.name || '', effect: names[pending.type] })}</p>
         ) : pending.type === 'earth-dragon' && !earthChoiceMade ? (
           <>
-            <p className="battle-card-decision-question">¿Quieres mover una figura de cada rival fuera de esta provincia?</p>
+            <p className="battle-card-decision-question">{t('decision.earthDragon.question')}</p>
             <div className="battle-card-decision-actions">
-              <button className="btn-primary" onClick={() => { setEarthAccepted(true); setEarthChoiceMade(true); }}>Usar</button>
-              <button className="btn-secondary" onClick={() => resolveDecision(false, {})}>Omitir</button>
+              <button className="btn-primary" onClick={() => { setEarthAccepted(true); setEarthChoiceMade(true); }}>{t('common.use')}</button>
+              <button className="btn-secondary" onClick={() => resolveDecision(false, {})}>{t('common.skip')}</button>
             </div>
           </>
         ) : (
@@ -120,7 +122,7 @@ export const BattleCardDecisionPopup = () => {
             <div className="battle-card-decision-groups">
               {pending.type === 'fire-dragon' && hasMercy && Object.keys(candidates).some(playerId => playerId !== pending.ownerId) && (
                 <div className="battle-card-decision-mercy">
-                  <button className={!useMercy ? 'btn-primary' : 'btn-secondary'} onClick={() => setUseMercy(false)}>Aplicar bajas</button>
+                  <button className={!useMercy ? 'btn-primary' : 'btn-secondary'} onClick={() => setUseMercy(false)}>{t('common.applyCasualties')}</button>
                   <button className={useMercy ? 'btn-primary' : 'btn-secondary'} onClick={() => setUseMercy(true)}>Misericordia (+2 PV)</button>
                 </div>
               )}
@@ -139,7 +141,7 @@ export const BattleCardDecisionPopup = () => {
                       <strong style={{ color: clan?.color }}>{player?.name}</strong>
                     </div>
                     <div className="battle-card-choice-block">
-                      <span className="battle-card-choice-label">Figura</span>
+                      <span className="battle-card-choice-label">{t('common.figure')}</span>
                       <div className="battle-card-choice-options">
                         {figures.map(figure => (
                           <button
@@ -156,7 +158,7 @@ export const BattleCardDecisionPopup = () => {
                     </div>
                     {pending.type === 'earth-dragon' && (
                       <div className="battle-card-choice-block">
-                        <span className="battle-card-choice-label">Provincia de destino</span>
+                        <span className="battle-card-choice-label">{t('common.destinationProvince')}</span>
                         {validDestinationIds.length > 0 ? (
                           <div className="battle-card-choice-options">
                             {validDestinationIds.map(provinceId => {
@@ -178,8 +180,8 @@ export const BattleCardDecisionPopup = () => {
                         ) : (
                           <p className="waiting-label">
                             {player?.clanId === 'luna'
-                              ? 'No puede moverse a ninguna provincia porque todos los destinos ya tienen 2 figuras de Luna.'
-                              : 'No hay ninguna provincia de destino válida.'}
+                              ? t('decision.earthDragon.lunaBlocked')
+                              : t('decision.earthDragon.noDestination')}
                           </p>
                         )}
                       </div>
@@ -198,8 +200,8 @@ export const BattleCardDecisionPopup = () => {
               </button>
             )}
             <div className="battle-card-decision-actions">
-              {pending.type === 'earth-dragon' && earthAccepted && <button className="btn-secondary" onClick={() => { setEarthChoiceMade(false); setEarthAccepted(false); }}>Cancelar</button>}
-              <button className="btn-primary" disabled={!canConfirm} onClick={() => resolveDecision(true, selectedByPlayer, destinationsByFigure, useMercy)}>Confirmar</button>
+              {pending.type === 'earth-dragon' && earthAccepted && <button className="btn-secondary" onClick={() => { setEarthChoiceMade(false); setEarthAccepted(false); }}>{t('common.cancel')}</button>}
+              <button className="btn-primary" disabled={!canConfirm} onClick={() => resolveDecision(true, selectedByPlayer, destinationsByFigure, useMercy)}>{t('common.confirm')}</button>
             </div>
           </>
         )}

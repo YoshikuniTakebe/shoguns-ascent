@@ -38,7 +38,7 @@ export const NinjaDecisionPopup = () => {
   return createPortal(
     <div className="battle-popup-overlay">
       <div className="battle-popup-card battle-card-decision" style={{ borderColor: clan?.color || '#c8a951' }}>
-        <h3 className="battle-popup-title" style={{ color: clan?.color || '#c8a951' }}>Camino del Ninja</h3>
+        <h3 className="battle-popup-title" style={{ color: clan?.color || '#c8a951' }}>{t('decision.ninja.title')}</h3>
         <div className="battle-card-decision-owner">
           {owner && <ClanShield clanId={owner.clanId} size={isOwner ? 24 : 72} />}
           <strong style={{ color: clan?.color }}>{owner?.name}</strong>
@@ -86,12 +86,12 @@ export const NinjaDecisionPopup = () => {
               {t('battle.viewMap')}
             </button>
             <div className="battle-card-decision-actions">
-              <button className="btn-secondary" onClick={() => resolveDecision(false)}>Omitir</button>
-              <button className="btn-primary" disabled={!targetFigureId} onClick={() => resolveDecision(true, targetFigureId, useMercy)}>Confirmar</button>
+              <button className="btn-secondary" onClick={() => resolveDecision(false)}>{t('common.skip')}</button>
+              <button className="btn-primary" disabled={!targetFigureId} onClick={() => resolveDecision(true, targetFigureId, useMercy)}>{t('common.confirm')}</button>
             </div>
           </>
         ) : (
-          <p className="waiting-label">Esperando a que {owner?.name || 'el jugador'} resuelva Camino del Ninja...</p>
+          <p className="waiting-label">{t('common.waitingForResolution', { name: owner?.name || '', effect: 'Path of the Ninja' })}</p>
         )}
       </div>
     </div>,

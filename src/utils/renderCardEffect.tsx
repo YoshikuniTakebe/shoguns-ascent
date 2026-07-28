@@ -49,9 +49,8 @@ export function renderCardEffect(text: string): ReactNode[] {
       const iconSize = iconName === 'shinto' ? 17 : 14;
       result.push(
         <span key={`icon-${matchStart}`} style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', gap: '1px' }}>
-          {amountBefore && <span style={{ fontWeight: 'bold', color: iconColor }}>{amountBefore}</span>}
+          {(amountBefore || amountAfter) && <span style={{ fontWeight: 'bold', color: iconColor }}>{amountBefore || amountAfter}</span>}
           <IconComponent size={iconSize} color={iconColor} />
-          {amountAfter && <span style={{ fontWeight: 'bold', color: '#c8a951' }}>{amountAfter}</span>}
         </span>
       );
     }

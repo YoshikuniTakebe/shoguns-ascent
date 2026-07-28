@@ -1,14 +1,20 @@
 import type { CSSProperties } from 'react';
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
-import { useShallow } from 'zustand/react/shallow';
 import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, SPRING_CARDS, SUMMER_CARDS, AUTUMN_CARDS, KAMI_DATA } from '../types/game';
 import type { Figure, GameState } from '../types/game';
 import { useT } from '../i18n';
 import { BushiIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon } from './Icons';
-import { countVirtueCards, getDaimyoUpgradeForceBonus, getFujinMovementCost, getPlayerSeasonCardEffects, isDaimyoFigure, isFigureTrappedBySusanoo } from '../utils/gameLogic';
+import { canManifestKamiInProvince, countVirtueCards, getDaimyoUpgradeForceBonus, getFujinMovementCost, getPlayerSeasonCardEffects, isDaimyoFigure, isFigureTrappedBySusanoo } from '../utils/gameLogic';
 import { renderCardEffect } from '../utils/renderCardEffect';
 import { getCardEffectKey } from '../utils/cardTranslations';
+
+const EMPTY_MARSHAL_MOVES: NonNullable<GameState['marshalMovedFigures']> = [];
+const EMPTY_KAMI_RESOLUTION_TEMPLES: NonNullable<GameState['kamiResolutionTemples']> = [];
+const EMPTY_WAR_PROVINCE_SLOTS: GameState['warProvinceSlots'] = [];
+const EMPTY_WAR_START_ACTIONS: NonNullable<GameState['warStartActions']> = [];
+const EMPTY_JINMENJU_PROVINCES: NonNullable<GameState['recruitJinmenjuProvinceIds']> = {};
 
 /** Helper to check if a player has a card by base ID (accounts for '-2' suffix duplicates) */
 function hasDisplayCard(cardIds: Set<string>, baseId: string): boolean {
@@ -45,8 +51,11 @@ function getFigureForce(figure: Figure, ownerClanId: string, gameState: GameStat
           const provinceHasOni = province.figures.some(
             (f) => f.type === 'monster' && f.monsterCardId && f.monsterCardId.includes('oni-of-')
           );
-          if (hasDisplayCard(cardIds, 'su-path-of-might') && provinceHasOni) {
-            figForce += 1;
+          const pathOfMightCopies = playerCards.filter(card =>
+            card.id === 'su-path-of-might' || card.id === 'su-path-of-might-2'
+          ).length;
+          if (pathOfMightCopies > 0 && provinceHasOni) {
+            figForce += pathOfMightCopies;
           }
         }
       }
@@ -154,6 +163,12 @@ function getFigureDisplayName(figure: Figure): string {
 
 const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; color: string; regionId: string }) => {
   const t = useT();
+  const [tooltipPosition, setTooltipPosition] = React.useState<{ left: number; top: number } | null>(null);
+  const showTooltip = (event: React.MouseEvent<HTMLSpanElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTooltipPosition({ left: rect.left + rect.width / 2, top: rect.top - 10 });
+  };
+  const hideTooltip = () => setTooltipPosition(null);
   const gameState = useGameStore.getState().gameState!;
   const ownerPlayer = gameState.players.find(p => p.id === figure.owner);
   const ownerClanId = ownerPlayer ? ownerPlayer.clanId : '';
@@ -166,18 +181,27 @@ const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; co
     ? t(`kami.${figure.kamiType}.expansionEffect`)
     : null;
 
-  const tooltipContent = (
-    <span className="figure-tooltip" style={{ borderColor: color }}>
+  const tooltipContent = tooltipPosition && typeof document !== 'undefined' ? createPortal(
+    <span
+      className="figure-tooltip figure-tooltip-portal"
+      style={{ borderColor: color, left: tooltipPosition.left, top: tooltipPosition.top }}
+    >
       <span className="figure-tooltip-name">{displayName}</span>
       <span className="figure-tooltip-force">Force: {force}</span>
       {monsterPower && <span className="figure-tooltip-power">{renderCardEffect(monsterPower)}</span>}
       {kamiPower && <span className="figure-tooltip-power">{kamiPower}</span>}
-    </span>
-  );
+    </span>,
+    document.body,
+  ) : null;
+
+  const wrapperProps = {
+    onMouseEnter: showTooltip,
+    onMouseLeave: hideTooltip,
+  };
 
   if (figure.type === 'bushi') {
     return (
-      <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
+      <span {...wrapperProps} className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
         <BushiIcon size={21} color={color} />
         {tooltipContent}
       </span>
@@ -185,7 +209,7 @@ const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; co
   }
   if (figure.type === 'shinto') {
     return (
-      <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
+      <span {...wrapperProps} className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
         <ShintoIcon size={21} color={color} />
         {tooltipContent}
       </span>
@@ -193,7 +217,7 @@ const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; co
   }
   if (figure.type === 'fortress') {
     return (
-      <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
+      <span {...wrapperProps} className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
         <FortressIcon size={21} color={color} />
         {tooltipContent}
       </span>
@@ -201,7 +225,7 @@ const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; co
   }
   if (figure.type === 'daimyo') {
     return (
-      <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
+      <span {...wrapperProps} className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
         <DaimyoIcon size={21} color={color} />
         {tooltipContent}
       </span>
@@ -209,7 +233,7 @@ const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; co
   }
   if (figure.type === 'monster') {
     return (
-      <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
+      <span {...wrapperProps} className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`}>
         <MonsterIcon size={21} color={color} />
         {tooltipContent}
       </span>
@@ -217,7 +241,7 @@ const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; co
   }
   if (figure.type === 'kami') {
     return (
-      <span className={`figure-icon figure-icon-wrapper kami-map-icon${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`} style={{ color }}>
+      <span {...wrapperProps} className={`figure-icon figure-icon-wrapper kami-map-icon${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`} style={{ color }}>
         <span aria-hidden="true">神</span>
         {tooltipContent}
       </span>
@@ -229,7 +253,7 @@ const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; co
     kami: '\u2728',
   };
   return (
-    <span className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`} style={{ color }}>
+    <span {...wrapperProps} className={`figure-icon figure-icon-wrapper${ownerClanId === 'sol' ? ' figure-icon-sol' : ''}`} style={{ color }}>
       {icons[figure.type] || '\u25CF'}
       {tooltipContent}
     </span>
@@ -237,62 +261,30 @@ const FigureIcon = React.memo(({ figure, color, regionId }: { figure: Figure; co
 });
 
 export const RegionCard = React.memo(({ regionId, style }: { regionId: string; style: CSSProperties }) => {
-  // Use granular selectors to avoid re-renders from unrelated state changes
   const gameState = useGameStore(s => s.gameState);
   const province = useGameStore(s => s.gameState?.provinces[regionId]);
-  const {
-    players,
-    currentPlayerIndex,
-    currentPhase: _currentPhase,
-    mode,
-    marshalMandateActive,
-    marshalMovedFigures,
-    kamiResolutionActive,
-    fujinMovesRemaining,
-    kamiResolutionTemples,
-    kamiResolutionIndex,
-    zorroPlacementActive,
-    zorroPlacementPlayerId,
-    warProvinceSlots,
-    honorTrack: _honorTrack,
-    harvestMandateActive: _harvestMandateActive,
-    raijinPlacementActive,
-    daikaijuPlacementActive,
-    daikaijuPlacementPlayerId,
-    kamiPlacementActive,
-    kamiPlacementPlayerId,
-    kamiPlacementProvinceId,
-    currentSeason: _currentSeason,
-    warStartActions,
-    warStartActionIndex,
-    warStartSelection,
-  } = useGameStore(useShallow(s => ({
-    players: s.gameState?.players,
-    currentPlayerIndex: s.gameState?.currentPlayerIndex ?? 0,
-    currentPhase: s.gameState?.currentPhase,
-    mode: s.gameState?.mode,
-    marshalMandateActive: s.gameState?.marshalMandateActive ?? false,
-    marshalMovedFigures: s.gameState?.marshalMovedFigures ?? [],
-    kamiResolutionActive: s.gameState?.kamiResolutionActive ?? false,
-    fujinMovesRemaining: s.gameState?.fujinMovesRemaining ?? 0,
-    kamiResolutionTemples: s.gameState?.kamiResolutionTemples ?? [],
-    kamiResolutionIndex: s.gameState?.kamiResolutionIndex ?? 0,
-    zorroPlacementActive: s.gameState?.zorroPlacementActive ?? false,
-    zorroPlacementPlayerId: s.gameState?.zorroPlacementPlayerId,
-    warProvinceSlots: s.gameState?.warProvinceSlots ?? [],
-    honorTrack: s.gameState?.honorTrack ?? [],
-    harvestMandateActive: s.gameState?.harvestMandateActive ?? false,
-    raijinPlacementActive: s.gameState?.raijinPlacementActive ?? false,
-    daikaijuPlacementActive: s.gameState?.daikaijuPlacementActive ?? false,
-    daikaijuPlacementPlayerId: s.gameState?.daikaijuPlacementPlayerId ?? null,
-    kamiPlacementActive: s.gameState?.kamiPlacementActive ?? false,
-    kamiPlacementPlayerId: s.gameState?.kamiPlacementPlayerId ?? null,
-    kamiPlacementProvinceId: s.gameState?.kamiPlacementProvinceId ?? null,
-    currentSeason: s.gameState?.currentSeason,
-    warStartActions: s.gameState?.warStartActions ?? [],
-    warStartActionIndex: s.gameState?.warStartActionIndex ?? 0,
-    warStartSelection: s.gameState?.warStartSelection ?? null,
-  })));
+  const players = gameState?.players;
+  const currentPlayerIndex = gameState?.currentPlayerIndex ?? 0;
+  const mode = gameState?.mode;
+  const marshalMandateActive = gameState?.marshalMandateActive ?? false;
+  const marshalMovedFigures = gameState?.marshalMovedFigures ?? EMPTY_MARSHAL_MOVES;
+  const kamiResolutionActive = gameState?.kamiResolutionActive ?? false;
+  const fujinMovesRemaining = gameState?.fujinMovesRemaining ?? 0;
+  const kamiResolutionTemples = gameState?.kamiResolutionTemples ?? EMPTY_KAMI_RESOLUTION_TEMPLES;
+  const kamiResolutionIndex = gameState?.kamiResolutionIndex ?? 0;
+  const zorroPlacementActive = gameState?.zorroPlacementActive ?? false;
+  const zorroPlacementPlayerId = gameState?.zorroPlacementPlayerId;
+  const warProvinceSlots = gameState?.warProvinceSlots ?? EMPTY_WAR_PROVINCE_SLOTS;
+  const raijinPlacementActive = gameState?.raijinPlacementActive ?? false;
+  const daikaijuPlacementActive = gameState?.daikaijuPlacementActive ?? false;
+  const daikaijuPlacementPlayerId = gameState?.daikaijuPlacementPlayerId ?? null;
+  const kamiPlacementActive = gameState?.kamiPlacementActive ?? false;
+  const kamiPlacementPlayerId = gameState?.kamiPlacementPlayerId ?? null;
+  const kamiPlacementProvinceId = gameState?.kamiPlacementProvinceId ?? null;
+  const warStartActions = gameState?.warStartActions ?? EMPTY_WAR_START_ACTIONS;
+  const warStartActionIndex = gameState?.warStartActionIndex ?? 0;
+  const warStartSelection = gameState?.warStartSelection ?? null;
+  const recruitJinmenjuProvinceIds = gameState?.recruitJinmenjuProvinceIds ?? EMPTY_JINMENJU_PROVINCES;
   const selectedRegion = useGameStore(s => s.selectedRegion);
   const moveMode = useGameStore(s => s.moveMode);
   const moveFrom = useGameStore(s => s.moveFrom);
@@ -389,9 +381,8 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   // Zorro placement target logic
   let isZorroTarget = false;
   if (zorroPlacementActive && zorroPlacementPlayerId) {
-    const isBattleProvince = warProvinceSlots.some(s => s.provinceId === regionId);
     const hasZorroFigure = province.figures.some(f => f.owner === zorroPlacementPlayerId && f.type !== 'fortress');
-    if (isBattleProvince && !hasZorroFigure) {
+    if (regionId !== 'ocean' && !hasZorroFigure) {
       isZorroTarget = true;
     }
   }
@@ -402,10 +393,11 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
   if (kamiResolutionActive && raijinPlacementActive) {
     isRecruitTarget = true;
   } else if (jinmenjuSummonActive && recruitMode && !monsterPlacementMode) {
-    // When Jinmenju summon is active, only highlight the province where Jinmenju is
     if (apid) {
-      const hasJinmenju = province.figures.some(f => f.owner === apid && f.monsterCardId === 'sp-jinmenju');
-      if (hasJinmenju) {
+      const eligibleProvinceIds = recruitJinmenjuProvinceIds[apid] || [];
+      if (activePlayer?.clanId === 'libelula' && eligibleProvinceIds.length > 0) {
+        isRecruitTarget = true;
+      } else if (eligibleProvinceIds.includes(regionId)) {
         isRecruitTarget = true;
       } else {
         isRecruitDimmed = true;
@@ -432,7 +424,9 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
     const { selectRegion, doMoveForces, setMoveFrom, setSelectedFigures, doBuildFortress, doBuildFukurokuju, doRecruitPlaceFigure, doPlaceMonster, doRaijinPlace, doZorroPlaceBushi, doJinmenjuPlace, doDaikaijuPlaceProvince, doWarStartSelectProvince, doKamiSelectProvince } = useGameStore.getState();
     if (kamiPlacementActive && regionId !== 'ocean') {
       const isOwner = mode === 'hotseat' || localPlayerId === kamiPlacementPlayerId;
-      if (isOwner) doKamiSelectProvince(regionId);
+      if (isOwner && gameState && kamiPlacementPlayerId && canManifestKamiInProvince(gameState, kamiPlacementPlayerId, regionId)) {
+        doKamiSelectProvince(regionId);
+      }
       return;
     }
     if (isWarStartOwner && isWarStartTarget && (warStartAction?.type === 'naginata' || warStartAction?.type === 'ashigaru')) {
@@ -619,7 +613,11 @@ export const RegionCard = React.memo(({ regionId, style }: { regionId: string; s
 
   // Daikaiju placement target (any province except ocean)
   const isDaikaijuTarget = daikaijuPlacementActive && daikaijuPlacementMode && regionId !== 'ocean' && (mode === 'hotseat' || localPlayerId === daikaijuPlacementPlayerId);
-  const isKamiTarget = kamiPlacementActive && regionId !== 'ocean' && (mode === 'hotseat' || localPlayerId === kamiPlacementPlayerId);
+  const isKamiTarget = kamiPlacementActive
+    && regionId !== 'ocean'
+    && !!kamiPlacementPlayerId
+    && (mode === 'hotseat' || localPlayerId === kamiPlacementPlayerId)
+    && canManifestKamiInProvince(gameState, kamiPlacementPlayerId, regionId);
   const isKamiSelected = isKamiTarget && kamiPlacementProvinceId === regionId;
 
   return (

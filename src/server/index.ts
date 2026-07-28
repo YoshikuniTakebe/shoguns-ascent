@@ -13,6 +13,7 @@ import {
   chooseMandateTile,
   submitWarTacticBids,
   allBidsSubmitted,
+  escrowWarTacticBids,
   resolveNextBattle,
   moveForces,
   advancePhase,
@@ -30,7 +31,9 @@ import {
   skipBetrayTurn,
   shouldEndTeaPhase,
   recruitPlaceFigure,
+  recruitPlaceTempleShinto,
   recruitPlaceDaimyo,
+  jinmenjuPlaceFigure,
   skipRecruitTurn,
   skipTrainPurchase,
   advanceTrainResolution,
@@ -57,13 +60,13 @@ import {
   resolveSpringPlacementDecision,
   refreshPendingKamiResolution,
   resolveVassalDecision,
+  continueVassalAfterNotice,
   applyRighteousnessVP,
   applyDignityMonsterSummon,
   prepareMonsterEnterDecision,
   resolveMonsterEnterDecision,
-  hasCard,
   grantWarlordSummonCoin,
-  grantRecruitWarlordCoinOnce,
+  recordRecruitSummon,
   chooseGenerosityRecipient,
   respondToGenerosity,
   getFujinMovementCost,
@@ -87,10 +90,12 @@ import {
   undoKamiManifestationProvince,
   confirmKamiManifestation,
   syncKamiControllers,
+  acknowledgeMarshalSerpentWarning,
+  continuePendingFujinMovement,
+  continueNureOnnaAfterSerpent,
 } from '../utils/gameLogic';
 import type { GameState, RuleEventNotice } from '../types/game';
 import { SEASON_CARDS_DATA } from '../types/game';
-import { getAvailableNormalShintoReserve } from '../utils/reserveUtils';
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 const describeTradeResources = (coins: number, ronin: number): string => {
@@ -137,21 +142,31 @@ import {
   purgeOrphanGames,
   getGamePasswordHash,
   findUserByUsernameOrEmail,
-  addFriend,
   getFriends,
   areFriends,
+  ensureMutualFriendship,
+  getFriendRequestDirection,
+  createFriendRequest,
+  getFriendRequests,
+  acceptFriendRequest,
+  rejectFriendRequest,
   savePendingLobby,
   getPendingLobby,
   getAllPendingLobbies,
   deletePendingLobby,
   getAppSetting,
   setAppSetting,
+  saveActionUndoSnapshot,
+  getActionUndoSnapshot,
+  deleteActionUndoSnapshot,
 } from './database';
 import type { DbPendingLobby } from './database';
 import { generateToken, verifyToken } from './auth';
+import { stateForPlayer } from './stateVisibility';
 import bcrypt from 'bcryptjs';
 
 const app = express();
+app.set('trust proxy', 1);
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
@@ -161,7 +176,10 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
 // Manual CORS middleware for Express 5 compatibility
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin && (allowedOrigins.length === 0 || allowedOrigins.includes(origin))) {
+  const isDevelopmentOrigin = process.env.NODE_ENV !== 'production'
+    && !!origin
+    && /^https?:\/\/(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+)(:\d+)?$/i.test(origin);
+  if (origin && (allowedOrigins.includes(origin) || isDevelopmentOrigin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
@@ -173,7 +191,7 @@ app.use((req, res, next) => {
   }
   next();
 });
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '10mb' }));
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
@@ -207,6 +225,23 @@ interface Lobby {
   // Optional preferred clan per invited user (by user id).
   invitedClans: Record<string, string>;
   createdAt: string;
+}
+
+type LobbyUndoType = 'recruit' | 'betray' | 'fujin';
+
+function setLobbyUndoSnapshot(lobby: Lobby, type: LobbyUndoType, state: GameState): void {
+  const snapshot = JSON.parse(JSON.stringify(state)) as GameState;
+  if (type === 'recruit') lobby.recruitUndoSnapshot = snapshot;
+  if (type === 'betray') lobby.betrayUndoSnapshot = snapshot;
+  if (type === 'fujin') lobby.fujinUndoSnapshot = snapshot;
+  if (lobby.persistentGameId) saveActionUndoSnapshot(lobby.persistentGameId, type, snapshot);
+}
+
+function clearLobbyUndoSnapshot(lobby: Lobby, type: LobbyUndoType): void {
+  if (type === 'recruit') lobby.recruitUndoSnapshot = null;
+  if (type === 'betray') lobby.betrayUndoSnapshot = null;
+  if (type === 'fujin') lobby.fujinUndoSnapshot = null;
+  if (lobby.persistentGameId) deleteActionUndoSnapshot(lobby.persistentGameId, type);
 }
 
 /** Number of currently unreserved and unoccupied slots in a lobby. */
@@ -323,6 +358,67 @@ function getOrRehydrateLobby(id: string): Lobby | undefined {
 }
 
 const lobbies = new Map<string, Lobby>();
+const activePlayerConnections = new Map<string, { lobbyId: string; ws: WebSocket }>();
+
+function broadcastRejoinStatus(lobby: Lobby): void {
+  if (!lobby.gameState) return;
+  const players = lobby.gameState.players.map((gamePlayer) => {
+    const livePlayer = lobby.players.find((player) => player.id === gamePlayer.id);
+    const connected = !!(livePlayer?.ws && livePlayer.ws.readyState === WebSocket.OPEN);
+    return {
+      id: gamePlayer.id,
+      name: gamePlayer.name,
+      clanId: gamePlayer.clanId,
+      connected,
+    };
+  });
+  const allConnected = players.every((player) => player.connected);
+  lobby.players.forEach((player) => safeSend(player.ws, {
+    type: 'REJOIN_STATUS',
+    players,
+    allConnected,
+  }));
+}
+
+function detachPlayerConnection(lobby: Lobby, playerId: string, socket: WebSocket): void {
+  const player = lobby.players.find((candidate) => candidate.id === playerId);
+  // A stale socket closing after a reconnection must not remove the replacement socket.
+  if (!player || player.ws !== socket) return;
+
+  if (!lobby.started) {
+    const keepsReservedSlot = playerId === lobby.host || lobby.invitedUserIds.includes(playerId);
+    if (keepsReservedSlot) {
+      player.ws = null;
+    } else {
+      lobby.players = lobby.players.filter((candidate) => candidate !== player);
+    }
+    persistLobby(lobby);
+    broadcastLobby(lobby);
+    return;
+  }
+
+  lobby.players = lobby.players.filter((candidate) => candidate !== player);
+  if (lobby.players.length === 0) {
+    lobbies.delete(lobby.id);
+    return;
+  }
+  broadcastLobby(lobby);
+  broadcastRejoinStatus(lobby);
+}
+
+function activatePlayerConnection(lobby: Lobby, playerId: string, socket: WebSocket): void {
+  const previous = activePlayerConnections.get(playerId);
+  if (previous && previous.ws !== socket) {
+    const previousLobby = lobbies.get(previous.lobbyId);
+    if (previousLobby) {
+      detachPlayerConnection(previousLobby, playerId, previous.ws);
+    }
+    if (previous.ws.readyState === WebSocket.OPEN || previous.ws.readyState === WebSocket.CONNECTING) {
+      previous.ws.close(4001, 'Connected to another game');
+    }
+  }
+  activePlayerConnections.set(playerId, { lobbyId: lobby.id, ws: socket });
+}
 
 // Initialize the database
 initDatabase();
@@ -341,7 +437,29 @@ try {
 
 // --- Auth endpoints ---
 
-app.post('/api/auth/register', async (req, res) => {
+const authAttempts = new Map<string, { count: number; resetAt: number }>();
+const limitAuthAttempts: express.RequestHandler = (req, res, next) => {
+  const now = Date.now();
+  if (authAttempts.size > 1000) {
+    for (const [storedKey, storedAttempt] of authAttempts) {
+      if (storedAttempt.resetAt <= now) authAttempts.delete(storedKey);
+    }
+  }
+  const key = req.ip || req.socket.remoteAddress || 'unknown';
+  const current = authAttempts.get(key);
+  const attempt = !current || current.resetAt <= now
+    ? { count: 1, resetAt: now + 15 * 60 * 1000 }
+    : { ...current, count: current.count + 1 };
+  authAttempts.set(key, attempt);
+  if (attempt.count > 30) {
+    res.setHeader('Retry-After', String(Math.ceil((attempt.resetAt - now) / 1000)));
+    res.status(429).json({ error: 'Too many authentication attempts' });
+    return;
+  }
+  next();
+};
+
+app.post('/api/auth/register', limitAuthAttempts, async (req, res) => {
   const { email, username, password } = req.body;
 
   if (!email || !username || !password) {
@@ -396,7 +514,7 @@ app.post('/api/auth/register', async (req, res) => {
   });
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', limitAuthAttempts, async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -512,6 +630,10 @@ app.get('/api/games/:id/map-view', (req, res) => {
     res.status(404).json({ error: 'Game not found' });
     return;
   }
+  if (!canAccessGame(userId, req.params.id)) {
+    res.status(403).json({ error: 'Game access denied' });
+    return;
+  }
 
   res.json({ view: getUserGameMapView(userId, req.params.id) || null });
 });
@@ -524,6 +646,10 @@ app.patch('/api/games/:id/map-view', (req, res) => {
   }
   if (!getGameById(req.params.id)) {
     res.status(404).json({ error: 'Game not found' });
+    return;
+  }
+  if (!canAccessGame(userId, req.params.id)) {
+    res.status(403).json({ error: 'Game access denied' });
     return;
   }
 
@@ -586,11 +712,16 @@ app.get('/api/lobbies/visible', (req, res) => {
 });
 
 app.post('/api/lobbies', (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
   const { name, maxPlayers } = req.body;
   const lobby: Lobby = {
     id: uuidv4(),
     name: name || 'New Game',
-    host: '',
+    host: userId,
     players: [],
     maxPlayers: maxPlayers || 5,
     gameState: null,
@@ -611,15 +742,19 @@ app.post('/api/lobbies', (req, res) => {
 // --- Game persistence REST endpoints ---
 
 app.get('/api/games', (req, res) => {
-  const status = req.query.status as string | undefined;
-  if (status === 'active') {
-    res.json(getActiveGames().map(formatGame));
-  } else if (status === 'finished') {
-    res.json(getFinishedGames().map(formatGame));
-  } else {
-    const all = [...getActiveGames(), ...getFinishedGames()];
-    res.json(all.map(formatGame));
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
   }
+  const status = req.query.status as string | undefined;
+  const visibleGames = isAdminUser(userId)
+    ? [...getActiveGames(), ...getFinishedGames()]
+    : getGamesByUserId(userId);
+  const filtered = status === 'active' || status === 'finished'
+    ? visibleGames.filter(game => game.status === status)
+    : visibleGames;
+  res.json(filtered.map(formatGame));
 });
 
 app.get('/api/games/my-games', (req, res) => {
@@ -650,7 +785,7 @@ function getAuthUserId(req: { headers: { authorization?: string } }): string | n
   return payload?.userId ?? null;
 }
 
-// Add a friend by username or email.
+// Send a friend request by username or email.
 app.post('/api/friends/add', (req, res) => {
   const userId = getAuthUserId(req);
   if (!userId) {
@@ -671,9 +806,26 @@ app.post('/api/friends/add', (req, res) => {
     res.status(400).json({ error: 'self' });
     return;
   }
-  const already = areFriends(userId, target.id);
-  addFriend(userId, target.id);
-  res.json({ friend: { id: target.id, username: target.username, email: target.email }, alreadyFriend: already });
+  if (areFriends(userId, target.id)) {
+    ensureMutualFriendship(userId, target.id);
+    res.json({ status: 'already_friend', user: { id: target.id, username: target.username } });
+    return;
+  }
+  const direction = getFriendRequestDirection(userId, target.id);
+  if (direction === 'outgoing') {
+    res.json({ status: 'already_pending', user: { id: target.id, username: target.username } });
+    return;
+  }
+  if (direction === 'incoming') {
+    res.json({ status: 'incoming_pending', user: { id: target.id, username: target.username } });
+    return;
+  }
+  const request = createFriendRequest(userId, target.id);
+  res.status(201).json({
+    status: 'sent',
+    request: { id: request.id, createdAt: request.createdAt },
+    user: { id: target.id, username: target.username },
+  });
 });
 
 // List the authenticated user's friends.
@@ -686,7 +838,44 @@ app.get('/api/friends', (req, res) => {
   res.json(getFriends(userId));
 });
 
+app.get('/api/friends/requests', (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+  res.json(getFriendRequests(userId));
+});
+
+app.post('/api/friends/requests/:requestId/accept', (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+  const friend = acceptFriendRequest(req.params.requestId, userId);
+  if (!friend) {
+    res.status(404).json({ error: 'request_not_found' });
+    return;
+  }
+  res.json({ friend });
+});
+
+app.post('/api/friends/requests/:requestId/reject', (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'No token provided' });
+    return;
+  }
+  if (!rejectFriendRequest(req.params.requestId, userId)) {
+    res.status(404).json({ error: 'request_not_found' });
+    return;
+  }
+  res.json({ rejected: true });
+});
+
 app.get('/api/games/:id', (req, res) => {
+  if (!requireGameAccess(req, res)) return;
   const game = getGameById(req.params.id);
   if (!game) {
     res.status(404).json({ error: 'Game not found' });
@@ -696,6 +885,8 @@ app.get('/api/games/:id', (req, res) => {
 });
 
 app.get('/api/games/:id/snapshots', (req, res) => {
+  const viewerId = requireGameAccess(req, res);
+  if (!viewerId) return;
   const game = getGameById(req.params.id);
   if (!game) {
     res.status(404).json({ error: 'Game not found' });
@@ -707,7 +898,7 @@ app.get('/api/games/:id/snapshots', (req, res) => {
       id: s.id,
       gameId: s.game_id,
       snapshotIndex: s.snapshot_index,
-      state: JSON.parse(s.state_json),
+      state: stateForPlayer(JSON.parse(s.state_json), viewerId),
       description: s.description,
       phase: s.phase,
       season: s.season,
@@ -717,6 +908,8 @@ app.get('/api/games/:id/snapshots', (req, res) => {
 });
 
 app.get('/api/games/:id/snapshots/:index', (req, res) => {
+  const viewerId = requireGameAccess(req, res);
+  if (!viewerId) return;
   const index = parseInt(req.params.index, 10);
   if (isNaN(index)) {
     res.status(400).json({ error: 'Invalid snapshot index' });
@@ -731,7 +924,7 @@ app.get('/api/games/:id/snapshots/:index', (req, res) => {
     id: snapshot.id,
     gameId: snapshot.game_id,
     snapshotIndex: snapshot.snapshot_index,
-    state: JSON.parse(snapshot.state_json),
+    state: stateForPlayer(JSON.parse(snapshot.state_json), viewerId),
     description: snapshot.description,
     phase: snapshot.phase,
     season: snapshot.season,
@@ -740,6 +933,7 @@ app.get('/api/games/:id/snapshots/:index', (req, res) => {
 });
 
 app.get('/api/games/:id/snapshot-count', (req, res) => {
+  if (!requireGameAccess(req, res)) return;
   const game = getGameById(req.params.id);
   if (!game) {
     res.status(404).json({ error: 'Game not found' });
@@ -751,17 +945,32 @@ app.get('/api/games/:id/snapshot-count', (req, res) => {
 // --- Hotseat persistence endpoints ---
 
 app.post('/api/games/save-hotseat', (req, res) => {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication is required to save a hotseat game' });
+    return;
+  }
   const { state, password } = req.body as { state: GameState; password?: string };
   if (!state) {
     res.status(400).json({ error: 'Missing state in request body' });
     return;
   }
+  if (state.mode !== 'hotseat') {
+    res.status(400).json({ error: 'Only hotseat games can be saved from a client' });
+    return;
+  }
   const gameId = state.id || uuidv4();
+  const existingGame = getGameById(gameId);
+  if (existingGame && !canAccessGame(userId, gameId)) {
+    res.status(403).json({ error: 'Game access denied' });
+    return;
+  }
   const players = state.players.map((p) => ({ name: p.name, clanId: p.clanId }));
   const gameName = state.gameName || `Hotseat - ${players.map((p) => p.name).join(' vs ')}`;
   const status = state.gameOver ? 'finished' : 'active';
 
   saveGame(gameId, gameName, players, 'hotseat', status, password);
+  addGamePlayer(gameId, userId, players[0]?.clanId || 'hotseat');
   saveSnapshot(gameId, state, 'Hotseat save');
 
   if (state.gameOver) {
@@ -772,11 +981,13 @@ app.post('/api/games/save-hotseat', (req, res) => {
 });
 
 app.get('/api/games/:id/has-password', (req, res) => {
+  if (!requireGameAccess(req, res)) return;
   const hash = getGamePasswordHash(req.params.id);
   res.json({ hasPassword: !!hash });
 });
 
 app.post('/api/games/:id/verify-password', async (req, res) => {
+  if (!requireGameAccess(req, res)) return;
   const { password } = req.body as { password: string };
   if (!password) {
     res.status(400).json({ error: 'Missing password' });
@@ -792,6 +1003,7 @@ app.post('/api/games/:id/verify-password', async (req, res) => {
 });
 
 app.put('/api/games/:id/snapshot', (req, res) => {
+  if (!requireGameAccess(req, res)) return;
   const { state } = req.body as { state: GameState };
   if (!state) {
     res.status(400).json({ error: 'Missing state in request body' });
@@ -800,6 +1012,10 @@ app.put('/api/games/:id/snapshot', (req, res) => {
   const game = getGameById(req.params.id);
   if (!game) {
     res.status(404).json({ error: 'Game not found' });
+    return;
+  }
+  if (game.mode !== 'hotseat' || state.mode !== 'hotseat' || state.id !== req.params.id) {
+    res.status(400).json({ error: 'Client snapshots are only accepted for the matching hotseat game' });
     return;
   }
 
@@ -830,6 +1046,33 @@ function readFigureSizeOverrides(): Record<string, number> {
   } catch {
     return {};
   }
+}
+
+function isAdminUser(userId: string | null): boolean {
+  if (!userId) return false;
+  return !!getUserById(userId)?.is_admin;
+}
+
+function canAccessGame(userId: string | null, gameId: string): boolean {
+  if (!userId) return false;
+  if (isAdminUser(userId)) return true;
+  return getGamePlayersByGameId(gameId).some(player => player.user_id === userId);
+}
+
+function requireGameAccess(
+  req: { headers: { authorization?: string }; params: { id: string } },
+  res: { status: (code: number) => { json: (body: unknown) => void } },
+): string | null {
+  const userId = getAuthUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication required' });
+    return null;
+  }
+  if (!canAccessGame(userId, req.params.id)) {
+    res.status(403).json({ error: 'Game access denied' });
+    return null;
+  }
+  return userId;
 }
 
 app.get('/api/settings/figure-sizes', (_req, res) => {
@@ -962,9 +1205,22 @@ function formatGame(game: { id: string; name: string; players_json: string; stat
   // Enrich players with userId from game_players table
   const basePlayers: { name: string; clanId: string }[] = JSON.parse(game.players_json);
   const gamePlayers = getGamePlayersByGameId(game.id);
+  const liveLobby = game.mode === 'online'
+    ? Array.from(lobbies.values()).find((lobby) => lobby.started && lobby.persistentGameId === game.id)
+    : null;
+  const connectedPlayerIds = new Set(
+    (liveLobby?.players || [])
+      .filter((player) => player.ws?.readyState === WebSocket.OPEN)
+      .map((player) => player.id),
+  );
   const enrichedPlayers = basePlayers.map((p) => {
     const gp = gamePlayers.find((gp) => gp.clan_id === p.clanId);
-    return { name: p.name, clanId: p.clanId, userId: gp?.user_id || null };
+    return {
+      name: p.name,
+      clanId: p.clanId,
+      userId: gp?.user_id || null,
+      connected: !!gp?.user_id && connectedPlayerIds.has(gp.user_id),
+    };
   });
 
   // GameState players are honor-sorted, while players_json keeps lobby order. Translate the
@@ -1055,7 +1311,10 @@ function startLobbyGame(l: Lobby): void {
     addGamePlayer(persistId, p.id, p.clanId);
   }
 
-  l.players.forEach((p) => safeSend(p.ws, { type: 'GAME_START', state: l.gameState }));
+  l.players.forEach((p) => safeSend(p.ws, {
+    type: 'GAME_START',
+    state: l.gameState ? stateForPlayer(l.gameState, p.id) : null,
+  }));
 }
 
 function restorePendingMonsterPlacement(state: GameState): GameState {
@@ -1147,6 +1406,10 @@ wss.on('connection', (ws: WebSocket, req) => {
   ws.on('message', (raw) => {
     try {
       const data = JSON.parse(raw.toString());
+      if (!userId) {
+        safeSend(ws, { type: 'ERROR', message: 'Authentication required' });
+        return;
+      }
 
       switch (data.type) {
         case 'CREATE_LOBBY': {
@@ -1201,6 +1464,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           };
           lobbies.set(lobbyId, l);
           currentLobbyId = lobbyId;
+          activatePlayerConnection(l, playerId, ws);
           persistLobby(l);
           ws.send(JSON.stringify({ type: 'LOBBY_CREATED', lobbyId }));
           broadcastLobby(l);
@@ -1222,6 +1486,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             if (existing) {
               existing.ws = ws;
               currentLobbyId = l.id;
+              activatePlayerConnection(l, playerId, ws);
               ws.send(JSON.stringify({ type: 'LOBBY_JOINED', lobbyId: l.id }));
               persistLobby(l);
               broadcastLobby(l);
@@ -1249,6 +1514,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const newPlayer = { id: playerId, name: joinPlayerName, clanId: '', ws };
           l.players.push(newPlayer);
           currentLobbyId = l.id;
+          activatePlayerConnection(l, playerId, ws);
 
           // If this invited user has a preferred clan and it's still free, assign it.
           if (userId && l.invitedClans[userId]) {
@@ -1524,7 +1790,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const { fromProvinceId, toProvinceId, figureIds } = data.payload || {};
           if (!fromProvinceId || !toProvinceId || !figureIds) return;
-          l.gameState = moveForces(l.gameState, data.playerId, fromProvinceId, toProvinceId, figureIds);
+          l.gameState = moveForces(l.gameState, playerId, fromProvinceId, toProvinceId, figureIds);
           broadcastState(l);
           break;
         }
@@ -1541,7 +1807,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             break;
           }
           l.gameState = preBattleState;
-          const submittedState = submitWarTacticBids(l.gameState, provinceId, data.playerId, tacticBids);
+          const submittedState = submitWarTacticBids(l.gameState, provinceId, playerId, tacticBids);
           if (submittedState === l.gameState) {
             safeSend(ws, { type: 'ERROR', message: 'La apuesta de guerra no es valida' });
             return;
@@ -1549,6 +1815,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           l.gameState = submittedState;
           // Only resolve once all participants have submitted their bids
           if (allBidsSubmitted(l.gameState, provinceId)) {
+            l.gameState = escrowWarTacticBids(l.gameState, provinceId);
             l.gameState = prepareBattleCardDecision(l.gameState, provinceId);
             if (l.gameState.pendingBattleCardDecision) {
               broadcastState(l);
@@ -1583,7 +1850,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const { useEffect, selectedByPlayer, destinationsByFigure, useMercy } = data.payload || {};
           const nextState = resolveBattleCardDecision(
             l.gameState,
-            data.playerId,
+            playerId,
             !!useEffect,
             selectedByPlayer || {},
             destinationsByFigure || {},
@@ -1618,7 +1885,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'RESOLVE_BATTLE_MERCY_DECISION': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState?.pendingBattleMercyDecision) return;
-          const nextState = resolveBattleMercyDecision(l.gameState, data.playerId, !!data.payload?.useMercy);
+          const nextState = resolveBattleMercyDecision(l.gameState, playerId, !!data.payload?.useMercy);
           if (nextState === l.gameState) return;
           l.gameState = nextState;
           broadcastState(l);
@@ -1630,7 +1897,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState?.pendingNinjaDecision) return;
           const nextState = resolveNinjaDecision(
             l.gameState,
-            data.playerId,
+            playerId,
             !!data.payload?.useEffect,
             data.payload?.targetFigureId,
             !!data.payload?.useMercy,
@@ -1646,7 +1913,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState?.pendingMonkeyDecision) return;
           const nextState = resolveMonkeyDecision(
             l.gameState,
-            data.playerId,
+            playerId,
             !!data.payload?.useEffect,
             data.payload?.targetPlayerId,
           );
@@ -1660,7 +1927,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           const pending = l?.gameState?.pendingBenevolence;
           if (!l?.gameState || !pending) return;
-          let nextState = resolveBenevolenceDecision(l.gameState, data.playerId, data.payload?.recipientId);
+          let nextState = resolveBenevolenceDecision(l.gameState, playerId, data.payload?.recipientId);
           if (nextState === l.gameState) return;
           if (!nextState.pendingBenevolence && !(nextState.pendingRuleNotices?.length || 0)) {
             if (pending.resume === 'advance-train') {
@@ -1707,7 +1974,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'RESOLVE_VASSAL_DECISION': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState?.pendingVassalDecision) return;
-          const nextState = resolveVassalDecision(l.gameState, data.playerId, !!data.payload?.accept);
+          const nextState = resolveVassalDecision(l.gameState, playerId, !!data.payload?.accept);
           if (nextState === l.gameState) return;
           l.gameState = nextState;
           broadcastState(l);
@@ -1718,7 +1985,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           const pending = l?.gameState?.pendingSerpentCharge;
           if (!l?.gameState || !pending) return;
-          let nextState = resolveSerpentChargeDecision(l.gameState, data.playerId, !!data.payload?.chargeCoin);
+          let nextState = resolveSerpentChargeDecision(l.gameState, playerId, !!data.payload?.chargeCoin);
           if (nextState === l.gameState) return;
           if (!nextState.pendingSerpentCharge && !(nextState.pendingRuleNotices?.length || 0)) {
             if (pending.resume === 'advance-kami') nextState = advanceKamiResolution(nextState);
@@ -1733,7 +2000,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             else if (pending.resume === 'continue-pre-battle') {
               nextState = preparePreBattleCardDecision(nextState, pending.forcedMove?.battleProvinceId || pending.fromProvinceId);
               if (!nextState.pendingBattleCardDecision) nextState = resolveUncontestedBattles(nextState);
-            }
+            } else if (pending.resume === 'continue-nure-onna') nextState = continueNureOnnaAfterSerpent(nextState);
           }
           l.gameState = nextState;
           broadcastState(l);
@@ -1745,7 +2012,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const pending = l?.gameState?.pendingMonsterEnterDecision;
           if (!l?.gameState || !pending) return;
           const { useEffect, selectedByPlayer, destinationId, useMercy } = data.payload || {};
-          let nextState = resolveMonsterEnterDecision(l.gameState, data.playerId, !!useEffect, selectedByPlayer || {}, destinationId, !!useMercy);
+          let nextState = resolveMonsterEnterDecision(l.gameState, playerId, !!useEffect, selectedByPlayer || {}, destinationId, !!useMercy);
           if (nextState === l.gameState) return;
           if (!nextState.pendingMonsterEnterDecision) {
             if (pending.resume === 'advance-kami') {
@@ -1915,14 +2182,16 @@ wss.on('connection', (ws: WebSocket, req) => {
               victim.victoryPoints -= stolenVP;
               hostageWinner.victoryPoints += stolenVP;
             }
-            const hostageWinnerCards = new Set(hostageWinner.seasonCards.map(card => card.id));
-            if (!resData2.sincerityApplied && hasCard(hostageWinnerCards, 'su-sincerity')) {
-              gainHonor(l.gameState, hostageWinner.id);
+            const sincerityCopies = hostageWinner.seasonCards.filter(card =>
+              card.id === 'su-sincerity' || card.id === 'su-sincerity-2'
+            ).length;
+            if (sincerityCopies > 0) {
+              for (let copy = 0; copy < sincerityCopies; copy += 1) gainHonor(l.gameState, hostageWinner.id);
               const updatedWinner = l.gameState.players.find(player => player.id === hostageWinner.id);
               if (updatedWinner) {
-                updatedWinner.victoryPoints += 1;
-                hostageEventVP += 1;
-                l.gameState.log = [...l.gameState.log, `${updatedWinner.name} gana Honor y 1 PV por tomar un rehen (Sinceridad). Total ${updatedWinner.victoryPoints} PV`];
+                updatedWinner.victoryPoints += sincerityCopies;
+                hostageEventVP += sincerityCopies;
+                l.gameState.log = [...l.gameState.log, `${updatedWinner.name} gana ${sincerityCopies} Honor y ${sincerityCopies} PV por tomar un rehen (${sincerityCopies} ${sincerityCopies === 1 ? 'copia' : 'copias'} de Sinceridad). Total {vp} ${updatedWinner.victoryPoints}`];
               }
             }
             const capturedHostageData = {
@@ -1942,7 +2211,7 @@ wss.on('connection', (ws: WebSocket, req) => {
               hostagesTaken,
               hostageLimit,
               hostageVPGained: hostageEventVP,
-              sincerityApplied: resData2.sincerityApplied || hasCard(hostageWinnerCards, 'su-sincerity'),
+              sincerityApplied: resData2.sincerityApplied || sincerityCopies > 0,
             };
             const updatedBattles2 = l.gameState.activeBattles.map(b => {
               if (b.provinceId === unresolvedBattle2.provinceId && !b.resolved) {
@@ -1952,7 +2221,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             });
             const finalWinner = l.gameState.players.find(player => player.id === hostageWinner.id);
             const finalVictim = l.gameState.players.find(player => player.id === targetFigure.owner);
-            l.gameState = { ...l.gameState, activeBattles: updatedBattles2, log: [...l.gameState.log, `${finalWinner?.name} toma un rehen de ${finalVictim?.name} y roba ${stolenVP} PV. Total ${finalWinner?.name}: ${finalWinner?.victoryPoints} PV; ${finalVictim?.name}: ${finalVictim?.victoryPoints} PV`] };
+            l.gameState = { ...l.gameState, activeBattles: updatedBattles2, log: [...l.gameState.log, `${finalWinner?.name} toma un rehen de ${finalVictim?.name} y roba ${stolenVP} PV. Total ${finalWinner?.name}: {vp} ${finalWinner?.victoryPoints}; ${finalVictim?.name}: {vp} ${finalVictim?.victoryPoints}`] };
 
             const remainingCapturable = l.gameState.provinces[unresolvedBattle2.provinceId].figures.some(figure =>
               figure.owner !== hostageWinner.id
@@ -1980,15 +2249,16 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'FORM_ALLIANCE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'tea') return;
           const { toPlayerId, fromPlayerId, accept } = data.payload || {};
           if (accept && fromPlayerId) {
-            l.gameState = acceptAlliance(l.gameState, fromPlayerId, data.playerId);
+            l.gameState = acceptAlliance(l.gameState, fromPlayerId, playerId);
             // After accepting an alliance during tea phase, advance the player's turn
             if (l.gameState.currentPhase === 'tea') {
               l.gameState = advancePlayer(l.gameState);
             }
           } else if (toPlayerId) {
-            l.gameState = proposeAlliance(l.gameState, data.playerId, toPlayerId);
+            l.gameState = proposeAlliance(l.gameState, playerId, toPlayerId);
           }
           broadcastState(l);
           break;
@@ -1997,6 +2267,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'BREAK_ALLIANCE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (playerId !== l.host || l.gameState.currentPhase !== 'seasonSetup') return;
           l.gameState = breakAllAlliances(l.gameState);
           broadcastState(l);
           break;
@@ -2007,7 +2278,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           if (l.gameState.currentPhase !== 'tea') return;
           const { toPlayerId: teaPropTo, bribeAmount: teaPropBribe, requestAmount: teaPropRequest } = data.payload || {};
-          const fromId = data.playerId;
+          const fromId = playerId;
           if (!fromId || !teaPropTo) return;
           // Validate sender is unallied and not opted out
           const sender = l.gameState.players.find(p => p.id === fromId);
@@ -2030,7 +2301,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           if (l.gameState.currentPhase !== 'tea') return;
           const { fromPlayerId: teaAccFrom } = data.payload || {};
-          const acceptingId = data.playerId;
+          const acceptingId = playerId;
           if (!teaAccFrom || !acceptingId) return;
           l.gameState = acceptAlliance(l.gameState, teaAccFrom, acceptingId);
           if (shouldEndTeaPhase(l.gameState)) {
@@ -2045,7 +2316,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           if (l.gameState.currentPhase !== 'tea') return;
           const { fromPlayerId: teaRejFrom } = data.payload || {};
-          const rejectingId = data.playerId;
+          const rejectingId = playerId;
           if (!teaRejFrom || !rejectingId) return;
           // Remove proposal from the specified sender to the rejecting player
           l.gameState = {
@@ -2065,7 +2336,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (l.gameState.currentPhase !== 'tea') return;
-          const optOutId = data.playerId;
+          const optOutId = playerId;
           if (!optOutId) return;
           // Only opt out if not already opted out and not already allied
           const optPlayer = l.gameState.players.find(p => p.id === optOutId);
@@ -2089,6 +2360,14 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'ADVANCE_PHASE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (playerId !== l.host) return;
+          if (
+            l.gameState.pendingSpringPlacement ||
+            l.gameState.pendingMonsterEnterDecision ||
+            l.gameState.pendingBattleCardDecision ||
+            l.gameState.pendingBattleMercyDecision ||
+            l.gameState.pendingRuleNotices.length > 0
+          ) return;
           const prevPhase = l.gameState.currentPhase;
           l.gameState = advancePhase(l.gameState);
           // If we transitioned to cleanup phase (e.g., no battles case), start interactive cleanup
@@ -2102,6 +2381,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'SETUP_SEASON': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (playerId !== l.host || l.gameState.currentPhase !== 'seasonSetup') return;
           // In online mode, require all players to be ready before starting the season
           if (l.gameState.mode === 'online' && l.gameState.teaReadyPlayers.length < l.gameState.players.length) return;
           l.gameState = setupSeason(l.gameState, l.gameState.currentSeason);
@@ -2112,6 +2392,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'TEA_READY': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'seasonSetup') return;
           if (!playerId) return;
           if (!l.gameState.teaReadyPlayers.includes(playerId)) {
             l.gameState = { ...l.gameState, teaReadyPlayers: [...l.gameState.teaReadyPlayers, playerId] };
@@ -2127,6 +2408,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'KAMI_PHASE_READY': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'politics' || !l.gameState.kamiPhasePopupPending) return;
           if (!playerId) return;
           if (l.gameState.pendingSpringPlacement) return;
           l.gameState = refreshPendingKamiResolution(l.gameState);
@@ -2170,6 +2452,11 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'RESOLVE_KAMI': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (
+            l.gameState.currentPhase !== 'politics' ||
+            !l.gameState.kamiResolutionActive ||
+            l.gameState.kamiResolutionCurrentPlayerId !== playerId
+          ) return;
           l.gameState = resolveKamiTurn(l.gameState);
           broadcastState(l);
           break;
@@ -2178,6 +2465,13 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'INITIATE_WAR': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (
+            playerId !== l.host ||
+            l.gameState.currentPhase !== 'politics' ||
+            l.gameState.politicsMandateCount < l.gameState.maxMandates ||
+            l.gameState.kamiResolutionActive ||
+            l.gameState.kamiPhasePopupPending
+          ) return;
           l.gameState = initiateWarPhase(l.gameState);
           broadcastState(l);
           break;
@@ -2187,29 +2481,26 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.zorroPlacementActive) return;
-          if (data.playerId !== l.gameState.zorroPlacementPlayerId) return;
+          if (playerId !== l.gameState.zorroPlacementPlayerId) return;
           const { provinceId: zpProvinceId } = data.payload || {};
           if (!zpProvinceId) return;
 
-          const zorroPlayer = l.gameState.players.find(p => p.id === data.playerId);
+          const zorroPlayer = l.gameState.players.find(p => p.id === playerId);
           if (!zorroPlayer) return;
 
-          // Validate: province must be a battle province where Zorro has no figures
-          const isBattleProvince = l.gameState.warProvinceSlots.some(s => s.provinceId === zpProvinceId);
-          if (!isBattleProvince) return;
           const zpProvince = l.gameState.provinces[zpProvinceId];
-          if (!zpProvince) return;
-          const hasOwnFigure = zpProvince.figures.some(f => f.owner === data.playerId && f.type !== 'fortress');
+          if (!zpProvince || zpProvinceId === 'ocean') return;
+          const hasOwnFigure = zpProvince.figures.some(f => f.owner === playerId && f.type !== 'fortress');
           if (hasOwnFigure) return;
           if (zorroPlayer.bushi <= 0) return;
           if (l.gameState.zorroPlacementsRemaining <= 0) return;
 
           // Place bushi
           const newPlayers = l.gameState.players.map(p => {
-            if (p.id === data.playerId) return { ...p, bushi: p.bushi - 1 };
+            if (p.id === playerId) return { ...p, bushi: p.bushi - 1 };
             return p;
           });
-          const newFigure = { type: 'bushi' as const, owner: data.playerId, id: `fig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` };
+          const newFigure = { type: 'bushi' as const, owner: playerId, id: `fig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` };
           const newProvinces = {
             ...l.gameState.provinces,
             [zpProvinceId]: { ...zpProvince, figures: [...zpProvince.figures, newFigure] },
@@ -2236,7 +2527,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.zorroPlacementActive) return;
-          if (data.playerId !== l.gameState.zorroPlacementPlayerId) return;
+          if (playerId !== l.gameState.zorroPlacementPlayerId) return;
 
           l.gameState = advanceWarStartAction(l.gameState);
           broadcastState(l);
@@ -2246,7 +2537,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'WAR_START_SELECT_PROVINCE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState || !data.payload?.provinceId) return;
-          l.gameState = selectWarStartProvince(l.gameState, data.playerId, data.payload.provinceId);
+          l.gameState = selectWarStartProvince(l.gameState, playerId, data.payload.provinceId);
           broadcastState(l);
           break;
         }
@@ -2254,7 +2545,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'WAR_START_SELECT_FIGURE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState || !data.payload?.provinceId || !data.payload?.figureId) return;
-          l.gameState = selectWarStartFigure(l.gameState, data.playerId, data.payload.provinceId, data.payload.figureId);
+          l.gameState = selectWarStartFigure(l.gameState, playerId, data.payload.provinceId, data.payload.figureId);
           broadcastState(l);
           break;
         }
@@ -2262,7 +2553,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'WAR_START_RESET': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
-          l.gameState = resetWarStartSelection(l.gameState, data.playerId);
+          l.gameState = resetWarStartSelection(l.gameState, playerId);
           broadcastState(l);
           break;
         }
@@ -2270,7 +2561,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'WAR_START_TOGGLE_MERCY': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState || !data.payload?.provinceId) return;
-          l.gameState = toggleWarStartMercy(l.gameState, data.playerId, data.payload.provinceId);
+          l.gameState = toggleWarStartMercy(l.gameState, playerId, data.payload.provinceId);
           broadcastState(l);
           break;
         }
@@ -2278,7 +2569,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'WAR_START_CONFIRM': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
-          l.gameState = confirmWarStartAction(l.gameState, data.playerId);
+          l.gameState = confirmWarStartAction(l.gameState, playerId);
           broadcastState(l);
           break;
         }
@@ -2286,7 +2577,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'WAR_START_SKIP': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
-          l.gameState = skipWarStartAction(l.gameState, data.playerId);
+          l.gameState = skipWarStartAction(l.gameState, playerId);
           broadcastState(l);
           break;
         }
@@ -2294,6 +2585,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'WAR_PHASE_READY': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'war' || l.gameState.warPhaseStartAcknowledged) return;
           if (!playerId) return;
           if (!l.gameState.warPhaseReadyPlayers.includes(playerId)) {
             l.gameState = { ...l.gameState, warPhaseReadyPlayers: [...l.gameState.warPhaseReadyPlayers, playerId] };
@@ -2375,6 +2667,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'BATTLE_RESULT_ACCEPTED': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (l.gameState.currentPhase !== 'war') return;
           if (!playerId) return;
           if (!l.gameState.battleResultReadyPlayers.includes(playerId)) {
             l.gameState = { ...l.gameState, battleResultReadyPlayers: [...l.gameState.battleResultReadyPlayers, playerId] };
@@ -2409,8 +2702,16 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!playerId) return;
+          const allBattlesResolved = l.gameState.currentPhase === 'war'
+            && l.gameState.activeBattles.length > 0
+            && l.gameState.activeBattles.every(b => b.resolved || b.uncontested);
+          if (!l.gameState.warSummaryVisible && !allBattlesResolved) return;
           if (!l.gameState.warSummaryReadyPlayers.includes(playerId)) {
-            l.gameState = { ...l.gameState, warSummaryReadyPlayers: [...l.gameState.warSummaryReadyPlayers, playerId] };
+            l.gameState = {
+              ...l.gameState,
+              warSummaryVisible: true,
+              warSummaryReadyPlayers: [...l.gameState.warSummaryReadyPlayers, playerId],
+            };
           }
           if (l.gameState.warSummaryReadyPlayers.length >= l.gameState.players.length) {
             // Clear war summary state FIRST
@@ -2454,6 +2755,16 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'RESOLVE_BATTLE': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          const unresolvedBattle = l.gameState.activeBattles.find(battle => !battle.resolved && !battle.uncontested);
+          if (
+            l.gameState.currentPhase !== 'war' ||
+            !unresolvedBattle ||
+            !unresolvedBattle.participants.includes(playerId) ||
+            !allBidsSubmitted(l.gameState, unresolvedBattle.provinceId) ||
+            l.gameState.pendingBattleCardDecision ||
+            l.gameState.pendingBattleMercyDecision ||
+            l.gameState.pendingRuleNotices.length > 0
+          ) return;
           l.gameState = resolveNextBattle(l.gameState);
           broadcastState(l);
           break;
@@ -2462,6 +2773,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'RESOLVE_WINTER': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          if (playerId !== l.host || l.gameState.currentPhase !== 'winter' || l.gameState.gameOver) return;
           l.gameState = resolveWinter(l.gameState);
           broadcastState(l);
           break;
@@ -2554,7 +2866,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           }
           // Validate that the sender is the kami resolution player (for Ryujin monster purchases)
           if (l.gameState.kamiResolutionActive && l.gameState.kamiResolutionCurrentPlayerId) {
-            if (data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+            if (playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
           }
           const { cardId, provinceId, templeId, replaceFigureId, reserve } = data.payload || {};
           if (!cardId) return;
@@ -2627,7 +2939,11 @@ wss.on('connection', (ws: WebSocket, req) => {
             syncKamiControllers(s);
             applyDignityMonsterSummon(s, playerId);
             // Upgrade: Path of the Warlord - placing a purchased monster (Komainu/Hotei) is a summon.
-            s = grantWarlordSummonCoin(s, playerId);
+            s = grantWarlordSummonCoin(
+              s,
+              playerId,
+              s.kamiResolutionActive && !s.trainMandateActive ? 'advance-kami' : 'advance-train',
+            );
           } else if (provinceId) {
             // Monster placed in province
             const province = s.provinces[provinceId];
@@ -2648,7 +2964,11 @@ wss.on('connection', (ws: WebSocket, req) => {
             };
             applyDignityMonsterSummon(s, playerId);
             // Upgrade: Path of the Warlord - placing a purchased monster on the board is a summon.
-            s = grantWarlordSummonCoin(s, playerId);
+            s = grantWarlordSummonCoin(
+              s,
+              playerId,
+              s.kamiResolutionActive && !s.trainMandateActive ? 'advance-kami' : 'advance-train',
+            );
             s = prepareMonsterEnterDecision(s, provinceId, figureId, s.kamiResolutionActive && !s.trainMandateActive ? 'advance-kami' : 'advance-train');
           } else if (reserve) {
             // Monster goes to reserve (Luna no valid province or cancel)
@@ -2670,7 +2990,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             broadcastState(l);
             break;
           }
-          if (s.pendingMonsterEnterDecision) {
+          if (s.pendingMonsterEnterDecision || s.pendingRuleNotices?.some(notice => notice.type === 'oni-spite')) {
             l.gameState = s;
             broadcastState(l);
             break;
@@ -2701,7 +3021,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           // Validate that the sender is the current marshal resolution player
           if (l.gameState.marshalMandateActive) {
             const expectedPlayer = l.gameState.marshalResolutionOrder[l.gameState.marshalResolutionIndex];
-            if (data.playerId !== expectedPlayer) return;
+            if (playerId !== expectedPlayer) return;
           }
           let s = l.gameState;
 
@@ -2710,7 +3030,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (moves && Array.isArray(moves)) {
             for (const move of moves) {
               if (move.fromProvinceId && move.toProvinceId && move.figureIds) {
-                s = moveForces(s, data.playerId, move.fromProvinceId, move.toProvinceId, move.figureIds);
+                s = moveForces(s, playerId, move.fromProvinceId, move.toProvinceId, move.figureIds);
               }
             }
           }
@@ -2718,9 +3038,9 @@ wss.on('connection', (ws: WebSocket, req) => {
             for (const fort of fortresses) {
               if (fort.provinceId) {
                 if (fort.fukurokuju) {
-                  s = buildFukurokuju(s, data.playerId, fort.provinceId);
+                  s = buildFukurokuju(s, playerId, fort.provinceId);
                 } else {
-                  s = buildFortress(s, data.playerId, fort.provinceId);
+                  s = buildFortress(s, playerId, fort.provinceId);
                 }
               }
             }
@@ -2759,7 +3079,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const { provinceId } = data.payload || {};
           if (!provinceId) return;
-          l.gameState = buildFortress(l.gameState, data.playerId, provinceId);
+          l.gameState = buildFortress(l.gameState, playerId, provinceId);
           broadcastState(l);
           break;
         }
@@ -2769,7 +3089,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const { provinceId } = data.payload || {};
           if (!provinceId) return;
-          l.gameState = buildFukurokuju(l.gameState, data.playerId, provinceId);
+          l.gameState = buildFukurokuju(l.gameState, playerId, provinceId);
           broadcastState(l);
           break;
         }
@@ -2781,12 +3101,12 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!figureId || !provinceId) return;
           // Save undo snapshot on first betray selection
           if (!l.betrayUndoSnapshot) {
-            l.betrayUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+            setLobbyUndoSnapshot(l, 'betray', l.gameState);
           }
-          let s = betraySelectFigure(l.gameState, data.playerId, figureId, provinceId, selectedMonsterCardId);
+          let s = betraySelectFigure(l.gameState, playerId, figureId, provinceId, selectedMonsterCardId);
           if (!s.betrayMandateActive) {
             s = advancePlayer(s);
-            l.betrayUndoSnapshot = null;
+            clearLobbyUndoSnapshot(l, 'betray');
           }
           l.gameState = s;
           broadcastState(l);
@@ -2799,7 +3119,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           // Only the current player (betray issuer) can skip
           if (!l.gameState.betrayMandateActive) return;
           const currentPlayer = l.gameState.players[l.gameState.currentPlayerIndex];
-          if (!currentPlayer || currentPlayer.id !== data.playerId) return;
+          if (!currentPlayer || currentPlayer.id !== playerId) return;
           const triggeredBySnake = l.gameState.betrayTriggeredBySnake === true;
           let s = skipBetrayTurn(l.gameState);
           const prevPhaseSB = s.currentPhase;
@@ -2808,7 +3128,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             s = startInteractiveCleanup(s);
           }
           l.gameState = s;
-          l.betrayUndoSnapshot = null;
+          clearLobbyUndoSnapshot(l, 'betray');
           broadcastState(l);
           break;
         }
@@ -2818,14 +3138,37 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           // Validate that the placing player is the current recruit player
           const currentRecruitPlayerIdRPF = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
-          if (data.playerId !== currentRecruitPlayerIdRPF) return;
+          if (playerId !== currentRecruitPlayerIdRPF) return;
           const { provinceId, figureType } = data.payload || {};
           if (!provinceId || !figureType) return;
           // Save undo snapshot on first placement of this recruit turn
           if (!l.recruitUndoSnapshot) {
-            l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+            setLobbyUndoSnapshot(l, 'recruit', l.gameState);
           }
-          l.gameState = recruitPlaceFigure(l.gameState, data.playerId, provinceId, figureType);
+          l.gameState = recruitPlaceFigure(l.gameState, playerId, provinceId, figureType);
+          broadcastState(l);
+          break;
+        }
+
+        case 'ACKNOWLEDGE_MARSHAL_SERPENT_WARNING': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState || !playerId) return;
+          const nextState = acknowledgeMarshalSerpentWarning(l.gameState, playerId);
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
+          broadcastState(l);
+          break;
+        }
+
+        case 'JINMENJU_PLACE': {
+          const l = lobbies.get(currentLobbyId || '');
+          if (!l?.gameState) return;
+          const { provinceId, figureType } = data.payload || {};
+          if (!provinceId || (figureType !== 'bushi' && figureType !== 'shinto')) return;
+          if (!l.recruitUndoSnapshot) setLobbyUndoSnapshot(l, 'recruit', l.gameState);
+          const nextState = jinmenjuPlaceFigure(l.gameState, playerId, provinceId, figureType);
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
           broadcastState(l);
           break;
         }
@@ -2834,31 +3177,31 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           const currentRecruitPlayerIdRPM = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
-          if (data.playerId !== currentRecruitPlayerIdRPM) return;
+          if (playerId !== currentRecruitPlayerIdRPM) return;
           const { provinceId: monsterProvinceId, monsterCardId } = data.payload || {};
           if (!monsterProvinceId || !monsterCardId) return;
           if (!l.recruitUndoSnapshot) {
-            l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+            setLobbyUndoSnapshot(l, 'recruit', l.gameState);
           }
-          const player = l.gameState.players.find(p => p.id === data.playerId);
+          const player = l.gameState.players.find(p => p.id === playerId);
           if (!player) return;
           if (!l.gameState.recruitMandateActive || l.gameState.recruitPlacementsRemaining <= 0) return;
           const province = l.gameState.provinces[monsterProvinceId];
           if (!province) return;
           const monsterCard = player.seasonCards.find(c => c.id === monsterCardId && c.cardType === 'monster');
           if (!monsterCard) return;
-          const alreadyPlaced = Object.values(l.gameState.provinces).some(p => p.figures.some(f => f.owner === data.playerId && f.monsterCardId === monsterCardId))
-            || l.gameState.temples.some(t => t.figures.some(f => f.playerId === data.playerId && f.monsterCardId === monsterCardId));
+          const alreadyPlaced = Object.values(l.gameState.provinces).some(p => p.figures.some(f => f.owner === playerId && f.monsterCardId === monsterCardId))
+            || l.gameState.temples.some(t => t.figures.some(f => f.playerId === playerId && f.monsterCardId === monsterCardId));
           if (alreadyPlaced) return;
           // Validate province
           const isDragonflyRPM = player.clanId === 'libelula';
           if (!isDragonflyRPM) {
-            const hasFortress = province.figures.some(f => f.owner === data.playerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
+            const hasFortress = province.figures.some(f => f.owner === playerId && (f.type === 'fortress' || (f.type === 'monster' && f.monsterCardId === 'sp-fukurokuju')));
             if (!hasFortress) return;
           }
           // Luna max 2
           if (player.clanId === 'luna') {
-            const lunaFigures = province.figures.filter(f => f.owner === data.playerId && f.type !== 'fortress').length;
+            const lunaFigures = province.figures.filter(f => f.owner === playerId && f.type !== 'fortress').length;
             if (lunaFigures >= 2) return;
           }
           // Fortress usage validation
@@ -2866,13 +3209,13 @@ wss.on('connection', (ws: WebSocket, req) => {
           const timesUsed = usedProvinces.filter(p => p === monsterProvinceId).length;
           if (timesUsed > 0) {
             const isBonus = l.gameState.recruitMandateIssuerId ?
-              (data.playerId === l.gameState.recruitMandateIssuerId || player.allies.includes(l.gameState.recruitMandateIssuerId)) : false;
+              (playerId === l.gameState.recruitMandateIssuerId || player.allies.includes(l.gameState.recruitMandateIssuerId)) : false;
             if (!isBonus) return;
             const bonusUsed = usedProvinces.length - new Set(usedProvinces).size;
             if (bonusUsed >= 1) return;
           }
           const figureId = Math.random().toString(36).substring(2, 10);
-          const newFigure = { type: 'monster' as const, owner: data.playerId, id: figureId, monsterCardId };
+          const newFigure = { type: 'monster' as const, owner: playerId, id: figureId, monsterCardId };
           l.gameState = {
             ...l.gameState,
             provinces: {
@@ -2886,8 +3229,8 @@ wss.on('connection', (ws: WebSocket, req) => {
             recruitUsedFortressProvinces: [...l.gameState.recruitUsedFortressProvinces, monsterProvinceId],
             log: [...l.gameState.log, `${player.name} invoca a ${monsterCard.name} en ${province.name}`],
           };
-          applyDignityMonsterSummon(l.gameState, data.playerId);
-          l.gameState = grantRecruitWarlordCoinOnce(l.gameState, data.playerId);
+          applyDignityMonsterSummon(l.gameState, playerId);
+          l.gameState = recordRecruitSummon(l.gameState, playerId);
           l.gameState = prepareMonsterEnterDecision(l.gameState, monsterProvinceId, figureId);
           broadcastState(l);
           break;
@@ -2896,7 +3239,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'RESOLVE_SNAKE_DECISION': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState?.pendingSnakeDecision) return;
-          const nextState = resolveSnakeDecision(l.gameState, data.playerId, !!data.payload?.useEffect);
+          const nextState = resolveSnakeDecision(l.gameState, playerId, !!data.payload?.useEffect);
           if (nextState === l.gameState) return;
           l.gameState = nextState;
           broadcastState(l);
@@ -2908,8 +3251,8 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           const { templeId, figureId } = data.payload || {};
           if (!templeId || !figureId) return;
-          if (!l.betrayUndoSnapshot) l.betrayUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
-          const nextState = betrayReplaceWorshippingShinto(l.gameState, data.playerId, templeId, figureId);
+          if (!l.betrayUndoSnapshot) setLobbyUndoSnapshot(l, 'betray', l.gameState);
+          const nextState = betrayReplaceWorshippingShinto(l.gameState, playerId, templeId, figureId);
           if (nextState === l.gameState) return;
           l.gameState = nextState;
           broadcastState(l);
@@ -2938,10 +3281,18 @@ wss.on('connection', (ws: WebSocket, req) => {
             break;
           }
 
-          let s: GameState = { ...l.gameState, pendingRuleNotices: notices.slice(1) };
-          if (notice.resume === 'advance-kami') {
+          const remainingNotices = notices.slice(1);
+          const resumeAfterQueue = notice.resume && remainingNotices.length > 0;
+          if (resumeAfterQueue) {
+            const lastIndex = remainingNotices.length - 1;
+            if (!remainingNotices[lastIndex].resume) {
+              remainingNotices[lastIndex] = { ...remainingNotices[lastIndex], resume: notice.resume };
+            }
+          }
+          let s: GameState = { ...l.gameState, pendingRuleNotices: remainingNotices };
+          if (!resumeAfterQueue && notice.resume === 'advance-kami') {
             s = advanceKamiResolution(s);
-          } else if (notice.resume === 'advance-train') {
+          } else if (!resumeAfterQueue && notice.resume === 'advance-train') {
             s = { ...s, trainResolutionIndex: s.trainResolutionIndex + 1 };
             s = advanceTrainResolution(s);
             if (!s.trainMandateActive) {
@@ -2949,18 +3300,24 @@ wss.on('connection', (ws: WebSocket, req) => {
               s = advancePlayer(s);
               if (s.currentPhase === 'cleanup' && previousPhase !== 'cleanup') s = startInteractiveCleanup(s);
             }
-          } else if (notice.resume === 'advance-marshal') {
+          } else if (!resumeAfterQueue && notice.resume === 'advance-marshal') {
             s = skipMarshalTurn(s);
             if (!s.marshalMandateActive) {
               const previousPhase = s.currentPhase;
               s = advancePlayer(s);
               if (s.currentPhase === 'cleanup' && previousPhase !== 'cleanup') s = startInteractiveCleanup(s);
             }
-          } else if (notice.resume === 'advance-war-start') {
+          } else if (!resumeAfterQueue && notice.resume === 'advance-war-start') {
             s = advanceWarStartAction(s);
-          } else if (notice.resume === 'continue-pre-battle' && notice.fromProvinceId) {
+          } else if (!resumeAfterQueue && notice.resume === 'continue-pre-battle' && notice.fromProvinceId) {
             s = preparePreBattleCardDecision(s, notice.fromProvinceId);
             if (!s.pendingBattleCardDecision) s = resolveUncontestedBattles(s);
+          } else if (!resumeAfterQueue && notice.resume === 'continue-fujin') {
+            s = continuePendingFujinMovement(s);
+          } else if (!resumeAfterQueue && notice.resume === 'continue-vassal') {
+            s = continueVassalAfterNotice(s);
+          } else if (!resumeAfterQueue && notice.resume === 'continue-nure-onna') {
+            s = continueNureOnnaAfterSerpent(s);
           }
           l.gameState = s;
           broadcastState(l);
@@ -2990,7 +3347,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const temple = l.gameState.temples[templeIndex];
           if (player.clanId === 'luna' && temple.figures.filter(f => f.playerId === playerId).length >= 2) return;
           if (!l.recruitUndoSnapshot) {
-            l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+            setLobbyUndoSnapshot(l, 'recruit', l.gameState);
           }
           let figures = [...temple.figures];
           let players = l.gameState.players;
@@ -3016,7 +3373,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           figures.push({ playerId, figureId: uuidv4(), monsterCardId: cardId });
           const temples = [...l.gameState.temples];
           temples[templeIndex] = { ...temple, figures };
-          l.gameState = grantRecruitWarlordCoinOnce({
+          l.gameState = recordRecruitSummon({
             ...l.gameState,
             players,
             temples,
@@ -3034,13 +3391,13 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           const currentRecruitPlayerIdRPD = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
-          if (data.playerId !== currentRecruitPlayerIdRPD) return;
+          if (playerId !== currentRecruitPlayerIdRPD) return;
           const { provinceId: daimyoProvinceId, daimyoType } = data.payload || {};
           if (!daimyoProvinceId || !daimyoType) return;
           if (!l.recruitUndoSnapshot) {
-            l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+            setLobbyUndoSnapshot(l, 'recruit', l.gameState);
           }
-          const ns = recruitPlaceDaimyo(l.gameState, data.playerId, daimyoProvinceId, daimyoType);
+          const ns = recruitPlaceDaimyo(l.gameState, playerId, daimyoProvinceId, daimyoType);
           if (ns === l.gameState) return;
           l.gameState = ns;
           broadcastState(l);
@@ -3052,47 +3409,16 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           // Validate that the placing player is the current recruit player
           const currentRecruitPlayerIdRPTS = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
-          if (data.playerId !== currentRecruitPlayerIdRPTS) return;
+          if (playerId !== currentRecruitPlayerIdRPTS) return;
           const { templeId } = data.payload || {};
           if (!templeId) return;
           // Save undo snapshot on first placement of this recruit turn
           if (!l.recruitUndoSnapshot) {
-            l.recruitUndoSnapshot = JSON.parse(JSON.stringify(l.gameState));
+            setLobbyUndoSnapshot(l, 'recruit', l.gameState);
           }
-          // Place shinto in temple during recruit mandate
-          if (!l.gameState.recruitMandateActive) return;
-          if (l.gameState.recruitPlacementsRemaining <= 0) return;
-          const recruitPlayer = l.gameState.players.find(p => p.id === data.playerId);
-          if (!recruitPlayer || getAvailableNormalShintoReserve(recruitPlayer, l.gameState) <= 0) return;
-          const templeIndex = l.gameState.temples.findIndex(t => t.id === templeId);
-          if (templeIndex === -1) return;
-          const temple = l.gameState.temples[templeIndex];
-          // Luna clan power: max 2 shinto per temple
-          if (recruitPlayer.clanId === 'luna') {
-            const shintoInTemple = temple.figures.filter(f => f.playerId === data.playerId).length;
-            if (shintoInTemple >= 2) return;
-          }
-          const figureId = Math.random().toString(36).substring(2, 10);
-          const updatedTemples = [...l.gameState.temples];
-          updatedTemples[templeIndex] = {
-            ...temple,
-            figures: [...temple.figures, { playerId: data.playerId, figureId }],
-          };
-          const updatedPlayers = l.gameState.players.map(p => {
-            if (p.id === data.playerId) return { ...p, shinto: Math.max(0, p.shinto - 1) };
-            return p;
-          });
-          l.gameState = {
-            ...l.gameState,
-            temples: updatedTemples,
-            players: updatedPlayers,
-            recruitPlacementsRemaining: l.gameState.recruitPlacementsRemaining - 1,
-            log: [...l.gameState.log, `${recruitPlayer.name} coloca un shinto en santuario de ${capitalize(temple.kamiType)}`],
-          };
-          syncKamiControllers(l.gameState);
-          // Path of the Warlord: recruit counts as a single summon; award at most once per turn
-          // (covers players who recruit only into temples). Undo snapshot was saved above.
-          l.gameState = grantRecruitWarlordCoinOnce(l.gameState, data.playerId);
+          const nextState = recruitPlaceTempleShinto(l.gameState, playerId, templeId);
+          if (nextState === l.gameState) return;
+          l.gameState = nextState;
           broadcastState(l);
           break;
         }
@@ -3100,6 +3426,8 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'SKIP_RECRUIT_TURN': {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
+          const expectedRecruitPlayerId = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
+          if (!l.gameState.recruitMandateActive || playerId !== expectedRecruitPlayerId) return;
           let s = skipRecruitTurn(l.gameState);
           if (!s.recruitMandateActive) {
             const prevPhaseSR = s.currentPhase;
@@ -3109,7 +3437,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             }
           }
           l.gameState = s;
-          l.recruitUndoSnapshot = null;
+          clearLobbyUndoSnapshot(l, 'recruit');
           broadcastState(l);
           break;
         }
@@ -3120,11 +3448,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l.gameState.recruitMandateActive) return;
           // Validate sender is current recruit player
           const currentRecruitIdUndo = l.gameState.recruitResolutionOrder?.[l.gameState.recruitResolutionIndex];
-          if (data.playerId !== currentRecruitIdUndo) return;
+          if (playerId !== currentRecruitIdUndo) return;
           // Restore from snapshot
           if (l.recruitUndoSnapshot) {
             l.gameState = JSON.parse(JSON.stringify(l.recruitUndoSnapshot));
-            l.recruitUndoSnapshot = null;
+            clearLobbyUndoSnapshot(l, 'recruit');
           }
           broadcastState(l);
           break;
@@ -3136,11 +3464,11 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l.gameState.betrayMandateActive) return;
           // Validate sender is the betray issuer (current player)
           const currentBetrayIdUndo = l.gameState.players[l.gameState.currentPlayerIndex]?.id;
-          if (data.playerId !== currentBetrayIdUndo) return;
+          if (playerId !== currentBetrayIdUndo) return;
           // Restore from snapshot
           if (l.betrayUndoSnapshot) {
             l.gameState = JSON.parse(JSON.stringify(l.betrayUndoSnapshot));
-            l.betrayUndoSnapshot = null;
+            clearLobbyUndoSnapshot(l, 'betray');
           }
           broadcastState(l);
           break;
@@ -3152,7 +3480,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           // Validate that the player is the current train resolution player
           if (l.gameState.trainMandateActive) {
             const expectedPlayer = l.gameState.trainResolutionOrder[l.gameState.trainResolutionIndex];
-            if (data.playerId !== expectedPlayer) return;
+            if (playerId !== expectedPlayer) return;
           }
           let s = skipTrainPurchase(l.gameState);
           if (!s.trainMandateActive) {
@@ -3172,7 +3500,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           if (!l.gameState.harvestMandateActive) return;
           // Validate that the acknowledging player is the one whose turn it is
-          if (l.gameState.harvestCurrentPlayerId && data.playerId !== l.gameState.harvestCurrentPlayerId) return;
+          if (l.gameState.harvestCurrentPlayerId && playerId !== l.gameState.harvestCurrentPlayerId) return;
           let s = advanceHarvestResolution(l.gameState);
           if (!s.harvestMandateActive) {
             const prevPhaseAH = s.currentPhase;
@@ -3194,13 +3522,13 @@ wss.on('connection', (ws: WebSocket, req) => {
           const lotoPlayer = l.gameState.players[l.gameState.currentPlayerIndex];
           if (
             !l.gameState.lotoChoicePhase ||
-            lotoPlayer?.id !== data.playerId ||
+            lotoPlayer?.id !== playerId ||
             lotoPlayer?.clanId !== 'loto'
           ) {
             safeSend(ws, { type: 'ERROR', message: 'La seleccion de mandato de Loto ya no es valida' });
             return;
           }
-          let s = lotoChooseActualMandate(l.gameState, lotoMandate, data.playerId);
+          let s = lotoChooseActualMandate(l.gameState, lotoMandate, playerId);
           if (!s.betrayMandateActive && !s.trainMandateActive && !s.marshalMandateActive && !s.recruitMandateActive && !s.harvestMandateActive) {
             const prevPhaseLM = s.currentPhase;
             s = advancePlayer(s);
@@ -3218,7 +3546,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           if (!l.gameState.kamiResolutionActive) return;
           // Validate that the acknowledging player is the one whose turn it is
-          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
           const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
           if (!currentTemple) return;
@@ -3245,24 +3573,24 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           const { provinceId } = data.payload || {};
-          if (!provinceId || data.playerId !== l.gameState.kamiPlacementPlayerId) return;
-          l.gameState = selectKamiManifestationProvince(l.gameState, data.playerId, provinceId);
+          if (!provinceId || playerId !== l.gameState.kamiPlacementPlayerId) return;
+          l.gameState = selectKamiManifestationProvince(l.gameState, playerId, provinceId);
           broadcastState(l);
           break;
         }
 
         case 'KAMI_UNBOUND_UNDO_PROVINCE': {
           const l = lobbies.get(currentLobbyId || '');
-          if (!l?.gameState || data.playerId !== l.gameState.kamiPlacementPlayerId) return;
-          l.gameState = undoKamiManifestationProvince(l.gameState, data.playerId);
+          if (!l?.gameState || playerId !== l.gameState.kamiPlacementPlayerId) return;
+          l.gameState = undoKamiManifestationProvince(l.gameState, playerId);
           broadcastState(l);
           break;
         }
 
         case 'KAMI_UNBOUND_CONFIRM_PROVINCE': {
           const l = lobbies.get(currentLobbyId || '');
-          if (!l?.gameState || data.playerId !== l.gameState.kamiPlacementPlayerId) return;
-          l.gameState = confirmKamiManifestation(l.gameState, data.playerId);
+          if (!l?.gameState || playerId !== l.gameState.kamiPlacementPlayerId) return;
+          l.gameState = confirmKamiManifestation(l.gameState, playerId);
           broadcastState(l);
           break;
         }
@@ -3271,7 +3599,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.kamiResolutionActive || l.gameState.fujinMovesRemaining <= 0) return;
-          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
           const { fromProvinceId, toProvinceId, figureIds } = data.payload || {};
           if (!fromProvinceId || !toProvinceId || !figureIds) return;
@@ -3292,7 +3620,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           }
 
           const remaining = moved.fujinMovesRemaining - movementCost;
-          l.fujinUndoSnapshot = preMoveState;
+          setLobbyUndoSnapshot(l, 'fujin', preMoveState);
           l.gameState = { ...moved, fujinMovesRemaining: remaining };
           broadcastState(l);
           break;
@@ -3302,10 +3630,10 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState || !l.fujinUndoSnapshot) return;
           if (!l.gameState.kamiResolutionActive) return;
-          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
           l.gameState = JSON.parse(JSON.stringify(l.fujinUndoSnapshot));
-          l.fujinUndoSnapshot = null;
+          clearLobbyUndoSnapshot(l, 'fujin');
           broadcastState(l);
           break;
         }
@@ -3314,12 +3642,12 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.kamiResolutionActive) return;
-          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
           const ns = resolvePendingSerpentCrossings({ ...l.gameState, fujinMovesRemaining: 0 });
           const hasPendingSerpent = !!ns.pendingSerpentCharge || (ns.pendingRuleNotices?.length || 0) > (l.gameState.pendingRuleNotices?.length || 0);
           const s = hasPendingSerpent ? ns : advanceKamiResolution(ns);
-          l.fujinUndoSnapshot = null;
+          clearLobbyUndoSnapshot(l, 'fujin');
           l.gameState = s;
           broadcastState(l);
           break;
@@ -3329,7 +3657,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.kamiResolutionActive || !l.gameState.raijinPlacementActive) return;
-          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
           const { provinceId } = data.payload || {};
           if (!provinceId) return;
@@ -3377,7 +3705,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.raijinPlacementDone) return;
-          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
           const raijinTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
           let s: GameState = { ...l.gameState, raijinPlacementDone: false };
@@ -3396,7 +3724,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.raijinPlacementDone) return;
-          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
           const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
           if (!currentTemple || !currentTemple.winnerId) return;
@@ -3438,14 +3766,14 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.kamiResolutionActive || !l.gameState.ryujinBuyActive) return;
-          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
 
           const { cardId } = data.payload || {};
           if (!cardId) return;
 
           const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
           if (!currentTemple || !currentTemple.winnerId) return;
-          if (data.playerId !== currentTemple.winnerId) {
+          if (playerId !== currentTemple.winnerId) {
             safeSend(ws, { type: 'ERROR', message: 'Solo el ganador de Ryujin puede comprar la carta' });
             return;
           }
@@ -3491,9 +3819,9 @@ wss.on('connection', (ws: WebSocket, req) => {
           const l = lobbies.get(currentLobbyId || '');
           if (!l?.gameState) return;
           if (!l.gameState.kamiResolutionActive || !l.gameState.ryujinBuyActive) return;
-          if (l.gameState.kamiResolutionCurrentPlayerId && data.playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
+          if (l.gameState.kamiResolutionCurrentPlayerId && playerId !== l.gameState.kamiResolutionCurrentPlayerId) return;
           const currentTemple = l.gameState.kamiResolutionTemples[l.gameState.kamiResolutionIndex];
-          if (!currentTemple?.winnerId || data.playerId !== currentTemple.winnerId) {
+          if (!currentTemple?.winnerId || playerId !== currentTemple.winnerId) {
             safeSend(ws, { type: 'ERROR', message: 'Solo el ganador de Ryujin puede omitir la compra' });
             return;
           }
@@ -3533,7 +3861,8 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l.gameState.coinDistributionPending) return;
           const pending = l.gameState.coinDistributionPending;
           // Only the winner can distribute
-          if (data.playerId !== pending.winnerId) return;
+          if (playerId !== pending.winnerId) return;
+          if (pending.remainder <= 0) return;
           const { targetPlayerId } = data.payload || {};
           if (!targetPlayerId || !pending.losers.includes(targetPlayerId)) return;
 
@@ -3546,14 +3875,22 @@ wss.on('connection', (ws: WebSocket, req) => {
           const target = l.gameState.players.find(p => p.id === targetPlayerId);
           const newLog = [...l.gameState.log, `${winner?.name || ''} da 1 moneda extra a ${target?.name || ''}`];
           const newRemainder = pending.remainder - 1;
+          const newAllocations = {
+            ...(pending.allocations || {}),
+            [targetPlayerId]: (pending.allocations?.[targetPlayerId] || 0) + 1,
+          };
 
           l.gameState = {
             ...l.gameState,
             players: newPlayers,
             log: newLog,
-            coinDistributionPending: newRemainder > 0
-              ? { ...pending, remainder: newRemainder, distributed: pending.distributed + 1 }
-              : null,
+            coinDistributionPending: {
+              ...pending,
+              remainder: newRemainder,
+              distributed: pending.distributed + 1,
+              allocations: newAllocations,
+            },
+            coinDistributionReadyPlayers: newRemainder === 0 ? [] : l.gameState.coinDistributionReadyPlayers,
           };
           broadcastState(l);
           break;
@@ -3564,8 +3901,8 @@ wss.on('connection', (ws: WebSocket, req) => {
           if (!l?.gameState) return;
           if (!l.gameState.coinDistributionPending) return;
           const pendingDismiss = l.gameState.coinDistributionPending;
-          // Only allow dismiss if remainder is 0 (informational) or the sender is the winner
-          if (pendingDismiss.remainder !== 0 && data.playerId !== pendingDismiss.winnerId) return;
+          // The winner must allocate every remaining Coin before this can be dismissed.
+          if (pendingDismiss.remainder !== 0) return;
           l.gameState = { ...l.gameState, coinDistributionPending: null };
           broadcastState(l);
           break;
@@ -3647,9 +3984,9 @@ wss.on('connection', (ws: WebSocket, req) => {
               started: true,
               persistentGameId: gameId,
               config: null,
-              recruitUndoSnapshot: null,
-              betrayUndoSnapshot: null,
-              fujinUndoSnapshot: null,
+              recruitUndoSnapshot: getActionUndoSnapshot(gameId, 'recruit'),
+              betrayUndoSnapshot: getActionUndoSnapshot(gameId, 'betray'),
+              fujinUndoSnapshot: getActionUndoSnapshot(gameId, 'fujin'),
               invitedUserIds: [],
               invitedClans: {},
               createdAt: new Date().toISOString(),
@@ -3673,9 +4010,13 @@ wss.on('connection', (ws: WebSocket, req) => {
           }
 
           currentLobbyId = l.id;
+          activatePlayerConnection(l, playerId, ws);
 
           // Send game state to the reconnecting player
-          ws.send(JSON.stringify({ type: 'GAME_STATE', state: l.gameState }));
+          ws.send(JSON.stringify({
+            type: 'GAME_STATE',
+            state: stateForPlayer(l.gameState, playerId),
+          }));
 
           // Send lobby ID so the client can use sendAction
           ws.send(JSON.stringify({ type: 'LOBBY_JOINED', lobbyId: l.id }));
@@ -3698,51 +4039,19 @@ wss.on('connection', (ws: WebSocket, req) => {
       }
     } catch (e) {
       console.error(e);
+      safeSend(ws, { type: 'ERROR', message: 'The action could not be completed' });
     }
   });
 
   ws.on('close', () => {
+    const activeConnection = activePlayerConnections.get(playerId);
+    if (activeConnection?.ws === ws) {
+      activePlayerConnections.delete(playerId);
+    }
     if (!currentLobbyId) return;
     const l = lobbies.get(currentLobbyId);
     if (!l) return;
-
-    if (!l.started) {
-      // Pre-game waiting room. The lobby is persisted in the database, so a disconnect
-      // (host included) must NOT lose the game. Reserve the host's and invited players'
-      // slots (just drop their socket); free a random open-slot joiner's slot.
-      const player = l.players.find((p) => p.id === playerId);
-      if (player) {
-        const isHost = playerId === l.host;
-        const isInvited = l.invitedUserIds.includes(playerId);
-        if (isHost || isInvited) {
-          player.ws = null;
-        } else {
-          l.players = l.players.filter((p) => p.id !== playerId);
-        }
-      }
-      persistLobby(l);
-      broadcastLobby(l);
-      // Keep the lobby in memory even if empty; it is also persisted and can be rehydrated.
-      return;
-    }
-
-    // Started game (rejoin scenario) - preserve existing behaviour.
-    l.players = l.players.filter((p) => p.id !== playerId);
-    if (l.players.length === 0) {
-      lobbies.delete(currentLobbyId);
-    } else {
-      broadcastLobby(l);
-      if (l.gameState) {
-        const rejoinPlayers = l.gameState.players.map(gp => {
-          const lobbyPlayer = l.players.find(lp => lp.id === gp.id);
-          const connected = !!(lobbyPlayer && lobbyPlayer.ws && lobbyPlayer.ws.readyState === WebSocket.OPEN);
-          return { id: gp.id, name: gp.name, clanId: gp.clanId, connected };
-        });
-        const allConnected = rejoinPlayers.every(p => p.connected);
-        const rejoinMsg = { type: 'REJOIN_STATUS', players: rejoinPlayers, allConnected };
-        l.players.forEach(p => safeSend(p.ws, rejoinMsg));
-      }
-    }
+    detachPlayerConnection(l, playerId, ws);
   });
 });
 
@@ -3758,7 +4067,10 @@ function broadcastState(l: Lobby) {
     }
   }
 
-  l.players.forEach((p) => safeSend(p.ws, { type: 'GAME_STATE', state: l.gameState }));
+  l.players.forEach((p) => safeSend(p.ws, {
+    type: 'GAME_STATE',
+    state: l.gameState ? stateForPlayer(l.gameState, p.id) : null,
+  }));
 }
 
 function broadcastLobby(l: Lobby) {

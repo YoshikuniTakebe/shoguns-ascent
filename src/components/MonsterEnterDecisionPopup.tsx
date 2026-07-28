@@ -73,13 +73,13 @@ export const MonsterEnterDecisionPopup = () => {
           {owner && <ClanShield clanId={owner.clanId} size={isOwner ? 24 : 72} />}
           <strong style={{ color: ownerClan?.color }}>{owner?.name}</strong>
         </div>
-        <p>Entra en <strong style={{ color: PROVINCE_COLORS[pending.provinceId] || '#fff' }}>{province?.name}</strong></p>
+        <p>{t('decision.monsterEntered')} <strong style={{ color: PROVINCE_COLORS[pending.provinceId] || '#fff' }}>{province?.name}</strong></p>
 
         {!isOwner ? (
-          <p className="waiting-label">Esperando a que {owner?.name || 'el jugador'} resuelva {title}...</p>
+          <p className="waiting-label">{t('common.waitingForResolution', { name: owner?.name || '', effect: title })}</p>
         ) : pending.type === 'benten' && !bentenChoiceMade ? (
           <>
-            <p>¿Quieres obligar a mover un monstruo rival?</p>
+            <p>{t('decision.benten.moveMonster')}</p>
             <button
               className="bidding-peek-map-btn battle-card-map-button spring-placement-map-button"
               onClick={() => setBiddingMapPeek(true)}
@@ -91,15 +91,15 @@ export const MonsterEnterDecisionPopup = () => {
               {t('battle.viewMap')}
             </button>
             <div className="battle-card-decision-actions">
-              <button className="btn-primary" onClick={() => { setUseBenten(true); setBentenChoiceMade(true); }}>Usar</button>
-              <button className="btn-secondary" onClick={() => resolveDecision(false, {})}>Omitir</button>
+              <button className="btn-primary" onClick={() => { setUseBenten(true); setBentenChoiceMade(true); }}>{t('common.use')}</button>
+              <button className="btn-secondary" onClick={() => resolveDecision(false, {})}>{t('common.skip')}</button>
             </div>
           </>
         ) : (
           <>
             {pending.type === 'oni-hate' && hasMercy && (
               <div className="battle-card-decision-mercy">
-                <button className={!useMercy ? 'btn-primary' : 'btn-secondary'} onClick={() => setUseMercy(false)}>Aplicar bajas</button>
+                <button className={!useMercy ? 'btn-primary' : 'btn-secondary'} onClick={() => setUseMercy(false)}>{t('common.applyCasualties')}</button>
                 <button className={useMercy ? 'btn-primary' : 'btn-secondary'} onClick={() => setUseMercy(true)}>Misericordia (+2 PV)</button>
               </div>
             )}
@@ -114,7 +114,7 @@ export const MonsterEnterDecisionPopup = () => {
                       <strong style={{ color: clan?.color }}>{player?.name}</strong>
                     </div>
                     <div className="battle-card-choice-block">
-                      <span className="battle-card-choice-label">Figura</span>
+                      <span className="battle-card-choice-label">{t('common.figure')}</span>
                       <div className="battle-card-choice-options">
                         {figures.map(figure => (
                           <button
@@ -136,7 +136,7 @@ export const MonsterEnterDecisionPopup = () => {
                     </div>
                     {pending.type === 'benten' && selectedByPlayer[playerId] && (
                       <div className="battle-card-choice-block">
-                        <span className="battle-card-choice-label">Provincia de destino</span>
+                        <span className="battle-card-choice-label">{t('common.destinationProvince')}</span>
                         <div className="battle-card-choice-options">
                           {adjacentIds.map(id => {
                             const provinceColor = PROVINCE_COLORS[id] || '#c8a951';
@@ -170,8 +170,8 @@ export const MonsterEnterDecisionPopup = () => {
               {t('battle.viewMap')}
             </button>
             <div className="battle-card-decision-actions">
-              {pending.type === 'benten' && useBenten && <button className="btn-secondary" onClick={() => { setBentenChoiceMade(false); setUseBenten(false); }}>Cancelar</button>}
-              <button className="btn-primary" disabled={!canConfirm} onClick={() => resolveDecision(true, selectedByPlayer, destinationId, useMercy)}>Confirmar</button>
+              {pending.type === 'benten' && useBenten && <button className="btn-secondary" onClick={() => { setBentenChoiceMade(false); setUseBenten(false); }}>{t('common.cancel')}</button>}
+              <button className="btn-primary" disabled={!canConfirm} onClick={() => resolveDecision(true, selectedByPlayer, destinationId, useMercy)}>{t('common.confirm')}</button>
             </div>
           </>
         )}

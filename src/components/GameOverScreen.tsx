@@ -278,7 +278,7 @@ export const GameOverScreen = () => {
 
               {/* War Province Tokens */}
               <div className="scoring-modal-section">
-                <h4>Fichas de Provincia en Guerra</h4>
+                <h4>{t('gameOver.warProvinceTokens')}</h4>
                 <div className="scoring-modal-tokens">
                   <div className="scoring-token-row">
                     <span className="scoring-token-season"><SpringIcon size={16} color="#e8b4d8" /> Primavera</span>

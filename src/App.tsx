@@ -1,14 +1,15 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useGameStore } from './store/gameStore';
-import { MainMenu } from './components/MainMenu';
-import { GameBoard } from './components/GameBoard';
-import { GamesLobby } from './components/GamesLobby';
-import { ReplayViewer } from './components/ReplayViewer';
-import { AuthScreen } from './components/AuthScreen';
 import { ClanShield } from './components/ClanShields';
 import { CLANS } from './types/game';
 import { useT } from './i18n';
 import './App.css';
+
+const MainMenu = lazy(() => import('./components/MainMenu').then(module => ({ default: module.MainMenu })));
+const GameBoard = lazy(() => import('./components/GameBoard').then(module => ({ default: module.GameBoard })));
+const GamesLobby = lazy(() => import('./components/GamesLobby').then(module => ({ default: module.GamesLobby })));
+const ReplayViewer = lazy(() => import('./components/ReplayViewer').then(module => ({ default: module.ReplayViewer })));
+const AuthScreen = lazy(() => import('./components/AuthScreen').then(module => ({ default: module.AuthScreen })));
 
 const LobbyScreen = () => {
   const { lobbyId, lobbyState, localPlayerId, sendSelectClan, ws } = useGameStore();
@@ -126,17 +127,20 @@ const LobbyScreen = () => {
 
 const App = () => {
   const { screen, checkAuth, loadFigureSizeOverrides } = useGameStore();
+  const t = useT();
 
   useEffect(() => {
     checkAuth();
     loadFigureSizeOverrides();
   }, [checkAuth, loadFigureSizeOverrides]);
 
-  if (screen === 'auth') return <AuthScreen />;
-  if (screen === 'lobby') return <LobbyScreen />;
-  if (screen === 'game') return <GameBoard />;
-  if (screen === 'games-lobby') return <GamesLobby />;
-  if (screen === 'replay') return <ReplayViewer />;
-  return <MainMenu />;
+  const content = screen === 'auth' ? <AuthScreen />
+    : screen === 'lobby' ? <LobbyScreen />
+      : screen === 'game' ? <GameBoard />
+        : screen === 'games-lobby' ? <GamesLobby />
+          : screen === 'replay' ? <ReplayViewer />
+            : <MainMenu />;
+
+  return <Suspense fallback={<div className="loading">{t('common.loading')}</div>}>{content}</Suspense>;
 };
 export default App;

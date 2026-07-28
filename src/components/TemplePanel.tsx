@@ -8,6 +8,7 @@ import { MonsterIcon, ShintoIcon, FistIcon } from './Icons';
 import { getCardEffectKey } from '../utils/cardTranslations';
 import { renderCardEffect } from '../utils/renderCardEffect';
 import { TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
+import { canUseUnrighteousBetraySelection } from '../utils/gameLogic';
 
 /**
  * Rich hover tooltip for a monster figure in a shrine, matching the map tooltip
@@ -110,7 +111,7 @@ const KAMI_TILE_IMAGES: Record<KamiType, string> = {
 };
 
 export const TemplePanel = () => {
-  const { gameState, localPlayerId, komainuPrayMode, komainuPrayCardId, komainuPrayPlayerId, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto, jinmenjuSummonActive, doJinmenjuPlaceTemple, springLightSelectionMode, springLightSelectedTempleId, selectSpringLightTemple } = useGameStore();
+  const { gameState, localPlayerId, komainuPrayMode, komainuPrayCardId, komainuPrayPlayerId, doKomainuPlaceAtTemple, recruitMode, recruitFigureType, doRecruitPlaceTempleShinto, springLightSelectionMode, springLightSelectedTempleId, selectSpringLightTemple, doBetrayReplaceTempleShinto } = useGameStore();
   const [selectedKami, setSelectedKami] = useState<KamiType | null>(null);
   const [hoteiReplacementTarget, setHoteiReplacementTarget] = useState<HoteiReplacementTarget | null>(null);
   const t = useT();
@@ -127,6 +128,13 @@ export const TemplePanel = () => {
   const selectedKamiData = selectedKami
     ? KAMI_DATA.find(k => k.type === selectedKami)
     : null;
+  const betrayIssuer = gameState.betrayMandateIssuerId
+    ? gameState.players.find(player => player.id === gameState.betrayMandateIssuerId)
+    : null;
+  const isUnrighteousSelectionMode = !!betrayIssuer
+    && betrayIssuer.shinto > 0
+    && (gameState.mode === 'hotseat' || betrayIssuer.id === localPlayerId)
+    && canUseUnrighteousBetraySelection(gameState, betrayIssuer.id);
 
   // Group figures by clan for the modal, breaking down normal shinto vs shinto-monsters
   // (Komainu/Hotei) so the popup can show the shinto icon + count and each monster's name.
@@ -201,11 +209,13 @@ export const TemplePanel = () => {
           const springLightClan = springLightOwner
             ? CLANS.find(clan => clan.id === springLightOwner.clanId)
             : null;
+          const isUnrighteousTempleTarget = isUnrighteousSelectionMode
+            && temple.figures.some(figure => figure.playerId !== betrayIssuer?.id);
 
           return (
             <div
               key={temple.id}
-              className={`kami-slot filled${komainuPrayMode ? ' komainu-target' : ''}${isRecruitShintoTarget ? ' recruit-target' : ''}${isSpringLightTarget ? ' spring-light-target' : ''}${isSpringLightSelected ? ' spring-light-selected' : ''}`}
+              className={`kami-slot filled kami-slot-${temple.kamiType}${komainuPrayMode ? ' komainu-target' : ''}${isRecruitShintoTarget ? ' recruit-target' : ''}${isSpringLightTarget ? ' spring-light-target' : ''}${isSpringLightSelected ? ' spring-light-selected' : ''}${isUnrighteousTempleTarget ? ' unrighteous-target' : ''}`}
               style={{
                 borderColor: palette.primary,
                 backgroundImage: `url(${KAMI_TILE_IMAGES[temple.kamiType]})`,
@@ -216,7 +226,7 @@ export const TemplePanel = () => {
                   : komainuPrayMode || isRecruitShintoTarget || isSpringLightTarget
                   ? `rgba(246, 205, 0, 1.3) 0px 0px 8px, rgba(247, 214, 18, 1.15) 0px 0px 8px`
                   : `0 0 12px ${palette.glow}, inset 0 0 20px ${palette.glow}`,
-                cursor: komainuPrayMode || isRecruitShintoTarget || isSpringLightTarget ? 'pointer' : undefined,
+                cursor: komainuPrayMode || isRecruitShintoTarget || isSpringLightTarget || isUnrighteousTempleTarget ? 'pointer' : undefined,
               }}
               onClick={() => {
                 if (isSpringLightTarget) {
@@ -251,10 +261,10 @@ export const TemplePanel = () => {
                   } else {
                     doKomainuPlaceAtTemple(temple.id);
                   }
-                } else if (jinmenjuSummonActive && isRecruitShintoTarget) {
-                  doJinmenjuPlaceTemple(temple.id);
                 } else if (isRecruitShintoTarget) {
                   doRecruitPlaceTempleShinto(temple.id);
+                } else if (isUnrighteousSelectionMode) {
+                  return;
                 } else {
                   setSelectedKami(temple.kamiType);
                 }
@@ -264,25 +274,35 @@ export const TemplePanel = () => {
                 {kami ? t(KAMI_SUMMARY_KEYS[kami.type]) : ''}
               </div>
               {(temple.figures.length > 0 || isSpringLightSelected) && (
-                <div style={{
-                  position: 'absolute',
-                  bottom: '54px',
-                  right: '6px',
-                  display: 'flex',
-                  gap: '4px',
-                  background: 'rgba(0,0,0,0.4)',
-                  borderRadius: '6px',
-                  padding: '3px 5px',
-                }}>
+                <div className="kami-slot-figures">
                   {temple.figures.map((fig, i) => {
                     const player = gameState.players.find(pl => pl.id === fig.playerId);
                     const clan = player ? CLANS.find(c => c.id === player.clanId) : null;
                     const figColor = clan?.color || '#666';
+                    const isUnrighteousFigureTarget = isUnrighteousTempleTarget
+                      && fig.playerId !== betrayIssuer?.id;
                     // If figure has a monsterCardId, show MonsterIcon with tooltip
                     if (fig.monsterCardId) {
                       const cardData = SEASON_CARDS_DATA.find(c => c.id === fig.monsterCardId);
                       const monsterEffect = cardData ? t(getCardEffectKey(cardData.id)) : '';
                       const isLuna = player?.clanId === 'luna';
+                      if (isUnrighteousFigureTarget) {
+                        return (
+                          <button
+                            type="button"
+                            key={fig.figureId}
+                            className="kami-figure-dot figure-icon-wrapper unrighteous-shinto-target"
+                            title={player?.name || ''}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              doBetrayReplaceTempleShinto(temple.id, fig.figureId);
+                            }}
+                          >
+                            <MonsterIcon size={24} color={figColor} />
+                            <ShrineMonsterTooltip cardId={fig.monsterCardId} color={figColor} isLuna={isLuna} effectText={monsterEffect} />
+                          </button>
+                        );
+                      }
                       return (
                         <span
                           key={i}
@@ -291,6 +311,28 @@ export const TemplePanel = () => {
                           <MonsterIcon size={24} color={figColor} />
                           <ShrineMonsterTooltip cardId={fig.monsterCardId} color={figColor} isLuna={isLuna} effectText={monsterEffect} />
                         </span>
+                      );
+                    }
+                    if (isUnrighteousFigureTarget) {
+                      return (
+                        <button
+                          type="button"
+                          key={fig.figureId}
+                          className="kami-figure-dot unrighteous-shinto-target"
+                          title={player?.name || ''}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            doBetrayReplaceTempleShinto(temple.id, fig.figureId);
+                          }}
+                        >
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill={figColor} stroke="none" style={{ filter: 'drop-shadow(1px 1px 2px rgba(0,0,0,0.6))' }}>
+                            <rect x="4" y="6" width="16" height="2" rx="1" />
+                            <rect x="6" y="4" width="12" height="2" rx="0.5" opacity="0.7" />
+                            <rect x="7" y="8" width="2" height="14" />
+                            <rect x="15" y="8" width="2" height="14" />
+                            <rect x="9" y="12" width="6" height="1.5" opacity="0.5" />
+                          </svg>
+                        </button>
                       );
                     }
                     return (
@@ -409,7 +451,7 @@ export const TemplePanel = () => {
               Hotei - Reemplazar Shinto
             </h3>
             <p style={{ color: '#ccc', fontSize: '0.85rem', marginBottom: '12px' }}>
-              Elige el shinto a reemplazar:
+              {t('temple.chooseShintoReplace')}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {hoteiReplacementTarget.figures.map((fig) => (
@@ -451,7 +493,7 @@ export const TemplePanel = () => {
                   fontSize: '0.85rem',
                 }}
               >
-                Colocar sin reemplazar
+                {t('temple.placeWithoutReplacing')}
               </button>
             </div>
           </div>

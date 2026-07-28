@@ -41,14 +41,14 @@ export const TradeOfferPopup = () => {
                     <span className="trade-offer-section-label">{t('trade.offers')}:</span>
                     {offer.offerCoins > 0 && (
                       <span className="trade-offer-resource">
-                        <CoinIcon size={18} color="#f1c40f" />
                         <span style={{ fontWeight: 'bold', color: '#f1c40f' }}>{offer.offerCoins}</span>
+                        <CoinIcon size={18} color="#f1c40f" />
                       </span>
                     )}
                     {offer.offerRonin > 0 && (
                       <span className="trade-offer-resource">
-                        <RoninIcon size={18} color="#e74c3c" />
                         <span style={{ fontWeight: 'bold', color: '#e74c3c' }}>{offer.offerRonin}</span>
+                        <RoninIcon size={18} color="#e74c3c" />
                       </span>
                     )}
                   </div>
@@ -58,14 +58,14 @@ export const TradeOfferPopup = () => {
                     <span className="trade-offer-section-label">{t('trade.requests')}:</span>
                     {offer.requestCoins > 0 && (
                       <span className="trade-offer-resource">
-                        <CoinIcon size={18} color="#f1c40f" />
                         <span style={{ fontWeight: 'bold', color: '#f1c40f' }}>{offer.requestCoins}</span>
+                        <CoinIcon size={18} color="#f1c40f" />
                       </span>
                     )}
                     {offer.requestRonin > 0 && (
                       <span className="trade-offer-resource">
-                        <RoninIcon size={18} color="#e74c3c" />
                         <span style={{ fontWeight: 'bold', color: '#e74c3c' }}>{offer.requestRonin}</span>
+                        <RoninIcon size={18} color="#e74c3c" />
                       </span>
                     )}
                   </div>

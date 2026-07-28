@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, type ReactNode, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
-import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, KAMI_DATA, type DeckName } from '../types/game';
+import { CLANS, PROVINCES_DATA, PROVINCE_COLORS, KAMI_DATA, SEASON_CARDS_DATA, type DeckName } from '../types/game';
 import { RegionCard } from './RegionCard';
 import { PlayerPanel } from './PlayerPanel';
 import { ActionPanel } from './ActionPanel';
@@ -34,7 +34,8 @@ import { SpringPlacementPopup } from './SpringPlacementPopup';
 import { VassalDecisionPopup } from './VassalDecisionPopup';
 import { SerpentChargePopup } from './SerpentChargePopup';
 import { MonsterEnterDecisionPopup } from './MonsterEnterDecisionPopup';
-import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, UndoIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, FistIcon } from './Icons';
+import { MarshalSerpentWarningPopup } from './MarshalSerpentWarningPopup';
+import { VPIcon, CoinIcon, RoninIcon, HonorIcon, SpringIcon, SummerIcon, AutumnIcon, WinterIcon, BushiIcon, UndoIcon, ShintoIcon, FortressIcon, DaimyoIcon, MonsterIcon, FistIcon, ToriiGateIcon } from './Icons';
 import { ClanShield, WarSeal } from './ClanShields';
 import { CardStackIcon, DeckSetIcon } from './DeckSetIcons';
 import { getMonsterFigureImage, TEMPLATE_FIGURE_IMG } from '../utils/figureImages';
@@ -42,6 +43,8 @@ import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
 import popupBgImg from '../img/popup_bg.png';
 import { API_BASE } from '../config';
+import { renderCardEffect } from '../utils/renderCardEffect';
+import { getCardEffectKey } from '../utils/cardTranslations';
 
 const DECK_NAME_KEYS: Record<DeckName, TranslationKey> = {
   Archway: 'deck.archway',
@@ -324,6 +327,27 @@ export const GameBoard = () => {
 
   const cp = gameState.players[gameState.currentPlayerIndex];
   const isMyTurn = gameState.mode === 'hotseat' || cp?.id === localPlayerId;
+  const activeRuleNotice = gameState.pendingRuleNotices?.[0];
+  const shouldShowRuleNotice = Boolean(
+    activeRuleNotice
+    && (!gameState.pendingBenevolence || activeRuleNotice.type === 'benevolence')
+  );
+  const hasBlockingRuleFlow = Boolean(
+    gameState.pendingRuleNotices?.length
+    || gameState.pendingMarshalSerpentWarningPlayerId
+    || gameState.generosityPending
+    || gameState.pendingSerpentCharge
+    || gameState.pendingBattleCardDecision
+    || gameState.pendingBattleMercyDecision
+    || gameState.pendingNureOnnaDecision
+    || gameState.pendingMonsterEnterDecision
+    || gameState.pendingSpringPlacement
+    || gameState.pendingNinjaDecision
+    || gameState.pendingMonkeyDecision
+    || gameState.pendingSnakeDecision
+    || gameState.pendingBenevolence
+    || gameState.pendingVassalDecision
+  );
 
   const seasonColors: Record<string, string> = {
     spring: '#FFB7C5',
@@ -422,7 +446,7 @@ export const GameBoard = () => {
                 const battleIndex = gameState.activeBattles.findIndex(b => !b.resolved);
                 return (
                   <span className="current-player-name">
-                    Batalla {battleIndex + 1} en curso <span className="waiting-label">[ESPERANDO]</span>
+                    {t('battle.inProgress', { number: battleIndex + 1 })} <span className="waiting-label">{t('game.waiting')}</span>
                   </span>
                 );
               }
@@ -439,10 +463,11 @@ export const GameBoard = () => {
             );
           })()}
         </div>
-        <div className="legend-button-wrapper" style={{ right: '-18rem' }}>
-          <span className="game-name-header">{gameState.gameName}</span>
-          <button className="legend-btn">?</button>
-          <div className="legend-tooltip">
+        <div className="game-header-right">
+          <div className="legend-button-wrapper">
+            <span className="game-name-header">{gameState.gameName}</span>
+            <button className="legend-btn">?</button>
+            <div className="legend-tooltip">
             <div className="legend-tooltip-row"><BushiIcon size={20} color="#fff" /><span>{t('legend.bushi')}</span></div>
             <div className="legend-tooltip-row"><ShintoIcon size={20} color="#fff" /><span>{t('legend.shinto')}</span></div>
             <div className="legend-tooltip-row"><FortressIcon size={20} color="#fff" /><span>{t('legend.fortress')}</span></div>
@@ -458,14 +483,15 @@ export const GameBoard = () => {
             <div className="legend-tooltip-row"><SummerIcon size={20} color="#FF6B35" /><span style={{ color: '#FF6B35' }}>{t('legend.summer')}</span></div>
             <div className="legend-tooltip-row"><AutumnIcon size={20} color="#D4A574" /><span style={{ color: '#D4A574' }}>{t('legend.autumn')}</span></div>
             <div className="legend-tooltip-row"><WinterIcon size={20} color="#A8C8E8" /><span style={{ color: '#A8C8E8' }}>{t('legend.winter')}</span></div>
+            </div>
           </div>
+          <div className="mandate-counter">
+            {t('game.round')} {gameState.round}/{gameState.maxRounds}
+          </div>
+          <button className="exit-game-btn" onClick={() => useGameStore.getState().exitGame()} title={t('game.exit' as TranslationKey)}>
+            {t('game.exit' as TranslationKey)}
+          </button>
         </div>
-        <div className="mandate-counter">
-          {t('game.round')} {gameState.round}/{gameState.maxRounds}
-        </div>
-        <button className="exit-game-btn" onClick={() => useGameStore.getState().exitGame()} title={t('game.exit' as TranslationKey)}>
-          {t('game.exit' as TranslationKey)}
-        </button>
       </div>
 
       <div className="game-content">
@@ -539,15 +565,15 @@ export const GameBoard = () => {
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
                       {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
                       <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
-                      {' coloca un '}
+                      {t('game.raijinPlaceBefore')}{' '}
                       <BushiIcon size={22} color={clanColor} />
-                      {' Bushi en cualquier provincia'}
+                      {' '}{t('game.raijinPlaceAfter')}
                     </span>
                   ) : (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
                       {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
                       <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
-                      {' Bushi [ESPERANDO]'}
+                      {' '}{t('game.raijinWaiting')}
                     </span>
                   )
                 )}
@@ -557,19 +583,19 @@ export const GameBoard = () => {
                       {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
                       <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
                       <BushiIcon size={18} color={clanColor} />
-                      <span style={{ color: '#c8a951', fontWeight: 'bold' }}>{' Bushi colocado'}</span>
+                      <span style={{ color: '#c8a951', fontWeight: 'bold' }}>{t('game.raijinPlaced')}</span>
                       <button className="btn-secondary" onClick={doRaijinUndo} style={{ marginLeft: '8px', width: '36px', height: '36px', borderRadius: '50%', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                         <UndoIcon size={18} color="currentColor" />
                       </button>
                       <button className="btn-primary" onClick={doRaijinConfirm} style={{ marginLeft: '4px', fontSize: '0.85rem', padding: '4px 12px' }}>
-                        Terminar
+                        {t('game.finish')}
                       </button>
                     </span>
                   ) : (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.9rem' }}>
                       {winnerClan && <ClanShield clanId={winnerClan.id} size={20} />}
                       <span style={{ color: clanColor, fontWeight: 'bold' }}>{winnerPlayer?.name || '?'}</span>
-                      {' Bushi colocado [ESPERANDO]'}
+                      {' '}{t('game.raijinPlacedWaiting')}
                     </span>
                   )
                 )}
@@ -583,15 +609,15 @@ export const GameBoard = () => {
             if (isZorroPlayer) {
               return (
                 <div className="kami-action-overlay">
-                  <span>Zorro: Coloca Bushi en provincias de batalla ({gameState.zorroPlacementsRemaining} restantes)</span>
-                  <button className="btn-primary" onClick={doZorroSkipPlacement} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>Terminar</button>
+                  <span>{t('game.zorroPlacement', { count: gameState.zorroPlacementsRemaining })}</span>
+                  <button className="btn-primary" onClick={doZorroSkipPlacement} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>{t('game.finish')}</button>
                 </div>
               );
             } else {
               const zorroPlayer = gameState.players.find(p => p.id === gameState.zorroPlacementPlayerId);
               return (
                 <div className="kami-action-overlay">
-                  <span>Turno del Zorro{zorroPlayer ? ` (${zorroPlayer.name})` : ''} [ESPERANDO]</span>
+                  <span>{t('game.zorroWaiting', { player: zorroPlayer ? ` (${zorroPlayer.name})` : '' })}</span>
                 </div>
               );
             }
@@ -623,25 +649,25 @@ export const GameBoard = () => {
               province.figures.some(figure => figure.owner === action.playerId && figure.monsterCardId === 'su-sunakake-baba')
               && province.figures.some(figure => figure.owner !== action.playerId && (figure.type === 'bushi' || figure.type === 'shinto')));
             const unavailableMessage = action.type === 'naginata' && !hasNaginataBushi
-              ? 'No tienes ningun Bushi en el mapa que puedas mover.'
+              ? t('warStart.noNaginataBushi')
               : action.type === 'ashigaru' && player?.bushi === 0
-                ? 'No te quedan Bushi en la reserva.'
+                ? t('warStart.noAshigaruReserve')
                 : action.type === 'ashigaru' && !hasAshigaruProvince
-                  ? 'No tienes ninguna provincia con exactamente 1 figura.'
+                  ? t('warStart.noAshigaruProvince')
                   : action.type === 'sunakake' && !hasSunakakeTarget
-                    ? 'No hay ningun Bushi o Shinto rival en la provincia de Sunakake-Baba.'
+                    ? t('warStart.noSunakakeTarget')
                   : null;
             const canConfirm = action.type === 'keiri'
               || (action.type === 'naginata' && !!selection?.figureId && !!selection.destinationProvinceId)
               || (action.type === 'ashigaru' && !!selection?.provinceId)
               || (action.type === 'sunakake' && !!selection?.targetFigureIds?.[0]);
             const instruction = action.type === 'naginata'
-              ? 'Selecciona un Bushi y después cualquier provincia de destino.'
+              ? t('warStart.naginataInstruction')
               : action.type === 'ashigaru'
-                ? 'Selecciona una provincia donde tengas exactamente 1 figura.'
+                ? t('warStart.ashigaruInstruction')
                 : action.type === 'sunakake'
-                  ? 'Selecciona un Bushi o Shinto rival en la provincia de Sunakake-Baba.'
-                  : 'Selecciona hasta 2 Bushi o Shinto enemigos por cada provincia con uno de tus Daimyo.';
+                  ? t('warStart.sunakakeInstruction')
+                  : t('warStart.keiriInstruction');
             return (
               <div className="kami-action-overlay">
                 {isOwner ? (
@@ -656,22 +682,22 @@ export const GameBoard = () => {
                           onClick={() => doWarStartToggleMercy(provinceId)}
                           style={{ marginLeft: '6px', fontSize: '0.78rem', padding: '4px 9px' }}
                         >
-                          {province.name}: {spared ? 'Misericordia' : 'Ejecutar'}
+                          {province.name}: {spared ? t('warStart.mercy') : t('warStart.execute')}
                         </button>
                       );
                     })}
                     {unavailableMessage ? (
-                      <button className="btn-primary" onClick={doWarStartSkip} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>Aceptar</button>
+                      <button className="btn-primary" onClick={doWarStartSkip} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>{t('common.accept')}</button>
                     ) : (
                       <>
-                        <button className="btn-secondary" onClick={doWarStartReset} disabled={!selection} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>Deshacer</button>
-                        <button className="btn-secondary" onClick={doWarStartSkip} style={{ marginLeft: '6px', fontSize: '0.85rem', padding: '4px 12px' }}>Omitir</button>
-                        <button className="btn-primary" onClick={doWarStartConfirm} disabled={!canConfirm} style={{ marginLeft: '6px', fontSize: '0.85rem', padding: '4px 12px' }}>Confirmar</button>
+                        <button className="btn-secondary" onClick={doWarStartReset} disabled={!selection} style={{ marginLeft: '12px', fontSize: '0.85rem', padding: '4px 12px' }}>{t('common.undo')}</button>
+                        <button className="btn-secondary" onClick={doWarStartSkip} style={{ marginLeft: '6px', fontSize: '0.85rem', padding: '4px 12px' }}>{t('common.skip')}</button>
+                        <button className="btn-primary" onClick={doWarStartConfirm} disabled={!canConfirm} style={{ marginLeft: '6px', fontSize: '0.85rem', padding: '4px 12px' }}>{t('common.confirm')}</button>
                       </>
                     )}
                   </>
                 ) : (
-                  <span>Esperando a que {player?.name || 'el jugador'} resuelva {labels[action.type]}...</span>
+                  <span>{t('common.waitingForResolution', { name: player?.name || '', effect: labels[action.type] })}</span>
                 )}
               </div>
             );
@@ -976,8 +1002,7 @@ export const GameBoard = () => {
               <h4 style={{ color: '#fff', margin: '0px 0px', textAlign: 'center', marginBottom: '15px' }}>{t('game.teaReadyTitle')}</h4>
               {isReady ? (
                 <div className="tea-ready-waiting">
-                  <strong>{readyCount}/{gameState.players.length} listos</strong>
-                  <span>Esperando al resto de jugadores...</span>
+                  <strong>{t('common.readyWaiting', { count: String(readyCount), total: String(gameState.players.length) })}</strong>
                 </div>
               ) : (
                 <button className="monster-placement-btn" onClick={doTeaReady} style={{ fontSize: '1.02rem', padding: '0.68rem 2.12rem', marginTop: '-11px' }}>
@@ -990,7 +1015,7 @@ export const GameBoard = () => {
       })()}
 
       {/* Turn Popup (hotseat mandate transitions + online politics) */}
-      {turnPopupPlayer && (gameState.mode === 'hotseat' || (gameState.mode === 'online' && turnPopupPlayer === localPlayerId)) && gameState.currentPhase !== 'war' && !gameState.kamiResolutionActive && (() => {
+      {!hasBlockingRuleFlow && turnPopupPlayer && (gameState.mode === 'hotseat' || (gameState.mode === 'online' && turnPopupPlayer === localPlayerId)) && gameState.currentPhase !== 'war' && !gameState.kamiResolutionActive && (() => {
         const popupPlayer = gameState.players.find(p => p.id === turnPopupPlayer);
         if (!popupPlayer) return null;
         const clanColor = CLANS.find(c => c.id === popupPlayer.clanId)?.color;
@@ -1024,31 +1049,23 @@ export const GameBoard = () => {
       })()}
 
       {/* Harvest Popup */}
-      {!biddingMapPeek && <HarvestPopup />}
+      {!biddingMapPeek && !hasBlockingRuleFlow && <HarvestPopup />}
 
       {/* Kami Resolution Popup */}
-      {!biddingMapPeek && !gameState?.kamiPlacementActive && <KamiResolutionPopup />}
-      {!biddingMapPeek && <RyujinWaitingPopup />}
+      {!biddingMapPeek && !hasBlockingRuleFlow && !gameState?.kamiPlacementActive && <KamiResolutionPopup />}
+      {!biddingMapPeek && !hasBlockingRuleFlow && <RyujinWaitingPopup />}
 
       {/* Kami Summary Popup */}
-      {!biddingMapPeek && <KamiSummaryPopup />}
+      {!biddingMapPeek && !hasBlockingRuleFlow && <KamiSummaryPopup />}
 
       {/* Kami Phase Start Popup */}
-      {!biddingMapPeek && kamiPhasePopupVisible && !gameState.pendingSpringPlacement && !gameState.kamiPlacementActive && (
+      {!biddingMapPeek && !hasBlockingRuleFlow && kamiPhasePopupVisible && !gameState.kamiPlacementActive && (
         <div className="harvest-popup-backdrop">
           <div className="harvest-popup" style={{ borderColor: '#9B59B6', maxWidth: '420px', minWidth: '320px', background: 'linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #1a0a2e 100%)', boxShadow: '0 0 20px rgba(155, 89, 182, 0.4), inset 0 0 30px rgba(155, 89, 182, 0.05)', borderWidth: '2px' }}>
-            <h3 style={{ color: '#9B59B6', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                <path d="M4 6h16M5 6c0-1 2-3 7-3s7 2 7 3" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
-                <path d="M6 6v16M18 6v16" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
-                <path d="M6 11h12" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
-              </svg>
+            <h3 className="kami-phase-start-title" style={{ color: '#9B59B6', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <ToriiGateIcon size={44} className="kami-phase-torii" />
               <span>{t('kami.phaseStart.title')}</span>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                <path d="M4 6h16M5 6c0-1 2-3 7-3s7 2 7 3" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
-                <path d="M6 6v16M18 6v16" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
-                <path d="M6 11h12" stroke="#D4AF37" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
-              </svg>
+              <ToriiGateIcon size={44} className="kami-phase-torii" />
             </h3>
             <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.85, marginBottom: '16px' }}>
               {(() => {
@@ -1085,7 +1102,7 @@ export const GameBoard = () => {
       )}
 
       {/* War Phase Start Popup */}
-      {warPhasePopupVisible && (
+      {!hasBlockingRuleFlow && warPhasePopupVisible && (
         <div className="harvest-popup-backdrop">
           <div className="harvest-popup" style={{ borderColor: '#DC143C', maxWidth: '450px', minWidth: '320px' }}>
             <h3 style={{ color: '#DC143C', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
@@ -1102,18 +1119,43 @@ export const GameBoard = () => {
                   {warPhaseUpgradeSummary.map((entry, idx) => {
                     const clan = CLANS.find(c => c.id === entry.clanId);
                     return (
-                      <div key={idx} style={{ padding: '6px 10px', borderRadius: '6px', background: `${clan?.color || '#666'}22`, border: `1px solid ${clan?.color || '#666'}44` }}>
+                      <div key={idx} className="war-upgrade-player-group" style={{ background: `${clan?.color || '#666'}22`, borderColor: `${clan?.color || '#666'}44` }}>
                         {entry.bonuses.map((b, bi) => (
-                          <div key={bi} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 0' }}>
+                          <div key={bi} className="war-upgrade-badge">
                             <ClanShield clanId={entry.clanId} size={18} />
                             <span style={{ color: clan?.color, fontWeight: 'bold', fontSize: '0.85rem' }}>{entry.playerName}</span>
                             <span style={{ fontSize: '0.85rem', opacity: 0.9, fontStyle: 'italic' }}>{b.cardName}</span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '0.85rem', marginLeft: 'auto' }}>
+                            <span className="war-upgrade-result">
+                              {b.resource === 'naginata' && b.sourceProvinceId && b.destinationProvinceId ? (
+                                <>
+                                  <strong style={{ color: PROVINCE_COLORS[b.sourceProvinceId] }}>{gameState.provinces[b.sourceProvinceId]?.name}</strong>
+                                  <span aria-hidden="true">→</span>
+                                  <strong style={{ color: PROVINCE_COLORS[b.destinationProvinceId] }}>{gameState.provinces[b.destinationProvinceId]?.name}</strong>
+                                </>
+                              ) : b.resource === 'katana' ? (
+                                <>
+                                  <BushiIcon size={16} color={clan?.color} />
+                                  <strong>2</strong>
+                                  <FistIcon size={15} color={clan?.color} />
+                                </>
+                              ) : b.resource === 'effect' || b.resource === 'naginata' ? (
+                                <span>—</span>
+                              ) : (
+                                <span style={{ fontWeight: 'bold' }}>{b.amount}</span>
+                              )}
                               {b.resource === 'coins' && <CoinIcon size={14} color="#f1c40f" />}
                               {b.resource === 'ronin' && <RoninIcon size={14} color="#e74c3c" />}
                               {b.resource === 'vp' && <VPIcon size={14} color="#9B59B6" />}
-                              <span style={{ fontWeight: 'bold' }}>{b.amount}</span>
                             </span>
+                            <div className="war-upgrade-tooltip">
+                              {(() => {
+                                const card = SEASON_CARDS_DATA.find(candidate =>
+                                  candidate.id === b.cardId || candidate.id.replace(/-2$/, '') === b.cardId
+                                );
+                                if (!card) return b.cardName;
+                                return renderCardEffect(t(getCardEffectKey(card.id) as TranslationKey));
+                              })()}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1138,10 +1180,10 @@ export const GameBoard = () => {
                         <ClanShield clanId={player.clanId} size={18} />
                         <span style={{ color: clan?.color, fontWeight: 'bold', fontSize: '0.85rem', flex: 1 }}>{player.name}</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.85rem' }}>
-                          <CoinIcon size={16} color="#f1c40f" /> {player.coins}
+                          <strong>{player.coins}</strong> <CoinIcon size={16} color="#f1c40f" />
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.85rem' }}>
-                          <RoninIcon size={16} color="#e74c3c" /> {displayRonin}
+                          <strong>{displayRonin}</strong> <RoninIcon size={16} color="#e74c3c" />
                         </span>
                       </div>
                     );
@@ -1165,7 +1207,7 @@ export const GameBoard = () => {
       )}
 
       {/* Kami Unbound manifestation */}
-      {gameState?.kamiPlacementActive && (() => {
+      {!hasBlockingRuleFlow && gameState?.kamiPlacementActive && (() => {
         const owner = gameState.players.find(player => player.id === gameState.kamiPlacementPlayerId);
         const clan = owner ? CLANS.find(candidate => candidate.id === owner.clanId) : undefined;
         const color = clan?.color || 'var(--accent-gold)';
@@ -1246,7 +1288,7 @@ export const GameBoard = () => {
       })()}
 
       {/* Daikaiju Placement Popup */}
-      {gameState && gameState.daikaijuPlacementActive && !warPhasePopupVisible && !gameState.daikaijuSummaryVisible && (
+      {!hasBlockingRuleFlow && gameState && gameState.daikaijuPlacementActive && !warPhasePopupVisible && !gameState.daikaijuSummaryVisible && (
         (() => {
           const isOwner = gameState.mode === 'hotseat' || localPlayerId === gameState.daikaijuPlacementPlayerId;
           const ownerPlayer = gameState.players.find(player => player.id === gameState.daikaijuPlacementPlayerId);
@@ -1304,7 +1346,7 @@ export const GameBoard = () => {
       )}
 
       {/* Daikaiju Summary Popup */}
-      {gameState && gameState.daikaijuSummaryVisible && gameState.daikaijuSummaryData && (
+      {!hasBlockingRuleFlow && gameState && gameState.daikaijuSummaryVisible && gameState.daikaijuSummaryData && (
         (() => {
           const summary = gameState.daikaijuSummaryData;
           const province = gameState.provinces[summary.provinceId];
@@ -1335,7 +1377,7 @@ export const GameBoard = () => {
                   {t('daikaiju.summary.placedIn')}{' '}
                   <strong style={{ color: provinceColor }}>{summary.provinceName}</strong>
                 </p>
-                {summary.destroyedFortresses.length > 0 ? (
+                {summary.destroyedFortresses.length > 0 || (summary.crushedFukurokuju?.length || 0) > 0 ? (
                   <div className="daikaiju-destruction-list">
                     {summary.destroyedFortresses.map(df => {
                       const victim = gameState.players.find(player => player.id === df.playerId);
@@ -1356,6 +1398,24 @@ export const GameBoard = () => {
                                 ? t('daikaiju.summary.destroyedSingular')
                                 : t('daikaiju.summary.destroyedPlural')}
                             </span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {(summary.crushedFukurokuju || []).map((crushed, index) => {
+                      const victim = gameState.players.find(player => player.id === crushed.playerId);
+                      const victimClan = victim ? CLANS.find(clan => clan.id === victim.clanId) : undefined;
+                      const victimColor = victimClan?.color || 'var(--text-primary)';
+                      return (
+                        <div key={`fukurokuju-${crushed.playerId}-${index}`} className="daikaiju-destruction-row">
+                          <span className="daikaiju-destruction-owner" style={{ color: victimColor }}>
+                            {victimClan && <ClanShield clanId={victimClan.id} size={24} />}
+                            <strong>{victim?.name || crushed.playerName}</strong>
+                          </span>
+                          <span className="daikaiju-destruction-count" style={{ color: victimColor }}>
+                            <MonsterIcon size={22} color={victimColor} />
+                            <strong>Fukurokuju</strong>
+                            <span>{t('daikaiju.summary.crushed')}</span>
                           </span>
                         </div>
                       );
@@ -1384,11 +1444,11 @@ export const GameBoard = () => {
       )}
 
       {/* Hostage Return Popup (interactive cleanup) */}
-      {gameState && gameState.hostageReturnActive && !warSummaryVisible && createPortal(
+      {!hasBlockingRuleFlow && gameState && gameState.hostageReturnActive && !warSummaryVisible && createPortal(
         <div className="battle-popup-overlay">
           <div className="battle-popup-card" style={{ maxWidth: '460px', minWidth: '300px' }}>
             <h3 style={{ color: '#D4AF37', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-              <span>Devolucion de Rehenes</span>
+              <span>{t('common.returnHostages')}</span>
             </h3>
             {(() => {
               const currentReturnPlayerId = gameState.hostageReturnOrder[gameState.hostageReturnIndex];
@@ -1406,7 +1466,7 @@ export const GameBoard = () => {
                     <span style={{ color: returnClan?.color, fontWeight: 'bold', fontSize: '1.1rem' }}>{currentReturnPlayer.name}</span>
                   </div>
                   <p style={{ fontSize: '0.9rem', opacity: 0.9, margin: '8px 0' }}>
-                    Devuelve {hostageCount} rehen{hostageCount > 1 ? 'es' : ''} y gana <CoinIcon size={14} color="#f1c40f" /> {hostageCount} moneda{hostageCount > 1 ? 's' : ''}
+                    {t('common.returnHostagesSummary', { count: String(hostageCount) })} <CoinIcon size={14} color="#f1c40f" />
                   </p>
                   <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', margin: '8px 0' }}>
                     {currentReturnPlayer.hostages.map((h, idx) => {
@@ -1423,11 +1483,11 @@ export const GameBoard = () => {
                   <div style={{ marginTop: '16px' }}>
                     {!alreadyReturned && (gameState.mode === 'hotseat' || isMyReturn) ? (
                       <button className="btn-primary battle-popup-accept" onClick={doHostageReturnAccepted} style={{ borderColor: '#D4AF37' }}>
-                        Aceptar
+                        {t('common.accept')}
                       </button>
                     ) : (
                       <p style={{ color: '#D4AF37', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                        Esperando a {currentReturnPlayer.name}...
+                        {t('common.waitingForPlayer', { name: currentReturnPlayer.name })}
                       </p>
                     )}
                   </div>
@@ -1440,21 +1500,13 @@ export const GameBoard = () => {
       )}
 
       {/* War Summary Popup (after all battles resolved) */}
-      {warSummaryVisible && gameState && createPortal(
+      {!hasBlockingRuleFlow && warSummaryVisible && gameState && createPortal(
         <div className="battle-popup-overlay">
           <div className="battle-popup-card" style={{ maxWidth: '500px', minWidth: '320px' }}>
             <h3 style={{ color: '#DC143C', textAlign: 'center', margin: '0 0 12px 0', fontSize: '1.3rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                <path d="M4 4l16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M20 4l-16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="12" cy="12" r="1.5" fill="var(--accent-red)" opacity="0.6"/>
-              </svg>
+              <span style={{ color: '#DC143C', display: 'inline-flex', flexShrink: 0 }}><WarSeal size={30} /></span>
               <span>{t('war.summary.title')}</span>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                <path d="M4 4l16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M20 4l-16 16" stroke="var(--accent-red)" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="12" cy="12" r="1.5" fill="var(--accent-red)" opacity="0.6"/>
-              </svg>
+              <span style={{ color: '#DC143C', display: 'inline-flex', flexShrink: 0 }}><WarSeal size={30} /></span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
               {gameState.activeBattles.map((battle, idx) => {
@@ -1478,9 +1530,9 @@ export const GameBoard = () => {
               })}
             </div>
             <div style={{ margin: '16px 0', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
-              <p style={{ fontWeight: 'bold', fontSize: '0.95rem', margin: '0 0 8px 0', color: '#DC143C' }}>Fase de limpieza</p>
+              <p style={{ fontWeight: 'bold', fontSize: '0.95rem', margin: '0 0 8px 0', color: '#DC143C' }}>{t('common.cleanupTitle')}</p>
               <p style={{ fontSize: '0.85rem', margin: 0, lineHeight: 1.5, opacity: 0.9 }}>
-                Cuando todos los jugadores acepten, se procedera a la fase de limpieza donde los <ShintoIcon size={14} color="#9B59B6" /> en santuarios seran devueltos a la reserva de sus propietarios y se eliminaran todas las <CoinIcon size={14} color="#f1c40f" /> y todos los <RoninIcon size={14} color="#e74c3c" /> de los jugadores. Todas las alianzas se romperan.
+                {t('common.cleanupWhenReady')} <ShintoIcon size={14} color="#9B59B6" /> {t('common.cleanupShintoReturn')} <CoinIcon size={14} color="#f1c40f" /> {t('common.cleanupAnd')} <RoninIcon size={14} color="#e74c3c" /> {t('common.cleanupDiscarded')}
               </p>
             </div>
             <div style={{ textAlign: 'center' }}>
@@ -1546,19 +1598,21 @@ export const GameBoard = () => {
       {/* Trade Offer Popup */}
       <TradeOfferPopup />
 
-      <GenerosityPopup />
-      <NureOnnaPopup />
-      <RuleEventNoticePopup />
-      <BattleCardDecisionPopup />
-      <BattleMercyDecisionPopup />
-      <NinjaDecisionPopup />
-      <MonkeyDecisionPopup />
-      <SnakeDecisionPopup />
-      <BenevolencePopup />
-      <SpringPlacementPopup />
-      <VassalDecisionPopup />
-      <SerpentChargePopup />
-      <MonsterEnterDecisionPopup />
+      {shouldShowRuleNotice ? <RuleEventNoticePopup />
+        : gameState.pendingMarshalSerpentWarningPlayerId ? <MarshalSerpentWarningPopup />
+          : gameState.generosityPending ? <GenerosityPopup />
+          : gameState.pendingSerpentCharge ? <SerpentChargePopup />
+            : gameState.pendingBattleCardDecision ? <BattleCardDecisionPopup />
+              : gameState.pendingBattleMercyDecision ? <BattleMercyDecisionPopup />
+                : gameState.pendingNureOnnaDecision ? <NureOnnaPopup />
+                  : gameState.pendingMonsterEnterDecision ? <MonsterEnterDecisionPopup />
+                    : gameState.pendingSpringPlacement ? <SpringPlacementPopup />
+                      : gameState.pendingNinjaDecision ? <NinjaDecisionPopup />
+                        : gameState.pendingMonkeyDecision ? <MonkeyDecisionPopup />
+                          : gameState.pendingSnakeDecision ? <SnakeDecisionPopup />
+                            : gameState.pendingBenevolence ? <BenevolencePopup />
+                              : gameState.pendingVassalDecision ? <VassalDecisionPopup />
+                                : null}
 
     </div>
   );

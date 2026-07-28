@@ -3,8 +3,10 @@ import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS } from '../types/game';
 import { ClanShield } from './ClanShields';
 import { CoinIcon } from './Icons';
+import { useT } from '../i18n';
 
 export const SerpentChargePopup = () => {
+  const t = useT();
   const gameState = useGameStore(state => state.gameState);
   const localPlayerId = useGameStore(state => state.localPlayerId);
   const resolveCharge = useGameStore(state => state.doResolveSerpentCharge);
@@ -23,27 +25,27 @@ export const SerpentChargePopup = () => {
   return createPortal(
     <div className="battle-popup-overlay">
       <div className="battle-popup-card battle-card-decision" style={{ borderColor: ownerClan?.color || '#c8a951' }}>
-        <h3 className="battle-popup-title" style={{ color: ownerClan?.color || '#c8a951' }}>Camino de la Serpiente</h3>
+        <h3 className="battle-popup-title" style={{ color: ownerClan?.color || '#c8a951' }}>{t('decision.serpent.title')}</h3>
         <div className="battle-card-decision-owner">
           {owner && <ClanShield clanId={owner.clanId} size={isOwner ? 28 : 84} />}
           <strong style={{ color: ownerClan?.color }}>{owner?.name}</strong>
         </div>
         <p className="battle-card-decision-question">
-          ¿Quieres cobrar <CoinIcon size={19} color="#f1c40f" /> <strong>1</strong> a{' '}
+          {t('decision.serpent.questionBefore')} <strong>1</strong> <CoinIcon size={19} color="#f1c40f" /> a{' '}
           <span className="rule-event-inline-clan"><ClanShield clanId={mover?.clanId || ''} size={21} /><strong style={{ color: moverClan?.color }}>{mover?.name}</strong></span>{' '}
-          por usar la ruta marítima de{' '}
+          {t('decision.serpent.questionAfter')}{' '}
           <strong style={{ color: PROVINCE_COLORS[pending.fromProvinceId] }}>{fromProvince?.name}</strong> a{' '}
           <strong style={{ color: PROVINCE_COLORS[pending.toProvinceId] }}>{toProvince?.name}</strong>?
         </p>
         {isOwner ? (
           <div className="battle-card-decision-actions">
             <button className="btn-primary" disabled={!mover || (!pending.forcedMove && mover.coins <= 0)} onClick={() => resolveCharge(true)}>
-              {pending.forcedMove && (mover?.coins || 0) <= 0 ? 'Impedir el paso' : 'Cobrar'}
+              {pending.forcedMove && (mover?.coins || 0) <= 0 ? t('decision.serpent.blockPassage') : t('decision.serpent.charge')}
             </button>
-            <button className="btn-secondary" onClick={() => resolveCharge(false)}>No cobrar</button>
+            <button className="btn-secondary" onClick={() => resolveCharge(false)}>{t('decision.serpent.decline')}</button>
           </div>
         ) : (
-          <p className="waiting-label">Esperando a que {owner?.name || 'el jugador'} decida si cobra la ruta marítima...</p>
+          <p className="waiting-label">{t('common.waitingForResolution', { name: owner?.name || '', effect: 'Path of the Serpent' })}</p>
         )}
       </div>
     </div>,

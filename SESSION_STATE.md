@@ -270,7 +270,7 @@ Cards are organized by season (Spring/Summer/Autumn) and type:
 - **applyLoyaltyBonus** helper applies +1 VP when gaining VP with an ally (avoids infinite recursion)
 - **applyRighteousnessVP** helper for tracking kills and awarding VP
 - **Mercy** is an explicit owner choice in normal battle casualties, Fire Dragon, Oni of Hate, Way of the Keiri, and Path of the Ninja. It prevents death triggers and Justice for the spared group.
-- **Righteousness** triggers in 5 locations: battle casualties, seppuku, Fire Dragon, Oni of Hate, and betray figure replacement
+- **Righteousness** triggers on actual figure deaths such as battle casualties, Seppuku, Fire Dragon and Oni of Hate; Betray replacements do not trigger it
 - **Loyalty** bonus applied at major VP gain points (battle wins, hostage taking, seppuku, kitsune, imperial poets)
 - **Generosity/Benevolence** auto-select the poorest player as coin recipient
 - **Dignity** implemented in both gameStore.ts (hotseat) and server index.ts (online mode)
@@ -1457,3 +1457,208 @@ server restart — no longer loses the game.
 - Map preview temporarily suppresses Kami resolution and interactive overlays. A Kenin decision
   triggered after Raijin therefore exposes the board cleanly and resumes the same decision and
   selection state through its translated return button.
+
+## Changelog - 2026-07-25 (general consistency and security audit)
+
+- Online game records, snapshots, map views and live state are now restricted to participants and
+  administrators. Opponent bids, private deals and private log entries are filtered per viewer until
+  their rules allow disclosure.
+- The server is authoritative for online games: clients can no longer upload arbitrary snapshots or
+  impersonate another player through WebSocket payloads. Sensitive phase transitions and actions
+  validate the authenticated player, current phase and pending blocking decisions.
+- Production CORS now requires explicit `ALLOWED_ORIGINS`; authentication endpoints have basic
+  per-IP throttling, request bodies are limited to 10 MB and friend responses no longer expose email
+  addresses.
+- Blocking card and rules decisions use a single priority chain. Phase, Kami, War and result overlays
+  remain paused until the current decision has completed, avoiding stacked popups and hidden actions.
+- War bids are escrowed atomically when every participant has submitted. Resolution no longer charges
+  them a second time, preventing negative coin totals after pre-battle effects such as Koneko.
+- Jinmenju placement now shares the same validated implementation in hotseat and online play,
+  including reserves, Luna limits, honor and once-per-mandate behavior.
+- Undo states for Recruit, Betray and Fujin are persisted so reconnecting or restarting the server
+  does not silently remove the available rollback.
+- Snapshot retention now uses a hybrid policy: all structural checkpoints are retained, together with
+  the latest 100 intermediate states. Older non-checkpoint actions lose fine-grained replay history,
+  while season/phase/mandate/Kami/battle milestones and current recovery remain available.
+- Critical gameplay overlays and battle tactics now use the translation catalog consistently. The
+  canonical stored log remains language-neutral to the viewer and is localized when displayed.
+- Main routes and administrator tools are loaded on demand. The initial script is approximately
+  559 KB (147 KB gzip), with the Game Board split into its own approximately 290 KB chunk.
+- Added automated checks for per-player visibility and hybrid persistence. The complete audit suite,
+  lint, TypeScript build and production build pass.
+
+### Known structural follow-ups
+
+- Production assets still total approximately 324 MB because many source PNG files are 2-4 MB.
+  Converting them to WebP/AVIF needs a dedicated visual comparison pass to avoid damaging cards,
+  miniatures or map readability.
+- Log localization still translates legacy canonical Spanish entries through structured patterns.
+  Covered entries are tested, but a newly introduced log sentence still needs a matching translation
+  rule until the log is migrated to typed event objects.
+- Jinmenju follows the confirmed FAQ: it is neither a Stronghold nor a dual figure, must already be
+  deployed when Recruit begins and summons its extra figure in that Province. Dragonfly may redirect
+  that Summon to any Province. Jinmenju can never send the summoned Shinto directly to worship.
+
+## Changelog - 2026-07-25 (Unofficial FAQ comparison)
+
+- Compared all 69 sections of `Rising Sun Unofficial FAQ.docx` against the card and flow audit.
+- Jinmenju eligibility is captured when Recruit begins, tracked per owner and remains available even
+  when its owner has no normal Stronghold placement. Summoning Jinmenju during that Recruit does not
+  enable its ability.
+- Multiple Strongholds in one Province now each provide a Recruit placement there. Direct Shinto
+  worship validates an implicit legal Summon Province first, including the Moon two-figure limit.
+- Path of the Monkey charges every opponent tied for richest and loses Honor once.
+- Oni of Skulls retains Battle participants for its Honor comparison after their last figure leaves.
+- Fox may place at the start of War in every Province where it has no figures, not only War-token
+  Provinces.
+- Raijin no longer suppresses Turtle Stronghold force, because Strongholds are not figures.
+- Every copy of Sincerity triggers for each hostage, including Sunakake-Baba.
+- Deliberately unchanged pending table preference: the FAQ has no official ruling on whether
+  Dragonfly may redirect Way of the Ashigaru's two Bushi. The current implementation follows the
+  previously confirmed flow and keeps both Bushi in the selected one-figure Province.
+
+## Changelog - 2026-07-25 (Season card illustrations)
+
+- Added 55 unique watercolor and sumi-e illustrations for every non-Monster Season card. Duplicate
+  physical copies reuse the matching base-card artwork.
+- Card artwork is shared by the market, owned-card view and administrator catalog, including their
+  full-size zoom overlays.
+- New artwork is stored as 1024 px WebP at about 13.9 MB total instead of retaining the roughly
+  157 MB generated PNG sources.
+- Production TypeScript and Vite build pass with the complete card-art catalog.
+
+## Changelog - 2026-07-26 (online game blue-screen regression)
+
+- Fixed the blank blue screen that affected resumed games and newly started online games.
+- `MainMenu` no longer clears its deferred navigation mode while React is rendering; the cleanup now
+  runs after mount.
+- `RegionCard` no longer builds a composite Zustand snapshot while rendering. It subscribes to the
+  stable game-state reference and derives optional collections locally, so React 19 cannot enter the
+  `getSnapshot`/maximum-update loop.
+- Reproduced the original failure with two authenticated browser clients, then verified both a newly
+  started online game and a saved-game rejoin. Both players rendered the complete board, and a fresh
+  page reload also rejoined without console or page errors.
+- Lint, TypeScript and the production Vite build pass. All temporary test users and games were
+  removed after validation; no existing user or game records were modified.
+
+## Changelog - 2026-07-26 (waiting-lobby presence)
+
+- Online game cards now show `(Conectado)` / `(Joined)` only beside players who currently keep that
+  specific waiting room or started game open. Presence is never inferred merely from owning a slot
+  or participating in another game. Invited players who have not entered remain marked as waiting,
+  and unassigned slots continue to display `Libre/Únete`.
+- Each authenticated user can now hold presence in only one game at a time. Entering another game
+  removes the previous presence and closes its stale socket; a delayed close from an older tab cannot
+  remove the replacement connection. Lobby presence refreshes every five seconds.
+
+## Changelog - 2026-07-27 (current handoff)
+
+- Political-track War and Tea icons use the requested 40 px and 36 px sizes. Figure tooltips on the
+  map render through a document-level portal above every board and popup stacking context.
+- Amount and resource pairs are normalized as number followed by icon across logs, card effects,
+  battle displays and rule popups.
+- Path of the Shadow pauses Betray on an owner-only synchronized notice after granting 3 Coins.
+- Path of the Vassal now pauses after an accepted donation on a second reward notice showing the
+  2 VP gained and the player's new VP total. Acknowledging it resumes a further copy or Kami flow.
+- Kami, start-of-War and board-placement action controls share a responsive bottom action bar.
+  Way of Naginata no longer overflows; its completed origin and destination are retained for the
+  War-start summary.
+- War-upgrade badges expose translated effect tooltips. Naginata shows colored origin to destination,
+  while Way of the Katana shows the clan-colored Bushi and Force 2 result.
+- Battle-combatant confirmation popups use Kabuto seals around the title and the subtle Kabuto
+  background pattern.
+- Multiple Path of Might copies stack correctly in the force engine, map tooltip and Province zoom;
+  two copies give each eligible Bushi +2 Force.
+- The in-game header now uses stable left, center and right layout regions instead of absolute offsets,
+  so English and Spanish cannot overlap the game name, legend, round or Exit button.
+- Player VP, Coins, Honor and Ronin are displayed on one compact sidebar row with bold tabular values.
+- Verification passed: lint, production TypeScript/Vite build, War flow, Kami flow and log translation.
+  No development or game server was left running.
+
+## Changelog - 2026-07-27 (sidebar tooltips and card-rule notices)
+
+- Left-sidebar icon tooltips measure their rendered size and clamp themselves to the viewport. They
+  flip below the hovered control when there is not enough room above it.
+- Loyalty's text now uses a red `1` followed by the VP icon instead of `1+`. The Path of the Vassal
+  reward popup no longer inserts a period between the VP reward and the total.
+- Every Marshal player is warned when an opponent owns Path of the Serpent. Online observers see the
+  same blocking popup while the active player acknowledges it.
+- Way of the Merchant now creates a synchronized blocking notice for every activation, showing the
+  richer player that caused it, Coins gained and the owner's resulting Coin total. Chained notices
+  preserve the interrupted Train/Kami continuation and resume only after the final popup.
+- Oni of Spite now checks actual local Force, so a normal zero-Force Fortress does not trigger its
+  VP theft.
+- Kami Unbound province selection and authoritative confirmation both enforce Luna's maximum of two
+  figures; manifested Kami can no longer become a third Luna figure.
+- Focused Kami, War and Serpent checks, lint, TypeScript and the production Vite build pass.
+
+## Changelog - 2026-07-28 (mutual friend requests)
+
+- Adding a user by exact username or email now creates a pending friend request instead of adding
+  that user immediately. Duplicate outgoing requests, existing friendships and reverse pending
+  requests return explicit non-destructive states.
+- The Friends modal lists received requests with Accept/Reject controls, sent requests as pending,
+  and accepted friends in separate sections. The Friends icon shows a periodically refreshed badge
+  with the number of received requests.
+- Accepting is authoritative and transactional: only the intended recipient may accept, both users
+  are inserted into each other's friend lists and crossed pending requests are removed. Rejecting
+  removes only the pending request and creates no friendship.
+- Accepted friends refresh immediately in the game-creation invitation controls. Friend and request
+  API responses expose only user IDs and usernames, never email addresses.
+- Existing databases receive the new `friend_requests` table during normal initialization.
+  `npm run check:friends` validates authorization, bidirectional acceptance, rejection and response
+  privacy against an isolated temporary database.
+- Legacy friendships created by the old direct-add endpoint may contain only one directed row.
+  Startup now persists the missing reverse row, friend listings read either direction with duplicate
+  suppression, and an `already_friend` lookup repairs the pair immediately as an additional guard.
+- Friend-request checks, lint, TypeScript and the production Vite build pass. No server was left
+  running.
+
+## Changelog - 2026-07-28 (Righteousness and Betray)
+
+- Betray no longer activates Righteousness when replacing a province figure. The replaced figure
+  returns to its reserve and is not treated as killed.
+- Path of the Unrighteous follows the same rule when replacing a Shinto worshipping at a Kami
+  shrine: the Shinto returns to reserve without awarding Righteousness VP or opening its popup.
+- The focused War-flow checks cover both replacement routes.
+- Path of the Unrighteous can be consumed before the final Betray counter when no legal standard
+  replacement remains. Its use is tracked separately so the early shrine replacement cannot expose
+  another additional replacement afterward.
+- Its shrine selection now follows the board interaction: the sidebar only instructs the player,
+  eligible shrines glow, and the player clicks the exact opposing worshipper to replace. Empty
+  shrines and shrines containing only the issuer's figures are not highlighted.
+- Betray now explains a rejected Bushi/Shinto replacement when the issuer has no matching figure
+  left in reserve. In `2607251117origami`, Noboru legitimately had only one reserve Bushi before
+  replacing Granvi's Bushi in Kansai; Undo allows choosing Skyrunner's Bushi instead.
+- Path of the Warlord is deferred during Recruit until the active player presses Finish. A turn
+  that ends without any final placement grants nothing, and Undo can safely return to that state.
+  The Warlord log entry is emitted before any resulting Way of the Merchant activations.
+
+## Changelog - 2026-07-28 (Rising Sun FAQ 2.0)
+
+- `Rising_Sun_FAQ_2.0.pdf` was read, rendered and contrasted against the rules engine and
+  `CARD_AUDIT.md`. Existing implementations were checked for the general Place/Summon, Mandate,
+  Battle participation, Daimyo immunity and end-of-Battle timing clarifications.
+- Komainu and Hotei now use their Shinto/Monster dual type during Betray. The replacement picker
+  offers a normal Shinto and all legal Monster choices as appropriate. Daikaiju cannot be targeted
+  by Betray while in the Ocean.
+- Harvest keeps a pre-Mandate Coin snapshot and groups its base Coin, Province rewards and Path of
+  Sengoku reward into one gain per player for Way of the Merchant.
+- Nure-Onna now invokes Path of the Serpent when crossing its Sea Route. Paying, declining or being
+  unable to pay resumes the pending Nure-Onna/battle flow; an unpaid demanded toll returns the
+  figure to its source Province.
+- Daikaiju now crushes Fukurokuju together with physical Fortresses, returns it to Monster reserve,
+  resolves death effects and lists it in the synchronized arrival summary.
+- War and Serpent regression checks cover all corrected FAQ cases.
+
+## Changelog - 2026-07-29 (chat recovery verification)
+
+- Recovered the interrupted work on `main` by reading `SESSION_STATE.md`, `CARD_AUDIT.md` and the
+  current dirty worktree without reverting any pending local changes.
+- Verified all focused regression scripts: Train, Loto mandate, Kami Unbound, Recruit, log
+  translation, War, Path of the Serpent, per-player visibility, hybrid persistence and friend
+  requests.
+- `npm run lint` passes.
+- `npm run build` passes when run outside the sandbox; the sandboxed attempt failed only because
+  Vite could not write its temporary config file under `node_modules/.vite-temp`.
+- No development or game server was left running.

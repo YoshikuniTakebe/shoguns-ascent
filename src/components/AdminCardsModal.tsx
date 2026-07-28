@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { SEASON_CARDS_DATA, type CardType, type SeasonCard } from '../types/game';
 import { useT, type TranslationKey } from '../i18n';
 import { getCardEffectKey, getCardNameKey } from '../utils/cardTranslations';
-import { getMonsterImage } from '../utils/figureImages';
+import { getSeasonCardImage } from '../utils/cardImages';
 import { renderCardEffect } from '../utils/renderCardEffect';
 import {
   AutumnIcon,
@@ -137,10 +137,10 @@ export const AdminCardsModal = ({ onClose }: { onClose: () => void }) => {
                 style={{ borderLeftColor: CARD_TYPE_COLORS[card.cardType], cursor: 'pointer' }}
                 onClick={() => setZoomedCard(card)}
               >
-                {card.cardType === 'monster' && getMonsterImage(card.id) ? (
+                {getSeasonCardImage(card.id, card.cardType) ? (
                   <div className="season-card-image-placeholder">
                     <img
-                      src={getMonsterImage(card.id)!}
+                      src={getSeasonCardImage(card.id, card.cardType)!}
                       alt={t(getCardNameKey(card.id))}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }}
                     />
@@ -153,8 +153,8 @@ export const AdminCardsModal = ({ onClose }: { onClose: () => void }) => {
                 <div className="season-card-header">
                   <span className="season-card-name">{t(getCardNameKey(card.id))}</span>
                   <span className="season-card-cost">
-                    <CoinIcon size={16} color="#c8a951" strokeWidth="2.5" />
                     {card.cost}
+                    <CoinIcon size={16} color="#c8a951" strokeWidth="2.5" />
                   </span>
                 </div>
                 <span className="season-card-type-badge" style={{ backgroundColor: CARD_TYPE_COLORS[card.cardType] }}>
@@ -177,8 +177,8 @@ export const AdminCardsModal = ({ onClose }: { onClose: () => void }) => {
         {zoomedCard && (
           <div className="card-zoom-overlay" onClick={() => setZoomedCard(null)}>
             <div className="card-zoom-content">
-              {zoomedCard.cardType === 'monster' && getMonsterImage(zoomedCard.id) ? (
-                <img src={getMonsterImage(zoomedCard.id)!} alt={t(getCardNameKey(zoomedCard.id))} />
+              {getSeasonCardImage(zoomedCard.id, zoomedCard.cardType) ? (
+                <img src={getSeasonCardImage(zoomedCard.id, zoomedCard.cardType)!} alt={t(getCardNameKey(zoomedCard.id))} />
               ) : (
                 <div className="card-zoom-fallback">
                   <span className="card-zoom-fallback-icon">&#x1F3B4;</span>

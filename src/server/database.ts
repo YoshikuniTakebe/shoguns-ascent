@@ -8,7 +8,9 @@ import bcrypt from 'bcryptjs';
 let db: Database.Database;
 
 export function initDatabase(): void {
-  const dataDir = path.resolve(process.cwd(), 'data');
+  const dataDir = process.env.DATA_DIR
+    ? path.resolve(process.env.DATA_DIR)
+    : path.resolve(process.cwd(), 'data');
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
@@ -39,7 +41,8 @@ export function initDatabase(): void {
       description TEXT,
       phase TEXT,
       season TEXT,
-      created_at TEXT
+      created_at TEXT,
+      is_checkpoint INTEGER DEFAULT 0
     );
 
     CREATE INDEX IF NOT EXISTS idx_snapshots_game_id ON snapshots(game_id);
@@ -94,6 +97,17 @@ export function initDatabase(): void {
 
     CREATE INDEX IF NOT EXISTS idx_friends_user_id ON friends(user_id);
 
+    CREATE TABLE IF NOT EXISTS friend_requests (
+      id TEXT PRIMARY KEY,
+      sender_user_id TEXT REFERENCES users(id),
+      recipient_user_id TEXT REFERENCES users(id),
+      created_at TEXT NOT NULL,
+      UNIQUE(sender_user_id, recipient_user_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_friend_requests_recipient ON friend_requests(recipient_user_id);
+    CREATE INDEX IF NOT EXISTS idx_friend_requests_sender ON friend_requests(sender_user_id);
+
     CREATE TABLE IF NOT EXISTS pending_lobbies (
       id TEXT PRIMARY KEY,
       name TEXT,
@@ -111,6 +125,14 @@ export function initDatabase(): void {
       setting_key TEXT PRIMARY KEY,
       setting_value TEXT NOT NULL,
       updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS action_undo_snapshots (
+      game_id TEXT REFERENCES games(id),
+      action_type TEXT NOT NULL,
+      state_json TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY(game_id, action_type)
     );
   `);
 
@@ -133,6 +155,18 @@ export function initDatabase(): void {
   const gamesColumns = db.pragma('table_info(games)') as { name: string }[];
   if (!gamesColumns.some((col) => col.name === 'password_hash')) {
     db.exec(`ALTER TABLE games ADD COLUMN password_hash TEXT`);
+  }
+  const snapshotColumns = db.pragma('table_info(snapshots)') as { name: string }[];
+  if (!snapshotColumns.some((col) => col.name === 'is_checkpoint')) {
+    db.exec(`ALTER TABLE snapshots ADD COLUMN is_checkpoint INTEGER DEFAULT 0`);
+  }
+
+  repairAsymmetricFriendships();
+}
+
+export function closeDatabase(): void {
+  if (db?.open) {
+    db.close();
   }
 }
 
@@ -164,17 +198,38 @@ export function updateGameStatus(id: string, status: string, winner?: string): v
   stmt.run(status, winner || null, now, id);
 }
 
-export function saveSnapshot(gameId: string, state: GameState, description?: string): void {
+function isCheckpointState(previous: GameState | null, state: GameState, description?: string): boolean {
+  if (!previous || state.gameOver) return true;
+  if (description === 'Game started' || description === 'Hotseat save') return true;
+  if (previous.currentSeason !== state.currentSeason || previous.currentPhase !== state.currentPhase) return true;
+  if (previous.politicsMandateCount !== state.politicsMandateCount) return true;
+  if (previous.kamiResolutionActive !== state.kamiResolutionActive) return true;
+  if (previous.kamiResolutionIndex !== state.kamiResolutionIndex) return true;
+  const previousResolved = previous.activeBattles.filter(battle => battle.resolved || battle.uncontested).length;
+  const currentResolved = state.activeBattles.filter(battle => battle.resolved || battle.uncontested).length;
+  return previousResolved !== currentResolved;
+}
+
+export function saveSnapshot(gameId: string, state: GameState, description?: string, forceCheckpoint = false): void {
   const now = new Date().toISOString();
 
-  // Get next snapshot index
-  const countStmt = db.prepare(`SELECT COUNT(*) as count FROM snapshots WHERE game_id = ?`);
-  const result = countStmt.get(gameId) as { count: number };
-  const snapshotIndex = result.count;
+  const latest = db.prepare(
+    `SELECT snapshot_index, state_json FROM snapshots WHERE game_id = ? ORDER BY snapshot_index DESC LIMIT 1`
+  ).get(gameId) as { snapshot_index: number; state_json: string } | undefined;
+  const snapshotIndex = (latest?.snapshot_index ?? -1) + 1;
+  let previousState: GameState | null = null;
+  if (latest) {
+    try {
+      previousState = JSON.parse(latest.state_json) as GameState;
+    } catch {
+      previousState = null;
+    }
+  }
+  const isCheckpoint = forceCheckpoint || isCheckpointState(previousState, state, description);
 
   const stmt = db.prepare(`
-    INSERT INTO snapshots (game_id, snapshot_index, state_json, description, phase, season, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO snapshots (game_id, snapshot_index, state_json, description, phase, season, created_at, is_checkpoint)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     gameId,
@@ -183,8 +238,22 @@ export function saveSnapshot(gameId: string, state: GameState, description?: str
     description || `${state.currentPhase} - ${state.currentSeason}`,
     state.currentPhase,
     state.currentSeason,
-    now
+    now,
+    isCheckpoint ? 1 : 0,
   );
+
+  // Keep permanent milestones plus a rolling recovery window of recent intermediate states.
+  db.prepare(`
+    DELETE FROM snapshots
+    WHERE game_id = ?
+      AND is_checkpoint = 0
+      AND id NOT IN (
+        SELECT id FROM snapshots
+        WHERE game_id = ? AND is_checkpoint = 0
+        ORDER BY snapshot_index DESC
+        LIMIT 100
+      )
+  `).run(gameId, gameId);
 
   // Update game's updated_at timestamp
   const updateStmt = db.prepare(`UPDATE games SET updated_at = ? WHERE id = ?`);
@@ -299,6 +368,36 @@ export interface DbUser {
   language: 'en' | 'es';
   cards_light_mode: number;
   show_figure_measurements: number;
+}
+
+export type UndoActionType = 'recruit' | 'betray' | 'fujin';
+
+export function saveActionUndoSnapshot(gameId: string, actionType: UndoActionType, state: GameState): void {
+  db.prepare(`
+    INSERT INTO action_undo_snapshots (game_id, action_type, state_json, updated_at)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(game_id, action_type) DO UPDATE SET
+      state_json = excluded.state_json,
+      updated_at = excluded.updated_at
+  `).run(gameId, actionType, JSON.stringify(state), new Date().toISOString());
+}
+
+export function getActionUndoSnapshot(gameId: string, actionType: UndoActionType): GameState | null {
+  const row = db.prepare(
+    `SELECT state_json FROM action_undo_snapshots WHERE game_id = ? AND action_type = ?`
+  ).get(gameId, actionType) as { state_json: string } | undefined;
+  if (!row) return null;
+  try {
+    return JSON.parse(row.state_json) as GameState;
+  } catch {
+    return null;
+  }
+}
+
+export function deleteActionUndoSnapshot(gameId: string, actionType: UndoActionType): void {
+  db.prepare(
+    `DELETE FROM action_undo_snapshots WHERE game_id = ? AND action_type = ?`
+  ).run(gameId, actionType);
 }
 
 export function createUser(email: string, username: string, passwordHash: string): DbUser {
@@ -446,19 +545,149 @@ export function addFriend(userId: string, friendUserId: string): boolean {
 }
 
 export function areFriends(userId: string, friendUserId: string): boolean {
-  const row = db.prepare(`SELECT id FROM friends WHERE user_id = ? AND friend_user_id = ?`).get(userId, friendUserId);
+  const row = db.prepare(`
+    SELECT id FROM friends
+    WHERE (user_id = ? AND friend_user_id = ?)
+       OR (user_id = ? AND friend_user_id = ?)
+  `).get(userId, friendUserId, friendUserId, userId);
   return !!row;
 }
 
 /** Get the list of a user's friends (basic public info). */
-export function getFriends(userId: string): { id: string; username: string; email: string }[] {
+export function getFriends(userId: string): { id: string; username: string }[] {
   const stmt = db.prepare(`
-    SELECT u.id, u.username, u.email FROM friends f
-    INNER JOIN users u ON u.id = f.friend_user_id
-    WHERE f.user_id = ?
+    SELECT DISTINCT u.id, u.username
+    FROM friends f
+    INNER JOIN users u ON u.id = CASE
+      WHEN f.user_id = ? THEN f.friend_user_id
+      ELSE f.user_id
+    END
+    WHERE (f.user_id = ? OR f.friend_user_id = ?)
+      AND u.id <> ?
     ORDER BY u.username COLLATE NOCASE ASC
   `);
-  return stmt.all(userId) as { id: string; username: string; email: string }[];
+  return stmt.all(userId, userId, userId, userId) as { id: string; username: string }[];
+}
+
+function insertMutualFriendship(userId: string, friendUserId: string): void {
+  const createdAt = new Date().toISOString();
+  const insertFriend = db.prepare(`
+    INSERT OR IGNORE INTO friends (user_id, friend_user_id, created_at)
+    VALUES (?, ?, ?)
+  `);
+  insertFriend.run(userId, friendUserId, createdAt);
+  insertFriend.run(friendUserId, userId, createdAt);
+}
+
+export function ensureMutualFriendship(userId: string, friendUserId: string): void {
+  db.transaction(() => insertMutualFriendship(userId, friendUserId))();
+}
+
+export function repairAsymmetricFriendships(): number {
+  const result = db.prepare(`
+    INSERT OR IGNORE INTO friends (user_id, friend_user_id, created_at)
+    SELECT friend_user_id, user_id, created_at
+    FROM friends
+    WHERE user_id <> friend_user_id
+  `).run();
+  return result.changes;
+}
+
+export interface FriendRequestView {
+  id: string;
+  user: { id: string; username: string };
+  createdAt: string;
+}
+
+export function getFriendRequestDirection(
+  userId: string,
+  otherUserId: string,
+): 'outgoing' | 'incoming' | null {
+  const outgoing = db.prepare(`
+    SELECT id FROM friend_requests
+    WHERE sender_user_id = ? AND recipient_user_id = ?
+  `).get(userId, otherUserId);
+  if (outgoing) return 'outgoing';
+  const incoming = db.prepare(`
+    SELECT id FROM friend_requests
+    WHERE sender_user_id = ? AND recipient_user_id = ?
+  `).get(otherUserId, userId);
+  return incoming ? 'incoming' : null;
+}
+
+export function createFriendRequest(
+  senderUserId: string,
+  recipientUserId: string,
+): { id: string; createdAt: string } {
+  const id = uuidv4();
+  const createdAt = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO friend_requests (id, sender_user_id, recipient_user_id, created_at)
+    VALUES (?, ?, ?, ?)
+  `).run(id, senderUserId, recipientUserId, createdAt);
+  return { id, createdAt };
+}
+
+export function getFriendRequests(userId: string): {
+  incoming: FriendRequestView[];
+  outgoing: FriendRequestView[];
+} {
+  const incoming = db.prepare(`
+    SELECT fr.id, fr.created_at AS createdAt, u.id AS userId, u.username
+    FROM friend_requests fr
+    INNER JOIN users u ON u.id = fr.sender_user_id
+    WHERE fr.recipient_user_id = ?
+    ORDER BY fr.created_at DESC
+  `).all(userId) as Array<{ id: string; createdAt: string; userId: string; username: string }>;
+  const outgoing = db.prepare(`
+    SELECT fr.id, fr.created_at AS createdAt, u.id AS userId, u.username
+    FROM friend_requests fr
+    INNER JOIN users u ON u.id = fr.recipient_user_id
+    WHERE fr.sender_user_id = ?
+    ORDER BY fr.created_at DESC
+  `).all(userId) as Array<{ id: string; createdAt: string; userId: string; username: string }>;
+  const mapRequest = (request: { id: string; createdAt: string; userId: string; username: string }): FriendRequestView => ({
+    id: request.id,
+    user: { id: request.userId, username: request.username },
+    createdAt: request.createdAt,
+  });
+  return {
+    incoming: incoming.map(mapRequest),
+    outgoing: outgoing.map(mapRequest),
+  };
+}
+
+export function acceptFriendRequest(
+  requestId: string,
+  recipientUserId: string,
+): { id: string; username: string } | null {
+  const accept = db.transaction(() => {
+    const request = db.prepare(`
+      SELECT sender_user_id AS senderUserId
+      FROM friend_requests
+      WHERE id = ? AND recipient_user_id = ?
+    `).get(requestId, recipientUserId) as { senderUserId: string } | undefined;
+    if (!request) return null;
+
+    insertMutualFriendship(recipientUserId, request.senderUserId);
+    db.prepare(`
+      DELETE FROM friend_requests
+      WHERE (sender_user_id = ? AND recipient_user_id = ?)
+         OR (sender_user_id = ? AND recipient_user_id = ?)
+    `).run(recipientUserId, request.senderUserId, request.senderUserId, recipientUserId);
+
+    return db.prepare(`SELECT id, username FROM users WHERE id = ?`)
+      .get(request.senderUserId) as { id: string; username: string };
+  });
+  return accept();
+}
+
+export function rejectFriendRequest(requestId: string, recipientUserId: string): boolean {
+  const result = db.prepare(`
+    DELETE FROM friend_requests
+    WHERE id = ? AND recipient_user_id = ?
+  `).run(requestId, recipientUserId);
+  return result.changes > 0;
 }
 
 // --- Pending lobby persistence ---
@@ -569,12 +798,14 @@ export function deleteGame(gameId: string): void {
   const deleteSnapshots = db.prepare(`DELETE FROM snapshots WHERE game_id = ?`);
   const deleteGamePlayers = db.prepare(`DELETE FROM game_players WHERE game_id = ?`);
   const deleteMapViews = db.prepare(`DELETE FROM user_game_map_views WHERE game_id = ?`);
+  const deleteUndoSnapshots = db.prepare(`DELETE FROM action_undo_snapshots WHERE game_id = ?`);
   const deleteGameStmt = db.prepare(`DELETE FROM games WHERE id = ?`);
 
   const transaction = db.transaction(() => {
     deleteSnapshots.run(gameId);
     deleteGamePlayers.run(gameId);
     deleteMapViews.run(gameId);
+    deleteUndoSnapshots.run(gameId);
     deleteGameStmt.run(gameId);
   });
   transaction();
@@ -589,12 +820,14 @@ export function purgeOrphanGames(): number {
 
   const deleteSnapshots = db.prepare(`DELETE FROM snapshots WHERE game_id = ?`);
   const deleteMapViews = db.prepare(`DELETE FROM user_game_map_views WHERE game_id = ?`);
+  const deleteUndoSnapshots = db.prepare(`DELETE FROM action_undo_snapshots WHERE game_id = ?`);
   const deleteGameStmt = db.prepare(`DELETE FROM games WHERE id = ?`);
 
   const transaction = db.transaction(() => {
     for (const game of orphanGames) {
       deleteSnapshots.run(game.id);
       deleteMapViews.run(game.id);
+      deleteUndoSnapshots.run(game.id);
       deleteGameStmt.run(game.id);
     }
   });

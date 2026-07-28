@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { CLANS, PROVINCE_COLORS, SEASON_CARDS_DATA } from '../types/game';
 import type { Battle, GameState, BattleResolutionData } from '../types/game';
-import { ClanShield } from './ClanShields';
+import { ClanShield, WarSeal } from './ClanShields';
 import { CoinIcon, BushiIcon, ShintoIcon, DaimyoIcon, MonsterIcon, VPIcon, HonorIcon, RoninIcon, FistIcon } from './Icons';
 import { useT } from '../i18n';
 import type { TranslationKey } from '../i18n';
@@ -249,10 +249,10 @@ function BattleResultPopup({
   // Build bets data from battle.warTacticBids
   const tacticIds = ['seppuku', 'take-hostage', 'hire-ronin', 'imperial-poets'] as const;
   const tacticLabels: Record<string, string> = {
-    'seppuku': 'Seppuku',
-    'take-hostage': 'Tomar Rehén',
-    'hire-ronin': 'Contratar Ronin',
-    'imperial-poets': 'Poetas Imperiales',
+    'seppuku': t('battle.tacticName.seppuku'),
+    'take-hostage': t('battle.tacticName.takeHostage'),
+    'hire-ronin': t('battle.tacticName.hireRonin'),
+    'imperial-poets': t('battle.tacticName.imperialPoets'),
   };
 
   return (
@@ -265,7 +265,7 @@ function BattleResultPopup({
         {/* Bets (Apuestas) container */}
         {battle.warTacticBids && Object.keys(battle.warTacticBids).length > 0 && (
           <div style={{ margin: '0.5rem 0', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
-            <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>Apuestas</p>
+            <p style={{ margin: '0 0 0.4rem', fontWeight: 'bold', fontSize: '0.9em', opacity: 0.9 }}>{t('battle.bets')}</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
               {tacticIds.map(tacticId => {
                 const bidsForTactic = battle.participants
@@ -291,8 +291,8 @@ function BattleResultPopup({
                     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '0.3rem' }}>
                       {bidsForTactic.map(({ pid, clan, amount }) => (
                         <div key={pid} style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                          <CoinIcon size={14} color={clan?.color || '#FFD700'} />
                           <span style={{ fontWeight: 'bold', color: clan?.color || '#fff', fontSize: '0.85em' }}>{amount}</span>
+                          <CoinIcon size={14} color={clan?.color || '#FFD700'} />
                         </div>
                       ))}
                     </div>
@@ -367,8 +367,8 @@ function BattleResultPopup({
                     </span>
                   )}
                   <span style={{ opacity: 0.7 }}>y gano</span>
-                  <VPIcon size={14} color="#f5c842" />
                   <span style={{ color: '#f5c842', fontWeight: 'bold' }}>{resData.seppukuKillCount}</span>
+                  <VPIcon size={14} color="#f5c842" />
                   <span style={{ opacity: 0.7 }}>y subio</span>
                   <span style={{ fontWeight: 'bold' }}>{resData.seppukuKillCount}</span>
                   <span style={{ opacity: 0.7 }}>posiciones de</span>
@@ -440,8 +440,8 @@ function BattleResultPopup({
                       <ClanShield clanId={captor?.clanId || ''} size={16} />
                       <span style={{ color: captorClan?.color, fontWeight: 'bold' }}>{captor?.name}</span>
                       <span style={{ opacity: 0.7 }}>roba</span>
-                      <VPIcon size={16} color={captorClan?.color || '#f5c842'} />
                       <span style={{ color: captorClan?.color, fontWeight: 'bold' }}>{victoryPointsStolen}</span>
+                      <VPIcon size={16} color={captorClan?.color || '#f5c842'} />
                       <span style={{ opacity: 0.7 }}>a</span>
                       <ClanShield clanId={victim?.clanId || ''} size={16} />
                       <span style={{ color: victimClan?.color, fontWeight: 'bold' }}>{victim?.name}</span>
@@ -468,13 +468,13 @@ function BattleResultPopup({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.3rem' }}>
                     <ClanShield clanId={poetsPlayer?.clanId || ''} size={18} />
                     <span style={{ color: poetsClan?.color, fontWeight: 'bold' }}>{poetsPlayer?.name}</span>
-                    <span style={{ opacity: 0.8 }}>ha ganado</span>
-                    <VPIcon size={16} color="#f5c842" />
+                    <span style={{ opacity: 0.8 }}>{t('battle.hasWon')}</span>
                     <span style={{ color: '#f5c842', fontWeight: 'bold' }}>{resData.imperialPoetsVP}</span>
+                    <VPIcon size={16} color="#f5c842" />
                   </div>
                   <div style={{ fontSize: '0.85em', opacity: 0.8, paddingLeft: '0.5rem' }}>
                     {(seppukuDeaths > 0 || battleDeaths > 0) && (
-                      <p style={{ margin: '0.1rem 0' }}>{seppukuDeaths} muertos por Seppuku y {battleDeaths} muertos en Batalla</p>
+                      <p style={{ margin: '0.1rem 0' }}>{t('battle.deathSummary', { seppuku: seppukuDeaths, battle: battleDeaths })}</p>
                     )}
                     {resData.phoenixDiedInSeppuku && resData.phoenixDiedInBattle && (
                       <p style={{ margin: '0.1rem 0', color: '#f5c842' }}>Phoenix murio en seppuku y en batalla (2 muertes)</p>
@@ -494,7 +494,7 @@ function BattleResultPopup({
         )}
         {mode === 'online' && localPlayerId && (battleResultReadyPlayers || []).includes(localPlayerId) ? (
           <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
-            {(battleResultReadyPlayers || []).length}/{gameState.players.length} listos
+            {t('common.readyWaiting', { count: String((battleResultReadyPlayers || []).length), total: String(gameState.players.length) })}
           </p>
         ) : (
           <button className="btn-primary battle-popup-accept" onClick={onAccept}>
@@ -540,7 +540,7 @@ export const BattlePanel = () => {
       <div className="betray-active" style={{ padding: '1rem' }}>
         <p style={{ margin: 0, fontWeight: 'bold', color: 'var(--accent-gold)' }}>GUERRA</p>
         <p style={{ margin: '8px 0', color: 'var(--text-secondary)', fontSize: '0.9em' }}>
-          El clan Zorro esta colocando Bushi en provincias de batalla...
+          {t('battle.zorroWaiting')}
         </p>
       </div>
     );
@@ -592,7 +592,7 @@ export const BattlePanel = () => {
               </div>
             )}
             <p style={{ margin: '0.5rem 0', fontSize: '0.95em', opacity: 0.8 }}>
-              Esperando reparto de monedas...
+              {t('battle.coinDistributionWaiting')}
             </p>
           </div>
         </div>,
@@ -618,7 +618,7 @@ export const BattlePanel = () => {
               </div>
             )}
             <p style={{ margin: '0.5rem 0', fontSize: '0.95em' }}>
-              Los perdedores reciben las monedas apostadas por el ganador:
+              {t('battle.loserDistribution')}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.75rem' }}>
               {pending.losers.map(loserId => {
@@ -628,15 +628,15 @@ export const BattlePanel = () => {
                   <div key={loserId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                     <ClanShield clanId={loser?.clanId || ''} size={20} />
                     <span style={{ color: loserClan?.color, fontWeight: 'bold' }}>{loser?.name}</span>
-                    <CoinIcon size={14} color="#FFD700" />
                     <span style={{ color: '#FFD700', fontWeight: 'bold' }}>+{pending.allocations?.[loserId] ?? pending.sharePerLoser}</span>
+                    <CoinIcon size={14} color="#FFD700" />
                   </div>
                 );
               })}
             </div>
             {gameState.mode === 'online' && localPlayerId && (gameState.coinDistributionReadyPlayers || []).includes(localPlayerId) ? (
               <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
-                {(gameState.coinDistributionReadyPlayers || []).length}/{gameState.players.length} listos
+                {t('common.readyWaiting', { count: String((gameState.coinDistributionReadyPlayers || []).length), total: String(gameState.players.length) })}
               </p>
             ) : (
               <button className="btn-primary battle-popup-accept" onClick={doCoinDistributionDismiss}>
@@ -682,8 +682,8 @@ export const BattlePanel = () => {
             </p>
           )}
           <p style={{ margin: '0.5rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
-            <CoinIcon size={16} color="#FFD700" />
             <span style={{ fontWeight: 'bold', color: '#FFD700' }}>{pending.remainder}</span>
+            <CoinIcon size={16} color="#FFD700" />
             {' '}{t('battle.coinDistributionRemaining')}
           </p>
           <p style={{ margin: '0.25rem 0 0.75rem', fontSize: '0.9em', opacity: 0.8 }}>
@@ -702,8 +702,8 @@ export const BattlePanel = () => {
                 >
                   <ClanShield clanId={loser?.clanId || ''} size={20} />
                   <span style={{ color: loserClan?.color, fontWeight: 'bold' }}>{loser?.name}</span>
-                  <CoinIcon size={14} color="#FFD700" />
                   <span>+1</span>
+                  <CoinIcon size={14} color="#FFD700" />
                 </button>
               );
             })}
@@ -751,7 +751,7 @@ export const BattlePanel = () => {
             </span>
           </div>
           <p style={{ fontSize: '1.1em', margin: '0.5rem 0 1rem', textAlign: 'center' }}>
-            Quieres sacrificar TODAS tus tropas?
+            {t('battle.seppukuQuestion')}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <button
@@ -793,7 +793,7 @@ export const BattlePanel = () => {
               </span>
             </div>
             <p style={{ fontSize: '1em', margin: '0.5rem 0', textAlign: 'center', opacity: 0.8 }}>
-              Turno de {seppukuPlayer?.name} [ESPERANDO]
+              {t('battle.seppukuWaiting', { name: seppukuPlayer?.name || '' })}
             </p>
           </div>
         </div>,
@@ -817,11 +817,11 @@ export const BattlePanel = () => {
           <div style={{ margin: '0.75rem 0', padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }}>
             <p style={{ margin: '0 0 0.5rem', fontWeight: 'bold', fontSize: '0.95em' }}>Has obtenido:</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.3rem 0', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <VPIcon size={28} color="#f5c842" />
               <span style={{ color: '#f5c842', fontWeight: 'bold' }}>{killCount}</span>
+              <VPIcon size={28} color="#f5c842" />
               <span>y has subido</span>
-              <HonorIcon size={28} color="#9b59b6" />
               <span style={{ color: '#9b59b6', fontWeight: 'bold' }}>{killCount}</span>
+              <HonorIcon size={28} color="#9b59b6" />
               <span>posiciones</span>
             </div>
           </div>
@@ -932,9 +932,21 @@ export const BattlePanel = () => {
       );
     }
 
+    const isRespectAdditionalHostage = (battleResolutionData.hostagesTaken || 0) > 0;
+
     return createPortal(
       <div className="battle-popup-overlay">
         <div className="battle-popup-card" style={{ borderColor: hostageClan?.color, maxHeight: '80vh', overflow: 'auto' }}>
+          {isRespectAdditionalHostage && (
+            <>
+              <h3 className="battle-popup-title" style={{ color: hostageClan?.color || 'var(--accent-gold)', marginBottom: '0.25rem' }}>
+                {t('battle.respectTitle')}
+              </h3>
+              <p className="battle-popup-message" style={{ fontSize: '0.95rem', margin: '0 0 0.75rem', textAlign: 'center', color: 'var(--accent-cream)' }}>
+                {t('battle.respectSecondHostage')}
+              </p>
+            </>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <ClanShield clanId={hostagePlayer?.clanId || ''} size={36} />
             <span style={{ color: hostageClan?.color, fontWeight: 'bold', fontSize: '1.1em' }}>
@@ -942,7 +954,7 @@ export const BattlePanel = () => {
             </span>
           </div>
           <p style={{ fontSize: '1em', margin: '0.5rem 0 0.75rem', textAlign: 'center' }}>
-            Elige a quien capturar ({(battleResolutionData.hostagesTaken || 0) + 1}/{battleResolutionData.hostageLimit || 1})
+            {t('battle.chooseHostage', { current: (battleResolutionData.hostagesTaken || 0) + 1, total: battleResolutionData.hostageLimit || 1 })}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.75rem' }}>
             {capturableFigures.map(fig => {
@@ -986,7 +998,7 @@ export const BattlePanel = () => {
           </button>
           {(battleResolutionData.hostagesTaken || 0) > 0 && (
             <button className="btn-secondary battle-popup-accept" onClick={doHostageSkip}>
-              Terminar
+              {t('common.finish')}
             </button>
           )}
         </div>
@@ -1079,6 +1091,10 @@ export const BattlePanel = () => {
   const battle = allBattles[currentBattleIndex];
   const province = gameState.provinces[battle.provinceId];
   const battleNumber = currentBattleIndex + 1;
+  const lastConfrontationIndex = allBattles.reduce((lastIndex, candidate, index) => (
+    !candidate.uncontested ? index : lastIndex
+  ), -1);
+  const isLastConfrontation = currentBattleIndex === lastConfrontationIndex;
 
   // --- UNCONTESTED BATTLE: show popup ---
   if (battle.uncontested) {
@@ -1247,9 +1263,11 @@ export const BattlePanel = () => {
 
     return createPortal(
       <div className="battle-popup-overlay">
-        <div className="battle-popup-card" style={{ borderColor: playerClan?.color }}>
-          <h3 className="battle-popup-title">
+        <div className="battle-popup-card battle-combatants-popup" style={{ borderColor: playerClan?.color }}>
+          <h3 className="battle-popup-title battle-combatants-title">
+            <WarSeal size={34} />
             {t('battle.battleNumber', { number: battleNumber })}: <span style={{ color: PROVINCE_COLORS[battle.provinceId] || '#fff' }}>{province?.name || battle.provinceId}</span>
+            <WarSeal size={34} />
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <ClanShield clanId={player?.clanId || ''} size={36} />
@@ -1270,12 +1288,16 @@ export const BattlePanel = () => {
     const localReady = !!localPlayerId && gameState.battlePopupReadyPlayers.includes(localPlayerId);
     return createPortal(
       <div className="battle-popup-overlay">
-        <div className="battle-popup-card">
-          <h3 className="battle-popup-title">
-            {t('battle.battleNumber', { number: battleNumber })}:{' '}
-            <span style={{ color: PROVINCE_COLORS[battle.provinceId] || '#fff' }}>
-              {province?.name || battle.provinceId}
+        <div className="battle-popup-card battle-combatants-popup">
+          <h3 className="battle-popup-title battle-combatants-title">
+            <WarSeal size={34} />
+            <span>
+              {t('battle.battleNumber', { number: battleNumber })}:{' '}
+              <span style={{ color: PROVINCE_COLORS[battle.provinceId] || '#fff' }}>
+                {province?.name || battle.provinceId}
+              </span>
             </span>
+            <WarSeal size={34} />
           </h3>
           <p className="battle-popup-message">{t('battle.combatants')}</p>
           <div className="battle-start-combatants">
@@ -1283,7 +1305,7 @@ export const BattlePanel = () => {
               const participant = gameState.players.find(player => player.id === participantId);
               const clan = participant ? CLANS.find(candidate => candidate.id === participant.clanId) : null;
               return participant ? (
-                <span key={participant.id} className="battle-card-decision-owner">
+                <span key={participant.id} className="battle-card-decision-owner" style={{ color: clan?.color }}>
                   <ClanShield clanId={participant.clanId} size={28} />
                   <strong style={{ color: clan?.color }}>{participant.name}</strong>
                 </span>
@@ -1292,7 +1314,7 @@ export const BattlePanel = () => {
           </div>
           {localReady ? (
             <p style={{ color: '#DC143C', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
-              {gameState.battlePopupReadyPlayers.length}/{gameState.players.length} listos
+              {t('common.readyWaiting', { count: String(gameState.battlePopupReadyPlayers.length), total: String(gameState.players.length) })}
             </p>
           ) : (
             <button className="btn-primary battle-popup-accept" onClick={doAcceptBattlePopup}>
@@ -1372,6 +1394,7 @@ export const BattlePanel = () => {
         provinceColor={PROVINCE_COLORS[battle.provinceId]}
         battleNumber={battleNumber}
         isLastBattle={battleNumber === allBattles.length}
+        isLastConfrontation={isLastConfrontation}
         currentPlayerId={currentParticipant}
         onConfirm={handleOverlayConfirm}
         combatants={combatants}
@@ -1446,6 +1469,7 @@ export const BattlePanel = () => {
           provinceName={province?.name || battle.provinceId}
           provinceColor={PROVINCE_COLORS[battle.provinceId]}
           battleNumber={battleNumber}
+          isLastConfrontation={isLastConfrontation}
           onConfirm={(bidValues) => {
             if (!apid) return;
             doSubmitWarTacticBids(battle.provinceId, bidValues);

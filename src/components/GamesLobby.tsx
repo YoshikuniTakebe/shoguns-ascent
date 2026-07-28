@@ -6,13 +6,13 @@ import type { TranslationKey } from '../i18n';
 import { CLANS } from '../types/game';
 import { ClanShield, WarSeal } from './ClanShields';
 import { ConfigModal } from './ConfigModal';
-import { AddFriendModal, FriendsListModal } from './FriendsModal';
+import { AddFriendModal, FriendRequestBadge, FriendsListModal } from './FriendsModal';
 import titleImg from '../img/NoboruTaiyo.png';
 
 interface GameRecord {
   id: string;
   name: string;
-  players: { name: string; clanId: string; userId: string | null }[];
+  players: { name: string; clanId: string; userId: string | null; connected?: boolean }[];
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -82,8 +82,8 @@ export const GamesLobby = () => {
           // Logged in: fetch user's online games + all hotseat games
           const [myGamesRes, hotseatActiveRes, hotseatFinishedRes] = await Promise.all([
             fetch(`${API_BASE}/api/games/my-games`, { headers }),
-            fetch(`${API_BASE}/api/games?status=active`),
-            fetch(`${API_BASE}/api/games?status=finished`),
+            fetch(`${API_BASE}/api/games?status=active`, { headers }),
+            fetch(`${API_BASE}/api/games?status=finished`, { headers }),
           ]);
           const myGames: GameRecord[] = await myGamesRes.json();
           const allActive: GameRecord[] = await hotseatActiveRes.json();
@@ -124,18 +124,11 @@ export const GamesLobby = () => {
           setWaitingGames(waiting);
           setFinishedGames(allFinishedGames);
         } else {
-          // Not logged in: show only hotseat games
-          const [activeRes, finishedRes] = await Promise.all([
-            fetch(`${API_BASE}/api/games?status=active`),
-            fetch(`${API_BASE}/api/games?status=finished`),
-          ]);
-          const active: GameRecord[] = await activeRes.json();
-          const finished: GameRecord[] = await finishedRes.json();
-          const hotseatActive = active.filter(g => g.mode === 'hotseat');
-          const hotseatFinished = finished.filter(g => g.mode === 'hotseat');
+          // Persisted games are private. Anonymous users can still play local hotseat,
+          // but saved games only appear after signing in.
           setYourTurnGames([]);
-          setWaitingGames(hotseatActive);
-          setFinishedGames(hotseatFinished);
+          setWaitingGames([]);
+          setFinishedGames([]);
         }
       } catch {
         // Server might not be running
@@ -144,8 +137,8 @@ export const GamesLobby = () => {
       }
     };
     fetchGames();
-    // Poll every 15 seconds to keep the list in sync across clients
-    const interval = setInterval(fetchGames, 15000);
+    // Presence in online games should feel current without requiring a manual refresh.
+    const interval = setInterval(fetchGames, 5000);
     return () => clearInterval(interval);
   }, [authToken, authUser]);
 
@@ -159,7 +152,9 @@ export const GamesLobby = () => {
       await Promise.all(
         hotseatGames.map(async (g) => {
           try {
-            const res = await fetch(`${API_BASE}/api/games/${g.id}/has-password`);
+            const headers: Record<string, string> = {};
+            if (authToken) headers.Authorization = `Bearer ${authToken}`;
+            const res = await fetch(`${API_BASE}/api/games/${g.id}/has-password`, { headers });
             const data = await res.json();
             if (data.hasPassword) pwSet.add(g.id);
           } catch { /* ignore */ }
@@ -168,7 +163,7 @@ export const GamesLobby = () => {
       setPasswordGames(pwSet);
     };
     checkPasswords();
-  }, [yourTurnGames, waitingGames]);
+  }, [authToken, yourTurnGames, waitingGames]);
 
   const handleResumeGame = async (gameId: string, mode: string) => {
     if (mode === 'hotseat' && passwordGames.has(gameId)) {
@@ -185,7 +180,10 @@ export const GamesLobby = () => {
     try {
       const res = await fetch(`${API_BASE}/api/games/${passwordModal.gameId}/verify-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({ password: passwordInput }),
       });
       const data = await res.json();
@@ -321,8 +319,12 @@ export const GamesLobby = () => {
   };
 
   const renderGameCard = (game: GameRecord, type: 'your-turn' | 'waiting' | 'finished') => {
+    const hasConnectedPlayer = type !== 'finished'
+      && game.mode === 'online'
+      && game.players.some(player => player.connected);
     const cardClass = [
       'games-lobby-card',
+      hasConnectedPlayer ? 'games-lobby-card-connected' : '',
       type === 'your-turn' ? 'games-lobby-card-your-turn' : '',
       type === 'waiting' ? 'games-lobby-card-waiting' : '',
       type === 'finished' ? 'games-lobby-card-finished' : '',
@@ -389,7 +391,10 @@ export const GamesLobby = () => {
                 className={`games-lobby-card-clan-entry${type !== 'finished' && game.currentPlayerIndex === i ? ' games-lobby-card-clan-entry-active' : ''}`}
               >
                 <ClanShield clanId={p.clanId} size={16} />
-                <span style={{ color: getClanColor(p.clanId) }}>{p.name}</span>
+                <span style={{ color: getClanColor(p.clanId) }}>
+                  {p.name}
+                  {type !== 'finished' && game.mode === 'online' && p.connected && ` (${t('lobby.joined')})`}
+                </span>
               </span>
             ))}
           </span>
@@ -474,6 +479,7 @@ export const GamesLobby = () => {
                 <path d="M2 19c0-3 2.5-5 6-5s6 2 6 5" />
                 <path d="M14 14c3.5 0 6 2 6 5" />
               </svg>
+              <FriendRequestBadge />
             </button>
             {authUser.isAdmin && (
               <button className="friends-btn" onClick={() => setShowConfig(true)} title={t('config.title')}>
@@ -551,10 +557,11 @@ export const GamesLobby = () => {
             {waitingLobbies.map((l) => {
               const highlight = l.invited || l.isHost || l.isParticipant;
               const canEnter = l.isParticipant || l.isHost || l.invited || l.open;
+              const hasConnectedPlayer = (l.slots || []).some(slot => slot.status === 'joined');
               return (
                 <div
                   key={l.id}
-                  className={`games-lobby-card games-lobby-card-waiting${highlight ? ' games-lobby-card-invited' : ''}`}
+                  className={`games-lobby-card games-lobby-card-waiting${hasConnectedPlayer ? ' games-lobby-card-connected' : ''}${highlight ? ' games-lobby-card-invited' : ''}`}
                   onClick={() => canEnter && handleEnterLobby(l.id)}
                 >
                   <div className="games-lobby-card-left">
@@ -574,7 +581,9 @@ export const GamesLobby = () => {
                             <span style={{ color: getClanColor(slot.clanId) }}>{t('lobby.freeJoin')}</span>
                           ) : (
                             <span style={{ color: slot.status === 'waiting' ? undefined : getClanColor(slot.clanId) }}>
-                              {slot.name}{slot.status === 'waiting' ? ` (${t('lobby.waiting')})` : ''}
+                              {slot.name}
+                              {slot.status === 'waiting' && ` (${t('lobby.waiting')})`}
+                              {slot.status === 'joined' && ` (${t('lobby.joined')})`}
                             </span>
                           )}
                         </span>

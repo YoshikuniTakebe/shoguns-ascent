@@ -10,6 +10,27 @@ interface IconProps {
   strokeWidth?: string;
 }
 
+/** Full ceremonial torii used for prominent Kami headings. */
+export const ToriiGateIcon = ({ size = 48, color, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 64 64"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path d="M5 8C17 10 47 10 59 8L56 15C43 17 21 17 8 15L5 8Z" fill={color || '#182A4B'} stroke={color || '#0B1630'} strokeWidth="2" />
+    <path d="M11 19H53V25H11V19Z" fill={color || '#E53F55'} stroke={color || '#182A4B'} strokeWidth="2" />
+    <path d="M16 25H23L21 59H13L16 25Z" fill={color || '#E53F55'} stroke={color || '#182A4B'} strokeWidth="2" />
+    <path d="M41 25H48L51 59H43L41 25Z" fill={color || '#E53F55'} stroke={color || '#182A4B'} strokeWidth="2" />
+    <path d="M25 16H39V27H25V16Z" fill={color || '#E9E5D8'} stroke={color || '#182A4B'} strokeWidth="2" />
+    <path d="M28 18H36V27H28V18Z" fill={color || '#C83249'} />
+    <path d="M14 29H50V34H14V29Z" fill={color || '#E53F55'} stroke={color || '#182A4B'} strokeWidth="2" />
+    <path d="M23 25H41V31H23V25Z" fill={color || '#182A4B'} />
+  </svg>
+);
+
 /** Angular Bushi in high guard with a clearly outlined katana. */
 export const BushiIcon = ({ size = 24, color = 'currentColor', className }: IconProps) => (
   <svg

@@ -4,12 +4,15 @@ import {
   calculateForce,
   canBeKilledByPlayer,
   cleanupSeason,
+  continueVassalAfterNotice,
   confirmKamiManifestation,
   createInitialGameState,
   isFigureTrappedBySusanoo,
   moveForces,
   resolveUncontestedBattles,
+  resolveVassalDecision,
   ryujinBuyCard,
+  selectKamiManifestationProvince,
   syncKamiControllers,
 } from '../src/utils/gameLogic';
 import type { Figure, GameState, KamiType } from '../src/types/game';
@@ -39,6 +42,57 @@ function stateWithKami(selectedKami: KamiType[] = ['amaterasu', 'raijin', 'ryuji
   const confirmed = confirmKamiManifestation(state, owner.id);
   assert.equal(confirmed.kamiPlacementActive, false, 'An existing Kami may confirm without selecting a new Province');
   assert.equal(confirmed.provinces.kanto.figures.some(item => item.type === 'kami' && item.kamiType === 'amaterasu'), true, 'Confirming without a selection must keep the Kami in place');
+}
+
+{
+  const state = stateWithKami();
+  const luna = state.players.find(player => player.clanId === 'luna')!;
+  state.provinces.kanto.figures = [
+    figure('luna-one', 'bushi', luna.id),
+    figure('luna-two', 'monster', luna.id),
+  ];
+  state.kamiPlacementActive = true;
+  state.kamiPlacementPlayerId = luna.id;
+  state.kamiPlacementKamiType = 'amaterasu';
+
+  const selected = selectKamiManifestationProvince(state, luna.id, 'kanto');
+  assert.equal(selected, state, 'Luna must not be able to select a Province that already contains two of its figures');
+
+  state.kamiPlacementProvinceId = 'kanto';
+  const confirmed = confirmKamiManifestation(state, luna.id);
+  assert.equal(confirmed, state, 'Server-side confirmation must reject a third Luna figure');
+  assert.equal(state.provinces.kanto.figures.some(item => item.type === 'kami'), false);
+}
+
+{
+  const state = stateWithKami();
+  const owner = state.players[0];
+  owner.coins = 10;
+  owner.victoryPoints = 0;
+  state.pendingVassalDecision = { ownerId: owner.id, templeIndex: 0, copyNumber: 1, remainingCopies: 2 };
+
+  const rewarded = resolveVassalDecision(state, owner.id, true);
+  assert.equal(rewarded.players[0].coins, 8, 'Path of the Vassal must spend two Coins immediately');
+  assert.equal(rewarded.players[0].victoryPoints, 2, 'Path of the Vassal must grant two VP immediately');
+  assert.equal(rewarded.pendingRuleNotices?.[0]?.type, 'vassal', 'Path of the Vassal must pause on a reward notice');
+  assert.equal(rewarded.pendingVassalDecision?.copyNumber, 1, 'The next Vassal copy must wait until the reward notice is acknowledged');
+
+  const continued = continueVassalAfterNotice({ ...rewarded, pendingRuleNotices: [] });
+  assert.equal(continued.pendingVassalDecision?.copyNumber, 2, 'Acknowledging the reward must continue with the second Vassal copy');
+}
+
+{
+  const state = stateWithKami();
+  const owner = state.players[0];
+  owner.seasonCards = [
+    SEASON_CARDS_DATA.find(card => card.id === 'su-path-of-might')!,
+    SEASON_CARDS_DATA.find(card => card.id === 'su-path-of-might-2')!,
+  ];
+  state.provinces.kanto.figures = [
+    figure('might-bushi', 'bushi', owner.id),
+    { ...figure('might-oni', 'monster', owner.id), monsterCardId: 'su-oni-of-souls' },
+  ];
+  assert.equal(calculateForce(state.provinces.kanto, owner.id, state), 4, 'Two Path of Might copies must grant +2 Force to the Bushi');
 }
 
 {

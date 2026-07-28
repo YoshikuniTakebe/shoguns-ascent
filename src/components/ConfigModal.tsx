@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { getConfiguredServerUrl, setConfiguredServerUrl, WS_BASE } from '../config';
 import { useT } from '../i18n';
 import { useGameStore } from '../store/gameStore';
-import { AdminDioramaModal } from './AdminDioramaModal';
-import { AdminCardsModal } from './AdminCardsModal';
+
+const AdminDioramaModal = lazy(() => import('./AdminDioramaModal').then(module => ({ default: module.AdminDioramaModal })));
+const AdminCardsModal = lazy(() => import('./AdminCardsModal').then(module => ({ default: module.AdminCardsModal })));
 
 /**
  * Admin-only configuration panel. Currently exposes the internal server URL used for online
@@ -43,18 +44,18 @@ export const ConfigModal = ({ onClose }: { onClose: () => void }) => {
         <p className="config-modal-hint">{t('config.serverUrlHint')}</p>
 
         <div className="config-debug-section">
-          <h4>Modo debug</h4>
+          <h4>{t('config.debugMode')}</h4>
           <label className="config-checkbox-row">
             <input
               type="checkbox"
               checked={showFigureMeasurements}
               onChange={event => setShowFigureMeasurements(event.target.checked)}
             />
-            <span>Mostrar medidas de las figuras</span>
+            <span>{t('config.showFigureMeasurements')}</span>
           </label>
           <div className="config-debug-actions">
             <button className="btn-secondary" onClick={() => setShowDiorama(true)}>
-              Diorama
+              {t('config.diorama')}
             </button>
             <button className="btn-secondary" onClick={() => setShowCards(true)}>
               {t('admin.cards.button')}
@@ -68,8 +69,10 @@ export const ConfigModal = ({ onClose }: { onClose: () => void }) => {
         </div>
         </div>
       </div>
-      {showDiorama && <AdminDioramaModal onClose={() => setShowDiorama(false)} />}
-      {showCards && <AdminCardsModal onClose={() => setShowCards(false)} />}
+      <Suspense fallback={null}>
+        {showDiorama && <AdminDioramaModal onClose={() => setShowDiorama(false)} />}
+        {showCards && <AdminCardsModal onClose={() => setShowCards(false)} />}
+      </Suspense>
     </>
   );
 };
